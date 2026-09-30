@@ -24,7 +24,7 @@
           "PluginScope",
           "MeshConfigSpec"
         ],
-        "note": "Resource is a serde internally tagged enum (tag = \"kind\") without deny_unknown_fields, so unknown top-level keys are ignored by GitForgeOps. Required spec keys are the struct fields with no serde default."
+        "note": "Resource is a serde internally tagged enum (tag = \"kind\") without deny_unknown_fields, so unknown top-level keys are ignored by GitForgeOps. Required spec keys are the struct fields with no serde default. Option<T> fields accept null (serde maps it to None); Vec fields do not."
       }
     ]
   },
@@ -47,8 +47,11 @@
       "type": "object"
     },
     "id": {
-      "type": "string",
-      "description": "MeshConfig only: GitForgeOps-side fragment name. The loader defaults it to the file stem; it is never emitted into the mesh document."
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "MeshConfig only: GitForgeOps-side fragment name (Option<String>; null means absent). The loader defaults it to the file stem; it is never emitted into the mesh document."
     }
   },
   "allOf": [
@@ -213,9 +216,23 @@
                 "type": "array"
               },
               "istio_root_namespace": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Option<String>; null means absent (Edge's istio-system default applies)."
+              },
+              "trust_bundles": {
+                "description": "Option<serde_json::Value>: any JSON value; null means absent. The shape is Edge's mesh config."
+              },
+              "multi_cluster": {
+                "description": "Option<serde_json::Value>: any JSON value; null means absent. The shape is Edge's mesh config."
+              },
+              "outbound_traffic_policy": {
+                "description": "Option<serde_json::Value>: any JSON value; null means absent. The shape is Edge's mesh config."
               }
-            }
+            },
+            "description": "MeshConfigSpec. Every field is optional. List fields are Vec<serde_json::Value>, which serde rejects when null, so they must be arrays when present."
           }
         }
       }

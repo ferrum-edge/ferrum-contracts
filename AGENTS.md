@@ -40,7 +40,12 @@ Proposal and adoption tracking: ferrum-edge/.github#4.
   Breaking changes need a new `v<N+1>` file; tags `contracts-edge-X.Y.Z`
   are immutable.
 - Every schema needs at least one valid and one invalid fixture. An invalid
-  fixture changes exactly one thing, and `fixtures/README.md` says what.
+  fixture changes exactly one thing, `fixtures/README.md` says what, and
+  `fixtures/invalid-expectations.json` records the instance path and keyword
+  CI must see.
+- Values a schema copies from a vocabulary (the `diagnostic-ref`
+  `gateway_error` enum, the `ref` and `replica_id` patterns) must match the
+  vocabulary; CI checks it. Closed-enum policy: `docs/versioning.md`.
 - Update `CHANGELOG.md` under `[Unreleased]` in the same PR.
 - JSON: 2-space indent, UTF-8, trailing newline, no duplicate keys. Keep key
   order stable so diffs stay reviewable.
@@ -49,7 +54,7 @@ Proposal and adoption tracking: ferrum-edge/.github#4.
 
 - The `Validate contracts` workflow is the gate: schemas against the 2020-12
   meta-schema, `$id`/version/file-name consistency, fixtures (valid pass,
-  invalid fail), vocabularies against their schemas plus cross-reference
+  invalid fail with the expected path and keyword, formats asserted), vocabularies against their schemas plus cross-reference
   checks, the diagnostic-finding to diagnostic-report cross-check, and the
   plugin catalog's pointers into the pinned Edge `openapi.yaml`.
 - Actions are pinned by full commit SHA with a version comment.
@@ -57,7 +62,10 @@ Proposal and adoption tracking: ferrum-edge/.github#4.
 - Python packages are pinned by version and sha256 in `ci/requirements.txt`
   and installed with `--require-hashes --only-binary=:all: --no-deps`.
   Update procedure: `docs/release-process.md`.
-- Dependabot updates GitHub Actions weekly (`.github/dependabot.yml`).
+- Dependabot updates GitHub Actions and `ci/requirements.txt` weekly
+  (`.github/dependabot.yml`).
+- `main` requires the `Schemas, fixtures and vocabularies` check and a
+  code-owner review (`.github/CODEOWNERS`).
 
 ## PR and commit workflow
 

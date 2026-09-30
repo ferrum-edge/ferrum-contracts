@@ -60,7 +60,10 @@ new tag and updates its local copy, and records the change in
 ## Maintaining the validation workflow
 
 - **Actions** are pinned by full commit SHA with the release in a trailing
-  comment. Dependabot proposes updates weekly. Before accepting one, check
+  comment. Dependabot proposes updates weekly for Actions and for
+  `ci/requirements.txt`; check that a pip update carries the hash of every
+  file pip will install (for `rpds-py`, the CPython 3.13 manylinux x86_64
+  wheel). Before accepting one, check
   that the SHA is the tagged commit of that release
   (`gh api repos/<owner>/<action>/tags`).
 - **Validator packages** are pinned in `ci/requirements.txt` with sha256

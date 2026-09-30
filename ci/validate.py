@@ -9,18 +9,25 @@ Checks, in order:
 2. Every schema is valid against the JSON Schema 2020-12 meta-schema.
 3. Fixtures: every file under fixtures/<name>/valid/ must validate against
    the latest version of schema <name>, and every file under
-   fixtures/<name>/invalid/ must fail it. Each schema needs at least one of
-   each.
+   fixtures/<name>/invalid/ must fail it with exactly one top-level error
+   whose instance path and keyword (or those of an error nested under it)
+   match the entry in fixtures/invalid-expectations.json. Each schema needs
+   at least one of each; any other file in valid/ or invalid/ fails.
+   Formats are asserted (date-time needs the pinned rfc3339-validator).
 4. Vocabularies: every vocabularies/<v>.json validates against the schema its
    `$schema` names, which must be schemas/vocabulary-<v>/v<version>.
 5. Vocabulary consistency checks that JSON Schema cannot express (unique
-   values, cross-references between vocabularies).
+   values, cross-references between vocabularies, required cardinality
+   surfaces), and values copied from a vocabulary into a schema (the
+   diagnostic-ref gateway_error enum and ref / replica_id patterns).
 6. Cross-contract fixture checks (for example: every valid Anvil
    DiagnosticFinding fixture is also a valid Alloy diagnostic_report Finding).
 7. Optional (--openapi PATH or --fetch-openapi): the Edge openapi.yaml the
-   plugin catalog pins has the recorded sha256, and every config_schema
-   pointer names a component schema in it. --fetch-openapi downloads that
-   file from raw.githubusercontent.com at the pinned commit.
+   plugin catalog pins has the recorded sha256, and every plugin's
+   config_schema pointer is the component that Edge's PluginConfigBase
+   if/then block for that plugin_name references (and the component
+   exists). --fetch-openapi downloads that file from
+   raw.githubusercontent.com at the pinned commit.
 
 Exit status is 0 when every check passes and 1 otherwise. Only the Python
 standard library and the pinned packages in ci/requirements.txt are used.
@@ -43,6 +50,11 @@ BASE = "https://github.com/ferrum-edge/ferrum-contracts/schemas"
 META = "https://json-schema.org/draft/2020-12/schema"
 SCHEMA_FILE = re.compile(r"^v([1-9][0-9]*)\.schema\.json$")
 NAME = re.compile(r"^[a-z][a-z0-9-]*$")
+EXPECTATIONS = "invalid-expectations.json"
+FORMAT_CHECKER = Draft202012Validator.FORMAT_CHECKER
+# Formats the schemas use that must be asserted, not silently skipped. A
+# format is only checked when its optional dependency is installed.
+REQUIRED_FORMATS = ("date-time", "regex")
 
 # (fixture set, target schema name, JSON pointer fragment inside the target)
 CROSS_CHECKS = [
@@ -79,14 +91,17 @@ def load_json(path: Path, report: Report):
         return None
 
 
-def first_error(validator: Draft202012Validator, instance) -> str | None:
-    errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
-    if not errors:
-        return None
+def describe(errors) -> str:
+    errors = sorted(errors, key=lambda e: list(map(str, e.absolute_path)))
     err = errors[0]
-    location = "/".join(str(p) for p in err.absolute_path) or "(root)"
+    location = pointer(err.absolute_path) or "(root)"
     more = f" (+{len(errors) - 1} more)" if len(errors) > 1 else ""
-    return f"at {location}: {err.message}{more}"
+    return f"{err.validator} at {location}: {err.message}{more}"
+
+
+def first_error(validator: Draft202012Validator, instance) -> str | None:
+    errors = list(validator.iter_errors(instance))
+    return describe(errors) if errors else None
 
 
 def load_schemas(root: Path, report: Report) -> dict[str, dict[int, dict]]:
@@ -146,15 +161,44 @@ def build_registry(schemas: dict[str, dict[int, dict]]) -> Registry:
 
 
 def validator(schema: dict, registry: Registry) -> Draft202012Validator:
-    return Draft202012Validator(schema, registry=registry)
+    return Draft202012Validator(schema, registry=registry, format_checker=FORMAT_CHECKER)
+
+
+def pointer(path) -> str:
+    """JSON Pointer (RFC 6901) for a jsonschema error path; "" is the root."""
+    return "".join("/" + str(p).replace("~", "~0").replace("/", "~1") for p in path)
+
+
+def error_tree(error):
+    yield error
+    for child in error.context or ():
+        yield from error_tree(child)
+
+
+def load_expectations(root: Path, report: Report) -> dict[str, dict]:
+    path = root / "fixtures" / EXPECTATIONS
+    data = load_json(path, report) if path.is_file() else None
+    if not isinstance(data, dict):
+        report.fail(path, "missing or not a JSON object")
+        return {}
+    for key, value in data.items():
+        if (
+            not isinstance(value, dict)
+            or set(value) != {"instance_path", "keyword"}
+            or not all(isinstance(v, str) for v in value.values())
+        ):
+            report.fail(path, f"{key}: needs exactly instance_path and keyword strings")
+    return data
 
 
 def check_fixtures(root: Path, schemas, registry, report: Report) -> None:
     fixture_root = root / "fixtures"
+    expectations = load_expectations(root, report)
+    used = set()
     seen = set()
     for entry in sorted(fixture_root.iterdir()):
         if not entry.is_dir():
-            if entry.name != "README.md":
+            if entry.name not in ("README.md", EXPECTATIONS):
                 report.fail(entry, "unexpected file under fixtures/")
             continue
         name = entry.name
@@ -168,22 +212,53 @@ def check_fixtures(root: Path, schemas, registry, report: Report) -> None:
             if sub.name not in ("valid", "invalid") or not sub.is_dir():
                 report.fail(sub, "fixture sets contain only valid/ and invalid/")
         for kind in ("valid", "invalid"):
-            files = sorted((entry / kind).glob("*.json")) if (entry / kind).is_dir() else []
+            directory = entry / kind
+            files = []
+            if directory.is_dir():
+                for path in sorted(directory.iterdir()):
+                    if path.is_file() and path.suffix == ".json":
+                        files.append(path)
+                    else:
+                        report.fail(path, f"{kind}/ holds only *.json fixture files")
             if not files:
                 report.fail(entry, f"needs at least one {kind} fixture")
             for path in files:
                 instance = load_json(path, report)
                 if instance is None:
                     continue
-                error = first_error(v, instance)
-                if kind == "valid" and error:
-                    report.fail(path, f"valid fixture fails {name} v{latest} {error}")
-                elif kind == "invalid" and not error:
+                errors = list(v.iter_errors(instance))
+                rel = path.relative_to(fixture_root).as_posix()
+                if kind == "valid":
+                    if errors:
+                        detail = describe(errors)
+                        report.fail(path, f"valid fixture fails {name} v{latest} {detail}")
+                    else:
+                        report.ok()
+                    continue
+                used.add(rel)
+                expected = expectations.get(rel)
+                if not errors:
                     report.fail(path, f"invalid fixture passes {name} v{latest}")
+                elif expected is None:
+                    detail = describe(errors)
+                    report.fail(path, f"no entry in fixtures/{EXPECTATIONS}; got {detail}")
+                elif len(errors) != 1:
+                    report.fail(path, f"expected one error, got {len(errors)}: {describe(errors)}")
+                elif not any(
+                    pointer(e.absolute_path) == expected["instance_path"]
+                    and e.validator == expected["keyword"]
+                    for e in error_tree(errors[0])
+                ):
+                    report.fail(
+                        path,
+                        f"expected {expected['keyword']!r} at {expected['instance_path']!r}, "
+                        f"got {describe(errors)}",
+                    )
                 else:
                     report.ok()
-                    if kind == "invalid":
-                        print(f"  ok (rejected) {path.relative_to(root)}: {error}")
+                    print(f"  ok (rejected) {rel}: {describe(errors)}")
+    for key in sorted(set(expectations) - used):
+        report.fail(fixture_root / EXPECTATIONS, f"{key} names no invalid fixture")
     for name in schemas:
         if name not in seen:
             report.fail(f"fixtures/{name}", "schema has no fixture set")
@@ -271,11 +346,20 @@ def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) 
             for token in named:
                 if token not in tokens:
                     report.fail(where, f"class {c['value']} maps to unknown token {token!r}")
-        surfaces = {s["values"]: s["cardinality"] for s in errors["surfaces"]}
-        if surfaces.get("x_gateway_error_tokens") not in (None, len(tokens)):
-            report.fail(where, "X-Gateway-Error cardinality does not match the token list")
-        if surfaces.get("error_classes") not in (None, len(classes)):
-            report.fail(where, "error_class cardinality does not match the class list")
+        surfaces = {s["surface"]: s["cardinality"] for s in errors["surfaces"]}
+        metric_tokens = [
+            t for t in errors["x_gateway_error_tokens"] if t["metric_label_without_error_class"]
+        ]
+        required = {
+            "X-Gateway-Error response header": len(tokens),
+            "access-log error_class": len(classes),
+            "ferrum_requests_total{error_class}": len(classes) + len(metric_tokens),
+        }
+        for surface, count in required.items():
+            if surface not in surfaces:
+                report.fail(where, f"missing cardinality surface {surface!r}")
+            elif surfaces[surface] != count:
+                report.fail(where, f"{surface} cardinality {surfaces[surface]} != {count}")
         report.ok()
     headers = vocabularies.get("gateway-headers")
     if headers:
@@ -302,6 +386,68 @@ def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) 
         removed = [p["name"] for p in catalog["removed_plugins"]]
         unique(report, where, names + removed, "plugin name")
         report.ok()
+
+
+def check_copied_values(schemas, vocabularies: dict[str, dict], report: Report) -> None:
+    """Values a schema copies from a vocabulary must match it exactly."""
+    ref_schema = schemas.get("diagnostic-ref", {}).get(1)
+    errors = vocabularies.get("gateway-errors")
+    headers = vocabularies.get("gateway-headers")
+    where = "schemas/diagnostic-ref/v1.schema.json"
+    if not (ref_schema and errors and headers):
+        report.fail(where, "diagnostic-ref v1, gateway-errors or gateway-headers is missing")
+        return
+    props = ref_schema["properties"]
+    tokens = [t["token"] for t in errors["x_gateway_error_tokens"]]
+    enum = props["gateway_error"].get("enum", [])
+    if None not in enum:
+        report.fail(where, "gateway_error enum must allow null")
+    if sorted(e for e in enum if e is not None) != sorted(tokens):
+        report.fail(where, f"gateway_error enum {enum} != gateway-errors tokens {tokens}")
+    by_name = {h["name"].lower(): h for h in headers["headers"]}
+    pairs = [
+        ("ref", "x-ferrum-diagnostic-ref"),
+        ("replica_id", "x-ferrum-diagnostic-owner-replica"),
+    ]
+    for prop, header in pairs:
+        expected = by_name.get(header, {}).get("values", {}).get("pattern")
+        if expected is None:
+            report.fail("vocabularies/gateway-headers.json", f"{header} has no values.pattern")
+        elif props[prop].get("pattern") != expected:
+            report.fail(where, f"{prop} pattern != {header} pattern {expected!r}")
+    report.ok()
+
+
+def plugin_config_refs(text: str, report: Report, label: str) -> dict[str, str]:
+    """plugin_name -> component referenced by Edge's PluginConfigBase if/then blocks."""
+    lines = text.split("\n")
+    try:
+        start = lines.index("    PluginConfigBase:")
+    except ValueError:
+        report.fail(label, "no components.schemas.PluginConfigBase")
+        return {}
+    refs: dict[str, str] = {}
+    current = None
+    previous = ""
+    for line in lines[start + 1 :]:
+        if re.match(r"^    [A-Za-z]", line):
+            break
+        stripped = line.strip()
+        const = re.fullmatch(r"const: ([A-Za-z0-9_]+)", stripped)
+        if const and previous == "plugin_name:":
+            current = [const.group(1), None]
+        ref = re.fullmatch(r'\$ref: "#/components/schemas/([A-Za-z0-9]+)"', stripped)
+        if ref and current and current[1] is None:
+            current[1] = ref.group(1)
+            name = current[0]
+            if name in refs and refs[name] != current[1]:
+                report.fail(label, f"{name} references both {refs[name]} and {current[1]}")
+            refs.setdefault(name, current[1])
+        if stripped:
+            previous = stripped
+    if not refs:
+        report.fail(label, "PluginConfigBase has no plugin_name if/then blocks")
+    return refs
 
 
 def fetch_openapi(vocabularies: dict[str, dict], report: Report) -> bytes | None:
@@ -350,11 +496,22 @@ def check_openapi(
     end = re.search(r"^  [A-Za-z]", section, re.M)
     section = section[: end.start()] if end else section
     components = set(re.findall(r"^    ([A-Za-z0-9]+):\s*$", section, re.M))
+    refs = plugin_config_refs(text, report, openapi)
+    names = set()
     for plugin in catalog["plugins"]:
-        pointer = plugin["config_schema"]["pointer"]
-        component = pointer.removeprefix("#/components/schemas/")
+        names.add(plugin["name"])
+        target = plugin["config_schema"]["pointer"]
+        component = target.removeprefix("#/components/schemas/")
         if component not in components:
-            report.fail(openapi, f"{plugin['name']}: {pointer} does not resolve")
+            report.fail(openapi, f"{plugin['name']}: {target} does not resolve")
+        if refs.get(plugin["name"]) != component:
+            report.fail(
+                openapi,
+                f"{plugin['name']}: PluginConfigBase references {refs.get(plugin['name'])!r}, "
+                f"catalog has {component!r}",
+            )
+    for name in sorted(set(refs) - names):
+        report.fail(openapi, f"PluginConfigBase names {name!r}, which the catalog lacks")
     report.ok()
 
 
@@ -371,6 +528,10 @@ def main() -> int:
     args = parser.parse_args()
     root = args.root.resolve()
     report = Report()
+    missing = [f for f in REQUIRED_FORMATS if f not in FORMAT_CHECKER.checkers]
+    if missing:
+        print(f"format checkers unavailable (install ci/requirements.txt): {missing}")
+        return 1
 
     print("schemas")
     schemas = load_schemas(root, report)
@@ -382,6 +543,7 @@ def main() -> int:
     print("vocabularies")
     vocabularies = check_vocabularies(root, schemas, registry, report)
     check_vocabulary_consistency(vocabularies, report)
+    check_copied_values(schemas, vocabularies, report)
     if args.openapi or args.fetch_openapi:
         print("plugin config schema pointers")
         if args.openapi:

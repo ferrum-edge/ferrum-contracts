@@ -52,3 +52,19 @@ vocabularies belong to Edge.
 A contract PR needs approval from a maintainer of the owning product. A PR
 that changes the validation workflow or `ci/` needs approval from a
 maintainer of this repository.
+
+Today the org has one maintainer, so `.github/CODEOWNERS` maps every path to
+@jeremyjpj0916. When per-product teams exist, replace that line with one
+entry per contract file (for example `schemas/diagnostic-finding/` to the
+Anvil team, `vocabularies/` to the Edge team) and keep `ci/` and
+`.github/` with this repository's maintainers.
+
+## Branch protection
+
+`main` should require:
+
+- the status check **`Schemas, fixtures and vocabularies`** (the only job of
+  the `Validate contracts` workflow, `.github/workflows/validate.yml`), and
+- review from a code owner.
+
+If the job is renamed, update the required check in the same PR.

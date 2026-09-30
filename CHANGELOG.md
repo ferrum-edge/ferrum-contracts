@@ -38,6 +38,12 @@ First delivery of ferrum-edge/.github#4. Targets the first tag,
 - Conformance fixtures for every schema and vocabulary, taken from the owners'
   fixtures and examples where they exist (`fixtures/README.md`).
 - `Validate contracts` workflow and `ci/validate.py`, with hash-pinned
-  validator dependencies; Dependabot for GitHub Actions.
+  validator dependencies (including `rfc3339-validator`, so `date-time` is
+  asserted). CI also checks that each invalid fixture fails with its
+  recorded instance path and keyword (`fixtures/invalid-expectations.json`),
+  that values copied from vocabularies into schemas match, and that each
+  plugin's config schema pointer is the one Edge's `PluginConfigBase`
+  references for that plugin name.
+- Dependabot for GitHub Actions and `ci/requirements.txt`; `.github/CODEOWNERS`.
 - Docs: ownership, versioning, adoption status per consumer (including the
   ferrum-alloy#27 checklist), and the release process.

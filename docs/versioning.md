@@ -10,6 +10,12 @@ A schema lives at `schemas/<name>/v<N>.schema.json`. Its `$id` is
 and its `x-contract` block repeats `name` and `version`. CI rejects a schema
 whose file name, `$id` and `x-contract` disagree.
 
+The `$id` URLs are identifiers, not locations: nothing is served at them, and
+a request to one returns 404. Resolve a schema by its path in a pinned tag
+(for example
+`https://raw.githubusercontent.com/ferrum-edge/ferrum-contracts/contracts-edge-0.9.8/schemas/diagnostic-ref/v1.schema.json`),
+or load the files into your validator's schema registry by `$id`.
+
 `N` is a major version. Within a major version only these changes are
 allowed:
 
@@ -17,14 +23,41 @@ allowed:
 - a new value in an enumeration that the schema already declares open (for
   example Alloy's `anyOf` enumerations, which accept unknown strings);
 - a clearer `description`, or a tighter pattern that every existing
-  producer already meets and every fixture still passes.
+  producer already meets and every fixture still passes;
+- a new value in a closed enumeration that mirrors an Edge-owned
+  vocabulary, under the rule in [Closed enumerations](#closed-enumerations).
 
 Anything else is breaking and needs `v<N+1>.schema.json` next to the old
-file: removing or renaming a property, making an optional property
-required, adding a value to a closed enumeration (an old consumer would
-reject a new producer's payload), or changing the meaning of a value. The
-old major stays in the repository until every consumer in
-[adoption.md](adoption.md) has moved.
+file: removing or renaming a property or a value, making an optional
+property required, adding a value to any other closed enumeration, or
+changing the meaning of a value. The old major stays in the repository
+until every consumer in [adoption.md](adoption.md) has moved.
+
+## Closed enumerations
+
+Some schemas copy a closed Edge vocabulary. `diagnostic-ref` v1 lists the
+eight `X-Gateway-Error` tokens in `gateway_error`, exactly as Edge's own
+`openapi.yaml` does, and CI fails if that list and
+`vocabularies/gateway-errors.json` differ.
+
+On Edge's side a new token is additive: Edge v0.9.8 added `request_timeout`
+without changing anything else. Contracts follow the same rule:
+
+- **A token or class Edge adds is not a new major.** It is added to the
+  vocabulary and to every schema enumeration that copies it, in the release
+  tag for the Edge version that ships it, and listed under "Added" in
+  `CHANGELOG.md`. The tag is what binds a consumer to an Edge release, so a
+  consumer pinned to `contracts-edge-0.9.8` keeps validating exactly what
+  Edge v0.9.8 emits.
+- **Schemas stay closed; readers stay open.** The closed enumeration is the
+  producer contract for that Edge release. A consumer that may meet a newer
+  Edge than its pin must treat an unknown value as "unknown" (not as an
+  error and never as any known value) when it interprets a payload, and
+  should validate against the schema only in its own conformance tests.
+  Alloy's schemas use the same strategy explicitly, with `anyOf` open
+  enumerations.
+- **Removing, renaming or re-meaning a value is breaking** and needs a new
+  major of every schema that copies it.
 
 Payloads that carry their own version keep it: `schema_version:
 ferrum.diagnostic_ref.v1`, `schema: ferrum.diagnostic_report` with
@@ -44,6 +77,15 @@ were read from. A vocabulary may also list entries that exist only on Edge
 `main`; those are marked (`availability: unreleased`, or the
 `main_branch_delta` block) and are never presented as released.
 
+## Formats
+
+`format` is asserted, not only annotated: CI validates with jsonschema's
+format checker, and `ci/validate.py` refuses to run unless the `date-time`
+and `regex` checkers are available (`date-time` needs the hash-pinned
+`rfc3339-validator`). Formats the checker does not know, such as Anvil's
+generated `uint32`, remain annotations. Consumers that validate should
+enable format assertion too.
+
 ## Release tags
 
 Releases are git tags pinned to Edge releases:
@@ -54,8 +96,17 @@ Releases are git tags pinned to Edge releases:
 | `contracts-edge-X.Y.Z-rN` | A later revision for the same Edge release (a fixture fix, a newly adopted non-Edge schema). `N` starts at 2. |
 
 Tags are immutable. A tag is never moved, deleted or re-created; a mistake is
-fixed with the next `-rN` tag. Consumers pin a tag, or the commit SHA a tag
-points to, never a branch.
+fixed with the next `-rN` tag. The repository's active "Immutable release
+tags" ruleset enforces this: it blocks update and deletion of tags matching
+`v*` and `contracts-*`. Consumers pin a tag, or the commit SHA a tag points
+to, never a branch.
+
+A `contracts-edge-X.Y.Z` tag describes Edge `vX.Y.Z`, but it may also carry
+items that Edge has only on `main`, provided they are marked unreleased. The
+first tag will: `schemas/diagnostic-ref/v1` (`x-contract.edge_availability`)
+and the `X-Ferrum-Diagnostic-Ref` and `X-Ferrum-Diagnostic-Owner-Replica`
+headers (`availability: unreleased`). A consumer must not assume that an
+unreleased item exists on the Edge release its tag names.
 
 The repository has no tag yet. The first planned tag is
 `contracts-edge-0.9.8`; see [release-process.md](release-process.md).

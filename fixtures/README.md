@@ -11,6 +11,14 @@ exist. Where an owner keeps its fixtures in another format (TOML, YAML), the
 JSON here is a field-for-field transcription with comments removed. Invalid
 fixtures are a valid fixture with one change, listed below.
 
+`valid/` and `invalid/` hold only `*.json` fixtures; CI fails on any other
+file. Every invalid fixture has an entry in
+[`invalid-expectations.json`](invalid-expectations.json) with the JSON
+Pointer (`instance_path`, `""` for the root) and the JSON Schema `keyword`
+of the error it must produce. CI requires exactly one top-level error and
+that it, or an error nested under it (for `oneOf` / `anyOf`), matches the
+entry, so a fixture cannot pass by failing for an unrelated reason.
+
 ## Provenance
 
 | Fixture set | Source | Commit |
@@ -32,6 +40,7 @@ fixtures are a valid fixture with one change, listed below.
 | `diagnostic-ref/invalid/malformed-ref.json` | `ref` is not `fd1_` plus 32 lowercase hex digits |
 | `diagnostic-ref/invalid/granular-class-as-token.json` | `gateway_error` is an `ErrorClass` (`dns_lookup_error`), not an `X-Gateway-Error` token |
 | `diagnostic-ref/invalid/detail-missing-backend-dispatch.json` | `detail.backend_dispatch` is required |
+| `diagnostic-ref/invalid/created-at-not-rfc3339.json` | `created_at` is not an RFC 3339 `date-time` (format assertion) |
 | `diagnostic-report/invalid/unsupported-major.json` | `schema_version` `2.0`; readers reject other majors (Alloy's own fixture) |
 | `diagnostic-report/invalid/missing-collection.json` | `collection` is required |
 | `diagnostic-report/invalid/uppercase-span-id.json` | `span_id` must be 16 lowercase hex digits |
