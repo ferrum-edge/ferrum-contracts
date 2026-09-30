@@ -1,7 +1,8 @@
 {
   "diagnostic-finding/invalid/alloy-only-evidence-source.json": {
     "instance_path": "/evidence/0/source",
-    "keyword": "oneOf"
+    "keyword": "oneOf",
+    "top_keyword": "oneOf"
   },
   "diagnostic-finding/invalid/missing-does-not-prove.json": {
     "instance_path": "",

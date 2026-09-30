@@ -11,7 +11,8 @@ Checks, in order:
    the latest version of schema <name>, and every file under
    fixtures/<name>/invalid/ must fail it with exactly one top-level error
    whose instance path and keyword (or those of an error nested under it)
-   match the entry in fixtures/invalid-expectations.json. Each schema needs
+   match the entry in fixtures/invalid-expectations.json; an entry may also
+   pin the top-level keyword with `top_keyword`. Each schema needs
    at least one of each; any other file in valid/ or invalid/ fails.
    Formats are asserted (date-time needs the pinned rfc3339-validator).
 4. Vocabularies: every vocabularies/<v>.json validates against the schema its
@@ -52,9 +53,35 @@ SCHEMA_FILE = re.compile(r"^v([1-9][0-9]*)\.schema\.json$")
 NAME = re.compile(r"^[a-z][a-z0-9-]*$")
 EXPECTATIONS = "invalid-expectations.json"
 FORMAT_CHECKER = Draft202012Validator.FORMAT_CHECKER
-# Formats the schemas use that must be asserted, not silently skipped. A
-# format is only checked when its optional dependency is installed.
-REQUIRED_FORMATS = ("date-time", "regex")
+# Every format the JSON Schema 2020-12 validation spec defines. A schema may
+# use a standard format only if this validator has a checker for it; otherwise
+# the keyword silently degrades to an annotation. Formats outside this set
+# (Anvil's generated `uint32`, for example) are annotations by design. The
+# formats the schemas actually use are collected and checked in
+# check_formats().
+STANDARD_FORMATS = frozenset(
+    {
+        "date",
+        "date-time",
+        "duration",
+        "email",
+        "hostname",
+        "idn-email",
+        "idn-hostname",
+        "ipv4",
+        "ipv6",
+        "iri",
+        "iri-reference",
+        "json-pointer",
+        "regex",
+        "relative-json-pointer",
+        "time",
+        "uri",
+        "uri-reference",
+        "uri-template",
+        "uuid",
+    }
+)
 
 # (fixture set, target schema name, JSON pointer fragment inside the target)
 CROSS_CHECKS = [
@@ -152,6 +179,41 @@ def load_schemas(root: Path, report: Report) -> dict[str, dict[int, dict]]:
     return schemas
 
 
+def collect_formats(node) -> set[str]:
+    """Every `format` keyword value anywhere in a schema."""
+    formats: set[str] = set()
+    if isinstance(node, dict):
+        value = node.get("format")
+        if isinstance(value, str):
+            formats.add(value)
+        for child in node.values():
+            formats |= collect_formats(child)
+    elif isinstance(node, list):
+        for child in node:
+            formats |= collect_formats(child)
+    return formats
+
+
+def check_formats(schemas: dict[str, dict[int, dict]], report: Report) -> None:
+    """Fail closed on a standard format this validator cannot assert."""
+    files: dict[str, set[str]] = {}
+    for name, versions in schemas.items():
+        for version, schema in versions.items():
+            where = f"schemas/{name}/v{version}.schema.json"
+            for fmt in collect_formats(schema):
+                files.setdefault(fmt, set()).add(where)
+    for fmt in sorted(set(files) & STANDARD_FORMATS):
+        if fmt in FORMAT_CHECKER.checkers:
+            report.ok()
+            continue
+        for where in sorted(files[fmt]):
+            report.fail(
+                where,
+                f"format {fmt!r} is a JSON Schema 2020-12 format but no checker is "
+                f"registered; install the dependency that provides it (ci/requirements.txt)",
+            )
+
+
 def build_registry(schemas: dict[str, dict[int, dict]]) -> Registry:
     resources = []
     for versions in schemas.values():
@@ -181,13 +243,20 @@ def load_expectations(root: Path, report: Report) -> dict[str, dict]:
     if not isinstance(data, dict):
         report.fail(path, "missing or not a JSON object")
         return {}
+    required = {"instance_path", "keyword"}
+    allowed = required | {"top_keyword"}
     for key, value in data.items():
         if (
             not isinstance(value, dict)
-            or set(value) != {"instance_path", "keyword"}
+            or not required <= set(value)
+            or not set(value) <= allowed
             or not all(isinstance(v, str) for v in value.values())
         ):
-            report.fail(path, f"{key}: needs exactly instance_path and keyword strings")
+            report.fail(
+                path,
+                f"{key}: needs instance_path and keyword strings, "
+                f"and an optional top_keyword string",
+            )
     return data
 
 
@@ -253,6 +322,15 @@ def check_fixtures(root: Path, schemas, registry, report: Report) -> None:
                         path,
                         f"expected {expected['keyword']!r} at {expected['instance_path']!r}, "
                         f"got {describe(errors)}",
+                    )
+                elif (
+                    expected.get("top_keyword") is not None
+                    and errors[0].validator != expected["top_keyword"]
+                ):
+                    report.fail(
+                        path,
+                        f"expected top-level {expected['top_keyword']!r}, "
+                        f"got {errors[0].validator!r}: {describe(errors)}",
                     )
                 else:
                     report.ok()
@@ -346,7 +424,13 @@ def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) 
             for token in named:
                 if token not in tokens:
                     report.fail(where, f"class {c['value']} maps to unknown token {token!r}")
-        surfaces = {s["surface"]: s["cardinality"] for s in errors["surfaces"]}
+        surfaces: dict[str, int] = {}
+        for entry in errors["surfaces"]:
+            surface = entry["surface"]
+            if surface in surfaces:
+                report.fail(where, f"duplicate cardinality surface {surface!r}")
+                continue
+            surfaces[surface] = entry["cardinality"]
         metric_tokens = [
             t for t in errors["x_gateway_error_tokens"] if t["metric_label_without_error_class"]
         ]
@@ -528,13 +612,10 @@ def main() -> int:
     args = parser.parse_args()
     root = args.root.resolve()
     report = Report()
-    missing = [f for f in REQUIRED_FORMATS if f not in FORMAT_CHECKER.checkers]
-    if missing:
-        print(f"format checkers unavailable (install ci/requirements.txt): {missing}")
-        return 1
 
     print("schemas")
     schemas = load_schemas(root, report)
+    check_formats(schemas, report)
     registry = build_registry(schemas)
     print("fixtures")
     check_fixtures(root, schemas, registry, report)
