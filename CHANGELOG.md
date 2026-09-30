@@ -6,6 +6,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+## [contracts-edge-0.9.8] - 2026-09-30
+
 First delivery of ferrum-edge/.github#4. Targets the first tag,
 `contracts-edge-0.9.8`.
 
