@@ -80,11 +80,12 @@ were read from. A vocabulary may also list entries that exist only on Edge
 ## Formats
 
 `format` is asserted, not only annotated: CI validates with jsonschema's
-format checker, and `ci/validate.py` refuses to run unless the `date-time`
-and `regex` checkers are available (`date-time` needs the hash-pinned
-`rfc3339-validator`). Formats the checker does not know, such as Anvil's
-generated `uint32`, remain annotations. Consumers that validate should
-enable format assertion too.
+format checker, and `ci/validate.py` collects every `format` the schemas use
+and fails if any JSON Schema 2020-12 standard format has no registered
+checker (`date-time` needs the hash-pinned `rfc3339-validator`; `regex` is
+built in). Formats outside that standard, such as Anvil's generated
+`uint32`, remain annotations. Consumers that validate should enable format
+assertion too.
 
 ## Release tags
 

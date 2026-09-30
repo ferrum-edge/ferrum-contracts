@@ -17,7 +17,10 @@ file. Every invalid fixture has an entry in
 Pointer (`instance_path`, `""` for the root) and the JSON Schema `keyword`
 of the error it must produce. CI requires exactly one top-level error and
 that it, or an error nested under it (for `oneOf` / `anyOf`), matches the
-entry, so a fixture cannot pass by failing for an unrelated reason.
+entry, so a fixture cannot pass by failing for an unrelated reason. An entry
+may also carry `top_keyword`, which CI checks against the top-level error,
+pinning a `oneOf` / `anyOf` failure to that keyword rather than to a single
+branch of it.
 
 ## Provenance
 

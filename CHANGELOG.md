@@ -6,6 +6,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Changed
+
+- `ci/validate.py` hardening from the seed review (#2): it now collects every
+  `format` the schemas use and fails if a JSON Schema 2020-12 standard format
+  has no registered checker, rejects duplicate cardinality surface names
+  instead of letting the last one win, and can pin the top-level `oneOf` /
+  `anyOf` keyword for an invalid fixture with an optional `top_keyword` in
+  `fixtures/invalid-expectations.json`.
+
 ## [contracts-edge-0.9.8] - 2026-09-30
 
 First delivery of ferrum-edge/.github#4. Targets the first tag,
