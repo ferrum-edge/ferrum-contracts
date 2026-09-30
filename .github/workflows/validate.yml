@@ -1,0 +1,48 @@
+name: Validate contracts
+
+# Validates every schema against the JSON Schema 2020-12 meta-schema, every
+# fixture (valid must pass, invalid must fail), every vocabulary against its
+# schema, $id / version / filename consistency, and the plugin catalog's
+# pinned Edge openapi.yaml pointers. See ci/validate.py.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Schemas, fixtures and vocabularies
+    # Pinned image: ci/requirements.txt hash-pins the x86_64 CPython 3.13
+    # rpds-py wheel.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install the hash-pinned validator
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/contracts-venv"
+          "$RUNNER_TEMP/contracts-venv/bin/python" -m pip install \
+            --disable-pip-version-check --no-input \
+            --no-deps --only-binary=:all: --require-hashes \
+            -r ci/requirements.txt
+
+      - name: Validate
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/contracts-venv/bin/python" -I ci/validate.py --fetch-openapi

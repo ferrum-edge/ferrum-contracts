@@ -1,0 +1,81 @@
+{
+  "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-headers/v1.schema.json",
+  "vocabulary": "gateway-headers",
+  "version": 1,
+  "edge_release": "v0.9.8",
+  "description": "HTTP header names and prefixes that Ferrum Edge owns: gateway assertions to backends, gateway diagnostic response headers, internal markers, mesh control headers, and admin API headers. Names are case-insensitive; prefixes match any lowercase name that starts with them. Entries with availability \"unreleased\" are on Edge main only.",
+  "provenance": [
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.8",
+      "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+      "path": "src/proxy/headers.rs"
+    }
+  ],
+  "headers": [
+    {
+      "name": "x-consumer-",
+      "match": "prefix",
+      "surface": "proxy",
+      "direction": "gateway_to_backend",
+      "role": "gateway_assertion",
+      "edge_behavior": "Gateway-owned consumer assertion namespace. Consumer plugins may add attributes beneath it, so backend boundaries reject the whole prefix, and it is forbidden in request and response trailers.",
+      "availability": "v0.9.8",
+      "sources": [
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.8",
+          "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+          "path": "src/proxy/headers.rs",
+          "symbols": [
+            "is_consumer_assertion_header",
+            "is_forbidden_backend_request_trailer_name"
+          ]
+        },
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.8",
+          "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+          "path": "docs/plugins.md",
+          "sections": [
+            "grpc_web"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "X-Gateway-Error",
+      "match": "exact",
+      "surface": "proxy",
+      "direction": "gateway_to_client",
+      "role": "gateway_diagnostic",
+      "edge_behavior": "Gateway-owned diagnostic response header. Every dispatch path strips a backend copy, in headers or trailers, before the gateway writes its own value. Values are the closed vocabulary in vocabularies/gateway-errors.json. Not authenticated.",
+      "values": {
+        "vocabulary": "gateway-errors",
+        "field": "x_gateway_error_tokens"
+      },
+      "availability": "v0.9.8",
+      "sources": [
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.8",
+          "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+          "path": "src/proxy/headers.rs",
+          "symbols": [
+            "X_GATEWAY_ERROR_HEADER",
+            "GATEWAY_OWNED_DIAGNOSTIC_RESPONSE_HEADERS"
+          ]
+        },
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.8",
+          "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+          "path": "docs/error_classification.md",
+          "sections": [
+            "HTTP observability vocabulary (X-Gateway-Error)"
+          ]
+        }
+      ]
+    }
+  ]
+}

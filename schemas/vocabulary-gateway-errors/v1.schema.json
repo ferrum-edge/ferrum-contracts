@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-errors/v1.schema.json",
+  "title": "Gateway error vocabulary v1",
+  "description": "Shape of vocabularies/gateway-errors.json: Ferrum Edge ErrorClass values and X-Gateway-Error tokens. The values are owned by Ferrum Edge; this schema is owned by ferrum-contracts.",
+  "x-contract": {
+    "name": "vocabulary-gateway-errors",
+    "version": 1,
+    "status": "implemented",
+    "owner": "ferrum-edge/ferrum-contracts",
+    "instance": "vocabularies/gateway-errors.json"
+  },
+  "type": "object",
+  "required": [
+    "$schema",
+    "vocabulary",
+    "version",
+    "edge_release",
+    "description",
+    "provenance",
+    "header",
+    "surfaces",
+    "error_classes",
+    "x_gateway_error_tokens"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-errors/v1.schema.json"
+    },
+    "vocabulary": {
+      "type": "string",
+      "const": "gateway-errors"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "edge_release": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Edge release tag the vocabulary was read from."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Provenance"
+      }
+    },
+    "main_branch_delta": {
+      "$ref": "#/$defs/BranchDelta"
+    },
+    "header": {
+      "const": "X-Gateway-Error"
+    },
+    "surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "surface",
+          "values",
+          "cardinality"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "surface": {
+            "type": "string",
+            "minLength": 1
+          },
+          "values": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cardinality": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "error_classes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/ErrorClass"
+      }
+    },
+    "x_gateway_error_tokens": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Token"
+      }
+    }
+  },
+  "$defs": {
+    "Provenance": {
+      "type": "object",
+      "required": [
+        "repo",
+        "commit",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^ferrum-edge/[A-Za-z0-9._-]+$"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tag or branch the commit was read from."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "BranchDelta": {
+      "type": "object",
+      "required": [
+        "repo",
+        "ref",
+        "commit",
+        "summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^ferrum-edge/[A-Za-z0-9._-]+$"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "description": "How the owner's default branch differs from the pinned release, as of the recorded commit."
+    },
+    "ErrorClass": {
+      "type": "object",
+      "required": [
+        "value",
+        "rust_variant",
+        "request_reached_wire",
+        "log_kind",
+        "x_gateway_error",
+        "meaning"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "ErrorClass::as_str (snake_case serde name)."
+        },
+        "rust_variant": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "request_reached_wire": {
+          "type": "boolean",
+          "description": "false: pre-wire, the request body never reached the backend."
+        },
+        "log_kind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "error_class_log_kind: the error_kind field on gateway error log lines."
+        },
+        "x_gateway_error": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Default X-Gateway-Error token for this class (x_gateway_error_token_for_class)."
+        },
+        "x_gateway_error_note": {
+          "type": "string"
+        },
+        "x_gateway_error_overrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "token",
+              "when"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "token": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "when": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "meaning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "Token": {
+      "type": "object",
+      "required": [
+        "token",
+        "http_statuses",
+        "metric_label_without_error_class",
+        "rejection_phases",
+        "meaning"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "token": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "http_statuses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[1-5]([0-9]{2}|xx)$"
+          }
+        },
+        "metric_label_without_error_class": {
+          "type": "boolean",
+          "description": "Whether ferrum_requests_total{error_class} uses this token when the response has no ErrorClass (HTTP_METRICS_GATEWAY_ERROR_CLASSES)."
+        },
+        "rejection_phases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "description": "rejection_phase values that select this token (token_for_rejection_phase)."
+        },
+        "meaning": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

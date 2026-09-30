@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-headers/v1.schema.json",
+  "title": "Gateway-owned headers v1",
+  "description": "Shape of vocabularies/gateway-headers.json: HTTP header names and prefixes Ferrum Edge owns.",
+  "x-contract": {
+    "name": "vocabulary-gateway-headers",
+    "version": 1,
+    "status": "implemented",
+    "owner": "ferrum-edge/ferrum-contracts",
+    "instance": "vocabularies/gateway-headers.json"
+  },
+  "type": "object",
+  "required": [
+    "$schema",
+    "vocabulary",
+    "version",
+    "edge_release",
+    "description",
+    "provenance",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-headers/v1.schema.json"
+    },
+    "vocabulary": {
+      "type": "string",
+      "const": "gateway-headers"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "edge_release": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Edge release tag the vocabulary was read from."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Provenance"
+      }
+    },
+    "main_branch_delta": {
+      "$ref": "#/$defs/BranchDelta"
+    },
+    "not_headers": {
+      "type": "object",
+      "required": [
+        "names",
+        "note"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "headers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Header"
+      }
+    }
+  },
+  "$defs": {
+    "Provenance": {
+      "type": "object",
+      "required": [
+        "repo",
+        "commit",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^ferrum-edge/[A-Za-z0-9._-]+$"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tag or branch the commit was read from."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "BranchDelta": {
+      "type": "object",
+      "required": [
+        "repo",
+        "ref",
+        "commit",
+        "summary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^ferrum-edge/[A-Za-z0-9._-]+$"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "description": "How the owner's default branch differs from the pinned release, as of the recorded commit."
+    },
+    "Header": {
+      "type": "object",
+      "required": [
+        "name",
+        "match",
+        "surface",
+        "direction",
+        "role",
+        "edge_behavior",
+        "availability",
+        "sources"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9-]*$",
+          "description": "Header name as documented. Matching is case-insensitive. A prefix ends with '-'."
+        },
+        "match": {
+          "enum": [
+            "exact",
+            "prefix"
+          ]
+        },
+        "surface": {
+          "enum": [
+            "proxy",
+            "admin",
+            "mesh",
+            "notification",
+            "all"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "client_to_gateway",
+            "gateway_to_client",
+            "gateway_to_backend",
+            "peer_to_peer",
+            "gateway_to_recipient",
+            "internal",
+            "any"
+          ]
+        },
+        "role": {
+          "enum": [
+            "gateway_assertion",
+            "gateway_diagnostic",
+            "ferrum_owned",
+            "internal_marker",
+            "mesh_control",
+            "admin_request",
+            "admin_response",
+            "notification"
+          ]
+        },
+        "edge_behavior": {
+          "type": "string",
+          "minLength": 1
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "enum": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "pattern": {
+              "type": "string",
+              "format": "regex"
+            },
+            "max_length": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "default": {
+              "type": "string"
+            },
+            "vocabulary": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Name of the vocabulary file that lists the values."
+            },
+            "field": {
+              "type": "string"
+            }
+          }
+        },
+        "availability": {
+          "type": "string",
+          "pattern": "^(v[0-9]+\\.[0-9]+\\.[0-9]+|unreleased)$",
+          "description": "First Edge release that has the header, or unreleased when it is on main only."
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "match": {
+            "const": "prefix"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "name": {
+            "pattern": "-$"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "name": {
+            "pattern": "[A-Za-z0-9]$"
+          }
+        }
+      }
+    }
+  }
+}
