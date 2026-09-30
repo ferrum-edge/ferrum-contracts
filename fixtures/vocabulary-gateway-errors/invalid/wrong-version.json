@@ -1,0 +1,86 @@
+{
+  "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-errors/v1.schema.json",
+  "vocabulary": "gateway-errors",
+  "version": 2,
+  "edge_release": "v0.9.8",
+  "description": "Ferrum Edge's closed error vocabularies: the granular ErrorClass (access-log error_class, ferrum_requests_total{error_class}, stream disconnect metrics) and the eight coarse client-facing X-Gateway-Error tokens. The header token is a stable contract and must not change spelling.",
+  "provenance": [
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.8",
+      "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+      "path": "src/retry.rs",
+      "symbols": [
+        "ErrorClass",
+        "ErrorClass::as_str",
+        "ErrorClass::ALL",
+        "OBS_* constants",
+        "HTTP_OBSERVABILITY_ERROR_CLASSES",
+        "HTTP_METRICS_GATEWAY_ERROR_CLASSES",
+        "HTTP_METRICS_ERROR_CLASS_BOUND",
+        "x_gateway_error_token_for_class",
+        "token_for_rejection_phase",
+        "request_reached_wire",
+        "error_class_log_kind"
+      ]
+    }
+  ],
+  "header": "X-Gateway-Error",
+  "surfaces": [
+    {
+      "surface": "X-Gateway-Error response header",
+      "values": "x_gateway_error_tokens",
+      "cardinality": 8
+    },
+    {
+      "surface": "access-log error_class",
+      "values": "error_classes",
+      "cardinality": 19,
+      "note": "Omitted when unset."
+    },
+    {
+      "surface": "ferrum_requests_total{error_class}",
+      "values": "error_classes plus the tokens whose metric_label_without_error_class is true",
+      "cardinality": 24,
+      "note": "Omitted on 2xx, 3xx and 4xx."
+    }
+  ],
+  "error_classes": [
+    {
+      "value": "connection_refused",
+      "rust_variant": "ConnectionRefused",
+      "request_reached_wire": false,
+      "log_kind": "connect_failure",
+      "x_gateway_error": "connection_failure",
+      "meaning": "TCP connect refused (port not listening, firewall RST), including connect-phase RSTs. A TLS handshake failure after TCP connect is tls_error, not this class."
+    },
+    {
+      "value": "read_write_timeout",
+      "rust_variant": "ReadWriteTimeout",
+      "request_reached_wire": true,
+      "log_kind": "read_timeout",
+      "x_gateway_error": "backend_timeout",
+      "meaning": "A backend read or write exceeded its per-direction timeout."
+    }
+  ],
+  "x_gateway_error_tokens": [
+    {
+      "token": "connection_failure",
+      "http_statuses": [
+        "502"
+      ],
+      "metric_label_without_error_class": false,
+      "rejection_phases": [],
+      "meaning": "Pre-wire connect, DNS or TLS failure: the gateway could not set up a connection to the backend. Also the token for every ErrorClass whose request_reached_wire is false."
+    },
+    {
+      "token": "backend_timeout",
+      "http_statuses": [
+        "504"
+      ],
+      "metric_label_without_error_class": false,
+      "rejection_phases": [],
+      "meaning": "A backend held the request (it accepted the connection and was sent the request) but did not answer in time. Never used for a timeout no backend held."
+    }
+  ]
+}
