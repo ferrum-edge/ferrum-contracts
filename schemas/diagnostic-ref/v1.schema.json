@@ -8,13 +8,13 @@
     "version": 1,
     "status": "implemented",
     "owner": "ferrum-edge/ferrum-edge",
-    "edge_availability": "Edge main only; not in v0.9.8 or any earlier release.",
+    "edge_availability": "Included in Ferrum Edge v0.9.9.",
     "wire_version": "ferrum.diagnostic_ref.v1",
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "main",
-        "commit": "f638465034734e335bde7e76c56e8c8244afba8a",
+        "ref": "v0.9.9",
+        "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
         "path": "openapi.yaml",
         "symbols": [
           "components.schemas.DiagnosticRefLookup",
@@ -26,8 +26,8 @@
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "main",
-        "commit": "f638465034734e335bde7e76c56e8c8244afba8a",
+        "ref": "v0.9.9",
+        "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
         "path": "src/diagnostic_ref.rs",
         "symbols": [
           "DIAGNOSTIC_REF_SCHEMA_VERSION",
@@ -40,8 +40,8 @@
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "main",
-        "commit": "ab16c714a4d3462cfa332375950c7bcf17ca64b0",
+        "ref": "v0.9.9",
+        "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
         "path": "src/diagnostic_ref.rs",
         "note": "Introduced by ferrum-edge#5845 for issue ferrum-edge#5767; extended by issue #5846 (all mode, attempts, rejection, replica tag)."
       }

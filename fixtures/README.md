@@ -26,7 +26,7 @@ branch of it.
 
 | Fixture set | Source | Commit |
 |---|---|---|
-| `diagnostic-ref/valid/*` | ferrum-edge `openapi.yaml`, `GET /diagnostics/v1/refs/{ref}` `200` examples `connection_failure`, `tls_retry`, `plugin_rejection` | `f638465034734e335bde7e76c56e8c8244afba8a` (main) |
+| `diagnostic-ref/valid/*` | ferrum-edge `openapi.yaml`, `GET /diagnostics/v1/refs/{ref}` `200` examples `connection_failure`, `tls_retry`, `plugin_rejection`; the fd2 reference form and replica id are documented in `docs/error_classification.md` | `234717ce41965cd1e2b5c6c761a25475c5d7628c` (v0.9.9) |
 | `diagnostic-report/valid/*`, `diagnostic-report/invalid/unsupported-major.json` | ferrum-alloy `contracts/fixtures/reports/*.json`, copied byte for byte | `fa471ccb79a444aee04661880af2385596d9da45` |
 | `diagnostic-finding/valid/ferrum-token-connection-failure.json` | Built from ferrum-anvil's `ferrum.token.connection_failure` rule output: rule `ferrum.marker` v1 (`crates/anvil-diagnostics/src/rules/ferrum_rules.rs`, `lib.rs` `Draft::new`) with the wording of `catalog/diagnostics/findings.en.json` | `c401a320dcc5d52f707a5d5c27e333587b7a5d86` |
 | `diagnostic-finding/valid/ferrum-token-backend-error.json` | Built from the same rule for `backend_error` (scope and owner `unknown`, confidence `likely`, as asserted by the `ferrum_rules.rs` tests). Anvil keeps no JSON finding fixtures. | `c401a320dcc5d52f707a5d5c27e333587b7a5d86` |
@@ -44,6 +44,7 @@ branch of it.
 | `diagnostic-ref/invalid/granular-class-as-token.json` | `gateway_error` is an `ErrorClass` (`dns_lookup_error`), not an `X-Gateway-Error` token |
 | `diagnostic-ref/invalid/detail-missing-backend-dispatch.json` | `detail.backend_dispatch` is required |
 | `diagnostic-ref/invalid/created-at-not-rfc3339.json` | `created_at` is not an RFC 3339 `date-time` (format assertion) |
+| `diagnostic-ref/invalid/uppercase-replica-id.json` | `replica_id` is uppercase instead of eight lowercase hexadecimal digits |
 | `diagnostic-report/invalid/unsupported-major.json` | `schema_version` `2.0`; readers reject other majors (Alloy's own fixture) |
 | `diagnostic-report/invalid/missing-collection.json` | `collection` is required |
 | `diagnostic-report/invalid/uppercase-span-id.json` | `span_id` must be 16 lowercase hex digits |
@@ -71,5 +72,6 @@ branch of it.
 | `vocabulary-provisioned-by/invalid/untrimmed-value.json` | a value with leading whitespace; Edge trims the header |
 | `vocabulary-provisioned-by/invalid/wrong-label-key.json` | label key `provisioned_by` |
 | `vocabulary-plugin-catalog/invalid/unknown-protocol.json` | protocol `http2`; the catalog uses Edge's five protocol families |
+| `vocabulary-plugin-catalog/invalid/unknown-websocket-framing-plugin.json` | `websocket_framing_plugins` contains a name not declared by Edge |
 | `vocabulary-plugin-catalog/invalid/unknown-failure-policy.json` | failure policy `fail_open` |
 | `vocabulary-plugin-catalog/invalid/bad-schema-pointer.json` | a config schema pointer that is not a component name |

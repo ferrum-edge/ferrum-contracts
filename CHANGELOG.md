@@ -6,6 +6,11 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+## [contracts-edge-0.9.9] - 2026-10-01
+
+Refreshes the Edge-owned vocabularies from Ferrum Edge v0.9.9, commit
+`234717ce41965cd1e2b5c6c761a25475c5d7628c`.
+
 ### Changed
 
 - `ci/validate.py` hardening from the seed review (#2): it now collects every
@@ -14,6 +19,23 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   instead of letting the last one win, and can pin the top-level `oneOf` /
   `anyOf` keyword for an invalid fixture with an optional `top_keyword` in
   `fixtures/invalid-expectations.json`.
+
+- Gateway headers: `X-Ferrum-Diagnostic-Ref` (#5845) and
+  `X-Ferrum-Diagnostic-Owner-Replica` (#5868) move from unreleased to
+  released in v0.9.9. The `x-consumer-*` reserved namespace also documents
+  case-insensitive matching and `_`/`-` equivalence (#5880).
+- `diagnostic-ref` v1: the released contract includes the fd2 reference form
+  and replica identifier already tracked from Edge main; valid and invalid
+  fixtures cover the released form and its replica-id pattern.
+- Plugin catalog: refreshes the `openapi.yaml` pin and `mcp_gateway` lifecycle
+  phases. The v0.9.9 MCP OpenAPI bridge, AI governance, and admin tool-catalog
+  work is covered by Edge #5930, #5943, and #5949; built-in registrations and
+  removed-plugin names are unchanged. Adds the released WebSocket framing
+  capability list (`waf`, `ws_frame_logging`, `ws_message_size_limiting`,
+  `ws_rate_limiting`) from `BUILTIN_WEBSOCKET_FRAMING_PLUGINS` for
+  `websocket_permessage_deflate` passthrough admission (#5853, #5869).
+- Gateway error classes, tokens, and provisioning attribution have no value
+  changes from v0.9.8; their source provenance now points to v0.9.9.
 
 ## [contracts-edge-0.9.8] - 2026-09-30
 

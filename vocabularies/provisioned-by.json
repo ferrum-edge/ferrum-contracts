@@ -2,13 +2,13 @@
   "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-provisioned-by/v1.schema.json",
   "vocabulary": "provisioned-by",
   "version": 1,
-  "edge_release": "v0.9.8",
+  "edge_release": "v0.9.9",
   "description": "Application attribution for Ferrum Edge configuration resources: the provisioned-by resource label and the X-Ferrum-Provisioned-By admin request header, with the companion products' values. Informational only: not authorization, ownership, audit identity, or a routing selector.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.8",
-      "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+      "ref": "v0.9.9",
+      "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
       "path": "docs/admin_api.md",
       "sections": [
         "Resource labels and application attribution"
@@ -16,8 +16,8 @@
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.8",
-      "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+      "ref": "v0.9.9",
+      "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
       "path": "src/admin/provisioning.rs",
       "symbols": [
         "PROVISIONED_BY_LABEL",
@@ -28,8 +28,8 @@
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.8",
-      "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+      "ref": "v0.9.9",
+      "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
       "path": "openapi.yaml",
       "symbols": [
         "components.parameters.ProvisionedBy"
@@ -37,8 +37,8 @@
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.8",
-      "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+      "ref": "v0.9.9",
+      "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
       "path": "docs/hardening.md",
       "note": "Minimum companion versions that inject labels.provisioned-by."
     }
@@ -71,7 +71,7 @@
       "introduced_in": "ferrum-edge-git-forge-ops#218",
       "observed_in": {
         "repo": "ferrum-edge/ferrum-edge-git-forge-ops",
-        "ref": "main",
+        "ref": "v0.9.9",
         "commit": "36206d8de8929884f62c65a040f3a08d35bd5863",
         "path": "src/config/assembler.rs"
       }
@@ -84,7 +84,7 @@
       "introduced_in": "ferrum-nexus#245",
       "observed_in": {
         "repo": "ferrum-edge/ferrum-nexus",
-        "ref": "main",
+        "ref": "v0.9.9",
         "commit": "06254cfd124ce679bf7b93108c0edb1778160d00",
         "path": "server/src/ferrum-admin/client.ts"
       }
@@ -97,7 +97,7 @@
       "introduced_in": "ferrum-foundry#340",
       "observed_in": {
         "repo": "ferrum-edge/ferrum-foundry",
-        "ref": "main",
+        "ref": "v0.9.9",
         "commit": "8d075206e2fabf05283e0fb3c998d2fccf655293",
         "path": "server/proxy.ts"
       }
