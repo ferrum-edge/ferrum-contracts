@@ -6,6 +6,12 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+## [contracts-edge-0.9.9-r2] - 2026-10-01
+
+Revision of `contracts-edge-0.9.9` for an Alloy-owned schema change. The
+Edge-owned vocabularies are unchanged and still describe Ferrum Edge v0.9.9,
+which also covers v0.9.10 (no contract-source changes).
+
 ### Added
 
 - `service-manifest` v1: optional `[agents]` configuration from Alloy PR #113
