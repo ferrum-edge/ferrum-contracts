@@ -6,6 +6,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Added
+
+- `service-manifest` v1: optional `[agents]` configuration from Alloy PR #113.
+
 ## [contracts-edge-0.9.9] - 2026-10-01
 
 Refreshes the Edge-owned vocabularies from Ferrum Edge v0.9.9, commit
