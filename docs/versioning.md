@@ -118,10 +118,14 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.9` | `contracts-edge-0.9.9` | Refreshed Edge-owned contract sources |
 | `v0.9.10` | `contracts-edge-0.9.9` | No contract-source changes after v0.9.9 |
 
+Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
+pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
+`contracts-edge-0.9.9`.
+
 A non-Edge contract change, such as the Alloy-owned `[agents]` addition to
 `service-manifest` in #8, is released as a revision of the latest applicable
-Edge tag. Under the revision rule above, the next such release is
-`contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping and does not
-claim that the change shipped in Edge.
+Edge tag. Under the revision rule above, #8 is released as
+`contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
+v0.9.10) and does not claim that the change shipped in Edge.
 
 See [release-process.md](release-process.md) for the release steps.
