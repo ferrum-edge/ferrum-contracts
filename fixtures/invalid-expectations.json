@@ -80,9 +80,17 @@
     "instance_path": "/upstream",
     "keyword": "dependentRequired"
   },
+  "service-manifest/invalid/agents-enabled-not-boolean.json": {
+    "instance_path": "/agents/enabled",
+    "keyword": "type"
+  },
   "service-manifest/invalid/http3-protocol.json": {
     "instance_path": "/upstream/protocols/1",
     "keyword": "enum"
+  },
+  "service-manifest/invalid/agents-bad-namespace.json": {
+    "instance_path": "/agents/namespace",
+    "keyword": "pattern"
   },
   "service-manifest/invalid/tls-path-with-http-scheme.json": {
     "instance_path": "/upstream/scheme",
@@ -95,6 +103,10 @@
   "service-manifest/invalid/unsupported-major.json": {
     "instance_path": "/schema_version",
     "keyword": "pattern"
+  },
+  "service-manifest/invalid/agents-unknown-key.json": {
+    "instance_path": "/agents",
+    "keyword": "additionalProperties"
   },
   "vocabulary-gateway-errors/invalid/class-not-snake-case.json": {
     "instance_path": "/error_classes/0/value",

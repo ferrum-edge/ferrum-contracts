@@ -31,6 +31,7 @@ branch of it.
 | `diagnostic-finding/valid/ferrum-token-connection-failure.json` | Built from ferrum-anvil's `ferrum.token.connection_failure` rule output: rule `ferrum.marker` v1 (`crates/anvil-diagnostics/src/rules/ferrum_rules.rs`, `lib.rs` `Draft::new`) with the wording of `catalog/diagnostics/findings.en.json` | `c401a320dcc5d52f707a5d5c27e333587b7a5d86` |
 | `diagnostic-finding/valid/ferrum-token-backend-error.json` | Built from the same rule for `backend_error` (scope and owner `unknown`, confidence `likely`, as asserted by the `ferrum_rules.rs` tests). Anvil keeps no JSON finding fixtures. | `c401a320dcc5d52f707a5d5c27e333587b7a5d86` |
 | `service-manifest/valid/orders-api.json`, `plain-http.json` | ferrum-alloy `contracts/fixtures/manifests/orders-api.toml`, `plain-http.toml`, transcribed | `fa471ccb79a444aee04661880af2385596d9da45` |
+| `service-manifest/valid/agents-enabled.json` | ferrum-alloy `contracts/fixtures/openapi/orders-api.toml`, transcribed | `4cba0f4a66f85bcee3140e3b92e299275a2507fb` |
 | `gitforgeops-resource/valid/quickstart-*.json` | ferrum-edge-git-forge-ops `tests/fixtures/quickstart/resources/ferrum/{proxies,plugins,consumers,upstreams}/*.yaml`, transcribed | `36206d8de8929884f62c65a040f3a08d35bd5863` |
 | `gitforgeops-resource/valid/mesh-minimal.json` | ferrum-edge-git-forge-ops `tests/fixtures/mesh-minimal/ferrum/mesh/minimal.yaml`, transcribed | `36206d8de8929884f62c65a040f3a08d35bd5863` |
 | `vocabulary-*/valid/*` | Subsets of the vocabulary files in `vocabularies/` | this repository |
@@ -53,6 +54,9 @@ branch of it.
 | `diagnostic-finding/invalid/missing-does-not-prove.json` | `does_not_prove` is required |
 | `diagnostic-finding/invalid/alloy-only-evidence-source.json` | `gateway_telemetry` is an Alloy evidence source that Anvil's `DiagnosticFinding` does not accept |
 | `service-manifest/invalid/unsupported-major.json` | `schema_version` `2.0` |
+| `service-manifest/invalid/agents-unknown-key.json` | adds unknown `agents.read_only`; Alloy's agents object denies unknown fields |
+| `service-manifest/invalid/agents-bad-namespace.json` | `agents.namespace` contains a space, outside the 1-64 character `A-Za-z0-9_-` rule |
+| `service-manifest/invalid/agents-enabled-not-boolean.json` | `agents.enabled` is a string instead of a boolean |
 | `service-manifest/invalid/unknown-field.json` | unknown `upstream.backend_scheme` (the manifest uses `deny_unknown_fields`) |
 | `service-manifest/invalid/base-path-without-trailing-slash.json` | `api.service_base_path` must end in `/` |
 | `service-manifest/invalid/tls-path-with-http-scheme.json` | `server_ca_path` with `scheme = "http"` |

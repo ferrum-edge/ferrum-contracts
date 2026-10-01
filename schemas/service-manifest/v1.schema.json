@@ -13,7 +13,8 @@
       {
         "repo": "ferrum-edge/ferrum-alloy",
         "ref": "main",
-        "commit": "fa471ccb79a444aee04661880af2385596d9da45",
+        "commit": "4cba0f4a66f85bcee3140e3b92e299275a2507fb",
+        "availability": "unreleased",
         "path": "crates/ferrum-alloy-edge/src/manifest.rs",
         "symbols": [
           "ServiceManifest",
@@ -24,9 +25,20 @@
           "ManifestTimeouts",
           "ManifestGateway",
           "ManifestAuth",
+          "ManifestAgents",
           "ServiceManifest::validate"
         ],
-        "note": "Alloy publishes no JSON Schema for the manifest. This schema transcribes the serde structs (deny_unknown_fields, defaults) and the checks in validate(). Cross-field rules validate() applies after defaults (for example the proxy_id default) are not all expressible here."
+        "note": "Alloy publishes no JSON Schema for the manifest. This schema transcribes the serde structs (deny_unknown_fields, defaults) and the checks in validate(). Cross-field rules validate() applies after defaults (for example the proxy_id default and agents.endpoint_path being below api.public_path) are not all expressible here."
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.9",
+        "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
+        "path": "docs/api_specs.md",
+        "symbols": [
+          "x-ferrum-mcp (optional)"
+        ],
+        "note": "Edge v0.9.9 documents the MCP namespace character and length rule and requires the MCP endpoint to sit under the proxy listen path."
       }
     ]
   },
@@ -267,6 +279,26 @@
             "gateway",
             "service"
           ]
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "endpoint_path": {
+          "type": "string",
+          "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$",
+          "description": "Literal absolute MCP endpoint path below api.public_path."
+        },
+        "namespace": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$",
+          "description": "MCP tool-name prefix; defaults to service.name."
         }
       }
     }
