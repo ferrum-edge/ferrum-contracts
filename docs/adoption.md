@@ -1,33 +1,39 @@
 # Adoption
 
-All five consumer repositories now pin selected contracts releases. Each row
+All five consumer repositories pin selected contracts releases. Each row
 below names the local copy checked against a pin, or explains what remains
-unadopted. The paths were read from each repository's `main` at the commit in
-the table header; proposal and tracking live in
-[ferrum-edge/.github#4](https://github.com/ferrum-edge/.github/issues/4).
+unadopted. Commit references are each repository's `origin/main` fetched on
+2026-10-01. The proposal and adoption work tracked by
+[ferrum-edge/.github#4](https://github.com/ferrum-edge/.github/issues/4) is
+complete; that issue is closed.
 
-| Repository | Commit read |
-|---|---|
-| ferrum-edge | `v0.9.8` = `e27f2109216352c3fe9e67a7014611f3f66daa91`; `main` = `da45e9b1240ae6945a15a0f91912c810704c0362` |
-| ferrum-anvil | `5861d23c497534d5b07907a4420e919f3e989d06` |
-| ferrum-alloy | `bd72040ea265e9d21c24b8028888fe66c1f8f043` |
-| ferrum-nexus | `9fdd33cc4e7ccc1b1628f7518e9604e907a1e6ac` |
-| ferrum-foundry | `0aea505fed59b6424f14de81770b3e4391c70794` |
-| ferrum-edge-git-forge-ops | `8d9dfd86d8441ba2d7ac92fd31d2cf87b461da41` |
+| Repository | `origin/main` commit read | Pinned tag on `main` |
+|---|---|---|
+| ferrum-edge | `a8e20375878b9e6d0d80dbe4458de339fd0c9f8e` | producer: Edge `v0.9.10` (maps to `contracts-edge-0.9.9`) |
+| ferrum-anvil | `35b3499312b835865a676b7b3839197817295189` | `contracts-edge-0.9.9` |
+| ferrum-alloy | `0224b2c44c7dd07122539de29c0596045c8db076` | `contracts-edge-0.9.9` |
+| ferrum-nexus | `e68f27f865be49efc20541c9c6551c7bae0d155c` | `contracts-edge-0.9.9` |
+| ferrum-foundry | `6366ed7dd68d2ac57829ead6804d26763be8b62d` | `contracts-edge-0.9.9` |
+| ferrum-edge-git-forge-ops | `b5cf86edcbeb6426120963e8be0655fcb0c6fd16` | `contracts-edge-0.9.9` |
+
+Every consumer pins `contracts-edge-0.9.9`. Foundry (ferrum-foundry#523) and
+GitForgeOps (ferrum-edge-git-forge-ops#443) moved from `contracts-edge-0.9.8`
+on 2026-10-01; both now also check that the pin maps to the Edge release they
+qualify against.
 
 ## Status by consumer
 
 | Consumer | Contract | Local copy to replace | Status |
 |---|---|---|---|
-| ferrum-anvil | Gateway error vocabulary | Local release catalogs, finding labels, token mappings and `TOKENS` list; pinned copy at `contracts/ferrum-contracts/vocabularies/gateway-errors.json` | adopted: `contracts/ferrum-contracts/PIN` pins `contracts-edge-0.9.8`; `contracts_adoption` checks hashes and local token/class parity |
-| ferrum-anvil | Gateway-owned headers | `catalog/ferrum/ferrum-edge-*/outcomes.json`; pinned copy at `contracts/ferrum-contracts/vocabularies/gateway-headers.json` | adopted: CI checks the released diagnostic headers against the pin and explicitly treats `X-Ferrum-Diagnostic-Ref` as unreleased |
+| ferrum-anvil | Gateway error vocabulary | Local release catalogs, finding labels, token mappings and `TOKENS` list; pinned copy at `contracts/ferrum-contracts/vocabularies/gateway-errors.json` | adopted: `contracts/ferrum-contracts/PIN` pins `contracts-edge-0.9.9`; `contracts_adoption` checks hashes and local token/class parity |
+| ferrum-anvil | Gateway-owned headers | `catalog/ferrum/ferrum-edge-*/outcomes.json`; pinned copy at `contracts/ferrum-contracts/vocabularies/gateway-headers.json` | adopted: CI checks released diagnostic headers against the pin; `X-Ferrum-Diagnostic-Ref` is released in Edge v0.9.9 |
 | ferrum-anvil | `DiagnosticFinding` (owner) | `contracts/schemas/DiagnosticFinding.schema.json` remains the generated schema; pinned schema and valid/invalid fixtures are under `contracts/ferrum-contracts/` | adopted: CI checks schema parity (excluding `$id` and `x-contract`) and validates the pinned fixtures |
-| ferrum-anvil | `diagnostic_ref` | `docs/g01-gateway-diagnostic-contract.md`; Edge implementation is on `main` (ferrum-edge#5767, #5845), but no released tag contains it | not adopted: waits for an Edge release |
+| ferrum-anvil | `diagnostic_ref` | `docs/g01-gateway-diagnostic-contract.md`; shared schema at `schemas/diagnostic-ref/v1.schema.json` | adopted: pinned at `contracts/ferrum-contracts/schemas/diagnostic-ref/v1.schema.json` (ferrum-anvil#271); `contracts_adoption` checks the reference pattern and lookup vocabularies against Anvil's reader (ferrum-anvil#274) |
 | ferrum-alloy | Gateway error vocabulary | Local token explanations in `crates/ferrum-alloy-diagnostics/src/catalog.rs` and `rules.rs`, plus `crates/ferrum-alloy-edge/src/contract.rs`; pinned vocabulary under `contracts/ferrum-contracts/` | adopted: the pin hashes the vocabulary; pairing CI checks local tokens and recorded meanings |
 | ferrum-alloy | Gateway-owned headers | `crates/ferrum-alloy-edge/src/contract.rs`; pinned vocabulary at `contracts/ferrum-contracts/vocabularies/gateway-headers.json` | adopted: pairing CI checks the released diagnostic headers against the pin |
 | ferrum-alloy | `diagnostic_report` (owner) | Local schema `contracts/diagnostics/diagnostic-report.v1.schema.json`; pinned schema and Finding fixtures under `contracts/ferrum-contracts/` | adopted: CI checks schema parity and validates pinned Finding fixtures; the shared status remains **PROPOSED** and Anvil import is not tested |
 | ferrum-alloy | `service_manifest` (owner) | `crates/ferrum-alloy-edge/src/manifest.rs`; fixtures `contracts/fixtures/manifests/*.toml` | not adopted (proposed) |
-| ferrum-alloy | `diagnostic_ref` | `docs/edge-contract-inventory.md`; Edge implementation is on `main` but is not in a released tag | not adopted: waits for an Edge release |
+| ferrum-alloy | `diagnostic_ref` | `docs/edge-contract-inventory.md`; shared schema at `schemas/diagnostic-ref/v1.schema.json` | adopted in ferrum-alloy#117: pinned at `contracts/ferrum-contracts/schemas/diagnostic-ref/v1.schema.json`; pairing CI checks `EDGE_DIAGNOSTIC_REF_PATTERN` against the schema |
 | ferrum-alloy | GitForgeOps envelope | `crates/ferrum-alloy-edge/src/export.rs` `gitforgeops_files` output | not adopted: GitForgeOps pins envelope fixtures, but Alloy's generated output is not validated in CI |
 | ferrum-edge-git-forge-ops | Plugin catalog | `src/plugin_catalog.rs`; pinned copy at `contracts/ferrum-contracts/vocabularies/plugin-catalog.json` | adopted: `PIN` hashes the vocabulary and CI compares local names, priorities, retired names and reserved names |
 | ferrum-edge-git-forge-ops | `provisioned-by` | `src/config/assembler.rs`; pinned copy at `contracts/ferrum-contracts/vocabularies/provisioned-by.json` | adopted: CI compares the local label and its usages with the pinned vocabulary |
@@ -64,11 +70,10 @@ tracks consumers of Alloy's contracts. Its items, folded in here:
 
 ## Drift found while seeding
 
-- Anvil's `ferrum.rs` test list has seven tokens. That is correct for its
-  v0.9.5 and v0.9.7 catalogs, but the v0.9.8 catalog and Edge v0.9.8 have
-  eight (`request_timeout`).
-- Alloy's inventory and Anvil's G01 document still call `diagnostic_ref`
-  proposed; Edge implements it on `main` (not yet in a release).
+- Anvil's `ferrum.rs` test list has eight tokens, matching the v0.9.9
+  vocabulary and Edge v0.9.9, including `request_timeout`.
+- Edge v0.9.9 released `diagnostic_ref`; the Anvil release-status follow-up
+  is complete.
 - Alloy's `diagnostic_report` Finding is a superset of Anvil's
   `DiagnosticFinding`: open enumerations, two more evidence sources
   (`gateway_telemetry`, `service_telemetry`), and two more properties
@@ -76,7 +81,7 @@ tracks consumers of Alloy's contracts. Its items, folded in here:
   `fixtures/diagnostic-finding/invalid/alloy-only-evidence-source.json`
   records the difference.
 
-## Follow-ups
+## Remaining follow-ups
 
 - **Plugin config schemas are referenced, not vendored.** Edge publishes a
   config schema for all 82 built-in plugins in `openapi.yaml`
@@ -86,10 +91,20 @@ tracks consumers of Alloy's contracts. Its items, folded in here:
   later release should vendor each resolved schema as a standalone
   2020-12 schema (following `$ref`s), so consumers need not parse
   `openapi.yaml`.
-- **Anvil release status.** Anvil's CI currently treats
-  `X-Ferrum-Diagnostic-Ref` as unreleased; update that status when Anvil adopts
-  Edge v0.9.9.
 - **Generated types.** Add generated TypeScript types (Nexus, Foundry, Anvil
   desktop) and a Rust crate or `include_str!` entry point.
-- **Drift checks in consumers.** Each consumer adds a CI job that compares its
-  local copy with the pinned tag.
+
+Consumer drift checks now compare their local copies with the pinned tag; that
+follow-up is complete.
+
+## Candidate contracts
+
+These contract-like copies were identified by the 2026-10-01 audit. They are
+candidates for future adoption; this list does not add them to the shared
+contract set.
+
+- Nexus copies Edge's reserved `correlation_id` header names.
+- Foundry copies Edge's plugin configuration sensitivity metadata from
+  `pluginSensitivity.ts`.
+- Alloy has a `gateway-diagnostic-ref` report fixture that is not yet part of
+  the shared fixtures.

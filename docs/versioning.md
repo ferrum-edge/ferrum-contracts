@@ -103,11 +103,25 @@ tags" ruleset enforces this: it blocks update and deletion of tags matching
 to, never a branch.
 
 A `contracts-edge-X.Y.Z` tag describes Edge `vX.Y.Z`, but it may also carry
-items that Edge has only on `main`, provided they are marked unreleased. The
-first tag will: `schemas/diagnostic-ref/v1` (`x-contract.edge_availability`)
-and the `X-Ferrum-Diagnostic-Ref` and `X-Ferrum-Diagnostic-Owner-Replica`
-headers (`availability: unreleased`). A consumer must not assume that an
-unreleased item exists on the Edge release its tag names.
+items that Edge has only on `main`, provided they are marked unreleased. A
+consumer must not assume that an unreleased item exists on the Edge release
+its tag names.
 
-The repository has no tag yet. The first planned tag is
-`contracts-edge-0.9.8`; see [release-process.md](release-process.md).
+An Edge release that changes no contract source maps to the latest
+`contracts-edge-*` tag and does not need a new tag. For example, Edge v0.9.10
+contains no contract-source changes after v0.9.9, so it maps to
+`contracts-edge-0.9.9`.
+
+| Edge release | Contracts tag | Reason |
+|---|---|---|
+| `v0.9.8` | `contracts-edge-0.9.8` | Initial Edge-aligned contracts release |
+| `v0.9.9` | `contracts-edge-0.9.9` | Refreshed Edge-owned contract sources |
+| `v0.9.10` | `contracts-edge-0.9.9` | No contract-source changes after v0.9.9 |
+
+A non-Edge contract change, such as the Alloy-owned `[agents]` addition to
+`service-manifest` in #8, is released as a revision of the latest applicable
+Edge tag. Under the revision rule above, the next such release is
+`contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping and does not
+claim that the change shipped in Edge.
+
+See [release-process.md](release-process.md) for the release steps.

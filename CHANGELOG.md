@@ -8,7 +8,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Added
 
-- `service-manifest` v1: optional `[agents]` configuration from Alloy PR #113.
+- `service-manifest` v1: optional `[agents]` configuration from Alloy PR #113
+  (#8, closes #7).
+
+### Changed
+
+- Sync README, versioning, adoption, and release-process docs with the
+  published contracts tags and current consumer pins.
 
 ## [contracts-edge-0.9.9] - 2026-10-01
 
@@ -49,7 +55,7 @@ Refreshes the Edge-owned vocabularies from Ferrum Edge v0.9.9, commit
 
 ## [contracts-edge-0.9.8] - 2026-09-30
 
-First delivery of ferrum-edge/.github#4. Targets the first tag,
+Initial delivery of the work tracked by ferrum-edge/.github#4, published as
 `contracts-edge-0.9.8`.
 
 ### Added

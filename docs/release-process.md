@@ -35,13 +35,25 @@ When Ferrum Edge publishes `vX.Y.Z`:
 
 ## Tagging
 
-After the PR merges, a maintainer tags the merge commit:
+After the PR merges, a maintainer tags the merge commit. When a signing key
+is configured, create a signed annotated tag:
 
 ```sh
 git fetch origin
 git tag -s contracts-edge-X.Y.Z <merge-commit-sha> -m "Contracts for Ferrum Edge vX.Y.Z"
 git push origin contracts-edge-X.Y.Z
 ```
+
+If signing is unavailable, a lightweight tag is acceptable:
+
+```sh
+git fetch origin
+git tag contracts-edge-X.Y.Z <merge-commit-sha>
+git push origin contracts-edge-X.Y.Z
+```
+
+The tags published so far are lightweight and unsigned. Do not describe
+existing tags as signed.
 
 Then create a GitHub release for the tag with the changelog section as its
 notes. Never move or delete a pushed tag; publish `contracts-edge-X.Y.Z-rN`
