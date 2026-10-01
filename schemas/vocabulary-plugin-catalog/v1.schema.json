@@ -20,7 +20,6 @@
     "provenance",
     "config_schema_document",
     "protocol_values",
-    "websocket_framing_plugins",
     "plugins",
     "removed_plugins"
   ],

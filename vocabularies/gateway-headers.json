@@ -3,7 +3,7 @@
   "vocabulary": "gateway-headers",
   "version": 1,
   "edge_release": "v0.9.9",
-  "description": "HTTP header names and prefixes that Ferrum Edge owns: gateway assertions to backends, gateway diagnostic response headers, internal markers, mesh control headers, and admin API headers. Names are case-insensitive; prefixes match names case-insensitively. Entries with availability \"v0.9.9\" shipped in Ferrum Edge v0.9.9.",
+  "description": "HTTP header names and prefixes that Ferrum Edge owns: gateway assertions to backends, gateway diagnostic response headers, internal markers, mesh control headers, and admin API headers. Names are case-insensitive; prefixes match names case-insensitively. Availability is the first Edge release with the header, or \"unreleased\" for main-only entries.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",
@@ -34,6 +34,15 @@
       "ref": "v0.9.9",
       "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
       "path": "openapi.yaml"
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.9",
+      "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
+      "path": "docs/api_specs.md",
+      "sections": [
+        "x-ferrum-mcp"
+      ]
     }
   ],
   "not_headers": {
@@ -43,7 +52,8 @@
       "x-ferrum-plugins",
       "x-ferrum-consumers",
       "x-ferrum-validate",
-      "x-ferrum-external-refs"
+      "x-ferrum-external-refs",
+      "x-ferrum-mcp"
     ],
     "note": "OpenAPI document extension fields read by the API-spec import (docs/api_specs.md), not HTTP headers."
   },

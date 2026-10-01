@@ -71,7 +71,7 @@
       "introduced_in": "ferrum-edge-git-forge-ops#218",
       "observed_in": {
         "repo": "ferrum-edge/ferrum-edge-git-forge-ops",
-        "ref": "v0.9.9",
+        "ref": "main",
         "commit": "36206d8de8929884f62c65a040f3a08d35bd5863",
         "path": "src/config/assembler.rs"
       }
