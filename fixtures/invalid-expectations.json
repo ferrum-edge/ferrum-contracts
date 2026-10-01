@@ -28,6 +28,10 @@
     "instance_path": "/ref",
     "keyword": "pattern"
   },
+  "diagnostic-ref/invalid/uppercase-replica-id.json": {
+    "instance_path": "/replica_id",
+    "keyword": "pattern"
+  },
   "diagnostic-ref/invalid/unknown-schema-version.json": {
     "instance_path": "/schema_version",
     "keyword": "enum"
@@ -126,6 +130,10 @@
   },
   "vocabulary-plugin-catalog/invalid/unknown-protocol.json": {
     "instance_path": "/plugins/0/protocols/1",
+    "keyword": "enum"
+  },
+  "vocabulary-plugin-catalog/invalid/unknown-websocket-framing-plugin.json": {
+    "instance_path": "/websocket_framing_plugins/0",
     "keyword": "enum"
   },
   "vocabulary-provisioned-by/invalid/untrimmed-value.json": {

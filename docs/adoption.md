@@ -86,8 +86,9 @@ tracks consumers of Alloy's contracts. Its items, folded in here:
   later release should vendor each resolved schema as a standalone
   2020-12 schema (following `$ref`s), so consumers need not parse
   `openapi.yaml`.
-- **`diagnostic_ref` is unreleased.** Re-check the schema against the Edge
-  release that first ships it before tagging a release that claims it.
+- **Anvil release status.** Anvil's CI currently treats
+  `X-Ferrum-Diagnostic-Ref` as unreleased; update that status when Anvil adopts
+  Edge v0.9.9.
 - **Generated types.** Add generated TypeScript types (Nexus, Foundry, Anvil
   desktop) and a Rust crate or `include_str!` entry point.
 - **Drift checks in consumers.** Each consumer adds a CI job that compares its

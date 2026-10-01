@@ -2,13 +2,13 @@
   "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-headers/v1.schema.json",
   "vocabulary": "gateway-headers",
   "version": 1,
-  "edge_release": "v0.9.8",
-  "description": "HTTP header names and prefixes that Ferrum Edge owns: gateway assertions to backends, gateway diagnostic response headers, internal markers, mesh control headers, and admin API headers. Names are case-insensitive; prefixes match any lowercase name that starts with them. Entries with availability \"unreleased\" are on Edge main only.",
+  "edge_release": "v0.9.9",
+  "description": "HTTP header names and prefixes that Ferrum Edge owns: gateway assertions to backends, gateway diagnostic response headers, internal markers, mesh control headers, and admin API headers. Names are case-insensitive; prefixes match names case-insensitively. Entries with availability \"v0.9.9\" shipped in Ferrum Edge v0.9.9.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.8",
-      "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+      "ref": "v0.9.9",
+      "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
       "path": "src/proxy/headers.rs"
     }
   ],
@@ -19,13 +19,13 @@
       "surface": "proxy",
       "direction": "gateway_to_backend",
       "role": "gateway_assertion",
-      "edge_behavior": "Gateway-owned consumer assertion namespace. Consumer plugins may add attributes beneath it, so backend boundaries reject the whole prefix, and it is forbidden in request and response trailers.",
+      "edge_behavior": "Gateway-owned consumer assertion namespace. Matching is ASCII case-insensitive and treats _ as equivalent to -. The gateway may emit only its authenticated identity values beneath this prefix; backend boundaries reject client or plugin values across the whole prefix, and it is forbidden in request and response trailers.",
       "availability": "v0.9.8",
       "sources": [
         {
           "repo": "ferrum-edge/ferrum-edge",
-          "ref": "v0.9.8",
-          "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+          "ref": "v0.9.9",
+          "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "is_consumer_assertion_header",
@@ -34,8 +34,8 @@
         },
         {
           "repo": "ferrum-edge/ferrum-edge",
-          "ref": "v0.9.8",
-          "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+          "ref": "v0.9.9",
+          "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
           "path": "docs/plugins.md",
           "sections": [
             "grpc_web"
@@ -58,8 +58,8 @@
       "sources": [
         {
           "repo": "ferrum-edge/ferrum-edge",
-          "ref": "v0.9.8",
-          "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+          "ref": "v0.9.9",
+          "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "X_GATEWAY_ERROR_HEADER",
@@ -68,8 +68,8 @@
         },
         {
           "repo": "ferrum-edge/ferrum-edge",
-          "ref": "v0.9.8",
-          "commit": "e27f2109216352c3fe9e67a7014611f3f66daa91",
+          "ref": "v0.9.9",
+          "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
           "path": "docs/error_classification.md",
           "sections": [
             "HTTP observability vocabulary (X-Gateway-Error)"

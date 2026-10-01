@@ -39,7 +39,7 @@
     "udp": "Raw UDP datagram proxy, including DTLS termination and origination"
   },
   "websocket_framing_plugins": [
-    "waf",
+    "not_a_plugin",
     "ws_frame_logging",
     "ws_message_size_limiting",
     "ws_rate_limiting"
@@ -49,7 +49,7 @@
       "name": "transaction_log_schema",
       "classification": "config_only",
       "priority": 9999,
-      "failure_policy": "fail_open",
+      "failure_policy": "keep_last_known_good",
       "active_phases": [],
       "active_phases_note": "config-only; no lifecycle hooks — priority retained for schema-registration inventory/order",
       "protocols": [],
