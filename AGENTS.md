@@ -6,7 +6,8 @@ vocabularies, and conformance fixtures. There is no application code. The
 only executable file is the repository's own CI check, `ci/validate.py`.
 License: PolyForm Noncommercial 1.0.0.
 
-Proposal and adoption tracking: ferrum-edge/.github#4.
+Proposal and adoption history: ferrum-edge/.github#4 (closed; adoption
+completed).
 
 ## Layout
 
@@ -72,5 +73,4 @@ Proposal and adoption tracking: ferrum-edge/.github#4.
 Commit messages use concise imperative mood. PRs need a summary, the list of
 changes, and a test plan (normally: the `Validate contracts` workflow). A
 contract change needs approval from a maintainer of its owning product.
-Reference ferrum-edge/.github#4 without a closing keyword until adoption is
-complete.
+Reference ferrum-edge/.github#4 as closed history; adoption is complete.
