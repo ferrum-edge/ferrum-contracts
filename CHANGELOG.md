@@ -6,6 +6,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+- Add shared GPT-6.1 Sol worker skills for Codex and Claude with optional fast mode.
+
 ## [contracts-edge-0.9.9-r2] - 2026-10-01
 
 Revision of `contracts-edge-0.9.9` for an Alloy-owned schema change. The
