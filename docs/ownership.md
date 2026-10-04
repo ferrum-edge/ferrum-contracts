@@ -38,10 +38,18 @@ reviewed, versioned form that every other product pins.
 | `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | **proposed** |
 | GitForgeOps resource file envelope (`kind` + `spec`) | `schemas/gitforgeops-resource/v1.schema.json` | ferrum-edge-git-forge-ops | `src/config/schema.rs` (`Resource`) | implemented |
 
-`x-contract.status` is `implemented` when the owner produces or accepts the
-contract today, and `proposed` when no consumer has agreed to it yet. A
-proposed contract may change within its major version until a consumer
-adopts it; the change is still recorded in `CHANGELOG.md`.
+Owner implementation and shared qualification are separate facts. For example,
+`diagnostic-report` has `x-contract.status: implemented` for its Alloy owner
+and a separate **PROPOSED** shared status; `service-manifest` retains
+`x-contract.status: proposed`. Both now have bounded consumer qualification
+recorded in [adoption.md](adoption.md), but their canonical shared freeze is
+still pending agreement against matching immutable owner sources.
+
+Consumer fixture tests or previews do not automatically promote schema
+metadata, freeze v1 or publish a contracts tag. The owner-backed canonical
+change requires provenance, fixture review and owner approval under the rules
+above. Proposed contracts still follow [versioning.md](versioning.md), and
+every change is recorded in `CHANGELOG.md`; published tags remain immutable.
 
 The vocabulary schemas (`schemas/vocabulary-*`) describe the shape of the
 vocabulary files. This repository owns those shapes; the values inside the
