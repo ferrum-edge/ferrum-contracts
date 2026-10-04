@@ -77,6 +77,25 @@ were read from. A vocabulary may also list entries that exist only on Edge
 `main`; those are marked (`availability: unreleased`, or the
 `main_branch_delta` block) and are never presented as released.
 
+For the [0.9.11 release candidate](releases/contracts-edge-0.9.11.md),
+`edge_release: v0.9.11` identifies the actual immutable tagged owner source
+`c764084b3b51c3f7ffde268c039688d35e49c553`. Upstream Edge distribution is
+verified separately in the release record; the canonical contracts tag/publication
+remains pending. New Edge schema availability annotations distinguish those facts.
+Existing first-availability entries and immutable released tag bytes stay historical.
+
+Backend egress response version 1 and `ferrum-private-reserved-v1` identify the
+owner's exact classifier and label meanings. A change of meaning requires
+versioned coordination. Producer labels remain strict; unknown labels grant
+no known meaning or permission. Public-only publication additionally fails
+closed on missing/unknown policy data, an unexpected namespace, a non-serving
+scope or a false guarantee, as [the owner contract](admin-contracts.md) requires.
+This safety decision does not turn an unknown label into a known class.
+
+Conditional metadata v1 checks quoted strong token syntax and all four maps.
+It cannot distinguish cryptographic row/namespace bindings or authorize restore;
+the owner's HTTP precondition and transaction semantics remain authoritative.
+
 ## Formats
 
 `format` is asserted, not only annotated: CI validates with jsonschema's
@@ -127,5 +146,17 @@ A non-Edge contract change, such as the Alloy-owned `[agents]` addition to
 Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
+
+`contracts-edge-0.9.11` is presently a draft candidate, not a released mapping.
+The latest published canonical tag remains `contracts-edge-0.9.9-r2`.
+Root has accepted the unchanged shared Alloy v1 freeze after reviewed owner and
+consumer qualification. The candidate records **EXISTING**/implemented shared v1
+metadata at owner `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, while retaining
+owner-unreleased availability. Wire fields, bounds, fixtures and unknown-member/
+open-enum reader behavior are unchanged. Full report parity includes descriptions
+outside `$id`/`x-contract`, including historical PROPOSED wording in the owner
+copy. The metadata decision does not publish the canonical tag or approve Alloy
+crate publication. Consumers continue using their existing immutable pins until
+the new tag is published and their adoption PRs qualify.
 
 See [release-process.md](release-process.md) for the release steps.

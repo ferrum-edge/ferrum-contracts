@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-headers/v1.schema.json",
   "title": "Gateway-owned headers v1",
-  "description": "Shape of vocabularies/gateway-headers.json: HTTP header names and prefixes Ferrum Edge owns.",
+  "description": "Shape of vocabularies/gateway-headers.json: HTTP header names and prefixes with Ferrum Edge semantics, including standard HTTP admin precondition headers.",
   "x-contract": {
     "name": "vocabulary-gateway-headers",
     "version": 1,

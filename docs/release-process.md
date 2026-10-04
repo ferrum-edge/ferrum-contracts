@@ -28,10 +28,69 @@ When Ferrum Edge publishes `vX.Y.Z`:
    release. Move entries marked `unreleased` to the release that ships them.
 4. Add or update fixtures for anything that changed, including at least one
    invalid fixture for each new rule.
-5. Move the `CHANGELOG.md` entries under `[Unreleased]` into a
+5. Move the included `CHANGELOG.md` entries under `[Unreleased]` into a
    `[contracts-edge-X.Y.Z]` section.
 6. Open a PR. The `Validate contracts` workflow must pass. An owner of each
    changed contract approves (see [ownership.md](ownership.md)).
+
+## contracts-edge-0.9.11 final publication gates
+
+The [release record](releases/contracts-edge-0.9.11.md) pins published Edge
+`v0.9.11` at `c764084b3b51c3f7ffde268c039688d35e49c553`, its qualified merge
+parents/PR and OpenAPI hash. Root verified all 14 downloaded assets against API
+digests and seven binary checksum files, three Docker Hub indexes/six platform
+and config pairs, and default-image gateway/CNI bytes on amd64/arm64. All 20
+Release jobs succeeded, including strict hosted signatures/SLSA/SBOM,
+authenticated GHCR parity and Linux GNU ABI gates. GHCR remains private; Edge
+image configs contain no revision label.
+
+The new owner sources are `src/admin/conditional_snapshots.rs`, `preconditions.rs`,
+`crud.rs`, `backup.rs`, `backend_egress_policy.rs`, admin routing, transaction
+backends, `src/config/env_config.rs`, the admin docs and `openapi.yaml`.
+Preserve complete stored credentials, all four coherent row maps, namespace
+revision and atomic lease-fenced replacement, standard header semantics,
+runtime refusals and unconditional restore. Transcribe bounded process policy
+metadata without credentials/raw CIDRs or CP-to-DP attestation; see
+[admin-contracts.md](admin-contracts.md).
+
+Final Alloy annotations bind to qualified owner
+`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, an ordinary squash of reviewed
+PR #144. Its exact immutable sources, full report pairing, root/fresh owner
+review and all 18 main PUSH jobs/checks qualify that owner commit. The ordinary
+owner squash is not the canonical release/tag target and requires no second
+parent. Root now accepts the proposed coordinated freeze: report and manifest
+shared v1 are EXISTING/implemented in this candidate, retaining owner-unreleased
+availability. This is the authorized canonical metadata decision, not separate
+prior human approval or Alloy crate publishing permission. Preserve every v1
+wire field, bound, fixture and unknown-reader rule. Full report pairing includes
+descriptions outside `$id`/`x-contract`; the manifest remains a transcription
+with documented post-default/cross-field limits.
+
+Keep PR #13 draft pending final exact-head root/fresh review, owner review and
+hosted `Schemas, fixtures and vocabularies` success. The earlier 26a2797 candidate's
+45-file review, fresh review 3 and 116-check hosted validation are historical
+evidence; they do not qualify a changed candidate SHA.
+
+After final reviews and the hosted gate, root uses a canonical **merge commit**
+whose second parent equals the exact final reviewed PR head. Verify the merge
+commit, its unique associated PR and every applicable main PUSH workflow success
+before publishing the immutable tag and release notes. Earlier PR-head checks
+do not qualify the changed merge commit. No release tag is moved or rewritten.
+The `[contracts-edge-0.9.11]` changelog section is prepared; canonical publication
+remains pending, and unrelated `[Unreleased]` entries/historical releases are retained.
+
+Only after canonical tag publication do consumer pins/checksums/local copies and
+Alloy's matching local annotations/descriptions move together, with full hosted
+parity and recorded adoption evidence. Existing r2 bytes and consumer snapshots
+remain historical. Canonical metadata does not patch a product advisory or qualify
+production apply/performance. Root owns issue disposition and separate publishing
+permission.
+
+Preparation performs static source/diff inspection and integrity hashing only;
+repository execution is prohibited locally. GitHub-hosted `Validate contracts`
+is the schema/fixture/OpenAPI gate. The existing validator discovers the added
+files and shared label/order references without workflow, permission, dependency
+or validation exceptions.
 
 ## Tagging
 

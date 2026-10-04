@@ -9,7 +9,9 @@ reviewed, versioned form that every other product pins.
 
 1. **Edge owns the gateway vocabularies.** `ErrorClass`, the `X-Gateway-Error`
    tokens, the gateway-owned headers, the `provisioned-by` attribution rules
-   and the plugin catalog change only when Ferrum Edge changes them.
+   and the plugin catalog change only when Ferrum Edge changes them. Edge also
+   owns conditional snapshot/restore semantics and backend egress metadata,
+   including its versioned classifier and process/enforcement scope labels.
 2. **Each product owns its own schemas.** Anvil owns `DiagnosticFinding`, Alloy
    owns `diagnostic_report` and `service_manifest`, GitForgeOps owns its
    resource file envelope, and Edge owns `diagnostic_ref`.
@@ -33,23 +35,47 @@ reviewed, versioned form that every other product pins.
 | `provisioned-by` label and `X-Ferrum-Provisioned-By` | `vocabularies/provisioned-by.json` | ferrum-edge | `src/admin/provisioning.rs`, `docs/admin_api.md` | implemented |
 | Plugin catalog index | `vocabularies/plugin-catalog.json` | ferrum-edge | `src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`, `openapi.yaml` | implemented |
 | `ferrum.diagnostic_ref.v1` | `schemas/diagnostic-ref/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DiagnosticRefLookup`), `src/diagnostic_ref.rs` | released in Edge v0.9.9 |
+| Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | released in Edge v0.9.11; upstream distribution verified, canonical tag/publication pending |
+| Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`), `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs` | released in Edge v0.9.11; upstream distribution verified, canonical tag/publication pending |
 | `DiagnosticFinding` | `schemas/diagnostic-finding/v1.schema.json` | ferrum-anvil | `contracts/schemas/DiagnosticFinding.schema.json` (generated from Rust) | implemented |
-| `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; proposed as shared |
-| `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | **proposed** |
+| `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; EXISTING shared v1 in the canonical release candidate, owner unreleased |
+| `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | implemented; EXISTING shared v1 in the canonical release candidate, owner unreleased |
 | GitForgeOps resource file envelope (`kind` + `spec`) | `schemas/gitforgeops-resource/v1.schema.json` | ferrum-edge-git-forge-ops | `src/config/schema.rs` (`Resource`) | implemented |
 
-Owner implementation and shared qualification are separate facts. For example,
-`diagnostic-report` has `x-contract.status: implemented` for its Alloy owner
-and a separate **PROPOSED** shared status; `service-manifest` retains
-`x-contract.status: proposed`. Both now have bounded consumer qualification
-recorded in [adoption.md](adoption.md), but their canonical shared freeze is
-still pending agreement against matching immutable owner sources.
+Owner implementation, shared freeze and publication are separate facts. Both
+Alloy contracts now have `x-contract.status: implemented` and **EXISTING** shared
+v1 status in the [0.9.11 release candidate](releases/contracts-edge-0.9.11.md).
+Root accepted the unchanged wire freeze on 2026-10-04 after reviewed owner and
+[consumer qualification](adoption.md). This is the authorized canonical metadata
+decision, not an invented prior human approval or separate Alloy crate publishing
+approval. Alloy's owner availability remains `unreleased` (`publish = false`).
+
+Final provenance reads qualified owner
+`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, the ordinary squash of Alloy #144;
+its sole applicable main PUSH workflow and all 18 jobs/checks passed. Full
+diagnostic-report pairing includes every description outside `$id`/`x-contract`.
+The copied report retains historical PROPOSED wording in those owner descriptions;
+current shared status is recorded in `x-contract` and these docs. The manifest
+remains a transcription of owner code, with documented post-default/cross-field
+limits, not an owner-exported schema. Every v1 field, bound and fixture is retained.
+
+Canonical tag/publication still requires final root/fresh review, owner review,
+hosted validation and the canonical merge/PUSH gates. Existing r2 bytes and
+consumer pins remain historical; owner pin/local annotations and consumer copies
+move together only after the new immutable tag, with full hosted parity.
+
+The new Edge artifacts check metadata syntax/shape and owner-derived egress
+invariants. [HTTP/runtime semantics](admin-contracts.md), including credential
+verification, audit admission, snapshot coherence, lease fences and serving-DP
+checks, remain the owning implementation's responsibility; schema conformance
+alone grants no authorization or enforcement attestation.
 
 Consumer fixture tests or previews do not automatically promote schema
-metadata, freeze v1 or publish a contracts tag. The owner-backed canonical
-change requires provenance, fixture review and owner approval under the rules
-above. Proposed contracts still follow [versioning.md](versioning.md), and
-every change is recorded in `CHANGELOG.md`; published tags remain immutable.
+metadata, freeze v1 or publish a contracts tag. Root's accepted coordinated
+metadata decision is recorded with owner provenance and consumer evidence;
+landing still requires fixture review and owner approval under the rules above.
+All contracts follow [versioning.md](versioning.md), and every change is
+recorded in `CHANGELOG.md`; published tags remain immutable.
 
 The vocabulary schemas (`schemas/vocabulary-*`) describe the shape of the
 vocabulary files. This repository owns those shapes; the values inside the

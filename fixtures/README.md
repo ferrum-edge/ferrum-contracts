@@ -35,11 +35,46 @@ branch of it.
 | `gitforgeops-resource/valid/quickstart-*.json` | ferrum-edge-git-forge-ops `tests/fixtures/quickstart/resources/ferrum/{proxies,plugins,consumers,upstreams}/*.yaml`, transcribed | `36206d8de8929884f62c65a040f3a08d35bd5863` |
 | `gitforgeops-resource/valid/mesh-minimal.json` | ferrum-edge-git-forge-ops `tests/fixtures/mesh-minimal/ferrum/mesh/minimal.yaml`, transcribed | `36206d8de8929884f62c65a040f3a08d35bd5863` |
 | `vocabulary-*/valid/*` | Subsets of the vocabulary files in `vocabularies/` | this repository |
+| `admin-conditional-snapshot/valid/metadata.json` | ferrum-edge `docs/admin_backup_restore.md`, "Conditional snapshots and restore" JSON example, transcribed. Illustrative opaque tokens are not credential-derived MACs. | `c764084b3b51c3f7ffde268c039688d35e49c553` (published v0.9.11; upstream distribution verified) |
+| `admin-conditional-snapshot/valid/empty-maps.json` | Same metadata with empty resource maps, as emitted by `src/admin/conditional_snapshots.rs` `row_tags`/`serialize_snapshot` for an empty snapshot; token remains illustrative. | `c764084b3b51c3f7ffde268c039688d35e49c553` |
+| `backend-egress-policy/valid/default-control-plane.json` | ferrum-edge `openapi.yaml`, `/backend-egress-policy` `defaultControlPlane` example, transcribed field for field | `c764084b3b51c3f7ffde268c039688d35e49c553` |
+| `backend-egress-policy/valid/public-serving.json` | ferrum-edge `tests/integration/admin_backend_egress_policy_tests.rs` `serving_modes_report_the_proxy_policy_and_selected_namespace_scope`, field values completed from `src/admin/backend_egress_policy.rs` `handle_get` with `BackendAllowIps::Public`, no overlays and the production baseline | `c764084b3b51c3f7ffde268c039688d35e49c553` |
+| `backend-egress-policy/valid/public-with-allow-overrides.json`, `private-control-plane.json` | ferrum-edge `src/admin/backend_egress_policy.rs` `handle_get` and `src/config/env_config.rs` `BackendEgressPolicy::metadata`; sanitized transcriptions of public-with-allow-overlay and private-mode branches. No operator CIDRs, JWTs or credentials. | `c764084b3b51c3f7ffde268c039688d35e49c553` |
+| `vocabulary-backend-egress-policy/valid/v1.json`, `vocabulary-gateway-headers/valid/admin-standard-conditional.json` | Initial-candidate egress vocabulary snapshot and admin-header subset; owner paths/full provenance recorded in each fixture | `c764084b3b51c3f7ffde268c039688d35e49c553` |
+
+New admin fixtures are canonical candidate artifacts from the published v0.9.11
+owner source. Distribution evidence is recorded in the [release notes](../docs/releases/contracts-edge-0.9.11.md);
+fixtures alone do not establish consumer adoption. Their schemas
+check JSON conformance only: token authenticity, authorization, authoritative
+state/coherence, audit admission and serving-DP policy are runtime requirements.
+Existing Alloy fixtures are unchanged and retain their historical source
+provenance; the candidate re-reads schema/manifest source at qualified Alloy
+`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` without altering fixture semantics.
+All fixture bytes are retained. The egress vocabulary fixtures include the initial
+candidate description from before upstream publication; that historical fixture
+text is not current availability metadata. Current availability is recorded above
+and in the release record.
 
 ## Invalid fixtures
 
 | Fixture | Why it must fail |
 |---|---|
+| `admin-conditional-snapshot/invalid/missing-consumer-map.json` | From `valid/metadata.json`: remove only required `row_etags.consumers` |
+| `admin-conditional-snapshot/invalid/weak-namespace-tag.json` | From `valid/metadata.json`: change only the namespace token to a weak `W/` tag |
+| `admin-conditional-snapshot/invalid/token-with-line-break.json` | From `valid/metadata.json`: append only a line break to the namespace token; quoted entity-tag syntax has no trailing control bytes |
+| `admin-conditional-snapshot/invalid/unquoted-row-tag.json` | From `valid/metadata.json`: remove only the quotes from the proxy row token |
+| `admin-conditional-snapshot/invalid/unknown-row-map.json` | From `valid/metadata.json`: add only the unsupported `row_etags.api_specs` map; namespace coverage of API specs does not add a row map |
+| `backend-egress-policy/invalid/unknown-version.json` | From `valid/default-control-plane.json`: change only `schema_version` to `2` |
+| `backend-egress-policy/invalid/unknown-classification.json` | From `valid/default-control-plane.json`: change only `ip_classification` to `unknown` |
+| `backend-egress-policy/invalid/unknown-enforcement-scope.json` | From `valid/default-control-plane.json`: change only `enforcement_scope` to `unknown` |
+| `backend-egress-policy/invalid/unknown-mode.json` | From `valid/default-control-plane.json`: change only `mode` to `unknown` |
+| `backend-egress-policy/invalid/wrong-evaluation-stage.json` | From `valid/default-control-plane.json`: change only evaluation index 0 from `allow-cidrs` to `ip-mode` |
+| `backend-egress-policy/invalid/mode-class-mismatch.json` | From `valid/public-serving.json`: change only the allowed mode list to `["private-reserved"]` |
+| `backend-egress-policy/invalid/false-public-guarantee.json` | From `valid/public-serving.json`: change only the guarantee to false; the owner emits true for public mode without allow overlays |
+| `backend-egress-policy/invalid/allow-overlay-guarantee.json` | From `valid/public-with-allow-overrides.json`: change only the guarantee to true; undisclosed allow overlays prevent certification |
+| `backend-egress-policy/invalid/leaked-cidr-field.json` | From `valid/default-control-plane.json`: add only `allow_cidrs`; the closed response withholds raw CIDRs |
+| `vocabulary-backend-egress-policy/invalid/unknown-mode.json` | From `valid/v1.json`: change only modes index 0 to `unknown` |
+| `vocabulary-backend-egress-policy/invalid/short-commit.json` | From `valid/v1.json`: shorten only provenance index 0's full commit SHA |
 | `diagnostic-ref/invalid/unknown-schema-version.json` | `schema_version` is `ferrum.diagnostic_ref.v2` |
 | `diagnostic-ref/invalid/malformed-ref.json` | `ref` is not `fd1_` plus 32 lowercase hex digits |
 | `diagnostic-ref/invalid/granular-class-as-token.json` | `gateway_error` is an `ErrorClass` (`dns_lookup_error`), not an `X-Gateway-Error` token |

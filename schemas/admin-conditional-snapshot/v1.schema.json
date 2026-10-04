@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/admin-conditional-snapshot/v1.schema.json",
+  "title": "Edge conditional backup metadata v1",
+  "description": "The conditional member of GET /backup?conditional=true, not the full backup or a restore precondition. All rows and tokens come from one complete primary transaction snapshot. Namespace and row tokens have separate state bindings; only the namespace If-Match header authorizes conditional restore.",
+  "x-contract": {
+    "name": "admin-conditional-snapshot",
+    "version": 1,
+    "status": "implemented",
+    "owner": "ferrum-edge/ferrum-edge",
+    "edge_availability": "Released in Ferrum Edge v0.9.11 at c764084b3b51c3f7ffde268c039688d35e49c553; upstream distribution is verified. Canonical contracts-edge-0.9.11 tag/publication remains pending.",
+    "provenance": [
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.11",
+        "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+        "path": "openapi.yaml",
+        "symbols": [
+          "components.schemas.ConditionalBackupMetadata",
+          "components.schemas.ResourceETagMap",
+          "components.parameters.NamespaceIfMatch",
+          "components.headers.ResourceETag"
+        ]
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.11",
+        "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+        "path": "src/admin/backup.rs",
+        "symbols": [
+          "ConditionalBackupMetadata"
+        ]
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.11",
+        "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+        "path": "src/admin/conditional_snapshots.rs",
+        "symbols": [
+          "namespace_tag",
+          "row_tags",
+          "serialize_snapshot",
+          "restore"
+        ]
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.11",
+        "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+        "path": "src/admin/preconditions.rs",
+        "symbols": [
+          "resource_etag",
+          "quoted"
+        ]
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.11",
+        "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+        "path": "docs/admin_backup_restore.md",
+        "sections": [
+          "Conditional snapshots and restore"
+        ],
+        "note": "Transcribed OpenAPI metadata shape, with strong quoted token syntax from preconditions.rs. Tokens are keyed, opaque state validators; this schema checks syntax only."
+      }
+    ]
+  },
+  "type": "object",
+  "required": [
+    "namespace_etag",
+    "row_etags"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "namespace_etag": {
+      "$ref": "#/$defs/StrongETag",
+      "description": "Quoted strong tag for the complete coherent namespace state, including durable revision, ownership, trust, associations and registry metadata. Equal to the conditional backup ETag header; use only as namespace If-Match on restore."
+    },
+    "row_etags": {
+      "type": "object",
+      "required": [
+        "proxies",
+        "consumers",
+        "upstreams",
+        "plugin_configs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "proxies": {
+          "$ref": "#/$defs/ResourceETagMap"
+        },
+        "consumers": {
+          "$ref": "#/$defs/ResourceETagMap"
+        },
+        "upstreams": {
+          "$ref": "#/$defs/ResourceETagMap"
+        },
+        "plugin_configs": {
+          "$ref": "#/$defs/ResourceETagMap"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "StrongETag": {
+      "type": "string",
+      "pattern": "^\"[\\u0021\\u0023-\\u007e]+\"(?![\\s\\S])",
+      "description": "Opaque, quoted strong entity-tag syntax using visible ASCII accepted by the owner precondition parser. Preserve the token verbatim. JSON validation cannot establish cryptographic validity, freshness, authorization, or whether this is a row or namespace tag."
+    },
+    "ResourceETagMap": {
+      "type": "object",
+      "description": "Resource id to the same quoted strong tag individual CRUD reads issue for that complete stored row. Empty maps are valid. A row tag cannot authorize namespace replacement.",
+      "additionalProperties": {
+        "$ref": "#/$defs/StrongETag"
+      }
+    }
+  }
+}

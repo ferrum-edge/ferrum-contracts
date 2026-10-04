@@ -11,10 +11,53 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   import, GitForgeOps generated resource validation, Nexus/Foundry manifest
   previews and Foundry's accepted presentation ADR. Record the split Nexus
   pins, the published r2 `[agents]` addition and the Edge v0.9.10 mapping.
-- Clarify owner implementation versus shared qualification. Keep Alloy's shared
-  schemas PROPOSED and issue #27 open pending an owner-backed canonical freeze;
-  this documentation refresh changes no schemas, pins, tags or release status.
+- Clarify owner implementation versus shared qualification in the earlier
+  adoption-only refresh: shared schemas were PROPOSED pending an owner-backed
+  canonical freeze. That refresh changed no schemas, pins, tags or release status;
+  the coordinated freeze decision is now recorded in the prepared release below.
 - Add shared GPT-6.1 Sol worker skills for Codex and Claude with optional fast mode.
+
+## [contracts-edge-0.9.11] - 2026-10-04
+
+Prepared release contents; canonical merge/tag/publication remain pending in draft
+PR #13. Root has accepted the unchanged shared Alloy v1 freeze in this candidate.
+The latest published canonical release remains `contracts-edge-0.9.9-r2`;
+existing consumer pins are unchanged. See the [release record](docs/releases/contracts-edge-0.9.11.md)
+for verified Edge distribution, final qualified Alloy owner and publication order.
+
+### Added
+
+- Conditional snapshot metadata and backend egress response schemas, the egress
+  vocabulary/shape, sanitized fixtures and exact negative path/keyword expectations
+  for Edge #5992/#5994. Keep strict producer validation, opaque token/runtime
+  authorization boundaries and unknown-value reader semantics; public-only
+  publication requires serving-DP scope.
+- Standard HTTP admin `ETag`/`If-Match`, credential-complete verification,
+  coherent namespace tokens, atomic replacement/lease fences, runtime refusal
+  statuses and the unconditional restore exception in the admin contract docs.
+
+### Changed
+
+- Refresh all four existing Edge vocabularies from published v0.9.11,
+  `c764084b3b51c3f7ffde268c039688d35e49c553`, and update the pinned OpenAPI
+  SHA-256. Error tokens/classes, provisioning values, plugin registrations and
+  lifecycle metadata are unchanged from r2. No obsolete `main_branch_delta`
+  exists in these files; historical first-availability entries are retained.
+- Finalize diagnostic-report and service-manifest shared v1 as EXISTING/implemented
+  in the candidate at qualified Alloy owner
+  `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, with root's accepted coordinated
+  freeze and owner-unreleased availability. Preserve every wire field, bound,
+  fixture, unknown-reader rule and full report description pairing. The manifest
+  remains an owner-code transcription with post-default/cross-field limits.
+  No separate prior human approval, Alloy crate publishing permission or new
+  consumer pin is implied.
+- Synchronize README, ownership, adoption, versioning and release process with
+  verified Edge distribution, all 18 final Alloy main PUSH jobs/checks and the
+  remaining canonical review/hosted validation/merge/tag gates. Ordinary owner
+  squash qualification uses exact source/CI evidence; release/tag targets still
+  require an exact reviewed PR second parent and all main PUSH successes.
+  The existing hosted validator auto-discovers new artifacts; workflow,
+  permissions, dependencies and validator behavior are unchanged.
 
 ## [contracts-edge-0.9.9-r2] - 2026-10-01
 
