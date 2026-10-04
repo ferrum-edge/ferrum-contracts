@@ -1,9 +1,11 @@
 # Edge admin snapshot and egress contracts
 
-**Draft contracts-edge-0.9.11 candidate.** These surfaces exist at the immutable
-Edge `v0.9.11` source commit `c764084b3b51c3f7ffde268c039688d35e49c553`.
-Upstream publication evidence and the canonical release are pending root
-verification; no consumer adoption of this candidate is asserted.
+**Draft contracts-edge-0.9.11 PR; release contents prepared.** These surfaces
+shipped in Edge `v0.9.11` at immutable source
+`c764084b3b51c3f7ffde268c039688d35e49c553`, with verified upstream distribution
+recorded in the [release notes](releases/contracts-edge-0.9.11.md). The canonical
+tag/publication and downstream adoption remain pending. Canonical metadata alone
+does not patch a product advisory or qualify a consumer integration.
 
 ## Owner sources and artifact scope
 

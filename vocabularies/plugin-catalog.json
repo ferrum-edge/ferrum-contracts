@@ -3,7 +3,7 @@
   "vocabulary": "plugin-catalog",
   "version": 1,
   "edge_release": "v0.9.11",
-  "description": "Index of every built-in Ferrum Edge plugin at v0.9.11: name, registration failure policy, documented priority, phases and protocol surface, and a pointer to the plugin's config schema in Edge's tagged openapi.yaml (publication pending for this draft candidate). Build-time custom plugins are not listed.",
+  "description": "Index of every built-in Ferrum Edge plugin at v0.9.11: name, registration failure policy, documented priority, phases and protocol surface, and a pointer to the plugin's config schema in Edge's published openapi.yaml (canonical contracts tag/publication pending). Build-time custom plugins are not listed.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",

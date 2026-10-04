@@ -3,7 +3,7 @@
   "vocabulary": "backend-egress-policy",
   "version": 1,
   "edge_release": "v0.9.11",
-  "description": "Labels for process-scoped, immutable loaded backend policy metadata. The tagged v0.9.11 source is available; upstream publication and this canonical release remain pending. Mode lists describe the final evaluation stage, not unconditional effective allows. Classifier meaning changes require versioned coordination.",
+  "description": "Labels for process-scoped, immutable loaded backend policy metadata. Edge v0.9.11 is published with verified upstream distribution; this canonical contracts tag/publication remains pending. Mode lists describe the final evaluation stage, not unconditional effective allows. Classifier meaning changes require versioned coordination.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",

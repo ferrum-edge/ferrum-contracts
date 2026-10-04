@@ -35,20 +35,25 @@ branch of it.
 | `gitforgeops-resource/valid/quickstart-*.json` | ferrum-edge-git-forge-ops `tests/fixtures/quickstart/resources/ferrum/{proxies,plugins,consumers,upstreams}/*.yaml`, transcribed | `36206d8de8929884f62c65a040f3a08d35bd5863` |
 | `gitforgeops-resource/valid/mesh-minimal.json` | ferrum-edge-git-forge-ops `tests/fixtures/mesh-minimal/ferrum/mesh/minimal.yaml`, transcribed | `36206d8de8929884f62c65a040f3a08d35bd5863` |
 | `vocabulary-*/valid/*` | Subsets of the vocabulary files in `vocabularies/` | this repository |
-| `admin-conditional-snapshot/valid/metadata.json` | ferrum-edge `docs/admin_backup_restore.md`, "Conditional snapshots and restore" JSON example, transcribed. Illustrative opaque tokens are not credential-derived MACs. | `c764084b3b51c3f7ffde268c039688d35e49c553` (tagged v0.9.11; publication verification pending) |
+| `admin-conditional-snapshot/valid/metadata.json` | ferrum-edge `docs/admin_backup_restore.md`, "Conditional snapshots and restore" JSON example, transcribed. Illustrative opaque tokens are not credential-derived MACs. | `c764084b3b51c3f7ffde268c039688d35e49c553` (published v0.9.11; upstream distribution verified) |
 | `admin-conditional-snapshot/valid/empty-maps.json` | Same metadata with empty resource maps, as emitted by `src/admin/conditional_snapshots.rs` `row_tags`/`serialize_snapshot` for an empty snapshot; token remains illustrative. | `c764084b3b51c3f7ffde268c039688d35e49c553` |
 | `backend-egress-policy/valid/default-control-plane.json` | ferrum-edge `openapi.yaml`, `/backend-egress-policy` `defaultControlPlane` example, transcribed field for field | `c764084b3b51c3f7ffde268c039688d35e49c553` |
 | `backend-egress-policy/valid/public-serving.json` | ferrum-edge `tests/integration/admin_backend_egress_policy_tests.rs` `serving_modes_report_the_proxy_policy_and_selected_namespace_scope`, field values completed from `src/admin/backend_egress_policy.rs` `handle_get` with `BackendAllowIps::Public`, no overlays and the production baseline | `c764084b3b51c3f7ffde268c039688d35e49c553` |
 | `backend-egress-policy/valid/public-with-allow-overrides.json`, `private-control-plane.json` | ferrum-edge `src/admin/backend_egress_policy.rs` `handle_get` and `src/config/env_config.rs` `BackendEgressPolicy::metadata`; sanitized transcriptions of public-with-allow-overlay and private-mode branches. No operator CIDRs, JWTs or credentials. | `c764084b3b51c3f7ffde268c039688d35e49c553` |
-| `vocabulary-backend-egress-policy/valid/v1.json`, `vocabulary-gateway-headers/valid/admin-standard-conditional.json` | Full egress vocabulary and admin-header subset of the candidate vocabulary files; owner paths/full provenance recorded in each fixture | `c764084b3b51c3f7ffde268c039688d35e49c553` |
+| `vocabulary-backend-egress-policy/valid/v1.json`, `vocabulary-gateway-headers/valid/admin-standard-conditional.json` | Initial-candidate egress vocabulary snapshot and admin-header subset; owner paths/full provenance recorded in each fixture | `c764084b3b51c3f7ffde268c039688d35e49c553` |
 
-New admin fixtures are draft canonical artifacts from the actual tagged owner
-source, not evidence of upstream publication or consumer adoption. Their schemas
+New admin fixtures are canonical candidate artifacts from the published v0.9.11
+owner source. Distribution evidence is recorded in the [release notes](../docs/releases/contracts-edge-0.9.11.md);
+fixtures alone do not establish consumer adoption. Their schemas
 check JSON conformance only: token authenticity, authorization, authoritative
 state/coherence, audit admission and serving-DP policy are runtime requirements.
 Existing Alloy fixtures are unchanged and retain their historical source
 provenance; the candidate re-reads schema/manifest source at qualified Alloy
-`d7ddb3688e058ec3cc2e17d166a801aa0037b5b1` without altering fixture semantics.
+`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` without altering fixture semantics.
+All fixture bytes are retained. The egress vocabulary fixtures include the initial
+candidate description from before upstream publication; that historical fixture
+text is not current availability metadata. Current availability is recorded above
+and in the release record.
 
 ## Invalid fixtures
 

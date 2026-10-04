@@ -77,12 +77,12 @@ were read from. A vocabulary may also list entries that exist only on Edge
 `main`; those are marked (`availability: unreleased`, or the
 `main_branch_delta` block) and are never presented as released.
 
-For the [draft 0.9.11 candidate](releases/contracts-edge-0.9.11.md),
+For the [0.9.11 release candidate](releases/contracts-edge-0.9.11.md),
 `edge_release: v0.9.11` identifies the actual immutable tagged owner source
-`c764084b3b51c3f7ffde268c039688d35e49c553`; it does not establish successful
-upstream asset publication or a canonical contracts tag. New Edge schema
-availability annotations explicitly retain that pending boundary. Existing
-first-availability entries and immutable released tag bytes stay historical.
+`c764084b3b51c3f7ffde268c039688d35e49c553`. Upstream Edge distribution is
+verified separately in the release record; the canonical contracts tag/publication
+remains pending. New Edge schema availability annotations distinguish those facts.
+Existing first-availability entries and immutable released tag bytes stay historical.
 
 Backend egress response version 1 and `ferrum-private-reserved-v1` identify the
 owner's exact classifier and label meanings. A change of meaning requires
@@ -149,10 +149,14 @@ v0.9.10) and does not claim that the change shipped in Edge.
 
 `contracts-edge-0.9.11` is presently a draft candidate, not a released mapping.
 The latest published canonical tag remains `contracts-edge-0.9.9-r2`.
-The proposed shared Alloy v1 freeze preserves wire fields, bounds, fixtures
-and unknown-member/open-enum reader behavior. Metadata/description changes
-need matching owner evidence and full parity; a candidate annotation never
-freezes v1. Consumers continue using their existing immutable pins until the
-new canonical tag is published and their adoption PRs qualify.
+Root has accepted the unchanged shared Alloy v1 freeze after reviewed owner and
+consumer qualification. The candidate records **EXISTING**/implemented shared v1
+metadata at owner `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, while retaining
+owner-unreleased availability. Wire fields, bounds, fixtures and unknown-member/
+open-enum reader behavior are unchanged. Full report parity includes descriptions
+outside `$id`/`x-contract`, including historical PROPOSED wording in the owner
+copy. The metadata decision does not publish the canonical tag or approve Alloy
+crate publication. Consumers continue using their existing immutable pins until
+the new tag is published and their adoption PRs qualify.
 
 See [release-process.md](release-process.md) for the release steps.

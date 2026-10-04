@@ -8,7 +8,7 @@
     "version": 1,
     "status": "implemented",
     "owner": "ferrum-edge/ferrum-edge",
-    "edge_availability": "Present at immutable Edge v0.9.11; upstream publication and canonical contracts release are pending. Draft candidate only.",
+    "edge_availability": "Released in Ferrum Edge v0.9.11 at c764084b3b51c3f7ffde268c039688d35e49c553; upstream distribution is verified. Canonical contracts-edge-0.9.11 tag/publication remains pending.",
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-edge",

@@ -3,7 +3,7 @@
   "vocabulary": "gateway-headers",
   "version": 1,
   "edge_release": "v0.9.11",
-  "description": "HTTP header names and prefixes with Ferrum Edge semantics: gateway assertions, diagnostic response headers, internal markers, mesh control headers, and admin API headers, including standard HTTP ETag and If-Match. Names and prefixes match case-insensitively. Availability records the first Edge tag containing the surface; v0.9.11 is tagged but publication is pending for this draft candidate.",
+  "description": "HTTP header names and prefixes with Ferrum Edge semantics: gateway assertions, diagnostic response headers, internal markers, mesh control headers, and admin API headers, including standard HTTP ETag and If-Match. Names and prefixes match case-insensitively. Availability records the first Edge tag containing the surface; v0.9.11 is published with verified upstream distribution; canonical contracts tag/publication remains pending.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",
