@@ -1,11 +1,39 @@
 # contracts-edge-0.9.11 release record
 
-2026-10-04 finalized inputs and prepared release contents. **PR #13 remains DRAFT;
-canonical merge, tag and publication are pending.** Root has accepted the unchanged
-shared Alloy v1 freeze in this candidate after reviewed owner/consumer qualification.
-The latest published canonical release remains `contracts-edge-0.9.9-r2` at
-`591c73a3f965fdab440c3a76b2707accdf491ba5`. Consumer pins remain as recorded
-in [adoption.md](../adoption.md).
+**Published on 2026-10-04 at 22:41:21 UTC.** The latest canonical release is
+[`contracts-edge-0.9.11`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
+at `390edbd5b2485af0988e02f7827fde778d76ae0a`. It includes root's accepted
+unchanged shared Alloy v1 freeze after reviewed owner/consumer qualification.
+Alloy remains unpublished with no separate crate publishing approval. Consumer
+pins remain as recorded in [adoption.md](../adoption.md); 0.9.11 adoption is
+pending until consumer PRs merge and qualify.
+
+## Actual canonical publication
+
+[PR #13](https://github.com/ferrum-edge/ferrum-contracts/pull/13) merged at
+22:40:08 UTC on 2026-10-04 as `390edbd5b2485af0988e02f7827fde778d76ae0a`.
+Its first parent is `d098c81a50f1baaa8c081d511868c74e957ddf43`; its exact
+second parent is the final reviewed head `0cf926686f2164ad0b4de7b27e2eb5a25df6a261`.
+Root reviewed the complete change and fresh independent final-delta review
+reported no findings. The final-head [hosted run 37240041628](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240041628)
+succeeded with all 116 validation cases passing. Every actual main PUSH workflow
+on the merge commit succeeded before the immutable tag was created: the sole
+applicable [run 37240886730](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240886730)
+and required [Schemas, fixtures and vocabularies job 111549212572](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240886730/job/111549212572)
+completed successfully by 22:40:26 UTC.
+
+The unsigned lightweight `contracts-edge-0.9.11` tag points directly to that
+merge commit. [GitHub release 403239814](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
+was published at 22:41:21 UTC with `draft: false` and `prerelease: false`.
+Historical tags and their Edge mappings remain unchanged.
+
+The [immutable tagged source record](https://github.com/ferrum-edge/ferrum-contracts/blob/390edbd5b2485af0988e02f7827fde778d76ae0a/docs/releases/contracts-edge-0.9.11.md)
+and its released changelog section captured prepared/draft/pending wording before
+publication. Schema descriptions, `shared_status`, `coordinated_release` and
+`edge_availability` annotations also retain that historical wording. These bytes
+are preserved; their prepared status is not a new approval requirement or a
+claim that publication remains pending. This documentation records the subsequent
+actual publication without changing the tagged artifacts or qualification slices.
 
 ## Edge source and verified distribution
 
@@ -87,15 +115,16 @@ Successful older heads are not substituted for this final owner qualification.
 | [`crates/ferrum-alloy-edge/src/manifest.rs`](https://github.com/ferrum-edge/ferrum-alloy/blob/81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e/crates/ferrum-alloy-edge/src/manifest.rs) | `05d42db07c1e91a892aa3bee9194decb273dce4fcac1ce4e85b951cc3abfb250` |
 
 The [owner qualification proposal](https://github.com/ferrum-edge/ferrum-alloy/blob/81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e/docs/shared-contract-qualification.md)
-is present at that qualified owner. Root now accepts its coordinated freeze of
+is present at that qualified owner. Root accepted its coordinated freeze of
 the current unchanged `ferrum.diagnostic_report` v1 and `ferrum.service_manifest`
 v1 after reviewed owner/consumer qualification. This is root's authorized
 canonical metadata decision, not a claim of prior separate human approval or
 separate Alloy crate publishing approval. Both shared contracts are marked
-**EXISTING** with `x-contract.status: implemented` in this release candidate;
+**EXISTING** with `x-contract.status: implemented` in the published release;
 Alloy remains unpublished and provenance retains `availability: unreleased`.
-The `coordinated_release` annotation records the decision and pending canonical
-publication, replacing the obsolete pending-owner `freeze_candidate` proposal.
+The `coordinated_release` annotation records the accepted decision and the
+historical pre-publication state, replacing the obsolete pending-owner
+`freeze_candidate` proposal. Actual canonical publication is recorded above.
 
 Every v1 wire field, bound, fixture and unknown-reader rule is preserved.
 Full diagnostic-report pairing with 81cbb includes every description outside
@@ -105,9 +134,9 @@ The manifest remains a transcription of owner serde structs and validation,
 not an owner-exported schema. Owner post-default validation includes derived
 resource ID lengths and endpoint relationships not all asserted by this schema.
 Consumer presentation bounds do not redefine producer validation.
-Historical r2 schema/fixture/provenance bytes remain unchanged. After canonical
-publication, Alloy's owner pin/local annotations and consumer copies move
-together with full hosted parity; no downstream adoption has happened here.
+Historical r2 schema/fixture/provenance bytes remain unchanged. Alloy's owner
+pin/local annotations and consumer copies still need coordinated adoption PRs
+with full hosted parity after publication; no downstream adoption is recorded here.
 
 The [consumer ledger](../adoption.md#immutable-hosted-qualification) binds the
 following slices, without claiming arbitrary newer sources are qualified:
@@ -119,7 +148,7 @@ following slices, without claiming arbitrary newer sources are qualified:
 | Nexus #519 | `77fdb767ec8ef04e88f13df9fb291bc77fbd0344` | `559c350a5370335791cdc3082225dce6056cf547` | Strict shared-fixture manifest preview, authentication/CSRF/namespace/redaction and packaged acceptance; no publication/apply/diagnostic import |
 | GitForgeOps #461 | `e06f986dfeabb9bcb0c546c74b646f01e1c2a932` | `76d76c796cafbaea9556e992381b6e2518ae4f69` | Two actual pinned Alloy-generated resource trees through its strict loader/assembler/validator; no direct manifest JSON adoption or production apply |
 
-## Prepared release notes
+## Published release contents
 
 - Refresh the four existing Edge vocabularies and plugin OpenAPI integrity pin
   from published `v0.9.11` source, preserving existing vocabulary values and
@@ -130,19 +159,19 @@ following slices, without claiming arbitrary newer sources are qualified:
 - Record standard HTTP admin `ETag`/`If-Match` semantics, credential-complete
   authoritative verification, coherent namespace snapshot/replacement, and
   process/DP scope limits in [admin-contracts.md](../admin-contracts.md).
-- Finalize report and manifest shared v1 as EXISTING/implemented in the candidate
+- Finalize report and manifest shared v1 as EXISTING/implemented in the release
   at qualified Alloy owner 81cbb, with root's accepted unchanged-wire freeze and
   owner-unreleased availability. Preserve full report pairing and manifest
   transcription limits; grant no separate crate publishing permission.
 - Record verified Edge distribution, qualified immutable owner/consumer slices,
-  unchanged historical r2 pins and the remaining canonical publication/adoption
-  gates. Workflow, permissions, dependencies and validator behavior are unchanged.
+  unchanged historical r2 pins, completed canonical publication and pending
+  adoption. Workflow, permissions, dependencies and validator behavior are unchanged.
 
 Canonical metadata does not patch a product advisory or qualify production apply,
 performance, or arbitrary newer consumer sources. Read-only, redaction and
 unknown-authority limits remain those of the qualified slices above.
 
-## Root finalization and publication order
+## Completed finalization and pending adoption
 
 1. Edge distribution qualification is complete for the exact immutable tag:
    published assets/digests, image identities/binary pairing, hosted attestations
@@ -153,22 +182,22 @@ unknown-authority limits remain those of the qualified slices above.
    every applicable main PUSH success; it is not a release/tag target and needs
    no approved second parent. Retain paired descriptions and owner-unreleased
    availability; earlier green runs never qualify a changed owner SHA.
-3. Review the final canonical head and fixtures with root/fresh review and the
-   owning maintainers; require hosted `Schemas, fixtures and vocabularies` success
-   at that exact head. PR #13 stays draft pending these gates. Prior whole 45-file
-   review, fresh review 3 and all 116 hosted validations at candidate
-   `26a2797f15286da8e32002c4971b68013e134be9` are historical evidence only.
-4. Root merges the approved canonical PR with a **merge commit whose second parent
-   equals the exact final reviewed PR head**. Verify that target, the unique
-   associated PR and all applicable main PUSH workflow successes, then publish
-   the immutable `contracts-edge-0.9.11` tag and release notes. The release section
-   is prepared in `CHANGELOG.md`; unrelated `[Unreleased]` work and every historical
-   released section/tag are retained. No tag is moved or rewritten.
-5. Only after canonical tag publication, coordinate consumer pin/checksum/local
+3. Final canonical review and hosted validation completed at exact reviewed head
+   `0cf926686f2164ad0b4de7b27e2eb5a25df6a261`, as recorded above. Prior whole
+   45-file review, fresh review 3 and all 116 hosted validations at candidate
+   `26a2797f15286da8e32002c4971b68013e134be9` remain historical evidence only;
+   they were not substituted for final-head qualification.
+4. Root merged PR #13 with the exact reviewed second parent, verified the target
+   and all actual main PUSH successes, then published the immutable tag and
+   release 403239814. The prepared release section in `CHANGELOG.md` and every
+   historical released section/tag remain intact. No tag is moved or rewritten.
+5. Consumer adoption remains pending. Coordinate consumer pin/checksum/local
    copy updates and Alloy's matching local annotations/descriptions in their own
-   repositories with full hosted parity. Record adoption after those PRs qualify.
+   repositories with full hosted parity. Record adoption after those PRs merge
+   and qualify, without extending the historical qualification slices above.
    Root owns issue disposition and any separate crate publishing permission.
 
 Local repository execution is prohibited. Static source/diff inspection and
-integrity hashing do not establish hosted validation. This new candidate SHA
-requires its own hosted contracts gate and root/fresh review before landing.
+integrity hashing do not establish hosted validation. The publication runs above
+qualify their exact immutable commits. This subsequent documentation update needs
+its own hosted contracts gate and root review before landing.

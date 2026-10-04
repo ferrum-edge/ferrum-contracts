@@ -77,12 +77,14 @@ were read from. A vocabulary may also list entries that exist only on Edge
 `main`; those are marked (`availability: unreleased`, or the
 `main_branch_delta` block) and are never presented as released.
 
-For the [0.9.11 release candidate](releases/contracts-edge-0.9.11.md),
+For the [published 0.9.11 release](releases/contracts-edge-0.9.11.md),
 `edge_release: v0.9.11` identifies the actual immutable tagged owner source
 `c764084b3b51c3f7ffde268c039688d35e49c553`. Upstream Edge distribution is
-verified separately in the release record; the canonical contracts tag/publication
-remains pending. New Edge schema availability annotations distinguish those facts.
-Existing first-availability entries and immutable released tag bytes stay historical.
+verified separately in the release record. The canonical contracts tag points to
+`390edbd5b2485af0988e02f7827fde778d76ae0a` and was published on 2026-10-04.
+Prepared/pending schema annotations captured in that immutable source are
+historical pre-publication wording, not a new approval requirement. Existing
+first-availability entries and immutable released tag bytes stay historical.
 
 Backend egress response version 1 and `ferrum-private-reserved-v1` identify the
 owner's exact classifier and label meanings. A change of meaning requires
@@ -136,6 +138,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.8` | `contracts-edge-0.9.8` | Initial Edge-aligned contracts release |
 | `v0.9.9` | `contracts-edge-0.9.9` | Refreshed Edge-owned contract sources |
 | `v0.9.10` | `contracts-edge-0.9.9` | No contract-source changes after v0.9.9 |
+| `v0.9.11` | `contracts-edge-0.9.11` | Edge admin contracts and accepted unchanged shared v1 freeze at `390edbd5b2485af0988e02f7827fde778d76ae0a` |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
@@ -147,16 +150,24 @@ Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
 
-`contracts-edge-0.9.11` is presently a draft candidate, not a released mapping.
-The latest published canonical tag remains `contracts-edge-0.9.9-r2`.
+`contracts-edge-0.9.11` is the latest published canonical tag, at
+`390edbd5b2485af0988e02f7827fde778d76ae0a`. [PR #13](https://github.com/ferrum-edge/ferrum-contracts/pull/13)
+merged on 2026-10-04 at 22:40:08 UTC with exact reviewed second parent
+`0cf926686f2164ad0b4de7b27e2eb5a25df6a261`. Every applicable main PUSH workflow
+succeeded before tag creation; [release 403239814](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
+was published at 22:41:21 UTC. Historical 0.9.8, 0.9.9, 0.9.10 and r2 mappings
+remain unchanged.
+
 Root has accepted the unchanged shared Alloy v1 freeze after reviewed owner and
-consumer qualification. The candidate records **EXISTING**/implemented shared v1
+consumer qualification. The release records **EXISTING**/implemented shared v1
 metadata at owner `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, while retaining
 owner-unreleased availability. Wire fields, bounds, fixtures and unknown-member/
 open-enum reader behavior are unchanged. Full report parity includes descriptions
 outside `$id`/`x-contract`, including historical PROPOSED wording in the owner
-copy. The metadata decision does not publish the canonical tag or approve Alloy
-crate publication. Consumers continue using their existing immutable pins until
-the new tag is published and their adoption PRs qualify.
+copy. Alloy remains unpublished, and the canonical publication grants no separate
+Alloy crate publishing approval. Consumers continue using their recorded immutable
+pins until their adoption PRs merge and qualify; publication alone does not update
+those pins. Prepared/pending wording in the tagged source records the earlier
+pre-publication state. See the release record for the subsequent publication facts.
 
 See [release-process.md](release-process.md) for the release steps.

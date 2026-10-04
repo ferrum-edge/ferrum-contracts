@@ -8,12 +8,16 @@ The proposal and adoption work tracked by
 [ferrum-edge/.github#4](https://github.com/ferrum-edge/.github/issues/4) is
 complete; that issue is closed. The later Alloy consumer work tracked by
 [ferrum-alloy#27](https://github.com/ferrum-edge/ferrum-alloy/issues/27) remains
-open for root disposition after canonical publication and coordinated adoption.
-Root has accepted the unchanged shared v1 freeze in this release candidate.
+open for root disposition after coordinated adoption. Canonical
+[`contracts-edge-0.9.11`](releases/contracts-edge-0.9.11.md) was published at
+`390edbd5b2485af0988e02f7827fde778d76ae0a` on 2026-10-04 at 22:41:21 UTC,
+including root's accepted unchanged shared v1 freeze. Consumer adoption remains
+pending until its PRs merge and qualify; the table preserves the inspected
+immutable pin snapshots.
 
 | Repository | `main` commit read (2026-10-04) | Pinned tag on `main` |
 |---|---|---|
-| ferrum-edge | `c764084b3b51c3f7ffde268c039688d35e49c553` | producer: published `v0.9.11` source with verified distribution; canonical tag/publication pending; existing `v0.9.10` mapping is `contracts-edge-0.9.9`, also covered by r2 |
+| ferrum-edge | `c764084b3b51c3f7ffde268c039688d35e49c553` | producer: published `v0.9.11` source with verified distribution; maps to published `contracts-edge-0.9.11` at `390edbd5b2485af0988e02f7827fde778d76ae0a`; existing `v0.9.10` mapping is `contracts-edge-0.9.9`, also covered by r2 |
 | ferrum-anvil | `c19c0a6abba896bfec972b3e083179c55ef8e38c` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/c19c0a6abba896bfec972b3e083179c55ef8e38c/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9-r2` |
 | ferrum-alloy | `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9-r2` |
 | ferrum-nexus | `559c350a5370335791cdc3082225dce6056cf547` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/559c350a5370335791cdc3082225dce6056cf547/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9` vocabularies; [`SERVICE-MANIFEST-PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/559c350a5370335791cdc3082225dce6056cf547/contracts/ferrum-contracts/SERVICE-MANIFEST-PIN): `contracts-edge-0.9.9-r2` manifest |
@@ -34,34 +38,36 @@ which changed no contract source after v0.9.9 and maps to 0.9.9, with r2 for
 the Alloy addition. [Edge #6005](https://github.com/ferrum-edge/ferrum-edge/pull/6005)
 has since merged as `c764084b3b51c3f7ffde268c039688d35e49c553`; its actual
 unsigned lightweight `v0.9.11` tag was created at 19:46:47 UTC on 2026-10-04.
-The [canonical release candidate](releases/contracts-edge-0.9.11.md) reads
+The [published canonical release](releases/contracts-edge-0.9.11.md) reads
 those owner sources. Release 403215981 was published at 21:26:11 UTC, and all
 20 jobs in Release run 37229572280 succeeded by 21:30:12 UTC. Root verified
 actual assets/digests, Docker Hub identities and default-image binary pairing;
 hosted signatures/SLSA/SBOM, authenticated GHCR parity and ABI gates passed.
-GHCR remains private. The latest published canonical release remains r2.
+GHCR remains private. The latest published canonical release is 0.9.11 at
+`390edbd5b2485af0988e02f7827fde778d76ae0a`; historical r2 remains at
+`591c73a3f965fdab440c3a76b2707accdf491ba5`.
 No consumer pin changes here; the table preserves the qualified
 consumer slices rather than treating later main changes as new pin qualification.
 
-## Candidate admin and shared v1 adoption boundary
+## Published admin and shared v1 adoption boundary
 
 The new [admin contracts](admin-contracts.md) cover Edge #5992/#5994 source at
 the immutable v0.9.11 commit: credential-complete consumer verification,
 coherent conditional backup metadata/namespace restore and process egress
-discovery. The schema/fixtures are a canonical publication candidate, not
-evidence of consumer adoption. GitForgeOps must adopt complete verification
+discovery. The schema/fixtures are published canonical contracts; consumer
+adoption requires separate evidence. GitForgeOps must adopt complete verification
 and coherent tokens; Nexus (GHSA-93rq-89vr-38pc part B), Foundry and other
 publishers must check every relevant serving DP's policy and scope. CP policy
 metadata cannot substitute for DP checks. Missing/unknown policy data or
 incompatible scopes block public-only publication. No newly released patched
-consumer version or pin is recorded by this draft.
+consumer version or pin is recorded by this publication record.
 
 Alloy report/manifest provenance is re-read at qualified owner
 `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, the ordinary squash of reviewed
 Alloy #144, with all 18 main checks/jobs and its sole applicable PUSH workflow
 successful. Root reviewed the owner chain/new delta and fresh independent
 review 4 reported no findings. On 2026-10-04 root accepted the coordinated
-freeze of the unchanged report and manifest shared v1 contracts. Candidate
+freeze of the unchanged report and manifest shared v1 contracts. Published
 metadata now marks both **EXISTING**/implemented, retaining owner-unreleased
 availability. This records root's authorized metadata choice; it does not invent
 prior separate human approval or grant separate Alloy crate publishing approval.
@@ -73,11 +79,15 @@ wording. The manifest remains an owner-code transcription with post-default and
 cross-field limits. Historical r2 snapshots retain their original metadata;
 qualified r2 fixture consumption does not mean a new pin has been adopted.
 
-Root still owns final review/hosted validation, the canonical merge commit with
-its exact reviewed PR second parent and all applicable main PUSH successes,
-then immutable tag/publication. Only afterward do consumer pins/checksums/local
-annotations move together with full hosted parity. The existing consumer pins
-remain the released adoption boundary.
+Canonical [PR #13](https://github.com/ferrum-edge/ferrum-contracts/pull/13)
+merged at 22:40:08 UTC with exact reviewed second parent
+`0cf926686f2164ad0b4de7b27e2eb5a25df6a261`. All actual main PUSH workflows
+succeeded before tag creation, including [run 37240886730](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240886730)
+and required job 111549212572. Release 403239814 was published at 22:41:21 UTC.
+Prepared/pending wording in the immutable tagged source records its earlier
+pre-publication state; it is not a new approval requirement. Consumer
+pins/checksums/local annotations still need coordinated PRs that merge with full
+hosted parity. The existing consumer pins remain the recorded adoption boundary.
 
 Historical 2026-10-01 audit: all five consumers then pinned 0.9.9. Foundry
 (#523) and GitForgeOps (#443) had moved from 0.9.8 and checked the mapping to
@@ -92,11 +102,11 @@ claims.
 | ferrum-anvil | Gateway-owned headers | `catalog/ferrum/ferrum-edge-*/outcomes.json`; pinned copy at `contracts/ferrum-contracts/vocabularies/gateway-headers.json` | adopted: CI checks released diagnostic headers against the pin; `X-Ferrum-Diagnostic-Ref` is released in Edge v0.9.9 |
 | ferrum-anvil | `DiagnosticFinding` (owner) | `contracts/schemas/DiagnosticFinding.schema.json` remains the generated schema; pinned schema and valid/invalid fixtures are under `contracts/ferrum-contracts/` | adopted: CI checks schema parity (excluding `$id` and `x-contract`) and validates the pinned fixtures |
 | ferrum-anvil | `diagnostic_ref` | `docs/g01-gateway-diagnostic-contract.md`; shared schema at `schemas/diagnostic-ref/v1.schema.json` | adopted: pinned at `contracts/ferrum-contracts/schemas/diagnostic-ref/v1.schema.json` (ferrum-anvil#271); `contracts_adoption` checks the reference pattern and lookup vocabularies against Anvil's reader (ferrum-anvil#274) |
-| ferrum-anvil | `diagnostic_report` | `crates/anvil-diagnostics/src/import.rs`, dedicated desktop command and preview; pinned report schema and all report fixtures under `contracts/ferrum-contracts/` | consumer implemented and qualified in #312: bounded, unverified, read-only import; shared v1 is **EXISTING** in this candidate; r2 pin unchanged |
+| ferrum-anvil | `diagnostic_report` | `crates/anvil-diagnostics/src/import.rs`, dedicated desktop command and preview; pinned report schema and all report fixtures under `contracts/ferrum-contracts/` | consumer implemented and qualified in #312: bounded, unverified, read-only import; shared v1 is **EXISTING** in published 0.9.11; r2 pin unchanged |
 | ferrum-alloy | Gateway error vocabulary | Local token explanations in `crates/ferrum-alloy-diagnostics/src/catalog.rs` and `rules.rs`, plus `crates/ferrum-alloy-edge/src/contract.rs`; pinned vocabulary under `contracts/ferrum-contracts/` | adopted: the pin hashes the vocabulary; pairing CI checks local tokens and recorded meanings |
 | ferrum-alloy | Gateway-owned headers | `crates/ferrum-alloy-edge/src/contract.rs`; pinned vocabulary at `contracts/ferrum-contracts/vocabularies/gateway-headers.json` | adopted: pairing CI checks the released diagnostic headers against the pin |
-| ferrum-alloy | `diagnostic_report` (owner) | Local schema `contracts/diagnostics/diagnostic-report.v1.schema.json`; pinned schema and Finding fixtures under `contracts/ferrum-contracts/` | r2 adopted: CI checks schema parity and pinned Finding fixtures; Anvil now qualifies import of shared fixtures and an immutable real exporter report; shared v1 is **EXISTING** in this candidate; r2 pin unchanged |
-| ferrum-alloy | `service_manifest` (owner) | `crates/ferrum-alloy-edge/src/manifest.rs`; fixtures `contracts/fixtures/manifests/*.toml` | owner parser/exporter implemented; shared v1 is **EXISTING** in this candidate; historical r2 includes `[agents]`, and Alloy does not vendor the manifest schema; Nexus and Foundry qualify JSON preview consumption |
+| ferrum-alloy | `diagnostic_report` (owner) | Local schema `contracts/diagnostics/diagnostic-report.v1.schema.json`; pinned schema and Finding fixtures under `contracts/ferrum-contracts/` | r2 adopted: CI checks schema parity and pinned Finding fixtures; Anvil now qualifies import of shared fixtures and an immutable real exporter report; shared v1 is **EXISTING** in published 0.9.11; r2 pin unchanged |
+| ferrum-alloy | `service_manifest` (owner) | `crates/ferrum-alloy-edge/src/manifest.rs`; fixtures `contracts/fixtures/manifests/*.toml` | owner parser/exporter implemented; shared v1 is **EXISTING** in published 0.9.11; historical r2 includes `[agents]`, and Alloy does not vendor the manifest schema; Nexus and Foundry qualify JSON preview consumption |
 | ferrum-alloy | `diagnostic_ref` | `docs/edge-contract-inventory.md`; shared schema at `schemas/diagnostic-ref/v1.schema.json` | adopted in ferrum-alloy#117: pinned at `contracts/ferrum-contracts/schemas/diagnostic-ref/v1.schema.json`; pairing CI checks `EDGE_DIAGNOSTIC_REF_PATTERN` against the schema |
 | ferrum-alloy | GitForgeOps envelope | `crates/ferrum-alloy-edge/src/export.rs` `gitforgeops_files` output | consumer qualified in GitForgeOps #461: CI generates two trees from an immutable Alloy CLI and validates them through the actual consumer loader, assembler and CLIs |
 | ferrum-edge-git-forge-ops | Plugin catalog | `src/plugin_catalog.rs`; pinned copy at `contracts/ferrum-contracts/vocabularies/plugin-catalog.json` | adopted: `PIN` hashes the vocabulary and CI compares local names, priorities, retired names and reserved names |
@@ -104,10 +114,10 @@ claims.
 | ferrum-edge-git-forge-ops | GitForgeOps envelope (owner) | Local `src/config/schema.rs` `Resource`; schema and valid/invalid envelope fixtures under `contracts/ferrum-contracts/` | adopted: 0.9.9 pin hashes the shared envelope schema and fixtures; CI checks the top-level envelope against `Resource` and qualifies actual Alloy-generated trees |
 | ferrum-nexus | Plugin catalog | `shared/src/plugins.ts`; pinned copy at `contracts/ferrum-contracts/vocabularies/plugin-catalog.json` | adopted: `PIN` hashes the vocabulary and CI checks local plugin names against it |
 | ferrum-nexus | `provisioned-by` | `server/src/ferrum-admin/client.ts` and test double; pinned vocabulary at `contracts/ferrum-contracts/vocabularies/provisioned-by.json` | adopted: CI checks the header and value against the pin |
-| ferrum-nexus | `service_manifest` | `server/src/service-manifest/`, authenticated route; r2 schema, all shared manifest fixtures and invalid expectations under `contracts/ferrum-contracts/` | consumer implemented and qualified in #519: bounded, namespace-authorized, redacted JSON preview; shared v1 is **EXISTING** in this candidate; r2 pin unchanged |
+| ferrum-nexus | `service_manifest` | `server/src/service-manifest/`, authenticated route; r2 schema, all shared manifest fixtures and invalid expectations under `contracts/ferrum-contracts/` | consumer implemented and qualified in #519: bounded, namespace-authorized, redacted JSON preview; shared v1 is **EXISTING** in published 0.9.11; r2 pin unchanged |
 | ferrum-foundry | Plugin catalog | `src/lib/pluginConfigDefaults.ts`; pinned copy at `contracts/ferrum-contracts/vocabularies/plugin-catalog.json` | adopted: `PIN` hashes the vocabulary and CI checks local metadata and defaults against it |
 | ferrum-foundry | `provisioned-by` | `server/proxy.ts`, `src/components/shared/ResourceLabels.tsx`, `scripts/mock-admin-gateway.mjs`; pinned vocabulary under `contracts/ferrum-contracts/` | adopted: CI checks header, value and label usage against the pin |
-| ferrum-foundry | `service_manifest` | `server/service-manifest.ts`, authenticated route and preview card; r2 schema and all shared manifest fixtures under `contracts/ferrum-contracts/` | consumer implemented and qualified in #540: bounded, namespace-authorized, redacted JSON preview; shared v1 is **EXISTING** in this candidate; r2 pin unchanged |
+| ferrum-foundry | `service_manifest` | `server/service-manifest.ts`, authenticated route and preview card; r2 schema and all shared manifest fixtures under `contracts/ferrum-contracts/` | consumer implemented and qualified in #540: bounded, namespace-authorized, redacted JSON preview; shared v1 is **EXISTING** in published 0.9.11; r2 pin unchanged |
 
 A contract copy is **adopted** when the consumer pins an immutable
 `contracts-edge-*` tag or its commit and CI fails when its local copy differs.
@@ -119,8 +129,8 @@ coordinated metadata decision, supported by the owner and consumer evidence.
 ## ferrum-alloy#27 checklist
 
 [ferrum-alloy#27](https://github.com/ferrum-edge/ferrum-alloy/issues/27)
-tracks consumers of Alloy's contracts. The implemented and accepted portions of
-its original checklist are separated from pending publication/adoption:
+tracks consumers of Alloy's contracts. The implemented, accepted and published
+portions of its original checklist are separated from pending adoption:
 
 - [x] Anvil importer and cross-repository fixture/producer checks: #312.
 - [x] GitForgeOps consumer validation of real generated files: #461.
@@ -129,14 +139,17 @@ its original checklist are separated from pending publication/adoption:
 - [x] Foundry authenticated presentation ADR:
       [`docs/adr/0001-alloy-authenticated-presentation.md`](https://github.com/ferrum-edge/ferrum-foundry/blob/f7eaa96605e2183cec664eccbfee600f46e35f72/docs/adr/0001-alloy-authenticated-presentation.md).
 - [x] Root accepted owner/consumer qualification against matching immutable
-      producer sources and the unchanged shared v1 freeze; this candidate marks
+      producer sources and the unchanged shared v1 freeze; published 0.9.11 marks
       report and manifest shared status EXISTING/implemented.
-- [ ] Publish the canonical tag after final root/fresh review, hosted validation
-      and canonical merge/PUSH qualification; coordinate downstream pin adoption.
+- [x] Publish the canonical tag after final review, hosted validation and
+      canonical merge/PUSH qualification: release 403239814 at
+      `390edbd5b2485af0988e02f7827fde778d76ae0a`.
+- [ ] Coordinate downstream pin/checksum/local annotation adoption with full
+      hosted parity; record adoption only after those PRs merge and qualify.
 
-The shared report EXISTING decision and manifest v1 freeze are now accepted in
-the candidate. These entries do not assert a published freeze or new consumer
-pins. Issue #27 stays open for root disposition after the remaining gates.
+The accepted shared report EXISTING decision and manifest v1 freeze are now
+published in the canonical release. These entries do not assert new consumer
+pins. Issue #27 stays open for root disposition after coordinated adoption.
 
 ### Immutable hosted qualification
 
@@ -239,18 +252,19 @@ claim that human acceptance in GitForgeOps #266 passed.
 
 ## Remaining follow-ups
 
-- **Canonical publication and shared v1 adoption.** Owner qualification and
+- **Shared v1 adoption after canonical publication.** Owner qualification and
   root's accepted unchanged-wire freeze are recorded against Alloy
-  `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`. This candidate refreshes provenance
+  `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`. Published 0.9.11 refreshes provenance
   and marks both shared v1 contracts EXISTING/implemented. Historical released
   report provenance `fa471ccb79a444aee04661880af2385596d9da45`, manifest
   transcription `4cba0f4a66f85bcee3140e3b92e299275a2507fb` and r2 metadata
-  remain immutable. Final candidate review, owner review and the hosted contracts
-  gate are still required before canonical merge/PUSH qualification and tag
-  publication. After publication, coordinate consumer pins/checksums/local copies
-  and Alloy's matching annotations with full report parity including descriptions;
-  record newly qualified adoption slices without relabeling earlier evidence.
-  Root owns publication, issue #27 disposition and any separate publishing decision.
+  remain immutable. Canonical review, hosted validation, merge/PUSH qualification
+  and tag publication are complete at
+  `390edbd5b2485af0988e02f7827fde778d76ae0a`. Coordinate consumer
+  pins/checksums/local copies and Alloy's matching annotations with full report
+  parity including descriptions; record newly qualified adoption slices after
+  their PRs merge without relabeling earlier evidence. Root owns issue #27
+  disposition and any separate publishing decision.
   Follow [versioning.md](versioning.md) and [release-process.md](release-process.md).
 - **Plugin config schemas are referenced, not vendored.** Edge publishes a
   config schema for all 82 built-in plugins in `openapi.yaml`
