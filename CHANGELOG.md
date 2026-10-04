@@ -6,6 +6,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+- Record actual `contracts-edge-0.9.11` publication at
+  `390edbd5b2485af0988e02f7827fde778d76ae0a` after PR #13 and main PUSH
+  validation, including release 403239814 at 22:41:21 UTC on 2026-10-04 and
+  root's accepted unchanged shared v1 freeze. Update current release mappings
+  and documentation; preserve the prepared wording in the released section/tag
+  as historical, existing consumer pins and qualification slices, and Alloy's
+  unpublished status with no separate crate publishing approval. Consumer
+  adoption remains pending until its PRs merge and qualify.
 - Refresh the adoption ledger from immutable 2026-10-04 consumer PIN files,
   test/workflow sources and hosted evidence for Alloy #27: Anvil diagnostic
   import, GitForgeOps generated resource validation, Nexus/Foundry manifest

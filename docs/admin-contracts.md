@@ -1,11 +1,14 @@
 # Edge admin snapshot and egress contracts
 
-**Draft contracts-edge-0.9.11 PR; release contents prepared.** These surfaces
+**Published contracts-edge-0.9.11.** These surfaces
 shipped in Edge `v0.9.11` at immutable source
 `c764084b3b51c3f7ffde268c039688d35e49c553`, with verified upstream distribution
 recorded in the [release notes](releases/contracts-edge-0.9.11.md). The canonical
-tag/publication and downstream adoption remain pending. Canonical metadata alone
-does not patch a product advisory or qualify a consumer integration.
+tag points to `390edbd5b2485af0988e02f7827fde778d76ae0a`; release 403239814
+was published on 2026-10-04 at 22:41:21 UTC. Prepared/pending wording captured in
+the immutable source is historical. Downstream adoption remains pending until
+consumer PRs merge and qualify. Canonical metadata alone does not patch a product
+advisory or qualify a consumer integration.
 
 ## Owner sources and artifact scope
 
@@ -32,7 +35,7 @@ Fixtures contain illustrative tokens and no credentials.
 
 The full backup, consumer verification and restore body shapes remain in the
 pinned owner OpenAPI, including the historical credential fields allowed by
-`ConsumerVerification`. This candidate does not substitute a narrower
+`ConsumerVerification`. This release does not substitute a narrower
 credential model or validate authorization as JSON. `ETag` and `If-Match` are
 standard HTTP headers; `gateway-headers.json` records Edge's admin semantics.
 
@@ -125,7 +128,7 @@ CIDRs, addresses, counts, backend names, credentials or DNS probes are returned.
 `private-reserved` is Edge's versioned `is_private_ip` classifier, and `public`
 is its complement. The pinned owner docs/code define exact IPv4/IPv6 ranges,
 globally reachable IETF exceptions and recognized IPv4 embeddings. This
-candidate adds no second classifier. Changes to classifier meaning require
+release adds no second classifier. Changes to classifier meaning require
 versioned contract coordination.
 
 Evaluation is fixed first-match precedence: `allow-cidrs`, `deny-cidrs`,

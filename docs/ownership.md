@@ -35,16 +35,16 @@ reviewed, versioned form that every other product pins.
 | `provisioned-by` label and `X-Ferrum-Provisioned-By` | `vocabularies/provisioned-by.json` | ferrum-edge | `src/admin/provisioning.rs`, `docs/admin_api.md` | implemented |
 | Plugin catalog index | `vocabularies/plugin-catalog.json` | ferrum-edge | `src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`, `openapi.yaml` | implemented |
 | `ferrum.diagnostic_ref.v1` | `schemas/diagnostic-ref/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DiagnosticRefLookup`), `src/diagnostic_ref.rs` | released in Edge v0.9.9 |
-| Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | released in Edge v0.9.11; upstream distribution verified, canonical tag/publication pending |
-| Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`), `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs` | released in Edge v0.9.11; upstream distribution verified, canonical tag/publication pending |
+| Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | released in Edge v0.9.11; upstream distribution verified, canonical contracts-edge-0.9.11 published |
+| Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`), `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs` | released in Edge v0.9.11; upstream distribution verified, canonical contracts-edge-0.9.11 published |
 | `DiagnosticFinding` | `schemas/diagnostic-finding/v1.schema.json` | ferrum-anvil | `contracts/schemas/DiagnosticFinding.schema.json` (generated from Rust) | implemented |
-| `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; EXISTING shared v1 in the canonical release candidate, owner unreleased |
-| `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | implemented; EXISTING shared v1 in the canonical release candidate, owner unreleased |
+| `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
+| `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | implemented; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
 | GitForgeOps resource file envelope (`kind` + `spec`) | `schemas/gitforgeops-resource/v1.schema.json` | ferrum-edge-git-forge-ops | `src/config/schema.rs` (`Resource`) | implemented |
 
 Owner implementation, shared freeze and publication are separate facts. Both
 Alloy contracts now have `x-contract.status: implemented` and **EXISTING** shared
-v1 status in the [0.9.11 release candidate](releases/contracts-edge-0.9.11.md).
+v1 status in the [published 0.9.11 release](releases/contracts-edge-0.9.11.md).
 Root accepted the unchanged wire freeze on 2026-10-04 after reviewed owner and
 [consumer qualification](adoption.md). This is the authorized canonical metadata
 decision, not an invented prior human approval or separate Alloy crate publishing
@@ -59,10 +59,13 @@ current shared status is recorded in `x-contract` and these docs. The manifest
 remains a transcription of owner code, with documented post-default/cross-field
 limits, not an owner-exported schema. Every v1 field, bound and fixture is retained.
 
-Canonical tag/publication still requires final root/fresh review, owner review,
-hosted validation and the canonical merge/PUSH gates. Existing r2 bytes and
-consumer pins remain historical; owner pin/local annotations and consumer copies
-move together only after the new immutable tag, with full hosted parity.
+Canonical publication is complete: PR #13 merged at
+`390edbd5b2485af0988e02f7827fde778d76ae0a`, main PUSH validation succeeded,
+and release 403239814 was published on 2026-10-04 at 22:41:21 UTC. Prepared/pending
+wording in the immutable tagged source is historical, not a new approval
+requirement. Existing r2 bytes and consumer pins remain historical; owner
+pin/local annotations and consumer copies still need coordinated adoption PRs
+that merge with full hosted parity before the ledger records new pins.
 
 The new Edge artifacts check metadata syntax/shape and owner-derived egress
 invariants. [HTTP/runtime semantics](admin-contracts.md), including credential
@@ -72,8 +75,9 @@ alone grants no authorization or enforcement attestation.
 
 Consumer fixture tests or previews do not automatically promote schema
 metadata, freeze v1 or publish a contracts tag. Root's accepted coordinated
-metadata decision is recorded with owner provenance and consumer evidence;
-landing still requires fixture review and owner approval under the rules above.
+metadata decision is recorded in the published release with owner provenance and
+consumer evidence. Future contract changes require fixture review and owner
+approval under the rules above.
 All contracts follow [versioning.md](versioning.md), and every change is
 recorded in `CHANGELOG.md`; published tags remain immutable.
 

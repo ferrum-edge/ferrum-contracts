@@ -33,7 +33,7 @@ When Ferrum Edge publishes `vX.Y.Z`:
 6. Open a PR. The `Validate contracts` workflow must pass. An owner of each
    changed contract approves (see [ownership.md](ownership.md)).
 
-## contracts-edge-0.9.11 final publication gates
+## contracts-edge-0.9.11 completed publication
 
 The [release record](releases/contracts-edge-0.9.11.md) pins published Edge
 `v0.9.11` at `c764084b3b51c3f7ffde268c039688d35e49c553`, its qualified merge
@@ -58,36 +58,50 @@ Final Alloy annotations bind to qualified owner
 PR #144. Its exact immutable sources, full report pairing, root/fresh owner
 review and all 18 main PUSH jobs/checks qualify that owner commit. The ordinary
 owner squash is not the canonical release/tag target and requires no second
-parent. Root now accepts the proposed coordinated freeze: report and manifest
-shared v1 are EXISTING/implemented in this candidate, retaining owner-unreleased
+parent. Root accepted the coordinated freeze: report and manifest shared v1 are
+EXISTING/implemented in the published release, retaining owner-unreleased
 availability. This is the authorized canonical metadata decision, not separate
 prior human approval or Alloy crate publishing permission. Preserve every v1
 wire field, bound, fixture and unknown-reader rule. Full report pairing includes
 descriptions outside `$id`/`x-contract`; the manifest remains a transcription
 with documented post-default/cross-field limits.
 
-Keep PR #13 draft pending final exact-head root/fresh review, owner review and
-hosted `Schemas, fixtures and vocabularies` success. The earlier 26a2797 candidate's
-45-file review, fresh review 3 and 116-check hosted validation are historical
-evidence; they do not qualify a changed candidate SHA.
+[PR #13](https://github.com/ferrum-edge/ferrum-contracts/pull/13) completed final
+review at `0cf926686f2164ad0b4de7b27e2eb5a25df6a261`; root reviewed the full
+change and fresh independent final-delta review reported no findings. Hosted
+[run 37240041628](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240041628)
+passed at that final head, including all 116 validation cases. The earlier
+`26a2797f15286da8e32002c4971b68013e134be9` candidate's 45-file review, fresh
+review 3 and 116-check hosted validation remain historical evidence; they were
+not substituted for final-head qualification.
 
-After final reviews and the hosted gate, root uses a canonical **merge commit**
-whose second parent equals the exact final reviewed PR head. Verify the merge
-commit, its unique associated PR and every applicable main PUSH workflow success
-before publishing the immutable tag and release notes. Earlier PR-head checks
-do not qualify the changed merge commit. No release tag is moved or rewritten.
-The `[contracts-edge-0.9.11]` changelog section is prepared; canonical publication
-remains pending, and unrelated `[Unreleased]` entries/historical releases are retained.
+PR #13 merged at 22:40:08 UTC on 2026-10-04 as
+`390edbd5b2485af0988e02f7827fde778d76ae0a`. Its first parent is
+`d098c81a50f1baaa8c081d511868c74e957ddf43`; its **second parent equals the
+exact final reviewed PR head**, `0cf926686f2164ad0b4de7b27e2eb5a25df6a261`.
+Every actual main PUSH workflow succeeded before tag creation: sole applicable
+[run 37240886730](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240886730)
+and required [Schemas, fixtures and vocabularies job 111549212572](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240886730/job/111549212572).
+The immutable unsigned lightweight `contracts-edge-0.9.11` tag points to that
+merge commit; [release 403239814](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
+was published at 22:41:21 UTC. Earlier PR-head checks were not substituted for
+merge-commit qualification.
 
-Only after canonical tag publication do consumer pins/checksums/local copies and
-Alloy's matching local annotations/descriptions move together, with full hosted
-parity and recorded adoption evidence. Existing r2 bytes and consumer snapshots
-remain historical. Canonical metadata does not patch a product advisory or qualify
-production apply/performance. Root owns issue disposition and separate publishing
-permission.
+The immutable tag captured prepared/pending prose and annotations before
+publication, including the `[contracts-edge-0.9.11]` changelog section. That
+historical wording is preserved and is not a new approval requirement. The
+release record and current documentation record the subsequent publication;
+the released section and every historical tag remain unchanged.
 
-Preparation performs static source/diff inspection and integrity hashing only;
-repository execution is prohibited locally. GitHub-hosted `Validate contracts`
+Consumer pins/checksums/local copies and Alloy's matching local
+annotations/descriptions still need coordinated adoption PRs with full hosted
+parity. Record new adoption only after those PRs merge and qualify. Existing r2
+bytes and consumer snapshots remain historical. Canonical metadata does not
+patch a product advisory or qualify production apply/performance. Root owns
+issue disposition and separate publishing permission.
+
+Documentation updates use static source/diff inspection and integrity hashing
+only; repository execution is prohibited locally. GitHub-hosted `Validate contracts`
 is the schema/fixture/OpenAPI gate. The existing validator discovers the added
 files and shared label/order references without workflow, permission, dependency
 or validation exceptions.
