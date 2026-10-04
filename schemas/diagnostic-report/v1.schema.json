@@ -8,18 +8,26 @@
     "version": 1,
     "status": "implemented",
     "owner": "ferrum-edge/ferrum-alloy",
-    "shared_status": "PROPOSED as a shared Ferrum contract; Anvil import is not tested (ferrum-alloy#27).",
+    "shared_status": "PROPOSED shared v1 freeze candidate. Anvil import is merged and qualified; final matched Alloy owner qualification and canonical publication remain pending (ferrum-alloy#27).",
     "wire_version": "ferrum.diagnostic_report 1.x",
     "upstream_id": "tag:ferrumedge.com,2026:alloy/schema/diagnostic-report/1",
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-alloy",
         "ref": "main",
-        "commit": "fa471ccb79a444aee04661880af2385596d9da45",
+        "commit": "d7ddb3688e058ec3cc2e17d166a801aa0037b5b1",
         "path": "contracts/diagnostics/diagnostic-report.v1.schema.json",
-        "note": "Copied verbatim; $id was replaced (the original is kept in x-contract.upstream_id) and x-contract was added. Alloy keeps it in sync with its Rust enums through crates/ferrum-alloy-diagnostics/tests/schema_parity.rs."
+        "note": "Copied verbatim; $id was replaced (the original is kept in x-contract.upstream_id) and x-contract was added. Alloy keeps it in sync with its Rust enums through crates/ferrum-alloy-diagnostics/tests/schema_parity.rs.",
+        "availability": "unreleased"
       }
-    ]
+    ],
+    "freeze_candidate": {
+      "contracts_tag": "contracts-edge-0.9.11",
+      "state": "draft; not frozen or published",
+      "inspected_owner_commit": "d7ddb3688e058ec3cc2e17d166a801aa0037b5b1",
+      "owner_proposal_commit": "725914bee883b3a6248ee68bafec3040b1fa35d0",
+      "pending": "Root must supply and qualify the final merged Alloy owner SHA before canonical merge; update matching provenance/status/annotations together. No wire fields, bounds or fixtures change. Descriptions outside $id/x-contract remain paired with the inspected owner; owner pin/local annotations follow the new canonical tag."
+    }
   },
   "type": "object",
   "required": [

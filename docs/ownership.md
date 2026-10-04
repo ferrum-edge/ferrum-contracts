@@ -9,7 +9,9 @@ reviewed, versioned form that every other product pins.
 
 1. **Edge owns the gateway vocabularies.** `ErrorClass`, the `X-Gateway-Error`
    tokens, the gateway-owned headers, the `provisioned-by` attribution rules
-   and the plugin catalog change only when Ferrum Edge changes them.
+   and the plugin catalog change only when Ferrum Edge changes them. Edge also
+   owns conditional snapshot/restore semantics and backend egress metadata,
+   including its versioned classifier and process/enforcement scope labels.
 2. **Each product owns its own schemas.** Anvil owns `DiagnosticFinding`, Alloy
    owns `diagnostic_report` and `service_manifest`, GitForgeOps owns its
    resource file envelope, and Edge owns `diagnostic_ref`.
@@ -33,6 +35,8 @@ reviewed, versioned form that every other product pins.
 | `provisioned-by` label and `X-Ferrum-Provisioned-By` | `vocabularies/provisioned-by.json` | ferrum-edge | `src/admin/provisioning.rs`, `docs/admin_api.md` | implemented |
 | Plugin catalog index | `vocabularies/plugin-catalog.json` | ferrum-edge | `src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`, `openapi.yaml` | implemented |
 | `ferrum.diagnostic_ref.v1` | `schemas/diagnostic-ref/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DiagnosticRefLookup`), `src/diagnostic_ref.rs` | released in Edge v0.9.9 |
+| Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | implemented at tagged v0.9.11; draft canonical candidate, publication verification pending |
+| Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`), `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs` | implemented at tagged v0.9.11; draft canonical candidate, publication verification pending |
 | `DiagnosticFinding` | `schemas/diagnostic-finding/v1.schema.json` | ferrum-anvil | `contracts/schemas/DiagnosticFinding.schema.json` (generated from Rust) | implemented |
 | `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; proposed as shared |
 | `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | **proposed** |
@@ -44,6 +48,22 @@ and a separate **PROPOSED** shared status; `service-manifest` retains
 `x-contract.status: proposed`. Both now have bounded consumer qualification
 recorded in [adoption.md](adoption.md), but their canonical shared freeze is
 still pending agreement against matching immutable owner sources.
+
+The draft [0.9.11 candidate](releases/contracts-edge-0.9.11.md) re-reads Alloy
+schema/manifest source at qualified main
+`d7ddb3688e058ec3cc2e17d166a801aa0037b5b1`. Its freeze annotations record
+consumer qualification and an unmerged owner proposal, with explicit pending
+final owner provenance. They do not promote either shared status or grant
+publishing approval. Root must qualify the final matched owner merge and
+coordinate canonical annotations before merge. Full diagnostic-report pairing
+includes descriptions outside `$id`/`x-contract`; the owner pin and matching
+local annotations move together after the new canonical tag.
+
+The new Edge artifacts check metadata syntax/shape and owner-derived egress
+invariants. [HTTP/runtime semantics](admin-contracts.md), including credential
+verification, audit admission, snapshot coherence, lease fences and serving-DP
+checks, remain the owning implementation's responsibility; schema conformance
+alone grants no authorization or enforcement attestation.
 
 Consumer fixture tests or previews do not automatically promote schema
 metadata, freeze v1 or publish a contracts tag. The owner-backed canonical

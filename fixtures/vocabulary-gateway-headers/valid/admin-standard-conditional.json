@@ -1,0 +1,119 @@
+{
+  "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-headers/v1.schema.json",
+  "vocabulary": "gateway-headers",
+  "version": 1,
+  "edge_release": "v0.9.11",
+  "description": "Standard HTTP headers with owner-defined admin precondition semantics; draft v0.9.11 candidate.",
+  "provenance": [
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.11",
+      "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+      "path": "src/admin/preconditions.rs",
+      "symbols": [
+        "resource_etag",
+        "quoted",
+        "IfMatch"
+      ]
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.11",
+      "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+      "path": "src/admin/conditional_snapshots.rs",
+      "symbols": [
+        "consumer_verification",
+        "serialize_snapshot",
+        "restore"
+      ]
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.11",
+      "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+      "path": "docs/admin_backup_restore.md",
+      "sections": [
+        "Conditional snapshots and restore"
+      ]
+    }
+  ],
+  "headers": [
+    {
+      "name": "ETag",
+      "match": "exact",
+      "surface": "admin",
+      "direction": "gateway_to_client",
+      "role": "admin_response",
+      "edge_behavior": "Standard HTTP header. Row CRUD reads emit an opaque quoted strong tag bound to kind, namespace, id and complete stored state, including credentials redacted from ordinary consumer reads. The v0.9.11 admin-only verification read and conditional backup row maps share those tags. Conditional backup also emits a distinct coherent namespace tag equal to conditional.namespace_etag. No tag on cached row fallback or write responses; credential-complete verification and conditional backup never use cached fallback and require audit admission before response with Cache-Control: no-store. Shared admin JWT secrets allow replica agreement; secret rotation invalidates tags.",
+      "availability": "v0.9.9",
+      "sources": [
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.11",
+          "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+          "path": "openapi.yaml",
+          "symbols": [
+            "components.headers.ResourceETag",
+            "components.schemas.ConditionalBackupMetadata",
+            "components.schemas.ConsumerVerification"
+          ]
+        },
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.11",
+          "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+          "path": "src/admin/preconditions.rs",
+          "symbols": [
+            "resource_etag",
+            "quoted"
+          ]
+        },
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.11",
+          "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+          "path": "src/admin/conditional_snapshots.rs"
+        }
+      ]
+    },
+    {
+      "name": "If-Match",
+      "match": "exact",
+      "surface": "admin",
+      "direction": "client_to_gateway",
+      "role": "admin_request",
+      "edge_behavior": "Standard HTTP precondition header. Row PUT/DELETE for proxies, consumers, upstreams and plugin configs compare complete stored row state under the namespace admission lease; weak tags never match, strong lists match any member, and * checks existence. The v0.9.11 POST /restore?confirm=true exception requires the coherent namespace tag from conditional backup on the same namespace: atomic comparison and complete replacement, including empty replacement and lease entry/commit fences. Row tags and body metadata do not authorize restore; namespace wildcard/malformed/empty headers return 400, stale or weak-only tags 412, unsupported topology 501, unavailable state/lease 503. Omission preserves unconditional restore. If-Match on other mutating routes is refused with 400.",
+      "availability": "v0.9.9",
+      "sources": [
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.11",
+          "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+          "path": "openapi.yaml",
+          "symbols": [
+            "components.parameters.IfMatch",
+            "components.parameters.NamespaceIfMatch"
+          ]
+        },
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.11",
+          "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+          "path": "docs/admin_api.md",
+          "sections": [
+            "Conditional writes (ETag / If-Match)"
+          ]
+        },
+        {
+          "repo": "ferrum-edge/ferrum-edge",
+          "ref": "v0.9.11",
+          "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+          "path": "docs/admin_backup_restore.md",
+          "sections": [
+            "Conditional snapshots and restore"
+          ]
+        }
+      ]
+    }
+  ]
+}

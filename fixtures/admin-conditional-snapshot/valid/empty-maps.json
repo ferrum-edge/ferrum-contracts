@@ -1,0 +1,9 @@
+{
+  "namespace_etag": "\"opaque-namespace-tag\"",
+  "row_etags": {
+    "proxies": {},
+    "consumers": {},
+    "upstreams": {},
+    "plugin_configs": {}
+  }
+}

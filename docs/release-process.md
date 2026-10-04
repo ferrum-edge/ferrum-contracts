@@ -28,10 +28,52 @@ When Ferrum Edge publishes `vX.Y.Z`:
    release. Move entries marked `unreleased` to the release that ships them.
 4. Add or update fixtures for anything that changed, including at least one
    invalid fixture for each new rule.
-5. Move the `CHANGELOG.md` entries under `[Unreleased]` into a
+5. Move the included `CHANGELOG.md` entries under `[Unreleased]` into a
    `[contracts-edge-X.Y.Z]` section.
 6. Open a PR. The `Validate contracts` workflow must pass. An owner of each
    changed contract approves (see [ownership.md](ownership.md)).
+
+## Draft contracts-edge-0.9.11 prerequisites
+
+The [candidate record](releases/contracts-edge-0.9.11.md) pins actual Edge
+`v0.9.11` at `c764084b3b51c3f7ffde268c039688d35e49c553`, its qualified merge
+parents/PR and OpenAPI hash. A created tag is source provenance; upstream
+published release/assets, digests, attestations and ABI evidence still need
+root verification. Keep the canonical PR draft and unmerged until those facts
+and the final matched qualified Alloy owner SHA/decision are supplied.
+
+The new owner sources are `src/admin/conditional_snapshots.rs`, `preconditions.rs`,
+`crud.rs`, `backup.rs`, `backend_egress_policy.rs`, admin routing, transaction
+backends, `src/config/env_config.rs`, the admin docs and `openapi.yaml`.
+Preserve complete stored credentials, all four coherent row maps, namespace
+revision and atomic lease-fenced replacement, standard header semantics,
+runtime refusals and unconditional restore. Transcribe bounded process policy
+metadata without credentials/raw CIDRs or CP-to-DP attestation; see
+[admin-contracts.md](admin-contracts.md).
+
+Alloy annotations currently bind to qualified owner
+`d7ddb3688e058ec3cc2e17d166a801aa0037b5b1`; proposal
+`725914bee883b3a6248ee68bafec3040b1fa35d0` is not the final matched owner SHA.
+Root must qualify that final merge and reconcile status/provenance/annotations
+before canonical merge. Retain every v1 wire field, bound and fixture; full
+report pairing includes descriptions outside `$id`/`x-contract`. Keep explicit
+pending metadata if the owner decision cannot yet be supported. This work
+does not grant separate Alloy crate publishing approval.
+
+After owner approvals and the hosted gate at the final candidate, root verifies
+the canonical merge commit, its exact qualified PR second parent, unique
+associated PR and all applicable main PUSH workflow successes. Then root
+publishes the immutable canonical tag and release notes. Earlier head checks
+do not qualify a changed merge commit. No release tag is moved or rewritten.
+Only then do consumer pins/checksums/local copies and Alloy's matching local
+annotations/descriptions move together, with hosted parity and recorded
+adoption evidence. Preserve historical notes and unrelated `[Unreleased]` entries.
+
+Candidate preparation performs static source/diff inspection and integrity
+hashing only; repository execution is prohibited locally. GitHub-hosted
+`Validate contracts` is the schema/fixture/OpenAPI gate. The existing validator
+discovers the added files and shared label/order references without workflow,
+permission, dependency or validation exceptions.
 
 ## Tagging
 

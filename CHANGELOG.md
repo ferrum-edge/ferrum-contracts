@@ -16,6 +16,35 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   this documentation refresh changes no schemas, pins, tags or release status.
 - Add shared GPT-6.1 Sol worker skills for Codex and Claude with optional fast mode.
 
+### Draft contracts-edge-0.9.11 candidate
+
+Not merged, frozen, tagged or published. The latest published canonical release
+remains `contracts-edge-0.9.9-r2`; existing consumer pins are unchanged.
+See [candidate release notes](docs/releases/contracts-edge-0.9.11.md) for
+qualified inputs, pending upstream publication/Alloy owner evidence and order.
+
+- Refresh all four existing Edge vocabularies from actual tagged v0.9.11,
+  `c764084b3b51c3f7ffde268c039688d35e49c553`, and update the pinned OpenAPI
+  SHA-256. Error tokens/classes, provisioning values, plugin registrations and
+  lifecycle metadata are unchanged from r2. No obsolete `main_branch_delta`
+  exists in these files; historical first-availability entries are retained.
+- Add conditional snapshot metadata and backend egress response schemas,
+  the egress vocabulary/shape, sanitized fixtures and exact negative
+  path/keyword expectations for Edge #5992/#5994. Keep strict producer
+  validation, opaque token/runtime authorization boundaries and unknown-value
+  reader semantics; require serving-DP scope for public-only publication.
+- Record standard HTTP admin `ETag`/`If-Match`, credential-complete verification,
+  coherent namespace tokens, atomic replacement/lease fences, runtime refusal
+  statuses and the unconditional restore exception in the admin contract docs.
+- Stage Alloy shared v1 freeze annotations/provenance from qualified owner
+  `d7ddb3688e058ec3cc2e17d166a801aa0037b5b1`, preserving all wire fields,
+  bounds, paired descriptions and fixtures. Shared statuses remain PROPOSED;
+  final matched owner qualification/decision is pending. No crate publishing
+  approval or new consumer pin is implied.
+- Document candidate availability and root verification/publication gates in
+  README, ownership, adoption, versioning and release process. The existing
+  hosted validator auto-discovers new artifacts; no CI/dependency/gate changes.
+
 ## [contracts-edge-0.9.9-r2] - 2026-10-01
 
 Revision of `contracts-edge-0.9.9` for an Alloy-owned schema change. The

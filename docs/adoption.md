@@ -12,7 +12,7 @@ open pending coordinated owner qualification and the canonical shared freeze.
 
 | Repository | `main` commit read (2026-10-04) | Pinned tag on `main` |
 |---|---|---|
-| ferrum-edge | `66f25f5f89f1dbd4f7d523f3c57e2ace7f59d017` | producer: published Edge `v0.9.10` (maps to `contracts-edge-0.9.9`, also covered by r2) |
+| ferrum-edge | `c764084b3b51c3f7ffde268c039688d35e49c553` | producer: actual tagged `v0.9.11` source for this draft; published release/assets verification pending; existing `v0.9.10` mapping is `contracts-edge-0.9.9`, also covered by r2 |
 | ferrum-anvil | `c19c0a6abba896bfec972b3e083179c55ef8e38c` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/c19c0a6abba896bfec972b3e083179c55ef8e38c/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9-r2` |
 | ferrum-alloy | `d7ddb3688e058ec3cc2e17d166a801aa0037b5b1` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/d7ddb3688e058ec3cc2e17d166a801aa0037b5b1/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9-r2` |
 | ferrum-nexus | `559c350a5370335791cdc3082225dce6056cf547` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/559c350a5370335791cdc3082225dce6056cf547/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9` vocabularies; [`SERVICE-MANIFEST-PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/559c350a5370335791cdc3082225dce6056cf547/contracts/ferrum-contracts/SERVICE-MANIFEST-PIN): `contracts-edge-0.9.9-r2` manifest |
@@ -26,11 +26,47 @@ includes the Alloy-owned optional `[agents]` section. Alloy pins the diagnostic
 schemas and vocabularies from r2, but does not vendor the service-manifest
 schema. A tag pin therefore does not imply consumption of every file in it.
 
-[Edge v0.9.10](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.10)
-remains the latest published Edge release. It changed no contract source after
-v0.9.9, so the mapping remains 0.9.9, with r2 available for the Alloy addition.
-[Edge #6005](https://github.com/ferrum-edge/ferrum-edge/pull/6005) prepares
-v0.9.11 but is open and unpublished at this snapshot; it changes no pin here.
+The previous snapshot inspected Edge main
+`66f25f5f89f1dbd4f7d523f3c57e2ace7f59d017` and published
+[v0.9.10](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.10),
+which changed no contract source after v0.9.9 and maps to 0.9.9, with r2 for
+the Alloy addition. [Edge #6005](https://github.com/ferrum-edge/ferrum-edge/pull/6005)
+has since merged as `c764084b3b51c3f7ffde268c039688d35e49c553`; its actual
+unsigned lightweight `v0.9.11` tag was created at 19:46:47 UTC on 2026-10-04.
+The [draft canonical candidate](releases/contracts-edge-0.9.11.md) reads those
+owner sources. At handoff its release run was still in progress; published
+assets/digests/attestations/ABI evidence remain unverified for this candidate.
+The latest published canonical release remains r2. No consumer pin changes here.
+
+## Draft admin and shared v1 adoption boundary
+
+The new [admin contracts](admin-contracts.md) cover Edge #5992/#5994 source at
+the immutable v0.9.11 commit: credential-complete consumer verification,
+coherent conditional backup metadata/namespace restore and process egress
+discovery. The schema/fixtures are a canonical publication candidate, not
+evidence of consumer adoption. GitForgeOps must adopt complete verification
+and coherent tokens; Nexus (GHSA-93rq-89vr-38pc part B), Foundry and other
+publishers must check every relevant serving DP's policy and scope. CP policy
+metadata cannot substitute for DP checks. Missing/unknown policy data or
+incompatible scopes block public-only publication. No newly released patched
+consumer version or pin is recorded by this draft.
+
+Alloy report/manifest provenance is re-read at qualified owner
+`d7ddb3688e058ec3cc2e17d166a801aa0037b5b1`, preserving wire fields, bounds,
+paired descriptions and fixture semantics. Candidate metadata records the
+qualified consumer slices below and the owner proposal at
+`725914bee883b3a6248ee68bafec3040b1fa35d0`; that unmerged proposal is not
+final approval or the final matched owner SHA. Root must supply the qualified
+owner merge/decision before canonical merge and promote shared status only
+with matching evidence. Report shared status and manifest status stay
+**PROPOSED**. Alloy remains unpublished; no crate publishing approval follows.
+
+After owner qualification and actual Edge publication verification, root
+reviews/merges the canonical change, verifies its own merge/qualified second
+parent and all applicable PUSH runs, and publishes the immutable tag. Only
+then do consumer pins/checksums/local annotations move together, preserving
+Alloy's full schema parity including descriptions. The existing consumer pins
+remain the released adoption boundary.
 
 Historical 2026-10-01 audit: all five consumers then pinned 0.9.9. Foundry
 (#523) and GitForgeOps (#443) had moved from 0.9.8 and checked the mapping to
@@ -193,11 +229,12 @@ claim that human acceptance in GitForgeOps #266 passed.
   schema semantics before a coordinated freeze. The published report schema
   records owner `fa471ccb79a444aee04661880af2385596d9da45`; the manifest
   transcription records `4cba0f4a66f85bcee3140e3b92e299275a2507fb`. Their
-  existing metadata still contains historical no-consumer/untested wording.
-  This documentation refresh records the newer evidence without changing
-  those immutable sources, shared **PROPOSED** statuses or schema metadata.
-  A follow-up needs matching immutable owner sources, provenance and fixture
-  review, owner approval and the normal hosted contracts gate. Any subsequent
+  released metadata still contains historical no-consumer/untested wording.
+  This draft re-reads owner sources at
+  `d7ddb3688e058ec3cc2e17d166a801aa0037b5b1` and stages qualification annotations,
+  retaining paired descriptions and shared **PROPOSED** statuses. Finalization
+  needs the exact matched qualified owner merge, provenance/fixture review,
+  owner approval and the normal hosted contracts gate. Any subsequent
   release follows [versioning.md](versioning.md) and
   [release-process.md](release-process.md); existing tags stay immutable.
   Root owns the coordinated freeze and eventual issue #27 status update.

@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-backend-egress-policy/v1.schema.json",
+  "title": "Backend egress policy vocabulary v1",
+  "description": "Shape and complete v1 label sets of vocabularies/backend-egress-policy.json. Shared definitions also constrain the response schema; completeness, uniqueness and fixed evaluation order are asserted.",
+  "x-contract": {
+    "name": "vocabulary-backend-egress-policy",
+    "version": 1,
+    "status": "implemented",
+    "owner": "ferrum-edge/ferrum-contracts",
+    "instance": "vocabularies/backend-egress-policy.json",
+    "provenance": [
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.11",
+        "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+        "path": "openapi.yaml",
+        "symbols": [
+          "components.schemas.BackendEgressPolicyResponse"
+        ]
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.11",
+        "commit": "c764084b3b51c3f7ffde268c039688d35e49c553",
+        "path": "src/admin/backend_egress_policy.rs",
+        "note": "Vocabulary shape is contracts-owned; v1 labels/order are transcribed from the Edge-owned response and reused by its canonical schema."
+      }
+    ]
+  },
+  "type": "object",
+  "required": [
+    "$schema",
+    "vocabulary",
+    "version",
+    "edge_release",
+    "description",
+    "provenance",
+    "schema_version",
+    "ip_classification",
+    "policy_scope",
+    "enforcement_scopes",
+    "modes",
+    "ip_classes",
+    "evaluation_order",
+    "public_only_guaranteed_rule",
+    "consumer_rule"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "const": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-backend-egress-policy/v1.schema.json"
+    },
+    "vocabulary": {
+      "const": "backend-egress-policy"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "edge_release": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Provenance"
+      }
+    },
+    "schema_version": {
+      "$ref": "#/$defs/SchemaVersion"
+    },
+    "ip_classification": {
+      "$ref": "#/$defs/IpClassification"
+    },
+    "policy_scope": {
+      "$ref": "#/$defs/PolicyScope"
+    },
+    "enforcement_scopes": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/EnforcementScope"
+      }
+    },
+    "modes": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/Mode"
+      }
+    },
+    "ip_classes": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/IpClass"
+      }
+    },
+    "evaluation_order": {
+      "$ref": "#/$defs/EvaluationOrder"
+    },
+    "public_only_guaranteed_rule": {
+      "type": "string",
+      "minLength": 1
+    },
+    "consumer_rule": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "SchemaVersion": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "IpClassification": {
+      "type": "string",
+      "enum": [
+        "ferrum-private-reserved-v1"
+      ]
+    },
+    "PolicyScope": {
+      "type": "string",
+      "enum": [
+        "process"
+      ]
+    },
+    "EnforcementScope": {
+      "type": "string",
+      "enum": [
+        "local-data-plane",
+        "unserved-namespace",
+        "admission-only",
+        "no-data-plane"
+      ]
+    },
+    "Mode": {
+      "type": "string",
+      "enum": [
+        "both",
+        "public",
+        "private"
+      ]
+    },
+    "IpClass": {
+      "type": "string",
+      "enum": [
+        "public",
+        "private-reserved"
+      ]
+    },
+    "EvaluationOrder": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {
+          "type": "string",
+          "const": "allow-cidrs"
+        },
+        {
+          "type": "string",
+          "const": "deny-cidrs"
+        },
+        {
+          "type": "string",
+          "const": "dangerous-ranges"
+        },
+        {
+          "type": "string",
+          "const": "ip-mode"
+        }
+      ],
+      "items": false
+    },
+    "Provenance": {
+      "type": "object",
+      "required": [
+        "repo",
+        "ref",
+        "commit",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "const": "ferrum-edge/ferrum-edge"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbols": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

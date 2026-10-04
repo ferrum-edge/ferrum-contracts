@@ -30,6 +30,8 @@ complete; the issue is closed and remains as project history.
 | [`docs/versioning.md`](docs/versioning.md) | Schema versions and `contracts-edge-X.Y.Z` tags |
 | [`docs/adoption.md`](docs/adoption.md) | Consumer pins, qualification evidence and remaining contract gaps |
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
+| [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions and process egress discovery |
+| [`docs/releases/contracts-edge-0.9.11.md`](docs/releases/contracts-edge-0.9.11.md) | Draft candidate notes, immutable source evidence and pending publication gates |
 
 Every file records where it came from: owner repository, path, and commit.
 The latest published contracts release is
@@ -38,8 +40,20 @@ which adds Alloy's optional service-manifest `[agents]` section to
 [`contracts-edge-0.9.9`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.9).
 Both map to published Edge v0.9.9 and v0.9.10. The initial
 [`contracts-edge-0.9.8`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.8)
-release remains available. Edge v0.9.11 is not published at the 2026-10-04
-adoption snapshot.
+release remains available. This branch prepares a **DRAFT**
+`contracts-edge-0.9.11` candidate from Edge's actual unsigned lightweight
+`v0.9.11` tag at `c764084b3b51c3f7ffde268c039688d35e49c553`.
+Tag/source provenance is established; upstream release assets, digests,
+attestations/ABI evidence and final matched Alloy owner qualification remain
+pending root verification. The candidate is unmerged and unpublished and
+changes no consumer pin. See the [candidate record](docs/releases/contracts-edge-0.9.11.md).
+
+The candidate adds metadata schemas for coherent admin conditional backup and
+process-scoped backend egress discovery, plus the egress vocabulary and sanitized
+fixtures. Standard HTTP `ETag`/`If-Match` admin semantics are documented against
+the owner implementation. JSON validation checks shape and owner-derived
+invariants; authorization, token validity and serving-DP enforcement remain
+runtime requirements in [the admin contract](docs/admin-contracts.md).
 
 ## Consumers
 
