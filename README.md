@@ -28,17 +28,32 @@ complete; the issue is closed and remains as project history.
 | [`fixtures/`](fixtures) | Payloads producers must emit and consumers must accept (`valid/`) or reject (`invalid/`) |
 | [`docs/ownership.md`](docs/ownership.md) | Who owns each contract and how changes land |
 | [`docs/versioning.md`](docs/versioning.md) | Schema versions and `contracts-edge-X.Y.Z` tags |
-| [`docs/adoption.md`](docs/adoption.md) | Which products consume which contract, and the local copies to replace |
+| [`docs/adoption.md`](docs/adoption.md) | Consumer pins, qualification evidence and remaining contract gaps |
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
 
 Every file records where it came from: owner repository, path, and commit.
-The current releases are [`contracts-edge-0.9.8`](https://github.com/ferrum-edge/ferrum-contracts/tree/contracts-edge-0.9.8)
-and [`contracts-edge-0.9.9`](https://github.com/ferrum-edge/ferrum-contracts/tree/contracts-edge-0.9.9).
+The latest published contracts release is
+[`contracts-edge-0.9.9-r2`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.9-r2),
+which adds Alloy's optional service-manifest `[agents]` section to
+[`contracts-edge-0.9.9`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.9).
+Both map to published Edge v0.9.9 and v0.9.10. The initial
+[`contracts-edge-0.9.8`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.8)
+release remains available. Edge v0.9.11 is not published at the 2026-10-04
+adoption snapshot.
 
 ## Consumers
 
 See [docs/adoption.md](docs/adoption.md) for each consumer's pinned tag,
 adoption status and remaining contract gaps.
+
+The 2026-10-04 snapshot records qualified Anvil diagnostic import, GitForgeOps
+validation of actual Alloy-generated resource trees, and Nexus/Foundry manifest
+previews with their bounded trust and presentation rules. Anvil, Alloy and
+Foundry pin r2; Nexus pins r2 for manifests and 0.9.9 for vocabularies;
+GitForgeOps pins 0.9.9. Alloy remains unpublished, and the shared diagnostic
+report and service manifest remain **PROPOSED** pending an owner-backed
+canonical freeze. [Alloy #27](https://github.com/ferrum-edge/ferrum-alloy/issues/27)
+remains open; consumer qualification does not itself freeze or release a contract.
 
 ## License
 

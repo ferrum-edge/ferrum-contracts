@@ -6,6 +6,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+- Refresh the adoption ledger from immutable 2026-10-04 consumer PIN files,
+  test/workflow sources and hosted evidence for Alloy #27: Anvil diagnostic
+  import, GitForgeOps generated resource validation, Nexus/Foundry manifest
+  previews and Foundry's accepted presentation ADR. Record the split Nexus
+  pins, the published r2 `[agents]` addition and the Edge v0.9.10 mapping.
+- Clarify owner implementation versus shared qualification. Keep Alloy's shared
+  schemas PROPOSED and issue #27 open pending an owner-backed canonical freeze;
+  this documentation refresh changes no schemas, pins, tags or release status.
 - Add shared GPT-6.1 Sol worker skills for Codex and Claude with optional fast mode.
 
 ## [contracts-edge-0.9.9-r2] - 2026-10-01
