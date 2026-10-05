@@ -41,8 +41,13 @@ branch of it.
 | `backend-egress-policy/valid/public-serving.json` | ferrum-edge `tests/integration/admin_backend_egress_policy_tests.rs` `serving_modes_report_the_proxy_policy_and_selected_namespace_scope`, field values completed from `src/admin/backend_egress_policy.rs` `handle_get` with `BackendAllowIps::Public`, no overlays and the production baseline | `c764084b3b51c3f7ffde268c039688d35e49c553` |
 | `backend-egress-policy/valid/public-with-allow-overrides.json`, `private-control-plane.json` | ferrum-edge `src/admin/backend_egress_policy.rs` `handle_get` and `src/config/env_config.rs` `BackendEgressPolicy::metadata`; sanitized transcriptions of public-with-allow-overlay and private-mode branches. No operator CIDRs, JWTs or credentials. | `c764084b3b51c3f7ffde268c039688d35e49c553` |
 | `vocabulary-backend-egress-policy/valid/v1.json`, `vocabulary-gateway-headers/valid/admin-standard-conditional.json` | Initial-candidate egress vocabulary snapshot and admin-header subset; owner paths/full provenance recorded in each fixture | `c764084b3b51c3f7ffde268c039688d35e49c553` |
+| `admin-deployment-snapshot/valid/empty-sql.json` | ferrum-edge/ferrum-edge `src/admin/deployment_mutations.rs` `snapshot`, `src/config/deployment_mutation.rs` `DeploymentSnapshot::representation`, `src/config/db_backend.rs` `ConditionalNamespaceSnapshot::representation`, and `src/config/db_loader.rs` `deployment_snapshot_tx`: transcribed complete empty SQL namespace, no registry record and zero watermark. The namespace fixes the owner integration test's `deployment-{UUID}` form to an illustrative all-zero UUID, avoiding the seeded `ferrum` registry row. Token is the illustrative all-zero form used in `tests/integration/admin_conditional_write_tests.rs`, not a captured MAC. | `0d917701b63ef38210c49df830f48cf0457cbc7d` (actual released v0.9.12) |
+| `admin-deployment-snapshot/valid/empty-mongodb.json` | Same owner snapshot/representation sources, with `src/config/mongo_store.rs` `deployment_snapshot_in_session`'s exact empty collection set instead of SQL tables. MongoDB embeds associations and credential uniqueness metadata; no separate SQL junction/credential-index collections are fabricated. | `0d917701b63ef38210c49df830f48cf0457cbc7d` |
+| `admin-deployment-mutation-acknowledgement/valid/applied.json`, `durable-only.json` | ferrum-edge/ferrum-edge `src/admin/deployment_mutations.rs` `finish` success branches, transcribed. IDs `live`/`deployment` come from `tests/integration/admin_conditional_write_tests.rs` `assert_deployment_cancellation_and_live_ack` / `assert_deployment_mutation_contract`; those tests assert local applied versus CP durable-only cleanup authorization. | `0d917701b63ef38210c49df830f48cf0457cbc7d` |
+| `admin-deployment-mutation-acknowledgement/valid/stale.json` | ferrum-edge/ferrum-edge `src/admin/deployment_mutations.rs` `store_error` precondition branch, transcribed with its exact error text and no success profile/target. | `0d917701b63ef38210c49df830f48cf0457cbc7d` |
+| `admin-deployment-mutation-acknowledgement/valid/not-started.json`, `unknown.json`, `committed-unconfirmed.json` | ferrum-edge/ferrum-edge `src/admin/deployment_mutations.rs` `unavailable`, with the exact `not_started`, `unknown` and `committed` arguments used by snapshot/admission, uncertain task/store and post-commit completion failure branches; literal source-body transcriptions. | `0d917701b63ef38210c49df830f48cf0457cbc7d` |
 
-New admin fixtures are canonical candidate artifacts from the published v0.9.11
+The existing backup/egress fixtures are canonical artifacts from published v0.9.11
 owner source. Distribution evidence is recorded in the [release notes](../docs/releases/contracts-edge-0.9.11.md);
 fixtures alone do not establish consumer adoption. Their schemas
 check JSON conformance only: token authenticity, authorization, authoritative
@@ -55,10 +60,39 @@ candidate description from before upstream publication; that historical fixture
 text is not current availability metadata. Current availability is recorded above
 and in the release record.
 
+The new deployment fixtures prepare canonical 0.9.12 artifacts from actual
+released owner source. [The preparation record](../docs/releases/contracts-edge-0.9.12.md)
+distinguishes verified Edge distribution from pending Contracts publication and
+consumer adoption. Empty-state fixtures cover exact SQL versus MongoDB evidence
+families; no populated secret-bearing HTTP golden or generated gzip bytes are
+invented. Nested evidence is open in owner OpenAPI and requires runtime
+completeness checks, including full raw/spec/external-reference retention.
+Acknowledgement fixtures cover explicit success, CP durable-only, stale,
+not-started, uncertain and committed-not-live results. Optional profile/target
+on refusals remain optional; consumers must require expected success identity
+and HTTP status in addition to the three required body fields. All pre-existing
+fixtures retain their original bytes and provenance.
+
 ## Invalid fixtures
 
 | Fixture | Why it must fail |
 |---|---|
+| `admin-deployment-snapshot/invalid/missing-evidence.json` | From `valid/empty-sql.json`: remove only required `evidence` |
+| `admin-deployment-snapshot/invalid/weak-token.json` | From `valid/empty-sql.json`: change only `namespace_etag` to its weak `W/` form |
+| `admin-deployment-snapshot/invalid/row-token.json` | From `valid/empty-sql.json`: change only `namespace_etag` to the owner test's quoted `row-token`, outside deployment authority |
+| `admin-deployment-snapshot/invalid/token-list.json` | From `valid/empty-sql.json`: change only `namespace_etag` to the two-token list used by the owner malformed-authority regression |
+| `admin-deployment-snapshot/invalid/token-with-line-break.json` | From `valid/empty-sql.json`: append only a line break to `namespace_etag`; the parser requires exact original token bytes |
+| `admin-deployment-snapshot/invalid/unknown-profile.json` | From `valid/empty-sql.json`: change only `profile` to `backup-v1`, outside the released deployment profile |
+| `admin-deployment-snapshot/invalid/evidence-not-object.json` | From `valid/empty-sql.json`: change only `evidence` from an object to an array |
+| `admin-deployment-snapshot/invalid/spec-not-object.json` | From `valid/empty-sql.json`: change only `api_specs` to an array containing a string rather than an object |
+| `admin-deployment-mutation-acknowledgement/invalid/unknown-profile.json` | From `valid/applied.json`: change only `profile` to `backup-v1` |
+| `admin-deployment-mutation-acknowledgement/invalid/unknown-durable.json` | From `valid/durable-only.json`: change only `durable` to `pending` |
+| `admin-deployment-mutation-acknowledgement/invalid/unknown-live.json` | From `valid/durable-only.json`: change only `live` to `all_data_planes_applied`; local acknowledgement does not assert that state |
+| `admin-deployment-mutation-acknowledgement/invalid/cleanup-not-boolean.json` | From `valid/durable-only.json`: change only cleanup authorization to the string `false` |
+| `admin-deployment-mutation-acknowledgement/invalid/missing-cleanup-authorization.json` | From `valid/durable-only.json`: remove only required `recovery_cleanup_authorized` |
+| `admin-deployment-mutation-acknowledgement/invalid/durable-only-cleanup.json` | From `valid/durable-only.json`: change only cleanup authorization to true; `live=not_applicable` violates its source-derived implication |
+| `admin-deployment-mutation-acknowledgement/invalid/unknown-durable-cleanup.json` | From `valid/applied.json`: change only `durable` to `unknown`; true cleanup authorization requires committed state |
+| `admin-deployment-mutation-acknowledgement/invalid/unconfirmed-cleanup.json` | From `valid/committed-unconfirmed.json`: change only cleanup authorization to true; unconfirmed live state cannot authorize cleanup |
 | `admin-conditional-snapshot/invalid/missing-consumer-map.json` | From `valid/metadata.json`: remove only required `row_etags.consumers` |
 | `admin-conditional-snapshot/invalid/weak-namespace-tag.json` | From `valid/metadata.json`: change only the namespace token to a weak `W/` tag |
 | `admin-conditional-snapshot/invalid/token-with-line-break.json` | From `valid/metadata.json`: append only a line break to the namespace token; quoted entity-tag syntax has no trailing control bytes |

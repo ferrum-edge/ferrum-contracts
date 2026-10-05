@@ -98,6 +98,18 @@ Conditional metadata v1 checks quoted strong token syntax and all four maps.
 It cannot distinguish cryptographic row/namespace bindings or authorize restore;
 the owner's HTTP precondition and transaction semantics remain authoritative.
 
+The [prepared 0.9.12 release](releases/contracts-edge-0.9.12.md) refreshes all
+five vocabulary `edge_release`/current Edge source pins to actually released
+`v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The latest published
+Contracts tag remains 0.9.11 until canonical finalization. First availability,
+historical fixtures and other-owner unreleased annotations are preserved.
+Deployment snapshot and acknowledgement are new v1 contracts; they do not
+change the meaning of `admin-conditional-snapshot` v1. Their original strong
+`deployment-v1-` token cannot substitute for backup namespace or row authority.
+Open raw evidence/resource objects follow owner OpenAPI; producer labels are
+strict and unknown acknowledgement states grant no cleanup/replay authority.
+See [deployment-contracts.md](deployment-contracts.md) for runtime requirements.
+
 ## Formats
 
 `format` is asserted, not only annotated: CI validates with jsonschema's
@@ -139,6 +151,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.9` | `contracts-edge-0.9.9` | Refreshed Edge-owned contract sources |
 | `v0.9.10` | `contracts-edge-0.9.9` | No contract-source changes after v0.9.9 |
 | `v0.9.11` | `contracts-edge-0.9.11` | Edge admin contracts and accepted unchanged shared v1 freeze at `390edbd5b2485af0988e02f7827fde778d76ae0a` |
+| `v0.9.12` | `contracts-edge-0.9.12` **prepared; not yet published** | Actual owner `0d917701b63ef38210c49df830f48cf0457cbc7d`; deployment-v1 and refreshed Edge provenance require a new canonical tag after its own protected merge/PUSH qualification |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to

@@ -22,16 +22,70 @@ When Ferrum Edge publishes `vX.Y.Z`:
      `src/plugins/builtin_parity.rs`, and the per-plugin `if`/`then` blocks
      of `PluginConfigBase` in `openapi.yaml`. Record the new
      `openapi.yaml` sha256 (`git show vX.Y.Z:openapi.yaml | shasum -a 256`).
+   - `vocabularies/backend-egress-policy.json`: `openapi.yaml`,
+     `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs`, and
+     the owner admin docs; preserve v1 classifier/label/guarantee meanings.
 2. Set `edge_release` to `vX.Y.Z` and every `provenance` commit to the tag's
    commit. Update each `main_branch_delta` against Edge `main`.
-3. Re-check the schemas that track Edge `main` (`diagnostic-ref`) against the
-   release. Move entries marked `unreleased` to the release that ships them.
+3. Re-check Edge-owned schemas (`diagnostic-ref`, conditional backup metadata,
+   backend egress policy, deployment snapshot and mutation acknowledgement)
+   against the release. Move entries marked `unreleased` only when that owner
+   release actually ships them. Preserve unrelated owners' unreleased markers.
 4. Add or update fixtures for anything that changed, including at least one
    invalid fixture for each new rule.
 5. Move the included `CHANGELOG.md` entries under `[Unreleased]` into a
    `[contracts-edge-X.Y.Z]` section.
 6. Open a PR. The `Validate contracts` workflow must pass. An owner of each
    changed contract approves (see [ownership.md](ownership.md)).
+
+## contracts-edge-0.9.12 preparation
+
+The [preparation record](releases/contracts-edge-0.9.12.md) binds to actual
+Edge `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`, after qualified
+protected release PR #6013 and all 14 main PUSH successes before tag creation.
+Release 403693646 is published and actual run 37298358313 completed at
+12:36:32 UTC on 2026-10-05 with all 20 jobs successful. Root verified every
+asset/sidecar, Docker Hub index/platform/config identity and default gateway/CNI
+byte pairing; strict authenticated hosted signatures/SLSA/SPDX and ABI/join
+gates passed. Preserve the documented private GHCR and absent revision-label
+limits. The previous published Contracts 0.9.11 record remains immutable history.
+
+Read deployment owner sources using `git show` at the actual tag commit:
+`openapi.yaml`, `src/admin/deployment_mutations.rs`, `src/admin/mod.rs`,
+`src/admin/api_specs/handlers.rs`, `src/config/{deployment_mutation,db_backend,
+db_loader,mongo_store,types}.rs`, and `docs/deployment_mutations.md` plus admin
+and API-spec docs. [deployment-contracts.md](deployment-contracts.md) transcribes
+the source protocol and distinguishes it from backup/restore and row tags.
+Preserve complete secret-bearing original evidence, full gzip specs and stored
+external references, strict single original deployment token, partial transaction
+fences and explicit acknowledgement-based cleanup. Durable-only and uncertain
+results prohibit automatic cleanup/replay; no fresh-token or unconditional fallback.
+Open owner envelopes do not certify nested completeness or consumer DTO acceptance.
+
+All five vocabulary source pins/Edge releases and current Edge-owned schema
+provenance are refreshed; plugin OpenAPI SHA-256 is
+`f7242228d73d34ad2d7da3c989ec6ba15bb6ae1f2f4c94a8e0a181b000caae77`.
+Unchanged tokens, catalog metadata, historical availability/fixtures, original
+conditional snapshot semantics and other-owner unreleased metadata are retained.
+Edge #6011's unfinished rejection contract is absent from the owner release.
+No validator/workflow/dependency exception is introduced. Repository tooling is
+not executed locally; the exact final head requires hosted `Validate contracts`.
+
+Canonical Contracts publication is pending. Root reviews the complete final
+diff, obtains fresh independent review and required Edge maintainer/code-owner
+approval, and qualifies the exact final head. The protected normal merge target
+must have that head as its exact second parent and an equal tree. Root verifies
+**every actual applicable main PUSH workflow** succeeds on the target before
+creating the immutable tag and publishing the release. Record actual
+parents/tree, final-head/merge hosted evidence, tag and release identity only
+after those gates. Prepared changelog entries do not establish publication.
+
+Consumer pin/copy/checksum adoption follows actual canonical qualification.
+Nexus #522/Part B, Foundry #544, GitForgeOps and supported publisher profile
+decisions remain independent and pending; no advisory closure is inferred.
+Alloy's accepted shared v1 freeze and owner-unreleased availability remain
+unchanged. Root owns PR creation, protected merge, tag and publication; this
+preparation worker stops after committing and pushing its assigned branch.
 
 ## contracts-edge-0.9.11 completed publication
 

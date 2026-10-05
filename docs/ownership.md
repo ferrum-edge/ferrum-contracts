@@ -11,7 +11,8 @@ reviewed, versioned form that every other product pins.
    tokens, the gateway-owned headers, the `provisioned-by` attribution rules
    and the plugin catalog change only when Ferrum Edge changes them. Edge also
    owns conditional snapshot/restore semantics and backend egress metadata,
-   including its versioned classifier and process/enforcement scope labels.
+   including its versioned classifier and process/enforcement scope labels,
+   and deployment-v1 original authority, partial mutation and acknowledgement.
 2. **Each product owns its own schemas.** Anvil owns `DiagnosticFinding`, Alloy
    owns `diagnostic_report` and `service_manifest`, GitForgeOps owns its
    resource file envelope, and Edge owns `diagnostic_ref`.
@@ -37,6 +38,8 @@ reviewed, versioned form that every other product pins.
 | `ferrum.diagnostic_ref.v1` | `schemas/diagnostic-ref/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DiagnosticRefLookup`), `src/diagnostic_ref.rs` | released in Edge v0.9.9 |
 | Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | released in Edge v0.9.11; upstream distribution verified, canonical contracts-edge-0.9.11 published |
 | Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`), `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs` | released in Edge v0.9.11; upstream distribution verified, canonical contracts-edge-0.9.11 published |
+| Deployment snapshot | `schemas/admin-deployment-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentSnapshot`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs`, `db_backend.rs`, `db_loader.rs`, `mongo_store.rs` | released in verified Edge v0.9.12; canonical contracts-edge-0.9.12 prepared, publication pending |
+| Deployment mutation acknowledgement | `schemas/admin-deployment-mutation-acknowledgement/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentMutationAcknowledgement`), `src/admin/deployment_mutations.rs` | released in verified Edge v0.9.12; canonical contracts-edge-0.9.12 prepared, publication pending |
 | `DiagnosticFinding` | `schemas/diagnostic-finding/v1.schema.json` | ferrum-anvil | `contracts/schemas/DiagnosticFinding.schema.json` (generated from Rust) | implemented |
 | `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
 | `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | implemented; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
@@ -84,6 +87,18 @@ recorded in `CHANGELOG.md`; published tags remain immutable.
 The vocabulary schemas (`schemas/vocabulary-*`) describe the shape of the
 vocabulary files. This repository owns those shapes; the values inside the
 vocabularies belong to Edge.
+
+The [0.9.12 preparation](releases/contracts-edge-0.9.12.md) reads Edge-owned
+sources at actual released `0d917701b63ef38210c49df830f48cf0457cbc7d`.
+Backup metadata, egress labels and diagnostic-ref wire content are retained;
+their current provenance is re-read at that owner. Deployment-v1 is a separate
+profile, with separate schemas and [runtime protocol](deployment-contracts.md).
+OpenAPI leaves raw evidence/resource objects open and acknowledgement
+profile/target optional for refusals; consumers must retain complete original
+evidence and require explicit success identity/cleanup authorization. Schema
+conformance cannot supply those runtime guarantees. Changed Edge contracts
+require Edge maintainer review before the pending canonical publication.
+Alloy and other owners retain their own availability and adoption boundaries.
 
 ## Reviewers
 
