@@ -6,6 +6,11 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+- Prepare `contracts-edge-0.9.12` against actually released, root-qualified Edge
+  `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The prepared
+  contents below require their own canonical review/hosted/protected merge/PUSH
+  and immutable tag/release gates. Latest published Contracts remains 0.9.11;
+  consumer adoption and pending publisher profile decisions are unchanged.
 - Record actual `contracts-edge-0.9.11` publication at
   `390edbd5b2485af0988e02f7827fde778d76ae0a` after PR #13 and main PUSH
   validation, including release 403239814 at 22:41:21 UTC on 2026-10-04 and
@@ -24,6 +29,51 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   canonical freeze. That refresh changed no schemas, pins, tags or release status;
   the coordinated freeze decision is now recorded in the prepared release below.
 - Add shared GPT-6.1 Sol worker skills for Codex and Claude with optional fast mode.
+
+## [contracts-edge-0.9.12] - 2026-10-05
+
+Prepared release contents; canonical merge/tag/publication remain pending.
+Edge v0.9.12 is actually published with verified distribution; the latest
+published canonical release remains `contracts-edge-0.9.11`. Existing consumer
+pins, other-owner unreleased features and supported-profile decisions are
+unchanged. See the [preparation record](docs/releases/contracts-edge-0.9.12.md).
+
+### Added
+
+- Separate deployment snapshot and mutation acknowledgement v1 schemas from
+  actual owner OpenAPI/handlers for Edge #6010/#6012, with source-transcribed
+  empty SQL/replica-set MongoDB snapshots, durable/live/refusal fixtures and
+  exact single-change invalid expectations. Preserve owner required/optional
+  fields and open evidence/resource shapes; assert the source's cleanup-true
+  implication without treating JSON validation as runtime authorization.
+- Document secret-complete original raw/spec/external-reference evidence,
+  distinct strong deployment tokens, strict conditional proxy removal/spec
+  replacement and explicit acknowledgement-based recovery cleanup. CP/unserved
+  HTTP 200 is cleanup false; refusal/uncertainty prohibits replay or refreshed
+  authority. Original namespace/row backup and restore semantics are retained.
+- Record actual Edge release 403693646, all 20 successful Release jobs, all 14
+  pre-tag main PUSH successes, verified asset/sidecar and Docker Hub identities,
+  default-image gateway/CNI byte pairing and hosted cryptographic/ABI gates.
+  Preserve private GHCR and absent image revision-label limits.
+
+### Changed
+
+- Refresh all five Edge vocabulary release/provenance pins, diagnostic-ref and
+  existing admin schema provenance to immutable v0.9.12 owner
+  `0d917701b63ef38210c49df830f48cf0457cbc7d`; pin OpenAPI SHA-256
+  `f7242228d73d34ad2d7da3c989ec6ba15bb6ae1f2f4c94a8e0a181b000caae77`.
+  Tokens/classes, provisioning values, plugin catalog metadata/pointers,
+  diagnostic-ref wire fields and egress classifier are unchanged. Extend
+  standard ETag/If-Match documentation for the separate deployment profile.
+- Distinguish published Contracts 0.9.11 from prepared 0.9.12 throughout current
+  docs and artifact descriptions. Preserve historical release sections/records,
+  fixtures, first availability, Alloy's accepted unchanged shared v1 freeze and
+  other-owner unreleased annotations. Unfinished Edge #6011 rejection-contract
+  work is not released here. Nexus Part B, Foundry's guarded-write decision,
+  consumer qualification and advisory disposition remain separate pending work.
+- Keep validator behavior, workflow/action/dependency pins and permissions
+  unchanged. Only static inspection/integrity hashing/diff checks run locally;
+  GitHub-hosted validation is the conformance gate.
 
 ## [contracts-edge-0.9.11] - 2026-10-04
 

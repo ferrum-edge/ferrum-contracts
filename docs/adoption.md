@@ -51,6 +51,38 @@ consumer slices rather than treating later main changes as new pin qualification
 
 ## Published admin and shared v1 adoption boundary
 
+### Released Edge v0.9.12; canonical refresh and consumer adoption pending
+
+The 2026-10-05 owner update is separate from the historical consumer pin table.
+Actual Edge `v0.9.12` at `0d917701b63ef38210c49df830f48cf0457cbc7d` is
+published with root-qualified distribution and all 20 actual Release jobs
+successful. [The preparation record](releases/contracts-edge-0.9.12.md)
+records its immutable source and identities. Contracts 0.9.12 remains prepared,
+unpublished, and subject to its own review, hosted gate and protected
+merge/PUSH/tag/release sequence. The published 0.9.11 mapping stays historical.
+
+[Deployment-v1](deployment-contracts.md) supplies complete original spec/plugin
+and raw dependency authority, atomic partial cascade removal and conditional
+API-spec replacement with explicit durable/live cleanup acknowledgements.
+It does not widen backup/restore or row-token authority. Nexus
+[#522](https://github.com/ferrum-edge/ferrum-nexus/pull/522), Foundry
+[#544](https://github.com/ferrum-edge/ferrum-foundry/pull/544) and GitForgeOps
+must adopt only after root qualifies the actual new canonical release. No new
+consumer pin/checksum, merged adoption, supported public-only profile, Part B
+completion or advisory closure is recorded here. Foundry's pending guarded-write
+decision is not resolved by the existence of this owner capability. Publisher
+serving-DP egress requirements and other owner-unreleased features remain intact.
+Edge #6011's unfinished rejection contract is not part of released v0.9.12.
+
+The owner exports OpenAPI envelope schemas, but no standalone machine-readable
+schema for complete raw SQL/BSON deployment evidence. The canonical snapshot
+schema therefore preserves open nested objects and requires runtime completeness
+and original-byte retention. The source-transcribed empty-state fixtures are not
+captured populated HTTP goldens. Consumer full-secret DTO request acceptance and
+broader production recovery qualification are gaps, not inferred capabilities.
+
+### Published 0.9.11 qualification
+
 The new [admin contracts](admin-contracts.md) cover Edge #5992/#5994 source at
 the immutable v0.9.11 commit: credential-complete consumer verification,
 coherent conditional backup metadata/namespace restore and process egress

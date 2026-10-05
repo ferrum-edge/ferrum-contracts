@@ -10,6 +10,14 @@ the immutable source is historical. Downstream adoption remains pending until
 consumer PRs merge and qualify. Canonical metadata alone does not patch a product
 advisory or qualify a consumer integration.
 
+The [prepared 0.9.12 deployment contracts](deployment-contracts.md) read
+actually released owner `0d917701b63ef38210c49df830f48cf0457cbc7d` and add a
+separate original deployment-token partial mutation profile. The current
+backup/egress schema provenance is re-read there with unchanged wire semantics.
+This document preserves the published 0.9.11 namespace/row/restore profile;
+deployment authority does not replace those tags or authorize whole restore.
+Contracts 0.9.12 publication and downstream adoption remain pending.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full

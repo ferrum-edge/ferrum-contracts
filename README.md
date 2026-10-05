@@ -31,6 +31,8 @@ complete; the issue is closed and remains as project history.
 | [`docs/adoption.md`](docs/adoption.md) | Consumer pins, qualification evidence and remaining contract gaps |
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
 | [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions and process egress discovery |
+| [`docs/deployment-contracts.md`](docs/deployment-contracts.md) | Original deployment authority, dependency-fenced partial writes and explicit cleanup acknowledgements |
+| [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Verified Edge v0.9.12 distribution and pending canonical Contracts preparation |
 | [`docs/releases/contracts-edge-0.9.11.md`](docs/releases/contracts-edge-0.9.11.md) | Actual canonical publication, verified distribution/owner evidence and pending consumer adoption |
 
 Every file records where it came from: owner repository, path, and commit.
@@ -56,7 +58,20 @@ requirement. Existing consumer pins are unchanged, and 0.9.11 adoption remains
 pending until the consumer PRs merge and qualify. See the
 [release record](docs/releases/contracts-edge-0.9.11.md).
 
-The release adds metadata schemas for coherent admin conditional backup and
+The next **prepared, unpublished** release is `contracts-edge-0.9.12`, from
+actually released Edge `v0.9.12` at
+`0d917701b63ef38210c49df830f48cf0457cbc7d`. It refreshes all five Edge
+vocabularies and the plugin OpenAPI pin, and adds separate deployment snapshot
+and mutation acknowledgement schemas. Complete original secret-bearing evidence
+and its deployment token fence partial proxy removal and API-spec replacement.
+Cleanup requires the explicit owner acknowledgement; even HTTP 200 can be
+durable-only and prohibit cleanup. The existing backup/row contracts keep their
+semantics. See [the deployment contract](docs/deployment-contracts.md) and
+[preparation record](docs/releases/contracts-edge-0.9.12.md) for provenance,
+verified Edge facts, remaining canonical gates and pending consumer adoption.
+Other-owner unreleased features and pending publisher profiles are not promoted.
+
+The published 0.9.11 release adds metadata schemas for coherent admin conditional backup and
 process-scoped backend egress discovery, plus the egress vocabulary and sanitized
 fixtures. Standard HTTP `ETag`/`If-Match` admin semantics are documented against
 the owner implementation. JSON validation checks shape and owner-derived
