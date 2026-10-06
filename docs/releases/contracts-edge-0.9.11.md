@@ -49,44 +49,13 @@ qualification of that exact second parent.
 [Release 403215981](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11)
 was published at 21:26:11 UTC. [Release run 37229572280](https://github.com/ferrum-edge/ferrum-edge/actions/runs/37229572280)
 completed successfully at 21:30:12 UTC; all 20 jobs succeeded, including the
-Linux GNU ABI and image-attestation release gates. Root verified actual downloaded
-bytes for all 14 assets against GitHub API digests and all seven binary checksum
-files. These are verified identities, not anticipated publication values:
-
-| Published asset | SHA-256 |
-|---|---|
-| `ferrum-cni-linux-aarch64` | `sha256:c54b68605132a42eab941ce43d595cca878f3be79e8ae1ecda5cf05dd6450b8a` |
-| `ferrum-cni-linux-aarch64.sha256` | `sha256:74273e45022ef49da473a56e2b81a208c06761ba66862dd9665b3e0c4642e019` |
-| `ferrum-cni-linux-x86_64` | `sha256:d70b1a273eaf4d5e30d07ef41a07764f13cd9fe4274d9348b4b710172fc1a7ef` |
-| `ferrum-cni-linux-x86_64.sha256` | `sha256:a7a3f44fb588b13e76643689336f8752d3b961a72c73c69b4b59121259d0b957` |
-| `ferrum-edge-linux-aarch64` | `sha256:3f0c4a7334878963792c8c277f49f8b91af24bf2db59996e41ec3f7e41c7fbac` |
-| `ferrum-edge-linux-aarch64.sha256` | `sha256:a2ea8f963d4d51fa446cd4642f0f0e68c84e1cd35b6a22724784e39c830b3eea` |
-| `ferrum-edge-linux-x86_64` | `sha256:97cbd7cd277feee8f661e9d2cd97a6383be969fd2fc2b61143601614922f988f` |
-| `ferrum-edge-linux-x86_64.sha256` | `sha256:e5ed7a4501dbd43a4832307eb80bb2aed0cd2dda1695e39665d1684f87553a2d` |
-| `ferrum-edge-macos-aarch64` | `sha256:d9a535fda68f17c67e7a44de4c6c0d037145d8772067c7051fa9bd47a30e12ea` |
-| `ferrum-edge-macos-aarch64.sha256` | `sha256:18fe8d150440edcce0833c77d002f2eff2b5c053a125671744c8262fcc6a30a4` |
-| `ferrum-edge-macos-x86_64` | `sha256:83a59079dd5661af431c8dcacbc1139c6e3963f9a755e6f13b8e93b1570f59c8` |
-| `ferrum-edge-macos-x86_64.sha256` | `sha256:3f0da056d146e57b78a2c4a2710ebd1e26a2933d2e68fbe684842fa0442bd325` |
-| `ferrum-edge-windows-x86_64.exe` | `sha256:9bc7c9240fa0898a9efeb6e2dabb74c696772af0bb0ba2f7e57ab70c3d0a86e9` |
-| `ferrum-edge-windows-x86_64.exe.sha256` | `sha256:456da9bd756e160d2a1b17d2af9fc50213b7715110c48be9589f2616c5ebbc83` |
-
-Root anonymously read and hashed all three Docker Hub indexes and all six
-amd64/arm64 platform manifests and config pairs. Default-image gateway and CNI
-layer bytes match the corresponding release assets on both architectures.
-
-| Docker Hub image | Index digest | amd64 manifest | arm64 manifest |
-|---|---|---|---|
-| `docker.io/ferrumedge/ferrum-edge:v0.9.11` | `sha256:2476b502855940e28157858fc24008545cb3baeb3084c9610e1d4505cbe0d36e` | `sha256:7287d297e8f305c99143e148f910024e50fac0341e7fd89236325331fe405b22` | `sha256:738a68e81da5cc9c0dde8e8ed5ba9e9c6957fcbdd930070d60d8782c303bb9eb` |
-| `docker.io/ferrumedge/ferrum-edge:v0.9.11-ebpf` | `sha256:3d4f5aedddca2fcb8ce4c24409201203ffbfb79779b37f0a1853e10944eef5b0` | `sha256:cc50378837fda0e1ceaaf29ea4c339dd00b6aa5f3f05881c667672fff794eb31` | `sha256:00e23af6398e6766816a18217da892f7a7a798035b27ed186ff03d8eb570ad71` |
-| `docker.io/ferrumedge/ferrum-edge:v0.9.11-ebpf-tools` | `sha256:681d6d8b0ae7a00921a4899a8f0c5059225f0eeef1bf17bb13da10ebd4719aea` | `sha256:7496eeec1b3e6762b35ad4188cd0ff15dd8008f4457f4696db013549ae6b8697` | `sha256:f74f4eae5e647e23b51bf6a19bd332ab4ae6227a429fe56ef22efc6affc1eee3` |
-
-[Hosted signing/attestation job 111535236475](https://github.com/ferrum-edge/ferrum-edge/actions/runs/37229572280/job/111535236475)
-verified Docker Hub/GHCR image identity parity, signatures, strict SLSA commit
-and subject identity, and signed per-platform SBOMs. GHCR remains private;
-the existing anonymous GHCR smoke is warn-only. Published Edge configs have
-no image revision label. Default-image binary pairing supplies exact byte
-identity; downstream image revision checks remain separate product requirements.
-Nothing was executed locally for this distribution inspection.
+Linux GNU ABI and image-attestation release gates. Edge's published assets and
+checksums, multi-arch image digests, and hosted signature/SLSA/SBOM facts are
+Edge release facts, recorded in the
+[Edge v0.9.11 GitHub release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11)
+and the Edge release record
+[`docs/releases/v0.9.11.md`](https://github.com/ferrum-edge/ferrum-edge/blob/v0.9.11/docs/releases/v0.9.11.md);
+this repository does not restate the digests.
 
 The four refreshed Edge vocabularies and new admin artifacts read owner sources
 at the tag commit, with plugin OpenAPI SHA-256

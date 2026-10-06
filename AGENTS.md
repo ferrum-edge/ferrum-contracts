@@ -48,6 +48,11 @@ completed).
   `gateway_error` enum, the `ref` and `replica_id` patterns) must match the
   vocabulary; CI checks it. Closed-enum policy: `docs/versioning.md`.
 - Update `CHANGELOG.md` under `[Unreleased]` in the same PR.
+- Tagged content is immutable: the `[contracts-edge-*]` `CHANGELOG.md`
+  sections, `docs/releases/contracts-edge-*.md`, schemas and vocabularies are
+  committed before the tag. Write them in final form; never write status words
+  such as `pending`, `prepared`, `draft`, `candidate` or `pre-publication` into
+  them. Status lives in PR bodies and tracking issues, not in tagged files.
 - JSON: 2-space indent, UTF-8, trailing newline, no duplicate keys. Keep key
   order stable so diffs stay reviewable.
 
@@ -65,8 +70,8 @@ completed).
   Update procedure: `docs/release-process.md`.
 - Dependabot updates GitHub Actions and `ci/requirements.txt` weekly
   (`.github/dependabot.yml`).
-- `main` requires the `Schemas, fixtures and vocabularies` check and a
-  code-owner review (`.github/CODEOWNERS`).
+- `main` requires the `Schemas, fixtures and vocabularies` check and no
+  approving reviews (ruleset 24239605; the repository is solo-maintained).
 
 ## PR and commit workflow
 

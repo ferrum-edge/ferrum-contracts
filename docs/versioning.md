@@ -79,8 +79,8 @@ were read from. A vocabulary may also list entries that exist only on Edge
 
 For the [published 0.9.11 release](releases/contracts-edge-0.9.11.md),
 `edge_release: v0.9.11` identifies the actual immutable tagged owner source
-`c764084b3b51c3f7ffde268c039688d35e49c553`. Upstream Edge distribution is
-verified separately in the release record. The canonical contracts tag points to
+`c764084b3b51c3f7ffde268c039688d35e49c553`. Edge distribution is recorded in
+the Edge release itself. The canonical contracts tag points to
 `390edbd5b2485af0988e02f7827fde778d76ae0a` and was published on 2026-10-04.
 Prepared/pending schema annotations captured in that immutable source are
 historical pre-publication wording, not a new approval requirement. Existing

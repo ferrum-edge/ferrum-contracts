@@ -41,9 +41,10 @@ merged as `c764084b3b51c3f7ffde268c039688d35e49c553`; its actual unsigned
 lightweight `v0.9.11` tag was created at 19:46:47 UTC on 2026-10-04 and maps to
 the published [contracts-edge-0.9.11](releases/contracts-edge-0.9.11.md). Release
 403215981 was published at 21:26:11 UTC, and all 20 jobs in Release run 37229572280
-succeeded by 21:30:12 UTC. Root verified actual assets/digests, Docker Hub
-identities and default-image binary pairing; hosted signatures/SLSA/SBOM,
-authenticated GHCR parity and ABI gates passed. GHCR remains private.
+succeeded by 21:30:12 UTC. Edge's published assets/checksums, image digests and
+hosted signature/SLSA/SBOM/ABI facts are recorded in the
+[Edge v0.9.11 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11),
+not in these contracts docs.
 
 The latest published canonical release is `contracts-edge-0.9.12` at
 `31f0a21d707795be293d15837c2f77c3d84219d8`. It refreshes all five Edge

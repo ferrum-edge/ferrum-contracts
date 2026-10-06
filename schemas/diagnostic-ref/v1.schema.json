@@ -41,9 +41,9 @@
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.9",
-        "commit": "ab16c714a4d3462cfa332375950c7bcf17ca64b0",
+        "commit": "234717ce41965cd1e2b5c6c761a25475c5d7628c",
         "path": "src/diagnostic_ref.rs",
-        "note": "Introduced by ferrum-edge#5845 for issue ferrum-edge#5767; extended by issue #5846 (all mode, attempts, rejection, replica tag)."
+        "note": "First released in Ferrum Edge v0.9.9. Introduced by ferrum-edge#5845 (ab16c714a4d3462cfa332375950c7bcf17ca64b0) for issue ferrum-edge#5767; extended by issue #5846 (all mode, attempts, rejection, replica tag)."
       }
     ]
   },

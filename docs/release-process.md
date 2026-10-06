@@ -34,9 +34,31 @@ When Ferrum Edge publishes `vX.Y.Z`:
 4. Add or update fixtures for anything that changed, including at least one
    invalid fixture for each new rule.
 5. Move the included `CHANGELOG.md` entries under `[Unreleased]` into a
-   `[contracts-edge-X.Y.Z]` section.
+   `[contracts-edge-X.Y.Z]` section and write the release record
+   (`docs/releases/contracts-edge-X.Y.Z.md`) in final form. Both are tagged
+   content and must not carry status words; see
+   [Release records and publication status](#release-records-and-publication-status).
 6. Open a PR. The `Validate contracts` workflow must pass. An owner of each
    changed contract approves (see [ownership.md](ownership.md)).
+
+## Release records and publication status
+
+The release record and the `[contracts-edge-X.Y.Z]` `CHANGELOG.md` section are
+committed before the tag, so their bytes are immutable once the tag exists.
+Write them in final form, in descriptive or present tense, and never write
+status words such as `pending`, `prepared`, `draft`, `candidate`, `unreleased`
+or `pre-publication` into tagged content.
+
+Publication status lives outside the tagged content:
+
+- the PR body records review, hosted-validation and merge state;
+- the tracking issue records consumer adoption and follow-up work; and
+- the GitHub release notes record facts that only exist after the tag (tag SHA,
+  release id, publish timestamp, CI run ids).
+
+Do not open a cleanup PR after each release to rewrite a release record or
+changelog section. If a record is wrong, correct it in the next release PR, or
+link the Edge release and its release record instead of editing tagged history.
 
 ## contracts-edge-0.9.12 completed publication
 
@@ -44,11 +66,11 @@ The [release record](releases/contracts-edge-0.9.12.md) binds to actual
 Edge `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`, after qualified
 protected release PR #6013 and all 14 main PUSH successes before tag creation.
 Release 403693646 is published and actual run 37298358313 completed at
-12:36:32 UTC on 2026-10-05 with all 20 jobs successful. Root verified every
-asset/sidecar, Docker Hub index/platform/config identity and default gateway/CNI
-byte pairing; strict authenticated hosted signatures/SLSA/SPDX and ABI/join
-gates passed. Preserve the documented private GHCR and absent revision-label
-limits. The previous published Contracts 0.9.11 record remains immutable history.
+12:36:32 UTC on 2026-10-05 with all 20 jobs successful. Edge's published
+assets/checksums, image digests and hosted signature/SLSA/SBOM/ABI facts live in
+the [Edge v0.9.12 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.12)
+and its Edge release record, not here. The previous published Contracts 0.9.11
+record remains immutable history.
 
 Read deployment owner sources using `git show` at the actual tag commit:
 `openapi.yaml`, `src/admin/deployment_mutations.rs`, `src/admin/mod.rs`,
@@ -90,12 +112,10 @@ unchanged. Root owns profile decisions and advisory disposition.
 
 The [release record](releases/contracts-edge-0.9.11.md) pins published Edge
 `v0.9.11` at `c764084b3b51c3f7ffde268c039688d35e49c553`, its qualified merge
-parents/PR and OpenAPI hash. Root verified all 14 downloaded assets against API
-digests and seven binary checksum files, three Docker Hub indexes/six platform
-and config pairs, and default-image gateway/CNI bytes on amd64/arm64. All 20
-Release jobs succeeded, including strict hosted signatures/SLSA/SBOM,
-authenticated GHCR parity and Linux GNU ABI gates. GHCR remains private; Edge
-image configs contain no revision label.
+parents/PR and OpenAPI hash. All 20 Release jobs succeeded. Edge's published
+assets/checksums, image digests and hosted signature/SLSA/SBOM/ABI facts live in
+the [Edge v0.9.11 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11)
+and its Edge release record, not here.
 
 The new owner sources are `src/admin/conditional_snapshots.rs`, `preconditions.rs`,
 `crud.rs`, `backup.rs`, `backend_egress_policy.rs`, admin routing, transaction
