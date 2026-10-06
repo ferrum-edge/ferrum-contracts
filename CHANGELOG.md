@@ -18,11 +18,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [contracts-edge-0.9.12] - 2026-10-05
 
-Prepared release contents; canonical merge/tag/publication remain pending.
-Edge v0.9.12 is actually published with verified distribution; the latest
-published canonical release remains `contracts-edge-0.9.11`. Existing consumer
-pins, other-owner unreleased features and supported-profile decisions are
-unchanged. See the [preparation record](docs/releases/contracts-edge-0.9.12.md).
+Published 2026-10-05 at 13:58:38 UTC as GitHub release 403772929, tag at
+`31f0a21d707795be293d15837c2f77c3d84219d8` (merge of #15), pinned to Ferrum Edge
+`v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`). See the
+[release record](docs/releases/contracts-edge-0.9.12.md).
 
 ### Added
 
@@ -77,11 +76,11 @@ unchanged. See the [preparation record](docs/releases/contracts-edge-0.9.12.md).
 
 ## [contracts-edge-0.9.11] - 2026-10-04
 
-Prepared release contents; canonical merge/tag/publication remain pending in draft
-PR #13. Root has accepted the unchanged shared Alloy v1 freeze in this candidate.
-The latest published canonical release remains `contracts-edge-0.9.9-r2`;
-existing consumer pins are unchanged. See the [release record](docs/releases/contracts-edge-0.9.11.md)
-for verified Edge distribution, final qualified Alloy owner and publication order.
+Published 2026-10-04 at 22:41:21 UTC as GitHub release 403239814, tag at
+`390edbd5b2485af0988e02f7827fde778d76ae0a`. Root has accepted the unchanged
+shared Alloy v1 freeze in this release. See the
+[release record](docs/releases/contracts-edge-0.9.11.md) for verified Edge
+distribution, final qualified Alloy owner and publication order.
 
 ### Added
 
