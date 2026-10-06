@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-backend-egress-policy/v1.schema.json",
   "title": "Backend egress policy vocabulary v1",
-  "description": "Shape and complete v1 label sets of vocabularies/backend-egress-policy.json. Shared definitions also constrain the response schema; completeness, uniqueness and fixed evaluation order are asserted.",
+  "description": "Shape and complete v1 label sets of the backend egress vocabulary for response schema_version 1 (Edge v0.9.11 and v0.9.12). Retained because backend-egress-policy v1 references its definitions; vocabularies/backend-egress-policy.json now uses the v2 shape. Completeness, uniqueness and fixed evaluation order are asserted.",
   "x-contract": {
     "name": "vocabulary-backend-egress-policy",
     "version": 1,

@@ -17,7 +17,7 @@ immutable pin snapshots.
 
 | Repository | `main` commit read (2026-10-06) | Pinned tag on `main` |
 |---|---|---|
-| ferrum-edge | `0d917701b63ef38210c49df830f48cf0457cbc7d` | producer: released `v0.9.12` source with verified distribution; maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
+| ferrum-edge | `9b83115de7ec23ab51ec4feae6bed65e596db425` | producer: released `v0.9.13` source; maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
 | ferrum-anvil | `07f7182b3aa6c244140b7ec3edab5a1668318c96` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/07f7182b3aa6c244140b7ec3edab5a1668318c96/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.11` |
 | ferrum-alloy | `4d3b3aa8edaa67d4bc5a16388f59ee899d81348f` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/4d3b3aa8edaa67d4bc5a16388f59ee899d81348f/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.12` (ferrum-alloy#150, merged 2026-10-06) |
 | ferrum-nexus | `f357a37cd0bee81faa0f14ea26e6e38a17cf3152` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/f357a37cd0bee81faa0f14ea26e6e38a17cf3152/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9` vocabularies; [`SERVICE-MANIFEST-PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/f357a37cd0bee81faa0f14ea26e6e38a17cf3152/contracts/ferrum-contracts/SERVICE-MANIFEST-PIN): `contracts-edge-0.9.9-r2` manifest |
@@ -46,15 +46,30 @@ hosted signature/SLSA/SBOM/ABI facts are recorded in the
 [Edge v0.9.11 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11),
 not in these contracts docs.
 
-The latest published canonical release is `contracts-edge-0.9.12` at
-`31f0a21d707795be293d15837c2f77c3d84219d8`. It refreshes all five Edge
-vocabularies and the plugin OpenAPI pin and adds deployment snapshot and mutation
-acknowledgement schemas from released Edge `v0.9.12` at
-`0d917701b63ef38210c49df830f48cf0457cbc7d`; the tag was published on 2026-10-05.
+The latest release is [`contracts-edge-0.9.13`](releases/contracts-edge-0.9.13.md),
+tagged on the merge commit of its release PR, for Edge `v0.9.13` at
+`9b83115de7ec23ab51ec4feae6bed65e596db425`. `contracts-edge-0.9.12` at
+`31f0a21d707795be293d15837c2f77c3d84219d8` refreshed all five Edge
+vocabularies and the plugin OpenAPI pin and added deployment snapshot and
+mutation acknowledgement schemas from released Edge `v0.9.12` at
+`0d917701b63ef38210c49df830f48cf0457cbc7d`; that tag was published on 2026-10-05.
 Historical 0.9.11 remains at `390edbd5b2485af0988e02f7827fde778d76ae0a`, and
 historical r2 remains at `591c73a3f965fdab440c3a76b2707accdf491ba5`.
 
 ## Published admin and shared v1 adoption boundary
+
+### contracts-edge-0.9.13 v2 contracts
+
+Edge `v0.9.13` emits backend egress `schema_version: 2` and the deployment
+snapshot with digest-only spec evidence and `api_spec_contents`; it rejects
+namespace and deployment tokens issued by `v0.9.12` with `412`. A consumer
+that reads either response from Edge `v0.9.13` needs `backend-egress-policy`
+v2 or `admin-deployment-snapshot` v2 from `contracts-edge-0.9.13`; the v1 files
+still describe Edge `v0.9.11` and `v0.9.12`. No consumer in the table above has
+adopted either contract yet, so no pin is affected. A public-only publisher
+(Nexus Part B, Foundry) that knows only `schema_version: 1` fails closed against
+`v0.9.13` until it adopts v2, and deployment recovery consumers must re-read
+authority after the Edge upgrade.
 
 ### Published contracts-edge-0.9.12; consumer adoption qualification
 

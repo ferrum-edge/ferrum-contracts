@@ -61,12 +61,38 @@ without changing anything else. Contracts follow the same rule:
 
 Payloads that carry their own version keep it: `schema_version:
 ferrum.diagnostic_ref.v1`, `schema: ferrum.diagnostic_report` with
-`schema_version: 1.x`, and `schema: ferrum.service_manifest` with
-`schema_version: 1.x`. The contract major matches the payload major.
+`schema_version: 1.x`, `schema: ferrum.service_manifest` with
+`schema_version: 1.x`, and the backend egress response's integer
+`schema_version` (1 in `backend-egress-policy` v1, 2 in v2). The contract
+major matches the payload major.
 
-Fixtures under `fixtures/<name>/` are checked against the latest major of
-`<name>`. When a second major is added, its fixtures move to
-`fixtures/<name>/v<N>/` and `ci/validate.py` is extended in the same PR.
+A schema with one major keeps its fixtures in `fixtures/<name>/valid/` and
+`fixtures/<name>/invalid/`. Once a schema has a second major, every major keeps
+its own fixtures in `fixtures/<name>/v<N>/valid/` and
+`fixtures/<name>/v<N>/invalid/`, and `ci/validate.py` checks each directory
+against its own major. `contracts-edge-0.9.13` introduced this layout for
+`backend-egress-policy`, `vocabulary-backend-egress-policy` and
+`admin-deployment-snapshot`.
+
+### Majors added in contracts-edge-0.9.13
+
+Edge `v0.9.13` changed two Edge-owned responses incompatibly, so each gets a
+new major and keeps its v1 file for consumers of earlier Edge releases:
+
+- `backend-egress-policy` v2: Edge emits `schema_version: 2` only, and
+  `public_only_guaranteed` changes meaning (it now also requires
+  `enforcement_scope=local-data-plane`). Removing a value and changing a
+  value's meaning are breaking. The vocabulary shape follows as
+  `vocabulary-backend-egress-policy` v2, and `vocabularies/backend-egress-policy.json`
+  has `version: 2`.
+- `admin-deployment-snapshot` v2: `api_spec_contents` becomes a required
+  member and `api_specs[].spec_content` changes from a byte array to a
+  `StoredContentDigest`. Both are breaking.
+
+`admin-conditional-snapshot` and `admin-deployment-mutation-acknowledgement`
+stay at v1: their wire shape did not change. Their tokens and bodies follow the
+owner's runtime rules for the release a consumer talks to (for example, Edge
+`v0.9.13` rejects tokens issued by `v0.9.12` with `412`).
 
 ## Vocabulary versions
 
@@ -153,6 +179,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.10` | `contracts-edge-0.9.9` | No contract-source changes after v0.9.9 |
 | `v0.9.11` | `contracts-edge-0.9.11` | Edge admin contracts and accepted unchanged shared v1 freeze at `390edbd5b2485af0988e02f7827fde778d76ae0a` |
 | `v0.9.12` | `contracts-edge-0.9.12` | Refreshed Edge-owned sources and deployment-v1 contracts from released owner `0d917701b63ef38210c49df830f48cf0457cbc7d`, tagged at `31f0a21d707795be293d15837c2f77c3d84219d8` |
+| `v0.9.13` | `contracts-edge-0.9.13` | Backend egress policy v2 and deployment snapshot v2 from released owner `9b83115de7ec23ab51ec4feae6bed65e596db425`, tagged on the merge commit of its release PR |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
@@ -164,7 +191,8 @@ Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
 
-`contracts-edge-0.9.12` is the latest published canonical tag, at
+`contracts-edge-0.9.13` is the latest tag, on the merge commit of its release
+PR; its GitHub release records the tag commit. `contracts-edge-0.9.12` is at
 `31f0a21d707795be293d15837c2f77c3d84219d8`. [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
 merged on 2026-10-05 at 13:57:00 UTC with exact reviewed second parent
 `d9c84810152732524c54a9ed292dc59103f0619d` and that reviewed head's tree. Its

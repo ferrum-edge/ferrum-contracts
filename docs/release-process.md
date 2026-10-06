@@ -24,15 +24,22 @@ When Ferrum Edge publishes `vX.Y.Z`:
      `openapi.yaml` sha256 (`git show vX.Y.Z:openapi.yaml | shasum -a 256`).
    - `vocabularies/backend-egress-policy.json`: `openapi.yaml`,
      `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs`, and
-     the owner admin docs; preserve v1 classifier/label/guarantee meanings.
+     the owner admin docs. A new response `schema_version` or a changed
+     classifier, label or guarantee meaning needs a new major of the response
+     and vocabulary schemas (Edge v0.9.13 moved both to v2).
 2. Set `edge_release` to `vX.Y.Z` and every `provenance` commit to the tag's
    commit. Update each `main_branch_delta` against Edge `main`.
 3. Re-check Edge-owned schemas (`diagnostic-ref`, conditional backup metadata,
    backend egress policy, deployment snapshot and mutation acknowledgement)
    against the release. Move entries marked `unreleased` only when that owner
    release actually ships them. Preserve unrelated owners' unreleased markers.
+   Consumers vendor `diagnostic-ref` v1 byte for byte, so its bytes stay
+   frozen while its owner sources are unchanged. An incompatible owner change
+   adds `v<N+1>.schema.json` and keeps the earlier major
+   ([versioning.md](versioning.md)).
 4. Add or update fixtures for anything that changed, including at least one
-   invalid fixture for each new rule.
+   invalid fixture for each new rule. A schema with several majors keeps each
+   major's fixtures in `fixtures/<name>/v<N>/`.
 5. Move the included `CHANGELOG.md` entries under `[Unreleased]` into a
    `[contracts-edge-X.Y.Z]` section and write the release record
    (`docs/releases/contracts-edge-X.Y.Z.md`) in final form. Both are tagged

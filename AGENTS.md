@@ -18,8 +18,9 @@ completed).
 - `schemas/vocabulary-<v>/v<N>.schema.json`: the shape of `vocabularies/<v>.json`.
 - `vocabularies/<v>.json`: Edge-owned vocabularies. `$schema` names the
   vocabulary schema; `edge_release` names the Edge tag the values came from.
-- `fixtures/<name>/{valid,invalid}/*.json`: conformance payloads. Provenance
-  and the reason each invalid fixture fails: `fixtures/README.md`.
+- `fixtures/<name>/{valid,invalid}/*.json`: conformance payloads; a schema
+  with several majors uses `fixtures/<name>/v<N>/{valid,invalid}/` per major.
+  Provenance and the reason each invalid fixture fails: `fixtures/README.md`.
 - `docs/`: `ownership.md`, `versioning.md`, `adoption.md`, `release-process.md`.
 - `ci/validate.py`, `ci/requirements.txt`: validation script and its
   hash-pinned dependencies. `.github/workflows/validate.yml` runs them.
