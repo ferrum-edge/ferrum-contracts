@@ -6,38 +6,22 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+- Record actual `contracts-edge-0.9.12` publication at
+  `31f0a21d707795be293d15837c2f77c3d84219d8` after PR #15 and main PUSH
+  validation, including release 403772929 at 13:58:38 UTC on 2026-10-05 and the
+  verified Edge `v0.9.12` source `0d917701b63ef38210c49df830f48cf0457cbc7d`.
+  Refresh the consumer pin table to the 2026-10-06 verified values and record
+  0.9.12 as the latest published canonical release; preserve the prepared wording
+  in the tagged sections as historical and leave pending consumer adoption,
+  other-owner unreleased features and publisher profile decisions unchanged.
 - Removed the GPT-6.1 Sol worker skill (not used by this project).
-- Prepare `contracts-edge-0.9.12` against actually released, root-qualified Edge
-  `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The prepared
-  contents below require their own canonical review/hosted/protected merge/PUSH
-  and immutable tag/release gates. Latest published Contracts remains 0.9.11;
-  consumer adoption and pending publisher profile decisions are unchanged.
-- Record actual `contracts-edge-0.9.11` publication at
-  `390edbd5b2485af0988e02f7827fde778d76ae0a` after PR #13 and main PUSH
-  validation, including release 403239814 at 22:41:21 UTC on 2026-10-04 and
-  root's accepted unchanged shared v1 freeze. Update current release mappings
-  and documentation; preserve the prepared wording in the released section/tag
-  as historical, existing consumer pins and qualification slices, and Alloy's
-  unpublished status with no separate crate publishing approval. Consumer
-  adoption remains pending until its PRs merge and qualify.
-- Refresh the adoption ledger from immutable 2026-10-04 consumer PIN files,
-  test/workflow sources and hosted evidence for Alloy #27: Anvil diagnostic
-  import, GitForgeOps generated resource validation, Nexus/Foundry manifest
-  previews and Foundry's accepted presentation ADR. Record the split Nexus
-  pins, the published r2 `[agents]` addition and the Edge v0.9.10 mapping.
-- Clarify owner implementation versus shared qualification in the earlier
-  adoption-only refresh: shared schemas were PROPOSED pending an owner-backed
-  canonical freeze. That refresh changed no schemas, pins, tags or release status;
-  the coordinated freeze decision is now recorded in the prepared release below.
-- Add shared GPT-6.1 Sol worker skills for Codex and Claude with optional fast mode.
 
 ## [contracts-edge-0.9.12] - 2026-10-05
 
-Prepared release contents; canonical merge/tag/publication remain pending.
-Edge v0.9.12 is actually published with verified distribution; the latest
-published canonical release remains `contracts-edge-0.9.11`. Existing consumer
-pins, other-owner unreleased features and supported-profile decisions are
-unchanged. See the [preparation record](docs/releases/contracts-edge-0.9.12.md).
+Published 2026-10-05 at 13:58:38 UTC as GitHub release 403772929, tag at
+`31f0a21d707795be293d15837c2f77c3d84219d8` (merge of #15), pinned to Ferrum Edge
+`v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`). See the
+[release record](docs/releases/contracts-edge-0.9.12.md).
 
 ### Added
 
@@ -75,14 +59,28 @@ unchanged. See the [preparation record](docs/releases/contracts-edge-0.9.12.md).
 - Keep validator behavior, workflow/action/dependency pins and permissions
   unchanged. Only static inspection/integrity hashing/diff checks run locally;
   GitHub-hosted validation is the conformance gate.
+- Prepare `contracts-edge-0.9.12` against actually released, root-qualified Edge
+  `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The prepared
+  contents below require their own canonical review/hosted/protected merge/PUSH
+  and immutable tag/release gates. At preparation time the latest published
+  Contracts was 0.9.11; consumer adoption and pending publisher profile decisions
+  are unchanged.
+- Record actual `contracts-edge-0.9.11` publication at
+  `390edbd5b2485af0988e02f7827fde778d76ae0a` after PR #13 and main PUSH
+  validation, including release 403239814 at 22:41:21 UTC on 2026-10-04 and
+  root's accepted unchanged shared v1 freeze. Update current release mappings
+  and documentation; preserve the prepared wording in the released section/tag
+  as historical, existing consumer pins and qualification slices, and Alloy's
+  unpublished status with no separate crate publishing approval. Consumer
+  adoption remains pending until its PRs merge and qualify.
 
 ## [contracts-edge-0.9.11] - 2026-10-04
 
-Prepared release contents; canonical merge/tag/publication remain pending in draft
-PR #13. Root has accepted the unchanged shared Alloy v1 freeze in this candidate.
-The latest published canonical release remains `contracts-edge-0.9.9-r2`;
-existing consumer pins are unchanged. See the [release record](docs/releases/contracts-edge-0.9.11.md)
-for verified Edge distribution, final qualified Alloy owner and publication order.
+Published 2026-10-04 at 22:41:21 UTC as GitHub release 403239814, tag at
+`390edbd5b2485af0988e02f7827fde778d76ae0a`. Root has accepted the unchanged
+shared Alloy v1 freeze in this release. See the
+[release record](docs/releases/contracts-edge-0.9.11.md) for verified Edge
+distribution, final qualified Alloy owner and publication order.
 
 ### Added
 
@@ -94,6 +92,7 @@ for verified Edge distribution, final qualified Alloy owner and publication orde
 - Standard HTTP admin `ETag`/`If-Match`, credential-complete verification,
   coherent namespace tokens, atomic replacement/lease fences, runtime refusal
   statuses and the unconditional restore exception in the admin contract docs.
+- Add shared GPT-6.1 Sol worker skills for Codex and Claude with optional fast mode.
 
 ### Changed
 
@@ -117,6 +116,15 @@ for verified Edge distribution, final qualified Alloy owner and publication orde
   require an exact reviewed PR second parent and all main PUSH successes.
   The existing hosted validator auto-discovers new artifacts; workflow,
   permissions, dependencies and validator behavior are unchanged.
+- Refresh the adoption ledger from immutable 2026-10-04 consumer PIN files,
+  test/workflow sources and hosted evidence for Alloy #27: Anvil diagnostic
+  import, GitForgeOps generated resource validation, Nexus/Foundry manifest
+  previews and Foundry's accepted presentation ADR. Record the split Nexus
+  pins, the published r2 `[agents]` addition and the Edge v0.9.10 mapping.
+- Clarify owner implementation versus shared qualification in the earlier
+  adoption-only refresh: shared schemas were PROPOSED pending an owner-backed
+  canonical freeze. That refresh changed no schemas, pins, tags or release status;
+  the coordinated freeze decision is now recorded in this release.
 
 ## [contracts-edge-0.9.9-r2] - 2026-10-01
 

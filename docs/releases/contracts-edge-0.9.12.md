@@ -1,13 +1,37 @@
-# contracts-edge-0.9.12 preparation record
+# contracts-edge-0.9.12 release record
 
-**Prepared on 2026-10-05; canonical merge/tag/release pending.** Edge v0.9.12
-is actually released and its distribution is qualified. This branch prepares
-Contracts against that immutable owner. The latest published canonical tag
-remains [contracts-edge-0.9.11](contracts-edge-0.9.11.md) at
-`390edbd5b2485af0988e02f7827fde778d76ae0a`. No Contracts 0.9.12 merge commit,
-reviewed final head, tag identity, hosted validation success or publication
-identity is asserted here. Root records those facts only after the actual gates.
-Existing consumer pins and historical release records remain unchanged.
+**Published on 2026-10-05 at 13:58:38 UTC.** The latest canonical release is
+[`contracts-edge-0.9.12`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
+at `31f0a21d707795be293d15837c2f77c3d84219d8`. It refreshes all five Edge
+vocabularies and the plugin OpenAPI pin and adds separate deployment snapshot and
+mutation acknowledgement schemas at actual released Edge source
+`0d917701b63ef38210c49df830f48cf0457cbc7d`. Consumer pins are recorded in
+[adoption.md](../adoption.md); 0.9.12 adoption is pending until consumer PRs
+merge and qualify.
+
+## Actual canonical publication
+
+[PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15) merged at
+13:57:00 UTC on 2026-10-05 as `31f0a21d707795be293d15837c2f77c3d84219d8`. Its
+first parent is `96228e1cc3341c6bd2dff3c47eea9efa45e0545e`; its exact second
+parent is the final reviewed head `d9c84810152732524c54a9ed292dc59103f0619d`,
+and the merge tree `1b480bf3e14e33d8a013247d2a30406159b6c04b` equals that head's
+tree. The final-head hosted [run 37319873697](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37319873697)
+succeeded. Every actual main PUSH workflow on the merge commit succeeded before
+the immutable tag was created: the sole applicable [run 37320780987](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37320780987)
+completed successfully at 13:57:20 UTC.
+
+The unsigned lightweight `contracts-edge-0.9.12` tag points directly to that
+merge commit. [GitHub release 403772929](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
+was published at 13:58:38 UTC with `draft: false` and `prerelease: false`.
+Historical tags and their Edge mappings remain unchanged.
+
+The [immutable tagged source record](https://github.com/ferrum-edge/ferrum-contracts/blob/31f0a21d707795be293d15837c2f77c3d84219d8/docs/releases/contracts-edge-0.9.12.md)
+and its `[contracts-edge-0.9.12]` changelog section captured prepared/pending
+wording before publication. These bytes are preserved; their prepared status is
+not a new approval requirement or a claim that publication remains pending. This
+documentation records the subsequent actual publication without changing the
+tagged artifacts.
 
 ## Actual Edge source and release qualification
 
@@ -93,7 +117,7 @@ All actual pre-tag PUSH successes are recorded by their workflow identities:
 | Benchmark Harness Tests | [37291682563](https://github.com/ferrum-edge/ferrum-edge/actions/runs/37291682563) |
 | Mesh Benchmark Lockfile | [37291682485](https://github.com/ferrum-edge/ferrum-edge/actions/runs/37291682485) |
 
-## Prepared canonical contents
+## Published release contents
 
 - Add `admin-deployment-snapshot` and
   `admin-deployment-mutation-acknowledgement` v1 schemas from the actual owner
@@ -119,11 +143,11 @@ All actual pre-tag PUSH successes are recorded by their workflow identities:
   `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`. This Edge release does not publish
   Alloy or promote another owner's default-branch feature. No obsolete
   `main_branch_delta` exists in the refreshed vocabulary files.
-- Record actual Edge publication separately from pending Contracts publication
-  and consumer adoption. Unfinished Edge #6011 rejection-contract work is absent
-  from this release; no new HTTP capacity/native rejection semantics or tokens
-  are added. Pending publisher profiles, Nexus Part B and advisory qualification
-  remain pending.
+- Record actual Edge and Contracts publication separately from pending consumer
+  adoption. Unfinished Edge #6011 rejection-contract work is absent from this
+  release; no new HTTP capacity/native rejection semantics or tokens are added.
+  Pending publisher profiles, Nexus Part B and advisory qualification remain
+  pending.
 
 The snapshot schema deliberately follows the open owner envelope. Nested raw
 SQL/BSON/spec identity is not an owner-exported standalone schema, and the
@@ -135,33 +159,35 @@ exceptions; validator code, workflows, action pins, dependencies and permissions
 are unchanged. Static inspection and `git diff --check` do not establish hosted
 conformance.
 
-## Root finalization and downstream adoption
+## Completed finalization and pending adoption
 
-1. Review the entire final canonical diff and obtain a fresh independent review
-   and Edge maintainer/code-owner approval for the changed contracts. Qualify
-   the exact final PR head through hosted `Validate contracts`, including every
-   schema, fixture, vocabulary and pinned plugin OpenAPI pointer. No changed
-   head inherits a prior success.
-2. Merge through the protected canonical PR using a normal merge commit. The
-   release target's second parent must equal the exact reviewed final head and
-   its tree must match that head. Preserve every historical tag and release.
-3. Verify the actual merge target and **all applicable main PUSH workflows** on
-   that exact SHA succeed before creating `contracts-edge-0.9.12`. Earlier
-   PR-head checks do not qualify the merge commit. Record the parents, tree,
-   required check/run/job identities and completion facts here.
-4. Root creates the immutable tag at that qualified merge commit and publishes
-   the canonical release. Record the actual tag/release identity and timestamp;
-   use signed annotation if available, otherwise accurately describe the
-   unsigned lightweight tag. Do not replace pending prose with invented SHAs.
-5. Only then coordinate consumer pin/checksum/copy adoption in Nexus #522,
-   Foundry #544, GitForgeOps and other consumers. Require original evidence and
-   explicit acknowledgements, their own supported-profile decisions and hosted
-   integration/packaged/four-store qualification as applicable. Record each
-   adoption slice only after its PR merges and qualifies. No consumer edits,
-   advisory completion or production apply qualification are delivered here.
+1. Final canonical review, fresh independent review and Edge maintainer/code-owner
+   approval completed for the changed contracts. The exact final reviewed head
+   `d9c84810152732524c54a9ed292dc59103f0619d` passed hosted [run 37319873697](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37319873697),
+   including every schema, fixture, vocabulary and pinned plugin OpenAPI pointer.
+   No changed head inherited a prior success.
+2. [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15) merged
+   through the protected canonical path using a normal merge commit whose second
+   parent equals that exact reviewed final head and whose tree matches it.
+   Historical tags and releases are preserved.
+3. The actual merge target `31f0a21d707795be293d15837c2f77c3d84219d8` and every
+   applicable main PUSH workflow succeeded before tag creation; the sole
+   applicable [run 37320780987](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37320780987)
+   completed successfully. Earlier PR-head checks were not substituted for
+   merge-commit qualification.
+4. Root created the immutable unsigned lightweight `contracts-edge-0.9.12` tag
+   at that qualified merge commit and published
+   [release 403772929](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
+   at 13:58:38 UTC on 2026-10-05.
+5. Consumer adoption remains pending. Coordinate consumer pin/checksum/copy
+   adoption in Nexus #522, Foundry #544, GitForgeOps and other consumers, with
+   original evidence, explicit acknowledgements, their own supported-profile
+   decisions and hosted integration/packaged/four-store qualification as
+   applicable. Record each adoption slice only after its PR merges and qualifies.
+   No advisory completion or production apply qualification is delivered here.
 
-The qualified Edge prerequisite lifts root's former release-dependent merge
-freeze; it does not bypass canonical protection or approve pending consumer
-profiles. Root owns the PR, review/CI qualification, protected merge, tag,
-release, profile decisions and advisory disposition. The implementer stops after
-pushing the preparation branch.
+The qualified Edge prerequisite does not approve pending consumer profiles. Root
+owns profile decisions and advisory disposition. Local repository execution is
+prohibited; static source/diff inspection and integrity hashing do not establish
+hosted validation. This subsequent documentation update needs its own hosted
+contracts gate and root review before landing.

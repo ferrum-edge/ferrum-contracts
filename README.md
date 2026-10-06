@@ -32,46 +32,51 @@ complete; the issue is closed and remains as project history.
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
 | [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions and process egress discovery |
 | [`docs/deployment-contracts.md`](docs/deployment-contracts.md) | Original deployment authority, dependency-fenced partial writes and explicit cleanup acknowledgements |
-| [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Verified Edge v0.9.12 distribution and pending canonical Contracts preparation |
+| [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Actual canonical publication, verified distribution and pending consumer adoption |
 | [`docs/releases/contracts-edge-0.9.11.md`](docs/releases/contracts-edge-0.9.11.md) | Actual canonical publication, verified distribution/owner evidence and pending consumer adoption |
 
 Every file records where it came from: owner repository, path, and commit.
 The latest published contracts release is
-[`contracts-edge-0.9.11`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
-at `390edbd5b2485af0988e02f7827fde778d76ae0a`, published on 2026-10-04 at
-22:41:21 UTC after [PR #13](https://github.com/ferrum-edge/ferrum-contracts/pull/13)
+[`contracts-edge-0.9.12`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
+at `31f0a21d707795be293d15837c2f77c3d84219d8`, published on 2026-10-05 at
+13:58:38 UTC after [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
 merged and its main PUSH validation succeeded. It maps to Edge's actual unsigned
-lightweight `v0.9.11` tag at `c764084b3b51c3f7ffde268c039688d35e49c553`.
+lightweight `v0.9.12` tag at `0d917701b63ef38210c49df830f48cf0457cbc7d`.
 Edge's release assets, digests, image identities, attestations and ABI gates are
-verified. Alloy owner `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` is qualified,
-and root's accepted unchanged shared v1 freeze is included in the publication.
+verified. The release refreshes all five Edge vocabularies and the plugin OpenAPI
+pin and adds separate deployment snapshot and mutation acknowledgement schemas.
 
 Historical
+[`contracts-edge-0.9.11`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
+at `390edbd5b2485af0988e02f7827fde778d76ae0a` was published on 2026-10-04 at
+22:41:21 UTC and maps to Edge's `v0.9.11` tag at
+`c764084b3b51c3f7ffde268c039688d35e49c553`; it includes Alloy owner
+`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` and root's accepted unchanged shared
+v1 freeze. Historical
 [`contracts-edge-0.9.9-r2`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.9-r2)
 adds Alloy's optional service-manifest `[agents]` section to
 [`contracts-edge-0.9.9`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.9);
 both retain their Edge v0.9.9/v0.9.10 mappings. The initial
 [`contracts-edge-0.9.8`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.8)
-release remains available. Prepared/pending wording in the immutable 0.9.11
-tagged source records its pre-publication state; it is not a new approval
-requirement. Existing consumer pins are unchanged, and 0.9.11 adoption remains
-pending until the consumer PRs merge and qualify. See the
-[release record](docs/releases/contracts-edge-0.9.11.md).
+release remains available. Prepared/pending wording in the immutable 0.9.11 and
+0.9.12 tagged sources records their pre-publication state; it is not a new
+approval requirement. Consumer pins are refreshed in
+[docs/adoption.md](docs/adoption.md), and 0.9.12 adoption remains pending until
+the consumer PRs merge and qualify. See the
+[release records](docs/releases/contracts-edge-0.9.12.md).
 
-The next **prepared, unpublished** release is `contracts-edge-0.9.12`, from
-actually released Edge `v0.9.12` at
-`0d917701b63ef38210c49df830f48cf0457cbc7d`. It refreshes all five Edge
-vocabularies and the plugin OpenAPI pin, and adds separate deployment snapshot
-and mutation acknowledgement schemas. Complete original secret-bearing evidence
-and its deployment token fence partial proxy removal and API-spec replacement.
-Cleanup requires the explicit owner acknowledgement; even HTTP 200 can be
-durable-only and prohibit cleanup. The existing backup/row contracts keep their
-semantics. See [the deployment contract](docs/deployment-contracts.md) and
-[preparation record](docs/releases/contracts-edge-0.9.12.md) for provenance,
-verified Edge facts, remaining canonical gates and pending consumer adoption.
-Other-owner unreleased features and pending publisher profiles are not promoted.
+The published 0.9.12 release adds separate deployment snapshot and mutation
+acknowledgement schemas plus refreshed Edge provenance from actually released
+Edge `v0.9.12` at `0d917701b63ef38210c49df830f48cf0457cbc7d`. Complete original
+secret-bearing evidence and its deployment token fence partial proxy removal and
+API-spec replacement. Cleanup requires the explicit owner acknowledgement; even
+HTTP 200 can be durable-only and prohibit cleanup. The existing backup/row
+contracts keep their semantics. See [the deployment contract](docs/deployment-contracts.md)
+and [release record](docs/releases/contracts-edge-0.9.12.md) for provenance and
+verified Edge facts. Other-owner unreleased features and pending publisher
+profiles are not promoted.
 
-The published 0.9.11 release adds metadata schemas for coherent admin conditional backup and
+The 0.9.11 release adds metadata schemas for coherent admin conditional backup and
 process-scoped backend egress discovery, plus the egress vocabulary and sanitized
 fixtures. Standard HTTP `ETag`/`If-Match` admin semantics are documented against
 the owner implementation. JSON validation checks shape and owner-derived
@@ -83,11 +88,12 @@ runtime requirements in [the admin contract](docs/admin-contracts.md).
 See [docs/adoption.md](docs/adoption.md) for each consumer's pinned tag,
 adoption status and remaining contract gaps.
 
-The 2026-10-04 snapshot records qualified Anvil diagnostic import, GitForgeOps
+The 2026-10-06 snapshot records qualified Anvil diagnostic import, GitForgeOps
 validation of actual Alloy-generated resource trees, and Nexus/Foundry manifest
-previews with their bounded trust and presentation rules. Anvil, Alloy and
-Foundry pin r2; Nexus pins r2 for manifests and 0.9.9 for vocabularies;
-GitForgeOps pins 0.9.9. The published release marks the shared diagnostic report
+previews with their bounded trust and presentation rules. Alloy, Foundry and
+GitForgeOps now pin `contracts-edge-0.9.12`; Anvil pins `contracts-edge-0.9.11`;
+Nexus pins `contracts-edge-0.9.9` for vocabularies and `contracts-edge-0.9.9-r2`
+for the manifest. The published release marks the shared diagnostic report
 and service manifest **EXISTING**/implemented after root's accepted coordinated v1
 freeze, preserving all wire fields, bounds, fixtures and reader behavior.
 Historical r2 metadata stays unchanged. Alloy remains unpublished; this decision

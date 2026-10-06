@@ -1,12 +1,12 @@
 # Edge deployment snapshot and mutation contracts
 
-**Released owner capability; canonical publication pending.** Edge `v0.9.12`
-ships this profile at `0d917701b63ef38210c49df830f48cf0457cbc7d`, with
-[verified distribution](releases/contracts-edge-0.9.12.md). The latest published
-Contracts tag remains `contracts-edge-0.9.11`. Preparing these artifacts does
-not record a new canonical tag, consumer pin, supported publisher profile or
-advisory closure. Nexus #522, Foundry #544 and GitForgeOps adoption require
-their own decisions and hosted qualification after canonical publication.
+**Published canonical contracts-edge-0.9.12.** Edge `v0.9.12` ships this profile
+at `0d917701b63ef38210c49df830f48cf0457cbc7d`, with
+[verified distribution](releases/contracts-edge-0.9.12.md). The canonical tag
+points to `31f0a21d707795be293d15837c2f77c3d84219d8`, published on 2026-10-05 at
+13:58:38 UTC. Publication does not itself record a consumer pin, supported
+publisher profile or advisory closure. Nexus #522, Foundry #544 and GitForgeOps
+adoption require their own decisions and hosted qualification.
 
 ## Immutable owner sources and schema scope
 
