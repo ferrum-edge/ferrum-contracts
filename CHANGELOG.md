@@ -25,10 +25,6 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 - Correct the `main` protection text in `AGENTS.md` and `docs/ownership.md`: it
   requires the `Schemas, fixtures and vocabularies` check and no approving
   reviews (ruleset 24239605; solo maintainer), not a code-owner review (#18).
-- `diagnostic-ref` v1 provenance: cite the actual Edge `v0.9.9` tag commit
-  `234717ce41965cd1e2b5c6c761a25475c5d7628c` for `src/diagnostic_ref.rs` and
-  note the introducing commit `ab16c714`. CI does not pin schema file hashes, so
-  no pin changes (#18).
 
 ## [contracts-edge-0.9.12] - 2026-10-05
 
