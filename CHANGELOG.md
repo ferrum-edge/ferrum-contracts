@@ -14,20 +14,7 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   0.9.12 as the latest published canonical release; preserve the prepared wording
   in the tagged sections as historical and leave pending consumer adoption,
   other-owner unreleased features and publisher profile decisions unchanged.
-- Prepare `contracts-edge-0.9.12` against actually released, root-qualified Edge
-  `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The prepared
-  contents below require their own canonical review/hosted/protected merge/PUSH
-  and immutable tag/release gates. At preparation time the latest published
-  Contracts was 0.9.11; consumer adoption and pending publisher profile decisions
-  are unchanged.
-- Record actual `contracts-edge-0.9.11` publication at
-  `390edbd5b2485af0988e02f7827fde778d76ae0a` after PR #13 and main PUSH
-  validation, including release 403239814 at 22:41:21 UTC on 2026-10-04 and
-  root's accepted unchanged shared v1 freeze. Update current release mappings
-  and documentation; preserve the prepared wording in the released section/tag
-  as historical, existing consumer pins and qualification slices, and Alloy's
-  unpublished status with no separate crate publishing approval. Consumer
-  adoption remains pending until its PRs merge and qualify.
+- Removed the GPT-6.1 Sol worker skill (not used by this project).
 
 ## [contracts-edge-0.9.12] - 2026-10-05
 
@@ -73,6 +60,20 @@ unchanged. See the [preparation record](docs/releases/contracts-edge-0.9.12.md).
 - Keep validator behavior, workflow/action/dependency pins and permissions
   unchanged. Only static inspection/integrity hashing/diff checks run locally;
   GitHub-hosted validation is the conformance gate.
+- Prepare `contracts-edge-0.9.12` against actually released, root-qualified Edge
+  `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The prepared
+  contents below require their own canonical review/hosted/protected merge/PUSH
+  and immutable tag/release gates. At preparation time the latest published
+  Contracts was 0.9.11; consumer adoption and pending publisher profile decisions
+  are unchanged.
+- Record actual `contracts-edge-0.9.11` publication at
+  `390edbd5b2485af0988e02f7827fde778d76ae0a` after PR #13 and main PUSH
+  validation, including release 403239814 at 22:41:21 UTC on 2026-10-04 and
+  root's accepted unchanged shared v1 freeze. Update current release mappings
+  and documentation; preserve the prepared wording in the released section/tag
+  as historical, existing consumer pins and qualification slices, and Alloy's
+  unpublished status with no separate crate publishing approval. Consumer
+  adoption remains pending until its PRs merge and qualify.
 
 ## [contracts-edge-0.9.11] - 2026-10-04
 
