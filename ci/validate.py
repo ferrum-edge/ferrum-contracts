@@ -8,12 +8,14 @@ Checks, in order:
    <name> and <N>.
 2. Every schema is valid against the JSON Schema 2020-12 meta-schema.
 3. Fixtures: every file under fixtures/<name>/valid/ must validate against
-   the latest version of schema <name>, and every file under
-   fixtures/<name>/invalid/ must fail it with exactly one top-level error
-   whose instance path and keyword (or those of an error nested under it)
-   match the entry in fixtures/invalid-expectations.json; an entry may also
-   pin the top-level keyword with `top_keyword`. Each schema needs
-   at least one of each; any other file in valid/ or invalid/ fails.
+   schema <name>, and every file under fixtures/<name>/invalid/ must fail it
+   with exactly one top-level error whose instance path and keyword (or
+   those of an error nested under it) match the entry in
+   fixtures/invalid-expectations.json; an entry may also pin the top-level
+   keyword with `top_keyword`. A schema with several majors keeps its
+   fixtures in fixtures/<name>/v<N>/{valid,invalid}/, one directory per
+   major, each checked against that major. Each fixture set needs at least
+   one of each; any other file in valid/ or invalid/ fails.
    Formats are asserted (date-time needs the pinned rfc3339-validator).
 4. Vocabularies: every vocabularies/<v>.json validates against the schema its
    `$schema` names, which must be schemas/vocabulary-<v>/v<version>.
@@ -50,6 +52,7 @@ from referencing import Registry, Resource
 BASE = "https://github.com/ferrum-edge/ferrum-contracts/schemas"
 META = "https://json-schema.org/draft/2020-12/schema"
 SCHEMA_FILE = re.compile(r"^v([1-9][0-9]*)\.schema\.json$")
+VERSION_DIR = re.compile(r"^v([1-9][0-9]*)$")
 NAME = re.compile(r"^[a-z][a-z0-9-]*$")
 EXPECTATIONS = "invalid-expectations.json"
 FORMAT_CHECKER = Draft202012Validator.FORMAT_CHECKER
@@ -260,6 +263,33 @@ def load_expectations(root: Path, report: Report) -> dict[str, dict]:
     return data
 
 
+def fixture_sets(entry: Path, name: str, versions, report: Report) -> list[tuple[Path, int]]:
+    """(directory holding valid/ and invalid/, schema major) pairs for one fixture set.
+
+    A schema with one major keeps fixtures/<name>/{valid,invalid}/, checked
+    against that major. A schema with several majors keeps
+    fixtures/<name>/v<N>/{valid,invalid}/ for every major N.
+    """
+    if len(versions) == 1:
+        for sub in sorted(entry.iterdir()):
+            if sub.name not in ("valid", "invalid") or not sub.is_dir():
+                report.fail(sub, "fixture sets contain only valid/ and invalid/")
+        return [(entry, max(versions))]
+    sets = []
+    for sub in sorted(entry.iterdir()):
+        match = VERSION_DIR.match(sub.name)
+        if not (sub.is_dir() and match and int(match.group(1)) in versions):
+            report.fail(sub, f"{name} has several majors; fixtures live only in v<N>/ per major")
+            continue
+        for kind in sorted(sub.iterdir()):
+            if kind.name not in ("valid", "invalid") or not kind.is_dir():
+                report.fail(kind, "fixture sets contain only valid/ and invalid/")
+        sets.append((sub, int(match.group(1))))
+    for version in sorted(set(versions) - {major for _, major in sets}):
+        report.fail(entry / f"v{version}", f"{name} v{version} has no fixtures")
+    return sets
+
+
 def check_fixtures(root: Path, schemas, registry, report: Report) -> None:
     fixture_root = root / "fixtures"
     expectations = load_expectations(root, report)
@@ -275,71 +305,83 @@ def check_fixtures(root: Path, schemas, registry, report: Report) -> None:
         if name not in schemas:
             report.fail(entry, f"no schema named {name!r}")
             continue
-        latest = max(schemas[name])
-        v = validator(schemas[name][latest], registry)
-        for sub in sorted(entry.iterdir()):
-            if sub.name not in ("valid", "invalid") or not sub.is_dir():
-                report.fail(sub, "fixture sets contain only valid/ and invalid/")
-        for kind in ("valid", "invalid"):
-            directory = entry / kind
-            files = []
-            if directory.is_dir():
-                for path in sorted(directory.iterdir()):
-                    if path.is_file() and path.suffix == ".json":
-                        files.append(path)
-                    else:
-                        report.fail(path, f"{kind}/ holds only *.json fixture files")
-            if not files:
-                report.fail(entry, f"needs at least one {kind} fixture")
-            for path in files:
-                instance = load_json(path, report)
-                if instance is None:
-                    continue
-                errors = list(v.iter_errors(instance))
-                rel = path.relative_to(fixture_root).as_posix()
-                if kind == "valid":
-                    if errors:
-                        detail = describe(errors)
-                        report.fail(path, f"valid fixture fails {name} v{latest} {detail}")
-                    else:
-                        report.ok()
-                    continue
-                used.add(rel)
-                expected = expectations.get(rel)
-                if not errors:
-                    report.fail(path, f"invalid fixture passes {name} v{latest}")
-                elif expected is None:
-                    detail = describe(errors)
-                    report.fail(path, f"no entry in fixtures/{EXPECTATIONS}; got {detail}")
-                elif len(errors) != 1:
-                    report.fail(path, f"expected one error, got {len(errors)}: {describe(errors)}")
-                elif not any(
-                    pointer(e.absolute_path) == expected["instance_path"]
-                    and e.validator == expected["keyword"]
-                    for e in error_tree(errors[0])
-                ):
-                    report.fail(
-                        path,
-                        f"expected {expected['keyword']!r} at {expected['instance_path']!r}, "
-                        f"got {describe(errors)}",
-                    )
-                elif (
-                    expected.get("top_keyword") is not None
-                    and errors[0].validator != expected["top_keyword"]
-                ):
-                    report.fail(
-                        path,
-                        f"expected top-level {expected['top_keyword']!r}, "
-                        f"got {errors[0].validator!r}: {describe(errors)}",
-                    )
-                else:
-                    report.ok()
-                    print(f"  ok (rejected) {rel}: {describe(errors)}")
+        for fixture_dir, version in fixture_sets(entry, name, schemas[name], report):
+            v = validator(schemas[name][version], registry)
+            check_fixture_dir(
+                fixture_root, fixture_dir, name, version, v, expectations, used, report
+            )
     for key in sorted(set(expectations) - used):
         report.fail(fixture_root / EXPECTATIONS, f"{key} names no invalid fixture")
     for name in schemas:
         if name not in seen:
             report.fail(f"fixtures/{name}", "schema has no fixture set")
+
+
+def check_fixture_dir(
+    fixture_root: Path,
+    entry: Path,
+    name: str,
+    version: int,
+    v: Draft202012Validator,
+    expectations: dict[str, dict],
+    used: set[str],
+    report: Report,
+) -> None:
+    for kind in ("valid", "invalid"):
+        directory = entry / kind
+        files = []
+        if directory.is_dir():
+            for path in sorted(directory.iterdir()):
+                if path.is_file() and path.suffix == ".json":
+                    files.append(path)
+                else:
+                    report.fail(path, f"{kind}/ holds only *.json fixture files")
+        if not files:
+            report.fail(entry, f"needs at least one {kind} fixture")
+        for path in files:
+            instance = load_json(path, report)
+            if instance is None:
+                continue
+            errors = list(v.iter_errors(instance))
+            rel = path.relative_to(fixture_root).as_posix()
+            if kind == "valid":
+                if errors:
+                    detail = describe(errors)
+                    report.fail(path, f"valid fixture fails {name} v{version} {detail}")
+                else:
+                    report.ok()
+                continue
+            used.add(rel)
+            expected = expectations.get(rel)
+            if not errors:
+                report.fail(path, f"invalid fixture passes {name} v{version}")
+            elif expected is None:
+                detail = describe(errors)
+                report.fail(path, f"no entry in fixtures/{EXPECTATIONS}; got {detail}")
+            elif len(errors) != 1:
+                report.fail(path, f"expected one error, got {len(errors)}: {describe(errors)}")
+            elif not any(
+                pointer(e.absolute_path) == expected["instance_path"]
+                and e.validator == expected["keyword"]
+                for e in error_tree(errors[0])
+            ):
+                report.fail(
+                    path,
+                    f"expected {expected['keyword']!r} at {expected['instance_path']!r}, "
+                    f"got {describe(errors)}",
+                )
+            elif (
+                expected.get("top_keyword") is not None
+                and errors[0].validator != expected["top_keyword"]
+            ):
+                report.fail(
+                    path,
+                    f"expected top-level {expected['top_keyword']!r}, "
+                    f"got {errors[0].validator!r}: {describe(errors)}",
+                )
+            else:
+                report.ok()
+                print(f"  ok (rejected) {rel}: {describe(errors)}")
 
 
 def check_cross(root: Path, schemas, registry, report: Report) -> None:

@@ -8,24 +8,25 @@
     "version": 1,
     "status": "implemented",
     "owner": "ferrum-edge/ferrum-edge",
-    "edge_availability": "Released since Ferrum Edge v0.9.11; re-read at verified v0.9.12 source 0d917701b63ef38210c49df830f48cf0457cbc7d. Canonical contracts-edge-0.9.11 is published; contracts-edge-0.9.12 publication is pending.",
+    "edge_availability": "Released since Ferrum Edge v0.9.11; unchanged wire shape re-read at v0.9.13 source 9b83115de7ec23ab51ec4feae6bed65e596db425. From v0.9.13 the namespace token MACs a bounded snapshot digest under the namespace_snapshot.v2 domain: earlier namespace tokens fail closed with 412, and a namespace over the 64 MiB canonical bound returns 507.",
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.12",
-        "commit": "0d917701b63ef38210c49df830f48cf0457cbc7d",
+        "ref": "v0.9.13",
+        "commit": "9b83115de7ec23ab51ec4feae6bed65e596db425",
         "path": "openapi.yaml",
         "symbols": [
           "components.schemas.ConditionalBackupMetadata",
           "components.schemas.ResourceETagMap",
           "components.parameters.NamespaceIfMatch",
-          "components.headers.ResourceETag"
+          "components.headers.ResourceETag",
+          "components.responses.NamespaceSnapshotTooLarge"
         ]
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.12",
-        "commit": "0d917701b63ef38210c49df830f48cf0457cbc7d",
+        "ref": "v0.9.13",
+        "commit": "9b83115de7ec23ab51ec4feae6bed65e596db425",
         "path": "src/admin/backup.rs",
         "symbols": [
           "ConditionalBackupMetadata"
@@ -33,30 +34,33 @@
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.12",
-        "commit": "0d917701b63ef38210c49df830f48cf0457cbc7d",
+        "ref": "v0.9.13",
+        "commit": "9b83115de7ec23ab51ec4feae6bed65e596db425",
         "path": "src/admin/conditional_snapshots.rs",
         "symbols": [
           "namespace_tag",
           "row_tags",
           "serialize_snapshot",
-          "restore"
+          "restore",
+          "snapshot_too_large",
+          "NAMESPACE_SNAPSHOT_TAG_KIND"
         ]
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.12",
-        "commit": "0d917701b63ef38210c49df830f48cf0457cbc7d",
+        "ref": "v0.9.13",
+        "commit": "9b83115de7ec23ab51ec4feae6bed65e596db425",
         "path": "src/admin/preconditions.rs",
         "symbols": [
           "resource_etag",
+          "snapshot_etag",
           "quoted"
         ]
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.12",
-        "commit": "0d917701b63ef38210c49df830f48cf0457cbc7d",
+        "ref": "v0.9.13",
+        "commit": "9b83115de7ec23ab51ec4feae6bed65e596db425",
         "path": "docs/admin_backup_restore.md",
         "sections": [
           "Conditional snapshots and restore"

@@ -19,6 +19,12 @@ deployment authority does not replace those tags or authorize whole restore.
 Contracts 0.9.12 is published at `31f0a21d707795be293d15837c2f77c3d84219d8`;
 downstream adoption remains pending.
 
+[Contracts 0.9.13](releases/contracts-edge-0.9.13.md) reads Edge `v0.9.13` at
+`9b83115de7ec23ab51ec4feae6bed65e596db425`. The backup metadata keeps its v1
+shape, but its namespace token is now a keyed MAC over a bounded snapshot
+digest, and the egress response moves to `schema_version: 2` with
+`backend-egress-policy` v2. Both changes are described below.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
@@ -53,8 +59,8 @@ standard HTTP headers; `gateway-headers.json` records Edge's admin semantics.
 | Route | Successful behavior | Refusals |
 |---|---|---|
 | `GET /consumers/{id}/verification` | `200`: admin-role, namespace-authorized read of the complete stored consumer and matching strong row `ETag`; security audit admission before response; `Cache-Control: no-store`; no cached fallback | `400` invalid input; `401` missing/invalid JWT; `403` role/namespace denial; `404` absent consumer; `503` unavailable authoritative state, tag key or audit admission |
-| `GET /backup?conditional=true` | `200`: full unfiltered primary transaction snapshot; exact stored consumer fields; all four row-tag maps; header `ETag` equals `conditional.namespace_etag`; audit admission before response; `Cache-Control: no-store`; no cached fallback | `400` invalid opt-in/filter/namespace; `401` authentication; `403` authorization; `501` unsupported MongoDB topology; `503` unavailable authoritative snapshot, tag key or audit admission |
-| `POST /restore?confirm=true` with namespace `If-Match` | Atomic compare and complete replacement in one transaction, including empty replacement and lease entry/commit fences; existing restore/live-apply response semantics; no new response `ETag` | `412` stale or weak-only tag; `400` malformed/empty header or wildcard; `501` unsupported topology; `503` unavailable state/lease; existing authentication, admission, body-size, confirmation, conflict and live-apply failures still apply |
+| `GET /backup?conditional=true` | `200`: full unfiltered primary transaction snapshot; exact stored consumer fields; all four row-tag maps; header `ETag` equals `conditional.namespace_etag`; audit admission before response; `Cache-Control: no-store`; no cached fallback | `400` invalid opt-in/filter/namespace; `401` authentication; `403` authorization; `501` unsupported MongoDB topology; `503` unavailable authoritative snapshot, tag key or audit admission; `507` (v0.9.13) canonical representation over 64 MiB |
+| `POST /restore?confirm=true` with namespace `If-Match` | Atomic compare and complete replacement in one transaction, including empty replacement and lease entry/commit fences; existing restore/live-apply response semantics; no new response `ETag` | `412` stale or weak-only tag (from v0.9.13, also any tag issued by v0.9.12 or earlier); `400` malformed/empty header or wildcard; `501` unsupported topology; `503` unavailable state/lease; `507` (v0.9.13) canonical representation over 64 MiB, nothing applied; existing authentication, admission, body-size, confirmation, conflict and live-apply failures still apply |
 
 Row tags cover the complete stored row, including privately verified
 credentials, rather than redacted response bytes. Ordinary consumer reads and
@@ -72,6 +78,16 @@ Registry metadata is covered but not exported or restored. Delete/recreate
 and reverted mutations invalidate namespace tags; reads, lease maintenance,
 audit events and missing-resource no-ops do not. Tags are keyed under the admin
 JWT secret; replicas need the same secret, and rotation invalidates old tags.
+
+From Edge v0.9.13 the namespace tag is a keyed MAC, in the
+`namespace_snapshot.v2` domain, over a bounded SHA-256 of the canonical
+snapshot. Stored API-spec documents, external-reference snapshots and other
+binary values enter it as the SHA-256 and length of the stored bytes, so any
+changed byte still invalidates the tag. Tags issued by v0.9.12 or earlier keep
+their syntax but fail closed with `412`; re-read the backup after upgrading.
+A namespace whose canonical representation (spec bytes excluded) exceeds
+64 MiB gets `507` with no tag and nothing applied; the refusal is deterministic
+for unchanged state. The metadata schema checks syntax only and is unchanged.
 
 Restore requires the namespace header token on the same `X-Ferrum-Namespace`.
 A row token or `conditional` body metadata cannot authorize replacement.
@@ -94,15 +110,18 @@ keeps its existing credential canonicalization.
 
 ## Immutable process egress policy
 
-`schemas/backend-egress-policy/v1.schema.json` transcribes
-`BackendEgressPolicyResponse`; `vocabularies/backend-egress-policy.json` records
-its v1 labels. Their common label/order definitions prevent vocabulary and
-response drift without changing CI. The schema also asserts the handler's
-exact mode class lists and guarantee calculation.
+`schemas/backend-egress-policy/v2.schema.json` transcribes
+`BackendEgressPolicyResponse` as Edge v0.9.13 emits it (`schema_version: 2`);
+`vocabularies/backend-egress-policy.json` (shape v2) records its labels.
+`backend-egress-policy/v1.schema.json` and the v1 vocabulary shape describe
+`schema_version: 1` from Edge v0.9.11 and v0.9.12. Each response major shares
+its label/order definitions with the vocabulary shape of the same major, which
+prevents vocabulary and response drift. Both majors assert the handler's exact
+mode class lists and that release's guarantee calculation.
 
-Validators must register both `backend-egress-policy/v1.schema.json` and
-`vocabulary-backend-egress-policy/v1.schema.json` by `$id` from the same
-immutable canonical pin. Response references resolve to the latter's `$defs`;
+Validators must register `backend-egress-policy/v<N>.schema.json` and
+`vocabulary-backend-egress-policy/v<N>.schema.json` of the same major by `$id`
+from the same immutable canonical pin. Response references resolve to the latter's `$defs`;
 the identifier URLs are not served documents (see [versioning.md](versioning.md)).
 
 `GET /backend-egress-policy` returns `200` with `Cache-Control: no-store`.
@@ -114,7 +133,7 @@ A present `ns` claim always constrains this read even when claim enforcement
 is off; missing claims are denied when enforcement is on. The namespace need
 not have stored resources; an absent namespace header selects `ferrum`.
 
-The response has `schema_version=1`,
+The response has `schema_version=2` (Edge v0.9.13; `1` in v0.9.11 and v0.9.12),
 `ip_classification=ferrum-private-reserved-v1`, and `policy_scope=process`.
 It reads the immutable loaded policy from the serving `ProxyState`, otherwise
 the loaded admin admission policy. It does not reread environment strings;
@@ -148,14 +167,18 @@ The dangerous-range flag defaults true but still permits ordinary
 loopback/RFC1918/ULA under `both`; it alone never establishes public-only egress.
 The overlay flags disclose only whether loaded lists are nonempty.
 
-`public_only_guaranteed` is true exactly when `mode=public` and
-`allow_cidr_overrides_present=false`. Deny overrides only restrict. Even a
-wholly public undisclosed allow list produces false; false does not prove a
-private address is reachable. The schema accepts a true guarantee on CP
-metadata because that is a policy fact, but CP metadata never attests its DPs.
+In `schema_version: 2`, `public_only_guaranteed` is true exactly when
+`enforcement_scope=local-data-plane`, `mode=public` and
+`allow_cidr_overrides_present=false`; `admission-only`, `unserved-namespace`
+and `no-data-plane` always report false, and the v2 schema rejects a true
+guarantee for them. In `schema_version: 1` it was true for public mode without
+allow overrides on any scope, including CP admission metadata. Deny overrides
+only restrict. Even a wholly public undisclosed allow list produces false;
+false does not prove a private address is reachable. CP metadata never attests
+its DPs.
 
-A public-only publisher must recognize the complete v1 vocabulary, match its
-namespace, require `local-data-plane` and `public_only_guaranteed=true`, and
+A public-only publisher must recognize `schema_version: 2` and its complete
+vocabulary, match its namespace, require `local-data-plane` and `public_only_guaranteed=true`, and
 check every serving DP again after replacement/restart. Missing/unknown
 versions, labels or fields, authorization failure, unserved/CP-only scopes and
 weaker policy block publication. Unknown values grant no known meaning or

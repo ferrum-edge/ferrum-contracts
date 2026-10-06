@@ -8,6 +8,53 @@ points to `31f0a21d707795be293d15837c2f77c3d84219d8`, published on 2026-10-05 at
 publisher profile or advisory closure. Nexus #522, Foundry #544 and GitForgeOps
 adoption require their own decisions and hosted qualification.
 
+## Edge v0.9.13: deployment snapshot v2
+
+Edge `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`, Edge #6017) keeps
+the `deployment-v1` profile, routes, token syntax and acknowledgement members,
+but changes the snapshot body incompatibly. `admin-deployment-snapshot` v2
+describes it; v1 describes Edge `v0.9.12`. Owner sources for v2 are the same
+paths at `v0.9.13`, plus `openapi.yaml` `StoredContentDigest` and
+`NamespaceSnapshotTooLarge` and `docs/upgrade_guide.md` "Upgrading to 0.9.13".
+
+- `evidence` and `api_specs` carry every stored spec document and
+  external-reference snapshot as `StoredContentDigest`
+  (`{"sha256": "<lowercase hex>", "len": <bytes>}`) instead of a byte array.
+  Raw SQL blobs are `{sha256, len}` instead of `bytes_hex`; MongoDB rows carry
+  `bson_sha256` instead of `bson_hex`, and binary values
+  `binary_sha256`/`len`/`subtype`. `api_specs` is sorted by id in byte order and
+  equals `evidence.resources[5]`. v2 requires `id`, `proxy_id` and
+  `spec_content` on each `api_specs` item, as the owner OpenAPI does.
+- The required `api_spec_contents` array holds, in `api_specs` order, one
+  closed `{id, spec_content_base64, external_ref_snapshot_base64}` object per
+  spec: standard padded base64 of the stored gzip document and of the stored
+  external-reference snapshot (or null). It is outside `evidence` and not part
+  of the token's digest, but each value decodes to the bytes whose digest the
+  evidence fences, so one read still recovers the original documents. Verify
+  each value against its digest before relying on it. `GET /api-specs/{id}`
+  cannot replace it: it returns the decompressed, possibly converted document.
+- The token keeps the `deployment-v1-` syntax, but is a keyed MAC in the
+  `deployment_snapshot.v2` domain over a bounded SHA-256 of the canonical
+  evidence. Every token issued by `v0.9.12` fails closed with `412`. Finish or
+  abandon in-flight recoveries before upgrading, then read new authority.
+- A namespace whose canonical evidence exceeds 64 MiB (spec bytes count as
+  digest and length), or whose base64 spec content exceeds 256 MiB, gets `507`
+  on `GET /deployment-snapshot` with `durable: "not_started"` and no token or
+  evidence. The conditional mutations return `507` with `not_started` from the
+  pre-transaction check and `not_committed` from inside the rolled-back
+  mutation transaction; `live` is `unconfirmed` and cleanup is never
+  authorized. A `507` is deterministic for unchanged state; do not retry it.
+
+The JSON schema cannot check that base64 content matches its digest, that the
+evidence is complete or that a token is authentic; those remain runtime checks.
+The v2 fixtures carry the empty SQL and MongoDB snapshots forward and add a
+synthetic SQL snapshot with one API spec, whose base64 content does decode to
+the bytes its digest names; it omits the spec's proxy and raw stored rows, so
+it is not a complete or captured response.
+The sections below describe the profile as introduced in `v0.9.12`; where they
+mention byte arrays, `bytes_hex` or `bson_hex`, `v0.9.13` uses the digest forms
+above.
+
 ## Immutable owner sources and schema scope
 
 All paths below belong to `ferrum-edge/ferrum-edge` at the full commit above:
@@ -147,6 +194,8 @@ operation prepares a whole-namespace restore or performs late compensation.
 | Confirmed commit but live/audit/cursor/lease acknowledgement unavailable | 503 | `committed` | `unconfirmed` | `false` |
 | Store/transport acknowledgement uncertain | 503 if available | `unknown` | `unconfirmed` | `false` |
 | Stale evidence or dependency/ownership refusal | 412/409 | `not_committed` | `unconfirmed` | `false` |
+| Namespace over the snapshot bound inside the mutation transaction (v0.9.13) | 507 | `not_committed` | `unconfirmed` | `false` |
+| Namespace over the snapshot bound before the transaction (v0.9.13) | 507 | `not_started` | `unconfirmed` | `false` |
 | Initial mode/evidence/admission failure | 400/503 | `not_started` | `unconfirmed` | `false` |
 
 Only a complete HTTP 200 acknowledgement with expected `profile=deployment-v1`

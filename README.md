@@ -25,27 +25,39 @@ complete; the issue is closed and remains as project history.
 | [`ci/`](ci) | Contract validation workflow and pinned dependencies |
 | [`vocabularies/`](vocabularies) | Edge-owned vocabularies: `ErrorClass` and `X-Gateway-Error` tokens, gateway-owned headers, `provisioned-by` values, and the plugin catalog index |
 | [`schemas/`](schemas) | JSON Schemas (2020-12), one directory per contract, one file per major version |
-| [`fixtures/`](fixtures) | Payloads producers must emit and consumers must accept (`valid/`) or reject (`invalid/`) |
+| [`fixtures/`](fixtures) | Payloads producers must emit and consumers must accept (`valid/`) or reject (`invalid/`); one `v<N>/` directory per major when a schema has several |
 | [`docs/ownership.md`](docs/ownership.md) | Who owns each contract and how changes land |
 | [`docs/versioning.md`](docs/versioning.md) | Schema versions and `contracts-edge-X.Y.Z` tags |
 | [`docs/adoption.md`](docs/adoption.md) | Consumer pins, qualification evidence and remaining contract gaps |
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
 | [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions and process egress discovery |
 | [`docs/deployment-contracts.md`](docs/deployment-contracts.md) | Original deployment authority, dependency-fenced partial writes and explicit cleanup acknowledgements |
+| [`docs/releases/contracts-edge-0.9.13.md`](docs/releases/contracts-edge-0.9.13.md) | Edge v0.9.13 source, the v2 egress and deployment snapshot contracts, and what stayed unchanged |
 | [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Actual canonical publication and pending consumer adoption |
 | [`docs/releases/contracts-edge-0.9.11.md`](docs/releases/contracts-edge-0.9.11.md) | Actual canonical publication/owner evidence and pending consumer adoption |
 
 Every file records where it came from: owner repository, path, and commit.
-The latest published contracts release is
+The latest contracts release is
+[`contracts-edge-0.9.13`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.13),
+tagged on the merge commit of its release PR. It maps to Edge `v0.9.13` at
+`9b83115de7ec23ab51ec4feae6bed65e596db425` and adds new majors for two
+response contracts Edge changed incompatibly: `backend-egress-policy` v2
+(`schema_version: 2`; `public_only_guaranteed` requires local enforcement) and
+`admin-deployment-snapshot` v2 (spec bytes as SHA-256 digests plus a separate
+`api_spec_contents` copy). The v1 files stay for consumers of earlier Edge
+releases. All five vocabularies and the plugin OpenAPI pin are refreshed. See
+the [release record](docs/releases/contracts-edge-0.9.13.md).
+
+Historical
 [`contracts-edge-0.9.12`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
-at `31f0a21d707795be293d15837c2f77c3d84219d8`, published on 2026-10-05 at
+at `31f0a21d707795be293d15837c2f77c3d84219d8` was published on 2026-10-05 at
 13:58:38 UTC after [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
 merged and its main PUSH validation succeeded. It maps to Edge's actual unsigned
 lightweight `v0.9.12` tag at `0d917701b63ef38210c49df830f48cf0457cbc7d`.
 Edge's release assets, digests, image identities, attestations and ABI gates are
 recorded in the [Edge v0.9.12 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.12).
-The release refreshes all five Edge vocabularies and the plugin OpenAPI
-pin and adds separate deployment snapshot and mutation acknowledgement schemas.
+That release refreshed all five Edge vocabularies and the plugin OpenAPI
+pin and added separate deployment snapshot and mutation acknowledgement schemas.
 
 Historical
 [`contracts-edge-0.9.11`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
@@ -66,7 +78,7 @@ approval requirement. Consumer pins are refreshed in
 the consumer PRs merge and qualify. See the
 [release records](docs/releases/contracts-edge-0.9.12.md).
 
-The published 0.9.12 release adds separate deployment snapshot and mutation
+The 0.9.12 release added separate deployment snapshot and mutation
 acknowledgement schemas plus refreshed Edge provenance from actually released
 Edge `v0.9.12` at `0d917701b63ef38210c49df830f48cf0457cbc7d`. Complete original
 secret-bearing evidence and its deployment token fence partial proxy removal and

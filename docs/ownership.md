@@ -36,10 +36,10 @@ reviewed, versioned form that every other product pins.
 | `provisioned-by` label and `X-Ferrum-Provisioned-By` | `vocabularies/provisioned-by.json` | ferrum-edge | `src/admin/provisioning.rs`, `docs/admin_api.md` | implemented |
 | Plugin catalog index | `vocabularies/plugin-catalog.json` | ferrum-edge | `src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`, `openapi.yaml` | implemented |
 | `ferrum.diagnostic_ref.v1` | `schemas/diagnostic-ref/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DiagnosticRefLookup`), `src/diagnostic_ref.rs` | released in Edge v0.9.9 |
-| Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | released in Edge v0.9.11; upstream distribution verified, canonical contracts-edge-0.9.11 published |
-| Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`), `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs` | released in Edge v0.9.11; upstream distribution verified, canonical contracts-edge-0.9.11 published |
-| Deployment snapshot | `schemas/admin-deployment-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentSnapshot`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs`, `db_backend.rs`, `db_loader.rs`, `mongo_store.rs` | released in Edge v0.9.12; upstream distribution verified, canonical contracts-edge-0.9.12 published |
-| Deployment mutation acknowledgement | `schemas/admin-deployment-mutation-acknowledgement/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentMutationAcknowledgement`), `src/admin/deployment_mutations.rs` | released in Edge v0.9.12; upstream distribution verified, canonical contracts-edge-0.9.12 published |
+| Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | released in Edge v0.9.11; wire shape unchanged through v0.9.13 |
+| Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `v2.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`), `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs` | v1 emitted by Edge v0.9.11 and v0.9.12; v2 released in Edge v0.9.13 |
+| Deployment snapshot | `schemas/admin-deployment-snapshot/v1.schema.json`, `v2.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentSnapshot`, `StoredContentDigest`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs`, `db_backend.rs`, `db_loader.rs`, `mongo_store.rs` | v1 emitted by Edge v0.9.12; v2 released in Edge v0.9.13 |
+| Deployment mutation acknowledgement | `schemas/admin-deployment-mutation-acknowledgement/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentMutationAcknowledgement`, `NamespaceSnapshotTooLarge`), `src/admin/deployment_mutations.rs` | released in Edge v0.9.12; shape unchanged in v0.9.13 |
 | `DiagnosticFinding` | `schemas/diagnostic-finding/v1.schema.json` | ferrum-anvil | `contracts/schemas/DiagnosticFinding.schema.json` (generated from Rust) | implemented |
 | `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
 | `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | implemented; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
@@ -100,6 +100,11 @@ conformance cannot supply those runtime guarantees. The changed Edge contracts
 were reviewed by the Edge maintainer and published as `contracts-edge-0.9.12`
 at `31f0a21d707795be293d15837c2f77c3d84219d8` on 2026-10-05. Alloy and other
 owners retain their own availability and adoption boundaries.
+
+The [0.9.13 release](releases/contracts-edge-0.9.13.md) reads Edge-owned
+sources at `v0.9.13`, `9b83115de7ec23ab51ec4feae6bed65e596db425`. Edge changed
+the backend egress response and the deployment snapshot incompatibly, so both
+have a v2 schema next to v1. `diagnostic-ref` v1 keeps its frozen bytes.
 
 ## Reviewers
 

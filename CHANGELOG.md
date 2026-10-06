@@ -6,25 +6,70 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
-- Record actual `contracts-edge-0.9.12` publication at
-  `31f0a21d707795be293d15837c2f77c3d84219d8` after PR #15 and main PUSH
-  validation, including release 403772929 at 13:58:38 UTC on 2026-10-05 and the
-  verified Edge `v0.9.12` source `0d917701b63ef38210c49df830f48cf0457cbc7d`.
-  Refresh the consumer pin table to the 2026-10-06 verified values and record
-  0.9.12 as the latest published canonical release; preserve the prepared wording
-  in the tagged sections as historical and leave pending consumer adoption,
-  other-owner unreleased features and publisher profile decisions unchanged.
-- Removed the GPT-6.1 Sol worker skill (not used by this project).
+## [contracts-edge-0.9.13] - 2026-10-06
+
+Contracts for Ferrum Edge `v0.9.13`
+(`9b83115de7ec23ab51ec4feae6bed65e596db425`). See the
+[release record](docs/releases/contracts-edge-0.9.13.md).
+
+### Added
+
+- `backend-egress-policy` v2 and `vocabulary-backend-egress-policy` v2 for
+  Edge #6017: `schema_version` 2, and `public_only_guaranteed` is true only
+  with `enforcement_scope=local-data-plane`, public mode and no allow
+  overrides. v2 fixtures cover the OpenAPI example, every non-serving scope
+  and the narrowed guarantee rule (#18).
+- `admin-deployment-snapshot` v2 for Edge #6017: required
+  `api_spec_contents` (one base64 copy of the stored spec bytes, outside the
+  evidence) and `api_specs` items whose `spec_content` and
+  `external_ref_snapshot` are `StoredContentDigest` (`sha256`, `len`). v2
+  fixtures carry the empty SQL and MongoDB snapshots forward, add a synthetic
+  one-spec SQL snapshot, and have an invalid fixture for each new rule.
+- Two `admin-deployment-mutation-acknowledgement` valid fixtures for the `507`
+  `NamespaceSnapshotTooLarge` bodies (`durable` `not_started` and
+  `not_committed`).
+- Release record `docs/releases/contracts-edge-0.9.13.md`.
+
+### Changed
+
+- `vocabularies/backend-egress-policy.json` moves to shape version 2 with
+  `schema_version: 2` and the local-enforcement guarantee and consumer rules.
+  The v1 response and vocabulary schemas stay for Edge v0.9.11 and v0.9.12;
+  their availability notes now say which Edge releases emit them.
+- `admin-deployment-snapshot` v1 stays for Edge v0.9.12; its availability
+  note records that v0.9.13 rejects v0.9.12 tokens with `412`.
+- Repin all five Edge vocabularies and the conditional snapshot, deployment
+  and acknowledgement schema provenance to `v0.9.13`; the plugin catalog pins
+  `openapi.yaml` SHA-256
+  `5f3e50e217b22b97d068490bdad9563ea450097a2daf7df4f80ff61f98559a81`. Error
+  tokens and classes, header names, provisioning values and plugin
+  registrations are unchanged. `diagnostic-ref` v1 keeps its frozen bytes.
+- `gateway-headers.json` `ETag` and `If-Match` describe the
+  `namespace_snapshot.v2` and `deployment_snapshot.v2` MAC domains, the `412`
+  for tags issued by v0.9.12 or earlier, and the 64 MiB `507` bound.
+- Schemas with several majors keep fixtures in `fixtures/<name>/v<N>/`, one
+  directory per major, and `ci/validate.py` checks each against its own major,
+  as `docs/versioning.md` requires. Existing v1 fixtures moved unchanged.
+- Admin, deployment, ownership, adoption, versioning and release-process docs
+  describe the v2 contracts and the Edge v0.9.13 mapping.
+- Record the `contracts-edge-0.9.12` publication at
+  `31f0a21d707795be293d15837c2f77c3d84219d8` (PR #15, release 403772929,
+  13:58:38 UTC on 2026-10-05, Edge `v0.9.12` at
+  `0d917701b63ef38210c49df830f48cf0457cbc7d`) and refresh the consumer pin
+  table to the values verified on 2026-10-06 (#17).
 - Release process: release records and `[contracts-edge-*]` changelog sections
-  are tagged content and must be written in final form without `pending`/
-  `prepared`/`draft`/`candidate` status words; publication status belongs in PR
-  bodies and tracking issues, so no post-release cleanup PR is needed (#18).
+  are tagged content, written in final form without status words; publication
+  status belongs in PR bodies and tracking issues (#18).
 - Move Edge distribution evidence (asset/Docker digests and hosted
   signature/SLSA/SBOM facts) out of contracts docs; link the Edge GitHub
   Release and its `docs/releases/vX.md` record instead (#18).
 - Correct the `main` protection text in `AGENTS.md` and `docs/ownership.md`: it
   requires the `Schemas, fixtures and vocabularies` check and no approving
   reviews (ruleset 24239605; solo maintainer), not a code-owner review (#18).
+
+### Removed
+
+- The GPT-6.1 Sol worker skill, which this project does not use (#16).
 
 ## [contracts-edge-0.9.12] - 2026-10-05
 
