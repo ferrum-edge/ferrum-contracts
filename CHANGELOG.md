@@ -23,8 +23,8 @@ Contracts for Ferrum Edge `v0.9.13`
   `api_spec_contents` (one base64 copy of the stored spec bytes, outside the
   evidence) and `api_specs` items whose `spec_content` and
   `external_ref_snapshot` are `StoredContentDigest` (`sha256`, `len`). v2
-  fixtures carry the empty SQL and MongoDB snapshots forward, with invalid
-  fixtures for the new rules.
+  fixtures carry the empty SQL and MongoDB snapshots forward, add a synthetic
+  one-spec SQL snapshot, and have an invalid fixture for each new rule.
 - Two `admin-deployment-mutation-acknowledgement` valid fixtures for the `507`
   `NamespaceSnapshotTooLarge` bodies (`durable` `not_started` and
   `not_committed`).

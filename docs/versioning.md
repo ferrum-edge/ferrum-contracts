@@ -112,9 +112,11 @@ Prepared/pending schema annotations captured in that immutable source are
 historical pre-publication wording, not a new approval requirement. Existing
 first-availability entries and immutable released tag bytes stay historical.
 
-Backend egress response version 1 and `ferrum-private-reserved-v1` identify the
-owner's exact classifier and label meanings. A change of meaning requires
-versioned coordination. Producer labels remain strict; unknown labels grant
+Backend egress response version 2, current from Edge v0.9.13, and
+`ferrum-private-reserved-v1` identify the owner's exact classifier and label
+meanings. Version 2 narrowed `public_only_guaranteed` to local data-plane
+enforcement; version 1 is retained for Edge v0.9.11 and v0.9.12. A change of
+meaning requires versioned coordination. Producer labels remain strict; unknown labels grant
 no known meaning or permission. Public-only publication additionally fails
 closed on missing/unknown policy data, an unexpected namespace, a non-serving
 scope or a false guarantee, as [the owner contract](admin-contracts.md) requires.

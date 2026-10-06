@@ -8,7 +8,7 @@
     "version": 2,
     "status": "implemented",
     "owner": "ferrum-edge/ferrum-edge",
-    "edge_availability": "Released in Ferrum Edge v0.9.13 at 9b83115de7ec23ab51ec4feae6bed65e596db425 (ferrum-edge#6017, issues #5994/#5999). Replaces v1, which Edge v0.9.11 and v0.9.12 emitted; v0.9.13 never emits schema_version 1.",
+    "edge_availability": "Released in Ferrum Edge v0.9.13 at 9b83115de7ec23ab51ec4feae6bed65e596db425 (ferrum-edge#6017; see issue #5994 and PR #5999). Replaces v1, which Edge v0.9.11 and v0.9.12 emitted; v0.9.13 never emits schema_version 1.",
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-edge",

@@ -54,6 +54,7 @@ branch of it.
 | `backend-egress-policy/v2/valid/public-with-allow-overrides.json`, `private-control-plane.json` | The v1 fixtures with `schema_version: 2`; `handle_get` gives both `public_only_guaranteed: false` in v2 as in v1 | `9b83115de7ec23ab51ec4feae6bed65e596db425` |
 | `vocabulary-backend-egress-policy/v2/valid/v2.json` | `vocabularies/backend-egress-policy.json` at this release, copied | this repository |
 | `admin-deployment-snapshot/v2/valid/empty-sql.json`, `empty-mongodb.json` | The v1 empty-state fixtures with `api_spec_contents: []`, as `src/admin/deployment_mutations.rs` `snapshot` emits for a namespace without specs; the empty `evidence` shape is unchanged in `src/config/deployment_mutation.rs` and `src/config/db_backend.rs`. Tokens stay illustrative. | `9b83115de7ec23ab51ec4feae6bed65e596db425` |
+| `admin-deployment-snapshot/v2/valid/one-spec-sql.json` | Synthetic. `v2/valid/empty-sql.json` with one API spec in `api_specs` and `evidence.resources[5]`, shaped by `openapi.yaml` `DeploymentSnapshot`/`StoredContentDigest` and `src/config/db_backend.rs` `ApiSpecSnapshotView` (every field, `None` as `null`, `external_ref_snapshot: null`), and the matching `api_spec_contents` item from `src/admin/deployment_mutations.rs` `api_spec_content`. The spec document is the 75-byte `{"openapi":"3.1.0","info":{"title":"Fixture","version":"1.0.0"},"paths":{}}` written for the fixture; `content_hash` and `uncompressed_size` are its SHA-256 and length, and `spec_content` is the SHA-256 and length of the 88-byte gzip stream that `spec_content_base64` encodes. `resource_hash` is all zeros and the token is illustrative. The proxy the spec names and the raw `evidence.stored` rows are omitted: JSON conformance does not check evidence completeness. | `9b83115de7ec23ab51ec4feae6bed65e596db425` |
 | `admin-deployment-mutation-acknowledgement/valid/snapshot-too-large-not-started.json`, `snapshot-too-large-not-committed.json` | ferrum-edge `src/admin/deployment_mutations.rs` `snapshot_too_large`, with the exact `SNAPSHOT_CONTENT_TOO_LARGE` message and `not_started` from `snapshot`, and the `NamespaceSnapshotTooLarge` message (`src/config/db_backend.rs`) with `not_committed` from `store_error` | `9b83115de7ec23ab51ec4feae6bed65e596db425` |
 | `admin-deployment-mutation-acknowledgement/valid/not-started.json`, `unknown.json`, `committed-unconfirmed.json` | ferrum-edge/ferrum-edge `src/admin/deployment_mutations.rs` `unavailable`, with the exact `not_started`, `unknown` and `committed` arguments used by snapshot/admission, uncertain task/store and post-commit completion failure branches; literal source-body transcriptions. | `0d917701b63ef38210c49df830f48cf0457cbc7d` |
 
@@ -105,15 +106,27 @@ fixtures retain their original bytes and provenance.
 | `admin-deployment-snapshot/v2/invalid/missing-api-spec-contents.json` | From `v2/valid/empty-sql.json`: remove only required `api_spec_contents` |
 | `admin-deployment-snapshot/v2/invalid/spec-content-byte-array.json` | From `v2/valid/empty-sql.json`: change only `api_specs` to one item whose `spec_content` is the v0.9.12 byte-array form (empty) instead of a `StoredContentDigest` |
 | `admin-deployment-snapshot/v2/invalid/spec-contents-extra-member.json` | From `v2/valid/empty-sql.json`: change only `api_spec_contents` to one item with an extra `spec_content` member; the owner closes these items |
+| `admin-deployment-snapshot/v2/invalid/spec-missing-proxy-id.json` | From `v2/valid/one-spec-sql.json`: remove only required `proxy_id` from the `api_specs` item |
+| `admin-deployment-snapshot/v2/invalid/spec-digest-uppercase-sha256.json` | From `v2/valid/one-spec-sql.json`: change only `spec_content.sha256` to uppercase hex; the owner emits lowercase |
+| `admin-deployment-snapshot/v2/invalid/spec-digest-sha256-byte-array.json` | From `v2/valid/one-spec-sql.json`: change only `spec_content.sha256` to an empty array instead of a hex string |
+| `admin-deployment-snapshot/v2/invalid/spec-digest-negative-len.json` | From `v2/valid/one-spec-sql.json`: change only `spec_content.len` to `-1` |
+| `admin-deployment-snapshot/v2/invalid/spec-digest-string-len.json` | From `v2/valid/one-spec-sql.json`: change only `spec_content.len` to the string `"88"` |
+| `admin-deployment-snapshot/v2/invalid/spec-digest-missing-len.json` | From `v2/valid/one-spec-sql.json`: remove only required `len` from `spec_content` |
+| `admin-deployment-snapshot/v2/invalid/spec-digest-extra-member.json` | From `v2/valid/one-spec-sql.json`: add only a `bytes` member to `spec_content`; `StoredContentDigest` is closed |
+| `admin-deployment-snapshot/v2/invalid/external-ref-byte-array.json` | From `v2/valid/one-spec-sql.json`: change only `external_ref_snapshot` to the v0.9.12 byte-array form (empty), which is neither a `StoredContentDigest` nor null |
+| `admin-deployment-snapshot/v2/invalid/spec-contents-missing-external-ref.json` | From `v2/valid/one-spec-sql.json`: remove only required `external_ref_snapshot_base64` from the `api_spec_contents` item; the owner emits `null` when no snapshot is stored |
+| `admin-deployment-snapshot/v2/invalid/spec-contents-numeric-id.json` | From `v2/valid/one-spec-sql.json`: change only the `api_spec_contents` item's `id` to the number `0` |
+| `admin-deployment-snapshot/v2/invalid/spec-contents-base64-byte-array.json` | From `v2/valid/one-spec-sql.json`: change only `spec_content_base64` to an empty array instead of a base64 string |
+| `admin-deployment-snapshot/v2/invalid/spec-contents-external-ref-byte-array.json` | From `v2/valid/one-spec-sql.json`: change only `external_ref_snapshot_base64` to an empty array instead of a base64 string or null |
 | `admin-deployment-snapshot/v2/invalid/{missing-evidence,weak-token,row-token,token-list,token-with-line-break,unknown-profile,evidence-not-object,spec-not-object}.json` | The v1 invalid fixtures of the same name with `api_spec_contents: []` added, so each still makes only its original change against `v2/valid/empty-sql.json` |
-| `admin-deployment-snapshot/v1/invalid/missing-evidence.json` | From `valid/empty-sql.json`: remove only required `evidence` |
-| `admin-deployment-snapshot/v1/invalid/weak-token.json` | From `valid/empty-sql.json`: change only `namespace_etag` to its weak `W/` form |
-| `admin-deployment-snapshot/v1/invalid/row-token.json` | From `valid/empty-sql.json`: change only `namespace_etag` to the owner test's quoted `row-token`, outside deployment authority |
-| `admin-deployment-snapshot/v1/invalid/token-list.json` | From `valid/empty-sql.json`: change only `namespace_etag` to the two-token list used by the owner malformed-authority regression |
-| `admin-deployment-snapshot/v1/invalid/token-with-line-break.json` | From `valid/empty-sql.json`: append only a line break to `namespace_etag`; the parser requires exact original token bytes |
-| `admin-deployment-snapshot/v1/invalid/unknown-profile.json` | From `valid/empty-sql.json`: change only `profile` to `backup-v1`, outside the released deployment profile |
-| `admin-deployment-snapshot/v1/invalid/evidence-not-object.json` | From `valid/empty-sql.json`: change only `evidence` from an object to an array |
-| `admin-deployment-snapshot/v1/invalid/spec-not-object.json` | From `valid/empty-sql.json`: change only `api_specs` to an array containing a string rather than an object |
+| `admin-deployment-snapshot/v1/invalid/missing-evidence.json` | From `v1/valid/empty-sql.json`: remove only required `evidence` |
+| `admin-deployment-snapshot/v1/invalid/weak-token.json` | From `v1/valid/empty-sql.json`: change only `namespace_etag` to its weak `W/` form |
+| `admin-deployment-snapshot/v1/invalid/row-token.json` | From `v1/valid/empty-sql.json`: change only `namespace_etag` to the owner test's quoted `row-token`, outside deployment authority |
+| `admin-deployment-snapshot/v1/invalid/token-list.json` | From `v1/valid/empty-sql.json`: change only `namespace_etag` to the two-token list used by the owner malformed-authority regression |
+| `admin-deployment-snapshot/v1/invalid/token-with-line-break.json` | From `v1/valid/empty-sql.json`: append only a line break to `namespace_etag`; the parser requires exact original token bytes |
+| `admin-deployment-snapshot/v1/invalid/unknown-profile.json` | From `v1/valid/empty-sql.json`: change only `profile` to `backup-v1`, outside the released deployment profile |
+| `admin-deployment-snapshot/v1/invalid/evidence-not-object.json` | From `v1/valid/empty-sql.json`: change only `evidence` from an object to an array |
+| `admin-deployment-snapshot/v1/invalid/spec-not-object.json` | From `v1/valid/empty-sql.json`: change only `api_specs` to an array containing a string rather than an object |
 | `admin-deployment-mutation-acknowledgement/invalid/unknown-profile.json` | From `valid/applied.json`: change only `profile` to `backup-v1` |
 | `admin-deployment-mutation-acknowledgement/invalid/unknown-durable.json` | From `valid/durable-only.json`: change only `durable` to `pending` |
 | `admin-deployment-mutation-acknowledgement/invalid/unknown-live.json` | From `valid/durable-only.json`: change only `live` to `all_data_planes_applied`; local acknowledgement does not assert that state |
@@ -127,17 +140,17 @@ fixtures retain their original bytes and provenance.
 | `admin-conditional-snapshot/invalid/token-with-line-break.json` | From `valid/metadata.json`: append only a line break to the namespace token; quoted entity-tag syntax has no trailing control bytes |
 | `admin-conditional-snapshot/invalid/unquoted-row-tag.json` | From `valid/metadata.json`: remove only the quotes from the proxy row token |
 | `admin-conditional-snapshot/invalid/unknown-row-map.json` | From `valid/metadata.json`: add only the unsupported `row_etags.api_specs` map; namespace coverage of API specs does not add a row map |
-| `backend-egress-policy/v1/invalid/unknown-version.json` | From `valid/default-control-plane.json`: change only `schema_version` to `2` |
-| `backend-egress-policy/v1/invalid/unknown-classification.json` | From `valid/default-control-plane.json`: change only `ip_classification` to `unknown` |
-| `backend-egress-policy/v1/invalid/unknown-enforcement-scope.json` | From `valid/default-control-plane.json`: change only `enforcement_scope` to `unknown` |
-| `backend-egress-policy/v1/invalid/unknown-mode.json` | From `valid/default-control-plane.json`: change only `mode` to `unknown` |
-| `backend-egress-policy/v1/invalid/wrong-evaluation-stage.json` | From `valid/default-control-plane.json`: change only evaluation index 0 from `allow-cidrs` to `ip-mode` |
-| `backend-egress-policy/v1/invalid/mode-class-mismatch.json` | From `valid/public-serving.json`: change only the allowed mode list to `["private-reserved"]` |
-| `backend-egress-policy/v1/invalid/false-public-guarantee.json` | From `valid/public-serving.json`: change only the guarantee to false; the owner emits true for public mode without allow overlays |
-| `backend-egress-policy/v1/invalid/allow-overlay-guarantee.json` | From `valid/public-with-allow-overrides.json`: change only the guarantee to true; undisclosed allow overlays prevent certification |
-| `backend-egress-policy/v1/invalid/leaked-cidr-field.json` | From `valid/default-control-plane.json`: add only `allow_cidrs`; the closed response withholds raw CIDRs |
-| `vocabulary-backend-egress-policy/v1/invalid/unknown-mode.json` | From `valid/v1.json`: change only modes index 0 to `unknown` |
-| `vocabulary-backend-egress-policy/v1/invalid/short-commit.json` | From `valid/v1.json`: shorten only provenance index 0's full commit SHA |
+| `backend-egress-policy/v1/invalid/unknown-version.json` | From `v1/valid/default-control-plane.json`: change only `schema_version` to `2` |
+| `backend-egress-policy/v1/invalid/unknown-classification.json` | From `v1/valid/default-control-plane.json`: change only `ip_classification` to `unknown` |
+| `backend-egress-policy/v1/invalid/unknown-enforcement-scope.json` | From `v1/valid/default-control-plane.json`: change only `enforcement_scope` to `unknown` |
+| `backend-egress-policy/v1/invalid/unknown-mode.json` | From `v1/valid/default-control-plane.json`: change only `mode` to `unknown` |
+| `backend-egress-policy/v1/invalid/wrong-evaluation-stage.json` | From `v1/valid/default-control-plane.json`: change only evaluation index 0 from `allow-cidrs` to `ip-mode` |
+| `backend-egress-policy/v1/invalid/mode-class-mismatch.json` | From `v1/valid/public-serving.json`: change only the allowed mode list to `["private-reserved"]` |
+| `backend-egress-policy/v1/invalid/false-public-guarantee.json` | From `v1/valid/public-serving.json`: change only the guarantee to false; the owner emits true for public mode without allow overlays |
+| `backend-egress-policy/v1/invalid/allow-overlay-guarantee.json` | From `v1/valid/public-with-allow-overrides.json`: change only the guarantee to true; undisclosed allow overlays prevent certification |
+| `backend-egress-policy/v1/invalid/leaked-cidr-field.json` | From `v1/valid/default-control-plane.json`: add only `allow_cidrs`; the closed response withholds raw CIDRs |
+| `vocabulary-backend-egress-policy/v1/invalid/unknown-mode.json` | From `v1/valid/v1.json`: change only modes index 0 to `unknown` |
+| `vocabulary-backend-egress-policy/v1/invalid/short-commit.json` | From `v1/valid/v1.json`: shorten only provenance index 0's full commit SHA |
 | `diagnostic-ref/invalid/unknown-schema-version.json` | `schema_version` is `ferrum.diagnostic_ref.v2` |
 | `diagnostic-ref/invalid/malformed-ref.json` | `ref` is not `fd1_` plus 32 lowercase hex digits |
 | `diagnostic-ref/invalid/granular-class-as-token.json` | `gateway_error` is an `ErrorClass` (`dns_lookup_error`), not an `X-Gateway-Error` token |

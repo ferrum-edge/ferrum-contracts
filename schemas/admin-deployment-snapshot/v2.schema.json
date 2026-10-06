@@ -8,7 +8,7 @@
     "version": 2,
     "status": "implemented",
     "owner": "ferrum-edge/ferrum-edge",
-    "edge_availability": "Released in Ferrum Edge v0.9.13 at 9b83115de7ec23ab51ec4feae6bed65e596db425 (ferrum-edge#6017, issues #5999/#6012). Replaces v1: api_spec_contents is required, spec bytes are digests, and the deployment_snapshot.v2 MAC domain rejects earlier tokens with 412.",
+    "edge_availability": "Released in Ferrum Edge v0.9.13 at 9b83115de7ec23ab51ec4feae6bed65e596db425 (ferrum-edge#6017; see PRs #5999 and #6012). Replaces v1: api_spec_contents is required, spec bytes are digests, and the deployment_snapshot.v2 MAC domain rejects earlier tokens with 412.",
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-edge",

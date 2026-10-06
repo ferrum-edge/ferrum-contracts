@@ -24,8 +24,8 @@ assets, digests and attestations are recorded in that Edge release, not here.
 
 ## Contract changes
 
-Edge [#6017](https://github.com/ferrum-edge/ferrum-edge/pull/6017) (issues
-#5994, #5999, #6012) changes two response contracts incompatibly:
+Edge [#6017](https://github.com/ferrum-edge/ferrum-edge/pull/6017) (see issue
+#5994 and PRs #5999 and #6012) changes two response contracts incompatibly:
 
 - **Backend egress policy, new major v2.** `GET /backend-egress-policy` now
   reports `schema_version: 2` and never `1`. `public_only_guaranteed` is true
@@ -104,9 +104,18 @@ own major. Schemas with one major keep `fixtures/<name>/{valid,invalid}/`.
 New v2 fixtures transcribe the owner's OpenAPI example and integration tests
 (`admin_backend_egress_policy_tests.rs`
 `public_only_is_never_guaranteed_without_local_enforcement`), and the empty
-SQL and MongoDB deployment snapshots with `api_spec_contents: []`. Every new
-rule has an invalid fixture, listed in `fixtures/README.md` with its expected
-path and keyword. No populated spec bytes or captured tokens are included.
+SQL and MongoDB deployment snapshots with `api_spec_contents: []`. A synthetic
+SQL deployment snapshot with one API spec shows a populated `api_specs` item,
+its `StoredContentDigest` and its `api_spec_contents` entry; its spec document
+is a minimal OpenAPI document written for the fixture, and its token is
+illustrative. Every new rule has an invalid fixture: for the deployment
+snapshot, the required `api_spec_contents`, the required `api_specs[]` members,
+the `StoredContentDigest` object, member types, `sha256` pattern, `len`
+minimum, required members and closed object, the `external_ref_snapshot`
+`oneOf`, and the required members, member types and closed object of
+`api_spec_contents[]`. `fixtures/README.md` lists each one,
+and `fixtures/invalid-expectations.json` records its expected path and keyword.
+No captured spec bytes or tokens are included.
 
 The `Validate contracts` workflow is the conformance gate. Workflow,
 permissions, action pins and Python dependencies are unchanged.

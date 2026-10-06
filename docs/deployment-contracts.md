@@ -47,6 +47,10 @@ paths at `v0.9.13`, plus `openapi.yaml` `StoredContentDigest` and
 
 The JSON schema cannot check that base64 content matches its digest, that the
 evidence is complete or that a token is authentic; those remain runtime checks.
+The v2 fixtures carry the empty SQL and MongoDB snapshots forward and add a
+synthetic SQL snapshot with one API spec, whose base64 content does decode to
+the bytes its digest names; it omits the spec's proxy and raw stored rows, so
+it is not a complete or captured response.
 The sections below describe the profile as introduced in `v0.9.12`; where they
 mention byte arrays, `bytes_hex` or `bson_hex`, `v0.9.13` uses the digest forms
 above.
