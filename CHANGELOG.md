@@ -6,6 +6,7 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+- Removed the GPT-6.1 Sol worker skill (not used by this project).
 - Prepare `contracts-edge-0.9.12` against actually released, root-qualified Edge
   `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The prepared
   contents below require their own canonical review/hosted/protected merge/PUSH
