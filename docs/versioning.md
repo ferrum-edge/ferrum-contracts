@@ -98,10 +98,11 @@ Conditional metadata v1 checks quoted strong token syntax and all four maps.
 It cannot distinguish cryptographic row/namespace bindings or authorize restore;
 the owner's HTTP precondition and transaction semantics remain authoritative.
 
-The [prepared 0.9.12 release](releases/contracts-edge-0.9.12.md) refreshes all
+The [published 0.9.12 release](releases/contracts-edge-0.9.12.md) refreshes all
 five vocabulary `edge_release`/current Edge source pins to actually released
-`v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The latest published
-Contracts tag remains 0.9.11 until canonical finalization. First availability,
+`v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The canonical
+`contracts-edge-0.9.12` tag points to `31f0a21d707795be293d15837c2f77c3d84219d8`
+and was published on 2026-10-05. First availability,
 historical fixtures and other-owner unreleased annotations are preserved.
 Deployment snapshot and acknowledgement are new v1 contracts; they do not
 change the meaning of `admin-conditional-snapshot` v1. Their original strong
@@ -151,7 +152,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.9` | `contracts-edge-0.9.9` | Refreshed Edge-owned contract sources |
 | `v0.9.10` | `contracts-edge-0.9.9` | No contract-source changes after v0.9.9 |
 | `v0.9.11` | `contracts-edge-0.9.11` | Edge admin contracts and accepted unchanged shared v1 freeze at `390edbd5b2485af0988e02f7827fde778d76ae0a` |
-| `v0.9.12` | `contracts-edge-0.9.12` **prepared; not yet published** | Actual owner `0d917701b63ef38210c49df830f48cf0457cbc7d`; deployment-v1 and refreshed Edge provenance require a new canonical tag after its own protected merge/PUSH qualification |
+| `v0.9.12` | `contracts-edge-0.9.12` | Refreshed Edge-owned sources and deployment-v1 contracts from released owner `0d917701b63ef38210c49df830f48cf0457cbc7d`, tagged at `31f0a21d707795be293d15837c2f77c3d84219d8` |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
@@ -163,13 +164,17 @@ Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
 
-`contracts-edge-0.9.11` is the latest published canonical tag, at
-`390edbd5b2485af0988e02f7827fde778d76ae0a`. [PR #13](https://github.com/ferrum-edge/ferrum-contracts/pull/13)
-merged on 2026-10-04 at 22:40:08 UTC with exact reviewed second parent
-`0cf926686f2164ad0b4de7b27e2eb5a25df6a261`. Every applicable main PUSH workflow
-succeeded before tag creation; [release 403239814](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
-was published at 22:41:21 UTC. Historical 0.9.8, 0.9.9, 0.9.10 and r2 mappings
-remain unchanged.
+`contracts-edge-0.9.12` is the latest published canonical tag, at
+`31f0a21d707795be293d15837c2f77c3d84219d8`. [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
+merged on 2026-10-05 at 13:57:00 UTC with exact reviewed second parent
+`d9c84810152732524c54a9ed292dc59103f0619d` and that reviewed head's tree. Its
+final-head hosted [run 37319873697](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37319873697)
+and the sole applicable main PUSH [run 37320780987](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37320780987)
+succeeded before tag creation; [release 403772929](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
+was published at 13:58:38 UTC. Historical
+[`contracts-edge-0.9.11`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
+remains at `390edbd5b2485af0988e02f7827fde778d76ae0a`, published on 2026-10-04
+at 22:41:21 UTC. Historical 0.9.8, 0.9.9, 0.9.10 and r2 mappings remain unchanged.
 
 Root has accepted the unchanged shared Alloy v1 freeze after reviewed owner and
 consumer qualification. The release records **EXISTING**/implemented shared v1

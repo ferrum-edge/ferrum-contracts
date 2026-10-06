@@ -38,9 +38,9 @@ When Ferrum Edge publishes `vX.Y.Z`:
 6. Open a PR. The `Validate contracts` workflow must pass. An owner of each
    changed contract approves (see [ownership.md](ownership.md)).
 
-## contracts-edge-0.9.12 preparation
+## contracts-edge-0.9.12 completed publication
 
-The [preparation record](releases/contracts-edge-0.9.12.md) binds to actual
+The [release record](releases/contracts-edge-0.9.12.md) binds to actual
 Edge `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`, after qualified
 protected release PR #6013 and all 14 main PUSH successes before tag creation.
 Release 403693646 is published and actual run 37298358313 completed at
@@ -71,21 +71,20 @@ Edge #6011's unfinished rejection contract is absent from the owner release.
 No validator/workflow/dependency exception is introduced. Repository tooling is
 not executed locally; the exact final head requires hosted `Validate contracts`.
 
-Canonical Contracts publication is pending. Root reviews the complete final
-diff, obtains fresh independent review and required Edge maintainer/code-owner
-approval, and qualifies the exact final head. The protected normal merge target
-must have that head as its exact second parent and an equal tree. Root verifies
-**every actual applicable main PUSH workflow** succeeds on the target before
-creating the immutable tag and publishing the release. Record actual
-parents/tree, final-head/merge hosted evidence, tag and release identity only
-after those gates. Prepared changelog entries do not establish publication.
+Canonical Contracts publication is complete. [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
+merged the exact final reviewed head `d9c84810152732524c54a9ed292dc59103f0619d`
+as the second parent of `31f0a21d707795be293d15837c2f77c3d84219d8`, with an equal
+tree. The final head and every actual applicable main PUSH workflow succeeded
+before tag creation; the immutable `contracts-edge-0.9.12` tag and
+[release 403772929](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
+were published at 13:58:38 UTC on 2026-10-05. See the
+[release record](releases/contracts-edge-0.9.12.md).
 
 Consumer pin/copy/checksum adoption follows actual canonical qualification.
 Nexus #522/Part B, Foundry #544, GitForgeOps and supported publisher profile
 decisions remain independent and pending; no advisory closure is inferred.
 Alloy's accepted shared v1 freeze and owner-unreleased availability remain
-unchanged. Root owns PR creation, protected merge, tag and publication; this
-preparation worker stops after committing and pushing its assigned branch.
+unchanged. Root owns profile decisions and advisory disposition.
 
 ## contracts-edge-0.9.11 completed publication
 
