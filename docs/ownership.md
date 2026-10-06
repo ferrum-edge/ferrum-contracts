@@ -115,10 +115,10 @@ Anvil team, `vocabularies/` to the Edge team) and keep `ci/` and
 
 ## Branch protection
 
-`main` should require:
+`main` requires:
 
 - the status check **`Schemas, fixtures and vocabularies`** (the only job of
   the `Validate contracts` workflow, `.github/workflows/validate.yml`), and
-- review from a code owner.
+- no approving reviews (ruleset 24239605; the repository is solo-maintained).
 
 If the job is renamed, update the required check in the same PR.

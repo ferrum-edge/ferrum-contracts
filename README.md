@@ -32,8 +32,8 @@ complete; the issue is closed and remains as project history.
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
 | [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions and process egress discovery |
 | [`docs/deployment-contracts.md`](docs/deployment-contracts.md) | Original deployment authority, dependency-fenced partial writes and explicit cleanup acknowledgements |
-| [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Actual canonical publication, verified distribution and pending consumer adoption |
-| [`docs/releases/contracts-edge-0.9.11.md`](docs/releases/contracts-edge-0.9.11.md) | Actual canonical publication, verified distribution/owner evidence and pending consumer adoption |
+| [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Actual canonical publication and pending consumer adoption |
+| [`docs/releases/contracts-edge-0.9.11.md`](docs/releases/contracts-edge-0.9.11.md) | Actual canonical publication/owner evidence and pending consumer adoption |
 
 Every file records where it came from: owner repository, path, and commit.
 The latest published contracts release is
@@ -43,7 +43,8 @@ at `31f0a21d707795be293d15837c2f77c3d84219d8`, published on 2026-10-05 at
 merged and its main PUSH validation succeeded. It maps to Edge's actual unsigned
 lightweight `v0.9.12` tag at `0d917701b63ef38210c49df830f48cf0457cbc7d`.
 Edge's release assets, digests, image identities, attestations and ABI gates are
-verified. The release refreshes all five Edge vocabularies and the plugin OpenAPI
+recorded in the [Edge v0.9.12 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.12).
+The release refreshes all five Edge vocabularies and the plugin OpenAPI
 pin and adds separate deployment snapshot and mutation acknowledgement schemas.
 
 Historical
