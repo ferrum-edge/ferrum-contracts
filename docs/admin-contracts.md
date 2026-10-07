@@ -25,6 +25,12 @@ shape, but its namespace token is now a keyed MAC over a bounded snapshot
 digest, and the egress response moves to `schema_version: 2` with
 `backend-egress-policy` v2. Both changes are described below.
 
+[Contracts 0.9.14](releases/contracts-edge-0.9.14.md) reads Edge `v0.9.14` at
+`@@EDGE_0914_COMMIT@@`. A control plane's egress response gains the optional
+`data_plane_attestation` object within `schema_version: 2`, and the conditional
+backup `ETag` is documented as a namespace state token. Both are described
+below; the backup metadata shape is unchanged.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
@@ -89,6 +95,13 @@ A namespace whose canonical representation (spec bytes excluded) exceeds
 64 MiB gets `507` with no tag and nothing applied; the refusal is deterministic
 for unchanged state. The metadata schema checks syntax only and is unchanged.
 
+Edge v0.9.14 documents the conditional backup `ETag` (equal to
+`conditional.namespace_etag`) as a namespace state token, not a validator of
+the response bytes: two exports of unchanged state carry the same tag although
+their bodies differ (`exported_at`). Use it only as the `If-Match` of a
+conditional restore on the same namespace, never for HTTP caching or
+`If-None-Match`.
+
 Restore requires the namespace header token on the same `X-Ferrum-Namespace`.
 A row token or `conditional` body metadata cannot authorize replacement.
 Strong tag lists match any member, but namespace `*` is rejected. The
@@ -144,7 +157,7 @@ CIDRs, addresses, counts, backend names, credentials or DNS probes are returned.
 |---|---|
 | `local-data-plane` | This process serves the selected namespace |
 | `unserved-namespace` | Its local data plane serves another namespace |
-| `admission-only` | CP admission policy without a local proxy; no DP attestation |
+| `admission-only` | CP admission policy without a local proxy; its top-level fields attest no DP. From v0.9.14 the separate `data_plane_attestation` object reports its connected DPs |
 | `no-data-plane` | No local proxy or CP admission scope, including node agents |
 
 | `mode` | Allowed classes at the mode stage | Blocked classes at the mode stage |
@@ -174,12 +187,61 @@ and `no-data-plane` always report false, and the v2 schema rejects a true
 guarantee for them. In `schema_version: 1` it was true for public mode without
 allow overrides on any scope, including CP admission metadata. Deny overrides
 only restrict. Even a wholly public undisclosed allow list produces false;
-false does not prove a private address is reachable. CP metadata never attests
-its DPs.
+false does not prove a private address is reachable. The CP's own top-level
+fields never attest its DPs.
+
+### Data-plane attestation on a control plane (Edge v0.9.14)
+
+From Edge v0.9.14 (#6029, issue #6020) every data plane reports bounded
+metadata about its own loaded policy on ConfigSync `Subscribe`: the mode and
+the dangerous-range, allow-override and deny-override presence flags, never
+CIDRs, addresses or counts. On a CP (`enforcement_scope=admission-only`) the
+response adds `data_plane_attestation`. It is optional and absent on every
+other response, so `schema_version` stays `2` and `backend-egress-policy` v2
+gains an optional property rather than a new major. The v2 schema rejects the
+object on any other `enforcement_scope`.
+
+| Member | Meaning |
+|---|---|
+| `source` | `configsync-subscribe` |
+| `connected_data_planes` | Live Subscribe streams for the selected namespace, counted per stream, not per distinct `node_id` |
+| `reporting_data_planes`, `unknown_data_planes` | Streams with and without a recognised report |
+| `weakest_policy` | Field-wise least restrictive policy over the reporting streams (mode admitting the union of their classes, dangerous ranges blocked only if all block, allow overrides if any has them, deny overrides only if all have them); `null` exactly when none reported |
+| `weakest_policy_complete` | True only when at least one stream is connected and every one reported |
+| `all_connected_public_only_guaranteed` | True exactly when `weakest_policy_complete` and `weakest_policy.public_only_guaranteed` are true |
+| `data_planes[]` | `node_id`, `connected_at`, `attestation` (`reported` or `unknown`) and `policy` (null when unknown), sorted by `node_id` then `connected_at`, with no build version |
+
+Each `policy` uses the top-level field meanings for a local data plane:
+`public_only_guaranteed` is true exactly for `mode=public` without allow
+overrides. The schema asserts the mode class lists, that guarantee, the
+`attestation`/`policy` pairing, and the summary implications above. It cannot
+check that the counts add up or that `weakest_policy` is the combination of
+the listed policies; consumers that rely on them must recompute.
+
+The reports come from JWT-authenticated data planes running the CP's exact
+build (ConfigSync protocol revision 3), but each is the data plane's own
+description, not a cryptographic attestation of its host. The set is a
+point-in-time view: a data plane partitioned from the CP keeps serving its
+cached config without being listed, and one using another CP is never seen.
+Another namespace's streams never appear. On a CP the endpoint discloses the
+namespace's DP `node_id`s, connection times and reported policies to
+namespace-authorized `viewer` tokens.
+
+`GET /cluster` (admin-only) gains per-DP `backend_egress_policy_attestation`
+and `backend_egress_policy` and a cluster-wide
+`data_plane_backend_egress_policy` aggregate with the same summary members.
+This repository has no `/cluster` contract; its shapes are in the pinned owner
+OpenAPI (`ClusterStatusCp`, `ConnectedDpNode`, `DataPlaneEgressSummary`,
+`DataPlaneEgressPolicy`).
 
 A public-only publisher must recognize `schema_version: 2` and its complete
 vocabulary, match its namespace, require `local-data-plane` and `public_only_guaranteed=true`, and
-check every serving DP again after replacement/restart. Missing/unknown
+check every serving DP again after replacement/restart. A publisher that cannot
+reach every DP's admin API may instead read the CP's `data_plane_attestation`
+for its namespace and require `all_connected_public_only_guaranteed=true`
+together with a `connected_data_planes` count equal to its expected live-stream
+inventory; an absent object, an unknown attestation status or an empty set
+blocks publication. Missing/unknown
 versions, labels or fields, authorization failure, unserved/CP-only scopes and
 weaker policy block publication. Unknown values grant no known meaning or
 permission. This is loaded-policy metadata, not external firewall attestation,

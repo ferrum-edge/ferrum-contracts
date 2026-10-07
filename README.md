@@ -32,21 +32,32 @@ complete; the issue is closed and remains as project history.
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
 | [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions and process egress discovery |
 | [`docs/deployment-contracts.md`](docs/deployment-contracts.md) | Original deployment authority, dependency-fenced partial writes and explicit cleanup acknowledgements |
+| [`docs/releases/contracts-edge-0.9.14.md`](docs/releases/contracts-edge-0.9.14.md) | Edge v0.9.14 source, the CP data-plane egress attestation, narrowed deployment durable outcomes and error-classification notes |
 | [`docs/releases/contracts-edge-0.9.13.md`](docs/releases/contracts-edge-0.9.13.md) | Edge v0.9.13 source, the v2 egress and deployment snapshot contracts, and what stayed unchanged |
 | [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Actual canonical publication and pending consumer adoption |
 | [`docs/releases/contracts-edge-0.9.11.md`](docs/releases/contracts-edge-0.9.11.md) | Actual canonical publication/owner evidence and pending consumer adoption |
 
 Every file records where it came from: owner repository, path, and commit.
 The latest contracts release is
-[`contracts-edge-0.9.13`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.13),
-tagged on the merge commit of its release PR. It maps to Edge `v0.9.13` at
+[`contracts-edge-0.9.14`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.14),
+tagged on the merge commit of its release PR. It maps to Edge `v0.9.14` at
+`@@EDGE_0914_COMMIT@@` and adds no new major: `backend-egress-policy` v2 gains
+the optional CP-only `data_plane_attestation` object (`schema_version` stays
+`2`), the deployment mutation acknowledgement describes the narrowed `durable`
+outcomes, and `gateway-errors.json` notes the HTTP/2 reset and buffered read
+reclassification without adding a class or token. All five vocabularies and the
+plugin OpenAPI pin are refreshed. See the
+[release record](docs/releases/contracts-edge-0.9.14.md).
+
+Historical
+[`contracts-edge-0.9.13`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.13)
+is tagged on the merge commit of its release PR and maps to Edge `v0.9.13` at
 `9b83115de7ec23ab51ec4feae6bed65e596db425` and adds new majors for two
 response contracts Edge changed incompatibly: `backend-egress-policy` v2
 (`schema_version: 2`; `public_only_guaranteed` requires local enforcement) and
 `admin-deployment-snapshot` v2 (spec bytes as SHA-256 digests plus a separate
 `api_spec_contents` copy). The v1 files stay for consumers of earlier Edge
-releases. All five vocabularies and the plugin OpenAPI pin are refreshed. See
-the [release record](docs/releases/contracts-edge-0.9.13.md).
+releases. See the [release record](docs/releases/contracts-edge-0.9.13.md).
 
 Historical
 [`contracts-edge-0.9.12`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)

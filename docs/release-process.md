@@ -23,7 +23,8 @@ When Ferrum Edge publishes `vX.Y.Z`:
      of `PluginConfigBase` in `openapi.yaml`. Record the new
      `openapi.yaml` sha256 (`git show vX.Y.Z:openapi.yaml | shasum -a 256`).
    - `vocabularies/backend-egress-policy.json`: `openapi.yaml`,
-     `src/admin/backend_egress_policy.rs`, `src/config/env_config.rs`, and
+     `src/admin/backend_egress_policy.rs`,
+     `src/grpc/backend_egress_attestation.rs`, `src/config/env_config.rs`, and
      the owner admin docs. A new response `schema_version` or a changed
      classifier, label or guarantee meaning needs a new major of the response
      and vocabulary schemas (Edge v0.9.13 moved both to v2).

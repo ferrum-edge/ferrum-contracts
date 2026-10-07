@@ -6,8 +6,60 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+## [contracts-edge-0.9.14] - 2026-10-07
+
+Contracts for Ferrum Edge `v0.9.14`
+(`@@EDGE_0914_COMMIT@@`). See the
+[release record](docs/releases/contracts-edge-0.9.14.md).
+
+### Added
+
+- `backend-egress-policy` v2 optional `data_plane_attestation` for Edge #6029
+  (issue #6020): the CP-only object listing each live ConfigSync Subscribe
+  stream of the namespace with its self-reported policy, the field-wise
+  `weakest_policy`, `weakest_policy_complete` and
+  `all_connected_public_only_guaranteed`. `schema_version` stays `2`. The
+  schema asserts the object only on `admission-only`, closes the attestation,
+  entry and policy objects, and checks the policy mode lists and guarantee, the
+  `attestation`/`policy` pairing and the summary implications. Five valid
+  fixtures (empty, reported, unknown, allow-overlay and shared `node_id` sets)
+  and twenty-one invalid fixtures (#18).
+- `vocabulary-backend-egress-policy` v2 optional
+  `data_plane_attestation_source`, `data_plane_attestation_statuses` and
+  `data_plane_attestation_rule`, present together or not at all, with one valid
+  and two invalid fixtures.
+- An `admin-deployment-mutation-acknowledgement` valid fixture for the `503`
+  `durable: "not_committed"` body (Edge #6027).
+- Release record `docs/releases/contracts-edge-0.9.14.md`.
+
 ### Changed
 
+- Repin all five Edge vocabularies and the egress, conditional snapshot,
+  deployment snapshot v2 and acknowledgement schema provenance to `v0.9.14`;
+  the plugin catalog pins `openapi.yaml` SHA-256
+  `6d286649ae744691e2eeb7d16607c538ca02e31bdeaafe98ab07fc861e7b9da4`. Error
+  tokens and classes, header names, provisioning values and plugin
+  registrations are unchanged. `diagnostic-ref` v1 keeps its frozen bytes.
+- `vocabularies/backend-egress-policy.json` carries the attestation source,
+  statuses and rule, and its consumer rule describes CP attestation as an
+  alternative to reading every DP.
+- `admin-deployment-mutation-acknowledgement` v1 describes each `durable`
+  value: from Edge v0.9.14 only commit or commit-acknowledgement uncertainty
+  reports `unknown`, and pre-commit store failures report `not_started` or
+  `not_committed` (Edge #6027, issue #6021). The enum is unchanged.
+- `admin-deployment-snapshot` v2 records the namespace-wide token fence and the
+  `api_spec_contents` peak memory that Edge v0.9.14 documents.
+- `gateway-errors.json` notes the Edge #6028/#6042 reclassification in the
+  `protocol_error`, `read_write_timeout` and `response_body_too_large`
+  meanings: a backend HTTP/2 reset other than `NO_ERROR` is `protocol_error`
+  and charged to the target, and buffered read errors report their real class
+  (a buffered read timeout is `504`). No class or token is added or removed.
+- `gateway-headers.json` `ETag` describes the conditional backup tag as a
+  namespace state token, and `If-Match` the namespace-wide deployment fence and
+  the narrowed `503` durable outcomes.
+- Admin, deployment, ownership, adoption, versioning and release-process
+  docs, `README.md` and `fixtures/README.md` describe the Edge v0.9.14 changes
+  and mapping.
 - Name Ferrum Edge LLC as the copyright holder in the `LICENSE` Required Notice.
 
 ## [contracts-edge-0.9.13] - 2026-10-06

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-backend-egress-policy/v2.schema.json",
   "title": "Backend egress policy vocabulary v2",
-  "description": "Shape and complete label sets of vocabularies/backend-egress-policy.json for response schema_version 2. Shared definitions also constrain the backend-egress-policy v2 response schema; completeness, uniqueness and fixed evaluation order are asserted. Only SchemaVersion differs from the v1 shape.",
+  "description": "Shape and complete label sets of vocabularies/backend-egress-policy.json for response schema_version 2. Shared definitions also constrain the backend-egress-policy v2 response schema; completeness, uniqueness and fixed evaluation order are asserted. Only SchemaVersion differs from the v1 shape. contracts-edge-0.9.14 adds the optional data-plane attestation members and definitions for the CP-only data_plane_attestation object Edge v0.9.14 adds within schema_version 2; a cyclic dependentRequired keeps them present together or not at all.",
   "x-contract": {
     "name": "vocabulary-backend-egress-policy",
     "version": 2,
@@ -12,19 +12,32 @@
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.13",
-        "commit": "9b83115de7ec23ab51ec4feae6bed65e596db425",
+        "ref": "v0.9.14",
+        "commit": "@@EDGE_0914_COMMIT@@",
         "path": "openapi.yaml",
         "symbols": [
-          "components.schemas.BackendEgressPolicyResponse"
+          "components.schemas.BackendEgressPolicyResponse",
+          "components.schemas.DataPlaneEgressAttestation",
+          "components.schemas.DataPlaneEgressAttestationStatus"
         ]
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.13",
-        "commit": "9b83115de7ec23ab51ec4feae6bed65e596db425",
+        "ref": "v0.9.14",
+        "commit": "@@EDGE_0914_COMMIT@@",
         "path": "src/admin/backend_egress_policy.rs",
         "note": "Vocabulary shape is contracts-owned; v2 labels/order are transcribed from the Edge-owned response and reused by its canonical schema."
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.14",
+        "commit": "@@EDGE_0914_COMMIT@@",
+        "path": "src/grpc/backend_egress_attestation.rs",
+        "symbols": [
+          "ATTESTATION_REPORTED",
+          "ATTESTATION_UNKNOWN"
+        ],
+        "note": "data_plane_attestation.source is the ATTESTATION_SOURCE constant of src/admin/backend_egress_policy.rs."
       }
     ]
   },
@@ -119,7 +132,34 @@
     "consumer_rule": {
       "type": "string",
       "minLength": 1
+    },
+    "data_plane_attestation_source": {
+      "$ref": "#/$defs/DataPlaneAttestationSource"
+    },
+    "data_plane_attestation_statuses": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/DataPlaneAttestationStatus"
+      }
+    },
+    "data_plane_attestation_rule": {
+      "type": "string",
+      "minLength": 1
     }
+  },
+  "dependentRequired": {
+    "data_plane_attestation_source": [
+      "data_plane_attestation_statuses"
+    ],
+    "data_plane_attestation_statuses": [
+      "data_plane_attestation_rule"
+    ],
+    "data_plane_attestation_rule": [
+      "data_plane_attestation_source"
+    ]
   },
   "$defs": {
     "SchemaVersion": {
@@ -187,6 +227,19 @@
         }
       ],
       "items": false
+    },
+    "DataPlaneAttestationSource": {
+      "type": "string",
+      "enum": [
+        "configsync-subscribe"
+      ]
+    },
+    "DataPlaneAttestationStatus": {
+      "type": "string",
+      "enum": [
+        "reported",
+        "unknown"
+      ]
     },
     "Provenance": {
       "type": "object",

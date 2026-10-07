@@ -94,6 +94,19 @@ stay at v1: their wire shape did not change. Their tokens and bodies follow the
 owner's runtime rules for the release a consumer talks to (for example, Edge
 `v0.9.13` rejects tokens issued by `v0.9.12` with `412`).
 
+### Additions in contracts-edge-0.9.14
+
+Edge `v0.9.14` adds the CP-only `data_plane_attestation` object to the backend
+egress response without changing `schema_version: 2`, and narrows which
+failures report deployment `durable: unknown` without changing the enum. Both
+fit within the current majors: `backend-egress-policy` v2 and
+`vocabulary-backend-egress-policy` v2 gain optional properties, and
+`admin-deployment-mutation-acknowledgement` v1 gains descriptions. The closed
+v2 response schema in `contracts-edge-0.9.13` rejects a v0.9.14 CP response
+that carries the object; that is the tag binding a consumer to the Edge release
+it names. The new `ErrorClass` assignments for HTTP/2 resets and buffered read
+errors reuse existing values, so `gateway-errors.json` only notes them.
+
 ## Vocabulary versions
 
 A vocabulary file's `version` is the version of its shape
@@ -182,6 +195,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.11` | `contracts-edge-0.9.11` | Edge admin contracts and accepted unchanged shared v1 freeze at `390edbd5b2485af0988e02f7827fde778d76ae0a` |
 | `v0.9.12` | `contracts-edge-0.9.12` | Refreshed Edge-owned sources and deployment-v1 contracts from released owner `0d917701b63ef38210c49df830f48cf0457cbc7d`, tagged at `31f0a21d707795be293d15837c2f77c3d84219d8` |
 | `v0.9.13` | `contracts-edge-0.9.13` | Backend egress policy v2 and deployment snapshot v2 from released owner `9b83115de7ec23ab51ec4feae6bed65e596db425`, tagged on the merge commit of its release PR |
+| `v0.9.14` | `contracts-edge-0.9.14` | Optional CP `data_plane_attestation` within backend egress policy v2, narrowed deployment `durable` outcomes and error-classification notes from released owner `@@EDGE_0914_COMMIT@@`, tagged on the merge commit of its release PR |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
@@ -193,8 +207,9 @@ Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
 
-`contracts-edge-0.9.13` is the latest tag, on the merge commit of its release
-PR; its GitHub release records the tag commit. `contracts-edge-0.9.12` is at
+`contracts-edge-0.9.14` is the latest tag, on the merge commit of its release
+PR; its GitHub release records the tag commit. `contracts-edge-0.9.13` is on
+the merge commit of its own release PR. `contracts-edge-0.9.12` is at
 `31f0a21d707795be293d15837c2f77c3d84219d8`. [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
 merged on 2026-10-05 at 13:57:00 UTC with exact reviewed second parent
 `d9c84810152732524c54a9ed292dc59103f0619d` and that reviewed head's tree. Its

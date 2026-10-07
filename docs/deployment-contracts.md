@@ -55,6 +55,42 @@ The sections below describe the profile as introduced in `v0.9.12`; where they
 mention byte arrays, `bytes_hex` or `bson_hex`, `v0.9.13` uses the digest forms
 above.
 
+## Edge v0.9.14: durable outcomes and namespace-wide fence
+
+Edge `v0.9.14` (`@@EDGE_0914_COMMIT@@`, Edge #6027, issue #6021) keeps the
+`deployment-v1` profile, `admin-deployment-snapshot` v2 and the
+acknowledgement members and `durable` values. It narrows what each `durable`
+value reports, and it documents two limits of the existing profile. Owner
+sources are `src/admin/deployment_mutations.rs` (`store_error`),
+`src/config/deployment_mutation.rs` (`DeploymentMutationNotStarted`,
+`DeploymentCommitOutcomeUnknown`), `openapi.yaml`
+`DeploymentMutationUnavailable` and `docs/deployment_mutations.md` at
+`v0.9.14`.
+
+- A `503` store failure before commit is attempted now reports
+  `durable: "not_started"` when it precedes the mutation transaction (a read,
+  transaction start or MongoDB mTLS admission refusal ahead of it), and
+  `durable: "not_committed"` when the transaction opened and rolled back (a lost
+  namespace admission lease, or a statement, admission or validation failure
+  inside it). Only a failed commit or commit acknowledgement, or a settlement
+  task that never reports, still reports `durable: "unknown"`. `v0.9.12` and
+  `v0.9.13` reported `unknown` for every such store failure. None of these
+  results authorizes cleanup or replay; `live` stays `unconfirmed`.
+- A token fences the whole namespace, not only the target's dependency graph.
+  Any consumer, credential, trust, registry-metadata or other resource write in
+  the namespace makes every outstanding token stale (`412`), and a fresh token
+  must not replay the refused recovery. Pause other writers to the namespace
+  from capturing the snapshot until the acknowledgement arrives, or resolve the
+  recovery manually. Writes to other namespaces, lease maintenance and audit
+  records do not invalidate the token.
+- Building `api_spec_contents` needs about twice its size in server memory (up
+  to roughly 512 MiB at the 256 MiB bound), on top of the stored gzip bytes the
+  snapshot already loaded.
+
+`admin-deployment-mutation-acknowledgement` v1 already admits every value, so
+the schema changes only its descriptions and provenance and gains a valid
+fixture for the `503` `not_committed` body.
+
 ## Immutable owner sources and schema scope
 
 All paths below belong to `ferrum-edge/ferrum-edge` at the full commit above:
@@ -192,7 +228,9 @@ operation prepares a whole-namespace restore or performs late compensation.
 | Confirmed commit, covering local application, final audit admission and lease release | 200 | `committed` | `applied` | `true` |
 | Confirmed CP/unserved/no serving coordinator commit | 200 | `committed` | `not_applicable` | `false` |
 | Confirmed commit but live/audit/cursor/lease acknowledgement unavailable | 503 | `committed` | `unconfirmed` | `false` |
-| Store/transport acknowledgement uncertain | 503 if available | `unknown` | `unconfirmed` | `false` |
+| Commit or commit acknowledgement failed, or the settlement task was lost | 503 if available | `unknown` | `unconfirmed` | `false` |
+| Store, lease or admission failure before the mutation transaction (v0.9.14; earlier releases reported `unknown`) | 503 | `not_started` | `unconfirmed` | `false` |
+| Lease loss or statement/admission/validation failure inside the rolled-back mutation transaction (v0.9.14; earlier releases reported `unknown`) | 503 | `not_committed` | `unconfirmed` | `false` |
 | Stale evidence or dependency/ownership refusal | 412/409 | `not_committed` | `unconfirmed` | `false` |
 | Namespace over the snapshot bound inside the mutation transaction (v0.9.13) | 507 | `not_committed` | `unconfirmed` | `false` |
 | Namespace over the snapshot bound before the transaction (v0.9.13) | 507 | `not_started` | `unconfirmed` | `false` |
