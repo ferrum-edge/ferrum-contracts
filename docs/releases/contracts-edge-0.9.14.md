@@ -9,7 +9,9 @@ the tag reads the owner at `v0.9.14`.
 ## Edge source
 
 The Edge `v0.9.14` tag points to `@@EDGE_0914_COMMIT@@`, the merge of
-[Edge #6050](https://github.com/ferrum-edge/ferrum-edge/pull/6050).
+[Edge #6050](https://github.com/ferrum-edge/ferrum-edge/pull/6050)
+(first parent `@@EDGE_0914_PARENT1@@`, second parent
+`@@EDGE_0914_PARENT2@@`).
 [GitHub release @@EDGE_0914_RELEASE_ID@@](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.14)
 was published at @@EDGE_0914_PUBLISHED_AT@@. Edge `v0.9.14` has no
 `docs/releases/v0.9.14.md`; its `CHANGELOG.md` `[0.9.14]` section and the
@@ -62,16 +64,18 @@ clearer description or a new fixture, which
   value and gains a valid fixture for the `503` `not_committed` body. The same
   PR documents that a `deployment-v1` token fences the whole namespace and the
   peak server memory of `api_spec_contents`; `admin-deployment-snapshot` v2
-  keeps its wire shape and records both in its descriptions.
+  keeps its wire shape and records the fence in its descriptions and the peak
+  memory in its `x-contract` and provenance text.
 - **Error classification.** Edge
   [#6028](https://github.com/ferrum-edge/ferrum-edge/pull/6028) and
   [#6042](https://github.com/ferrum-edge/ferrum-edge/pull/6042) (issues #6019
   and #6022) classify a backend HTTP/2 `RST_STREAM` or `GOAWAY` with any reason
   except `NO_ERROR` as `protocol_error`, before the response headers, during a
   buffered read or while a body streams, and charge it to the target. The
-  buffered collector's read errors now report their real class, so a buffered
-  read timeout is `read_write_timeout` with `504`; these errors used to be
-  `response_body_too_large`. No `ErrorClass` value or `X-Gateway-Error` token
+  buffered collector's reqwest-reported read errors now report their real class,
+  so a timeout reqwest reports there is `read_write_timeout` with `504`; these
+  errors used to be `response_body_too_large`. The collector's own idle
+  `backend_read_timeout_ms` timeout was already `read_write_timeout`. No `ErrorClass` value or `X-Gateway-Error` token
   is added or removed. `gateway-errors.json` notes the change in the
   `protocol_error`, `read_write_timeout` and `response_body_too_large`
   meanings.
@@ -133,8 +137,9 @@ rejects a CP response that carries `data_plane_attestation`; it needs
 unchanged.
 
 A public-only publisher may now read a CP's `data_plane_attestation` and
-require `all_connected_public_only_guaranteed=true` together with a
-`connected_data_planes` count equal to its expected inventory. An absent
+require `all_connected_public_only_guaranteed=true` together with every
+expected data-plane `node_id` present in `data_planes` (a stream count alone
+can double-count a reconnecting node and hide a missing one). An absent
 object, an unknown status or an empty set blocks publication. The reports are
 self-descriptions from authenticated data planes, not cryptographic host
 attestation. Deployment recovery consumers can treat `not_started` and

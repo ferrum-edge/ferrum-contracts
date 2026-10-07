@@ -108,8 +108,9 @@ have a v2 schema next to v1. `diagnostic-ref` v1 keeps its frozen bytes.
 
 The [0.9.14 release](releases/contracts-edge-0.9.14.md) reads Edge-owned
 sources at `v0.9.14`, `@@EDGE_0914_COMMIT@@`. Its changes fit the existing
-majors: an optional CP-only property in `backend-egress-policy` v2 and
-descriptions in the acknowledgement and vocabularies.
+majors: an optional CP-only property in `backend-egress-policy` v2,
+descriptions in the acknowledgement, `admin-deployment-snapshot` v2 and the
+vocabularies.
 
 ## Reviewers
 

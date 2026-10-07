@@ -117,7 +117,7 @@
       "request_reached_wire": true,
       "log_kind": "read_timeout",
       "x_gateway_error": "backend_timeout",
-      "meaning": "A backend read or write exceeded its per-direction timeout. From v0.9.14 this includes a read timeout while the buffered collector reads a larger or limited response body (504; earlier releases reported response_body_too_large)."
+      "meaning": "A backend read or write exceeded its per-direction timeout. From v0.9.14 this includes a timeout that reqwest reports while the buffered collector reads a larger or limited response body (504; earlier releases labelled such reqwest-reported read errors response_body_too_large). The collector's own idle backend_read_timeout_ms timeout was already read_write_timeout."
     },
     {
       "value": "client_disconnect",

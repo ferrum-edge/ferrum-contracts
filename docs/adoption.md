@@ -15,7 +15,7 @@ the reviewed PR #15 merge. Consumer adoption has started but remains pending
 until each PR merges and qualifies; the table records the current verified
 immutable pin snapshots.
 
-| Repository | `main` commit read (2026-10-06) | Pinned tag on `main` |
+| Repository | Commit read (consumers: `main` on 2026-10-06; Edge: `v0.9.14` tag) | Pinned tag on `main` |
 |---|---|---|
 | ferrum-edge | `@@EDGE_0914_COMMIT@@` | producer: released `v0.9.14` source; maps to `contracts-edge-0.9.14`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
 | ferrum-anvil | `07f7182b3aa6c244140b7ec3edab5a1668318c96` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/07f7182b3aa6c244140b7ec3edab5a1668318c96/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.11` |

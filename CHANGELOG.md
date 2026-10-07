@@ -52,8 +52,8 @@ Contracts for Ferrum Edge `v0.9.14`
 - `gateway-errors.json` notes the Edge #6028/#6042 reclassification in the
   `protocol_error`, `read_write_timeout` and `response_body_too_large`
   meanings: a backend HTTP/2 reset other than `NO_ERROR` is `protocol_error`
-  and charged to the target, and buffered read errors report their real class
-  (a buffered read timeout is `504`). No class or token is added or removed.
+  and charged to the target, and reqwest-reported buffered read errors report
+  their real class (a timeout reqwest reports there is `504`). No class or token is added or removed.
 - `gateway-headers.json` `ETag` describes the conditional backup tag as a
   namespace state token, and `If-Match` the namespace-wide deployment fence and
   the narrowed `503` durable outcomes.
