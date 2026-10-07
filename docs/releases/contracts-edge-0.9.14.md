@@ -137,9 +137,10 @@ rejects a CP response that carries `data_plane_attestation`; it needs
 unchanged.
 
 A public-only publisher may now read a CP's `data_plane_attestation` and
-require `all_connected_public_only_guaranteed=true` together with every
-expected data-plane `node_id` present in `data_planes` (a stream count alone
-can double-count a reconnecting node and hide a missing one). An absent
+require `all_connected_public_only_guaranteed=true` together with a count of
+distinct `node_id` values in `data_planes` (one random id per Edge DP process)
+that reaches its expected number of data-plane processes; a stream count alone
+can double-count a reconnecting process and hide a missing one. An absent
 object, an unknown status or an empty set blocks publication. The reports are
 self-descriptions from authenticated data planes, not cryptographic host
 attestation. Deployment recovery consumers can treat `not_started` and

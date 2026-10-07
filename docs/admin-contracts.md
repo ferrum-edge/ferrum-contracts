@@ -239,10 +239,10 @@ vocabulary, match its namespace, require `local-data-plane` and `public_only_gua
 check every serving DP again after replacement/restart. A publisher that cannot
 reach every DP's admin API may instead read the CP's `data_plane_attestation`
 for its namespace and require `all_connected_public_only_guaranteed=true`
-together with every expected data-plane `node_id` present in `data_planes`.
-`connected_data_planes` counts streams, so a reconnect overlap can double-count
-one node and a matching count alone does not prove that no node is missing; an
-absent object, an unknown attestation status or an empty set
+together with a count of distinct `node_id` values in `data_planes` that reaches
+the number of data-plane processes it expects for the namespace. Each Edge DP
+process reports its own random `node_id`; `connected_data_planes` counts
+streams, so a reconnect overlap can double-count one process. An absent object, an unknown attestation status or an empty set
 blocks publication. Missing/unknown
 versions, labels or fields, authorization failure, unserved/CP-only scopes and
 weaker policy block publication. Unknown values grant no known meaning or
