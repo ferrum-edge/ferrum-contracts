@@ -6,6 +6,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Changed
+
+- Name Ferrum Edge LLC as the copyright holder in the `LICENSE` Required Notice.
+
 ## [contracts-edge-0.9.13] - 2026-10-06
 
 Contracts for Ferrum Edge `v0.9.13`
