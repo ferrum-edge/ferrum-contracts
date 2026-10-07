@@ -242,8 +242,8 @@ for its namespace and require `all_connected_public_only_guaranteed=true`
 together with a count of distinct `node_id` values in `data_planes` that reaches
 the number of data-plane processes it expects for the namespace. Each Edge DP
 process reports its own random `node_id`; `connected_data_planes` counts
-streams, so a reconnect overlap can double-count one process. An absent object, an unknown attestation status or an empty set
-blocks publication. Missing/unknown
+streams, so a reconnect overlap can double-count one process. An absent
+object, an unknown attestation status or an empty set blocks publication. Missing/unknown
 versions, labels or fields, authorization failure, unserved/CP-only scopes and
 weaker policy block publication. Unknown values grant no known meaning or
 permission. This is loaded-policy metadata, not external firewall attestation,
