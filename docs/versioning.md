@@ -107,6 +107,28 @@ that carries the object; that is the tag binding a consumer to the Edge release
 it names. The new `ErrorClass` assignments for HTTP/2 resets and buffered read
 errors reuse existing values, so `gateway-errors.json` only notes them.
 
+### Additions in contracts-edge-0.9.15
+
+Edge `v0.9.15` changes header meaning, adds a gateway rejection phase and
+changes plugin config schemas, but no schema here changes a wire rule:
+
+- `gateway-headers.json` adds `X-Authenticated-Identity` and narrows
+  `X-Consumer-Username` to a mapped Consumer. Vocabulary values follow the
+  Edge release named by `edge_release`; no schema copies these header names,
+  so no major is needed, and `vocabulary-gateway-headers` v1 keeps its shape.
+  The meaning change is Edge's breaking change, recorded in each entry's
+  `edge_behavior` and bound to Edge `v0.9.15` by the tag.
+- `diagnostic-ref` v1 keeps its frozen bytes. Its `rejection.phase` is an open
+  label of at most 64 characters, so `route_protocol_admission` is already
+  valid, and `detail.rejection_phase` keeps its closed token-mapped enum
+  because `token_for_rejection_phase` maps the new phase to no token.
+- The plugin catalog's pointers are unchanged. The configs they reach change
+  with the pinned `openapi.yaml` (for example the closed `LdapAuthConfig`
+  drops `consumer_mapping`); the SHA-256 pin binds each tag to one Edge
+  release's config rules.
+- `gates_request_admission()` depends on each plugin instance's config, so it
+  is not a per-type catalog field.
+
 ## Vocabulary versions
 
 A vocabulary file's `version` is the version of its shape
@@ -196,6 +218,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.12` | `contracts-edge-0.9.12` | Refreshed Edge-owned sources and deployment-v1 contracts from released owner `0d917701b63ef38210c49df830f48cf0457cbc7d`, tagged at `31f0a21d707795be293d15837c2f77c3d84219d8` |
 | `v0.9.13` | `contracts-edge-0.9.13` | Backend egress policy v2 and deployment snapshot v2 from released owner `9b83115de7ec23ab51ec4feae6bed65e596db425`, tagged on the merge commit of its release PR |
 | `v0.9.14` | `contracts-edge-0.9.14` | Optional CP `data_plane_attestation` within backend egress policy v2, narrowed deployment `durable` outcomes and error-classification notes from released owner `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`, tagged on the merge commit of its release PR |
+| `v0.9.15` | `contracts-edge-0.9.15` | `X-Authenticated-Identity`, `Connection` nomination and `_`/`-` assertion rules, the `route_protocol_admission` phase and plugin config schema changes within the current majors, from released owner `25b37395ff61bfea0f3ffd189d9011c4984fa755`, tagged on the merge commit of its release PR |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
@@ -207,9 +230,12 @@ Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
 
-`contracts-edge-0.9.14` is the latest tag, on the merge commit of its release
-PR; its GitHub release records the tag commit. `contracts-edge-0.9.13` is on
-the merge commit of its own release PR. `contracts-edge-0.9.12` is at
+`contracts-edge-0.9.15` is the latest tag, on the merge commit of its release
+PR; its GitHub release records the tag commit. `contracts-edge-0.9.14` is at
+`ddbdd845733b7046c4393ac951011dafb774db33`, the merge commit of PR #22, with
+release 406650065 published on 2026-10-08 at 09:22:24 UTC.
+`contracts-edge-0.9.13` is at `9626821eb089c71f5d4d71268c7b8276a8a5ab50`, the
+merge commit of its own release PR. `contracts-edge-0.9.12` is at
 `31f0a21d707795be293d15837c2f77c3d84219d8`. [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
 merged on 2026-10-05 at 13:57:00 UTC with exact reviewed second parent
 `d9c84810152732524c54a9ed292dc59103f0619d` and that reviewed head's tree. Its

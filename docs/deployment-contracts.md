@@ -91,6 +91,18 @@ sources are `src/admin/deployment_mutations.rs` (`store_error`),
 the schema changes only its descriptions and provenance and gains a valid
 fixture for the `503` `not_committed` body.
 
+## Edge v0.9.15: unchanged profile
+
+Edge `v0.9.15` (`25b37395ff61bfea0f3ffd189d9011c4984fa755`) leaves the
+`deployment-v1` profile, `admin-deployment-snapshot` v2 and the
+acknowledgement unchanged: `src/admin/deployment_mutations.rs`,
+`src/config/deployment_mutation.rs`, `docs/deployment_mutations.md` and the
+OpenAPI components are byte-identical to `v0.9.14`. The release's
+`db_backend.rs`, `db_loader.rs`, `mongo_store.rs` and `types.rs` changes serve
+plugin-graph admission, consumer deltas and MongoDB batch attachments; they do
+not change the snapshot evidence or the acknowledgement. Both schemas repin
+their provenance to `v0.9.15`.
+
 ## Immutable owner sources and schema scope
 
 All paths below belong to `ferrum-edge/ferrum-edge` at the full commit above:
