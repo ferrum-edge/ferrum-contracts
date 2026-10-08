@@ -6,6 +6,64 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+## [contracts-edge-0.9.15] - 2026-10-08
+
+Contracts for Ferrum Edge `v0.9.15`
+(`25b37395ff61bfea0f3ffd189d9011c4984fa755`). See the
+[release record](docs/releases/contracts-edge-0.9.15.md).
+
+### Added
+
+- `gateway-headers.json` entry `X-Authenticated-Identity` (availability
+  `v0.9.15`) for Edge #6088 (issue #6082): the gateway-owned external identity
+  or display claim sent when a request authenticated without a mapped
+  Consumer. Client and plugin copies are removed, `_` matches `-`, the name is
+  forbidden in request trailers and refused as a configured header
+  destination (#18).
+- A `diagnostic-ref` valid fixture for the `all`-mode reference of a
+  `route_protocol_admission` refusal (Edge #6090, issue #6087), and an invalid
+  fixture that puts that label in `detail.rejection_phase`, which carries only
+  token-mapped phases.
+- A `vocabulary-gateway-headers` valid fixture with the
+  `X-Consumer-Username` and `X-Authenticated-Identity` entries, and an invalid
+  fixture whose `availability` is not an Edge tag.
+- Release record `docs/releases/contracts-edge-0.9.15.md`.
+
+### Changed
+
+- Repin all five Edge vocabularies and the egress, conditional snapshot,
+  deployment snapshot v2 and acknowledgement schema provenance to `v0.9.15`;
+  the plugin catalog pins `openapi.yaml` SHA-256
+  `f6c7d8b1d247060c4d0ae66e5c149ad3d76721addb8176eff45b6fc3d1b4d6b2`. Error
+  tokens and classes, provisioning values, plugin registrations and every
+  catalog pointer are unchanged. `diagnostic-ref` v1 keeps its frozen bytes:
+  its OpenAPI components are unchanged and its open `rejection.phase` already
+  admits `route_protocol_admission`.
+- `gateway-headers.json` `X-Consumer-Username` carries only a mapped
+  Consumer's username from Edge v0.9.15, and `X-Consumer-Custom-Id` and the
+  `x-consumer-` prefix record the same change (Edge #6088).
+- `gateway-headers.json` records the Edge #6090 rules: HTTP/1.1 and HTTP/3
+  ingress resolves a client's `Connection` nominations before any plugin runs,
+  keeps `Host`, `Content-Length`, `Expect`, the forwarding fields and the
+  configured real-IP header, and writes gateway assertions afterwards
+  (`src/proxy/headers.rs` provenance note and the top-level description);
+  `X-Geo-Country` and `x-path-param-` match `_` as `-`.
+- `plugin-catalog.json` lists the Edge v0.9.15 changes in the config schemas
+  its pointers reach: LDAP `consumer_mapping` removed (#6088),
+  `FERRUM_PLUGIN_SECRET_<NAME>` environment reference patterns (#6089),
+  `rate_limiting.ipv6_prefix`, `mcp_gateway`
+  `sessions.max_sessions_per_principal` and `body_validator`
+  `grpc_max_decompressed_size_bytes` minimum `1` (#6079), and the
+  `soap_ws_security` `allow_mtom` description (#6077). Request-admission gating
+  (`gates_request_admission()`, #6090) depends on instance config and the route's
+  per-protocol plugin set, so it is not a catalog field.
+- `gateway-errors.json` notes that `route_protocol_admission` maps to no
+  `X-Gateway-Error` token. No class, token or meaning changes.
+- Admin, deployment, ownership, adoption, versioning and release-process
+  docs, `README.md` and `fixtures/README.md` describe the Edge v0.9.15 changes
+  and mapping, and record `contracts-edge-0.9.14` at
+  `ddbdd845733b7046c4393ac951011dafb774db33` (release 406650065).
+
 ## [contracts-edge-0.9.14] - 2026-10-08
 
 Contracts for Ferrum Edge `v0.9.14`

@@ -14,7 +14,10 @@ When Ferrum Edge publishes `vX.Y.Z`:
      `OBS_*`, `x_gateway_error_token_for_class`, `token_for_rejection_phase`)
      and `docs/error_classification.md`.
    - `vocabularies/gateway-headers.json`: `src/proxy/headers.rs`,
-     `docs/admin_api.md`, `openapi.yaml`.
+     `src/proxy/mod.rs` (`refresh_backend_gateway_assertion_headers`),
+     `src/plugins/mod.rs` (`RequestContext` identity accessors),
+     `docs/plugins.md` ("Consumer Identity Headers"), `docs/admin_api.md`,
+     `openapi.yaml`.
    - `vocabularies/provisioned-by.json`: `src/admin/provisioning.rs`,
      `docs/admin_api.md`.
    - `vocabularies/plugin-catalog.json`: `src/plugins/mod.rs`
@@ -35,7 +38,9 @@ When Ferrum Edge publishes `vX.Y.Z`:
    against the release. Move entries marked `unreleased` only when that owner
    release actually ships them. Preserve unrelated owners' unreleased markers.
    Consumers vendor `diagnostic-ref` v1 byte for byte, so its bytes stay
-   frozen while its owner sources are unchanged. An incompatible owner change
+   frozen while its wire contract is unchanged; a new label in the open
+   `rejection.phase` (Edge v0.9.15 `route_protocol_admission`) gets fixtures,
+   not new bytes. An incompatible owner change
    adds `v<N+1>.schema.json` and keeps the earlier major
    ([versioning.md](versioning.md)).
 4. Add or update fixtures for anything that changed, including at least one

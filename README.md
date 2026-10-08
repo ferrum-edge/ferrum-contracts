@@ -32,6 +32,7 @@ complete; the issue is closed and remains as project history.
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
 | [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions and process egress discovery |
 | [`docs/deployment-contracts.md`](docs/deployment-contracts.md) | Original deployment authority, dependency-fenced partial writes and explicit cleanup acknowledgements |
+| [`docs/releases/contracts-edge-0.9.15.md`](docs/releases/contracts-edge-0.9.15.md) | Edge v0.9.15 source, the `X-Authenticated-Identity` header, `Connection` nomination rules, the `route_protocol_admission` phase and plugin config schema changes |
 | [`docs/releases/contracts-edge-0.9.14.md`](docs/releases/contracts-edge-0.9.14.md) | Edge v0.9.14 source, the CP data-plane egress attestation, narrowed deployment durable outcomes and error-classification notes |
 | [`docs/releases/contracts-edge-0.9.13.md`](docs/releases/contracts-edge-0.9.13.md) | Edge v0.9.13 source, the v2 egress and deployment snapshot contracts, and what stayed unchanged |
 | [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Actual canonical publication and pending consumer adoption |
@@ -39,14 +40,27 @@ complete; the issue is closed and remains as project history.
 
 Every file records where it came from: owner repository, path, and commit.
 The latest contracts release is
-[`contracts-edge-0.9.14`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.14),
-tagged on the merge commit of its release PR. It maps to Edge `v0.9.14` at
+[`contracts-edge-0.9.15`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.15),
+tagged on the merge commit of its release PR. It maps to Edge `v0.9.15` at
+`25b37395ff61bfea0f3ffd189d9011c4984fa755` and adds no new major and no schema
+rule: `gateway-headers.json` adds the gateway-owned `X-Authenticated-Identity`
+header, narrows `X-Consumer-Username` to a mapped Consumer and records the
+`Connection` nomination and `_`/`-` assertion rules; `diagnostic-ref` v1 keeps
+its frozen bytes and gains fixtures for the `route_protocol_admission`
+rejection phase; and the plugin catalog pins the `v0.9.15` `openapi.yaml`,
+whose config schemas drop the LDAP `consumer_mapping` and add the plugin
+secret, IPv6 prefix and MCP session rules. All five vocabularies are
+refreshed. See the [release record](docs/releases/contracts-edge-0.9.15.md).
+
+Historical
+[`contracts-edge-0.9.14`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.14)
+at `ddbdd845733b7046c4393ac951011dafb774db33` (release 406650065, published
+2026-10-08) maps to Edge `v0.9.14` at
 `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d` and adds no new major: `backend-egress-policy` v2 gains
 the optional CP-only `data_plane_attestation` object (`schema_version` stays
 `2`), the deployment mutation acknowledgement describes the narrowed `durable`
 outcomes, and `gateway-errors.json` notes the HTTP/2 reset and buffered read
-reclassification without adding a class or token. All five vocabularies and the
-plugin OpenAPI pin are refreshed. See the
+reclassification without adding a class or token. See the
 [release record](docs/releases/contracts-edge-0.9.14.md).
 
 Historical

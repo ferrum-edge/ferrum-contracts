@@ -31,6 +31,23 @@ digest, and the egress response moves to `schema_version: 2` with
 backup `ETag` is documented as a namespace state token. Both are described
 below; the backup metadata shape is unchanged.
 
+[Contracts 0.9.15](releases/contracts-edge-0.9.15.md) reads Edge `v0.9.15` at
+`25b37395ff61bfea0f3ffd189d9011c4984fa755`. The backup metadata, restore
+preconditions and egress response are unchanged; their sources
+(`conditional_snapshots.rs`, `preconditions.rs`, `backup.rs`,
+`backend_egress_policy.rs`, `backend_egress_attestation.rs` and their OpenAPI
+components) are byte-identical to `v0.9.14`. Two owner changes touch the same
+admin surface without a contract here. On MongoDB, `POST /batch` and
+`POST /restore` (conditional or not) now attach a `scope: proxy` plugin config
+to its proxy in the same write, as SQL already did (Edge #6065, #6074; rows
+written earlier are not rewritten), and the owner documents that both paths
+reject a `proxy_id` that does not exist in the namespace with `400` before
+anything is written. Where the admin `ns` claim is enforced, a
+namespace-scoped `operator` that introduces a `backend_tls_*` reference outside
+inline PEM, `system://` or a `k8s://` Secret in the addressed namespace gets
+`400` (Edge #6094, issue #6092); these are proxy and upstream field
+descriptions in the pinned OpenAPI.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full

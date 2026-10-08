@@ -61,6 +61,8 @@ branch of it.
 | `backend-egress-policy/v2/valid/control-plane-attestation-unknown.json`, `control-plane-attestation-allow-overlay.json`, `control-plane-attestation-shared-node-id.json` | ferrum-edge `tests/integration/admin_backend_egress_policy_tests.rs` `control_plane_attests_connected_data_planes_of_the_selected_namespace` (the unknown `dp-old` step and the `dp-c` allow-overlay step) and `every_stream_of_one_node_id_is_counted_and_weakens_the_aggregate`, with each policy view and aggregate completed from `src/grpc/backend_egress_attestation.rs` (`ReportedEgressPolicy` serialization, `weaken`, `DataPlaneEgressSummary::from_reports`). The CP top-level fields are the `defaultControlPlane` example's; `connected_at` values are illustrative RFC 3339 times in the owner's `to_rfc3339` form. No CIDRs or credentials. | `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d` (v0.9.14) |
 | `vocabulary-backend-egress-policy/v2/valid/data-plane-attestation.json` | `vocabularies/backend-egress-policy.json` at this release, copied | this repository |
 | `admin-deployment-mutation-acknowledgement/valid/store-failure-not-committed.json` | ferrum-edge `src/admin/deployment_mutations.rs` `store_error`, which from v0.9.14 calls `unavailable("not_committed")` for a store failure inside the rolled-back mutation transaction; literal source-body transcription | `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d` (v0.9.14) |
+| `diagnostic-ref/valid/route-protocol-admission.json` | The `plugin_rejection` example of ferrum-edge `openapi.yaml` (`GET /diagnostics/v1/refs/{ref}` `200`) with only `protocol` `http1`, `status` `403`, `detail.backend_target` and `detail.rejection` changed. `src/proxy/mod.rs` logs the refusal through `log_pre_backend_rejected_request`, which omits `backend_target` (null), and the rejection is the gateway rejection that `src/diagnostic_ref.rs` `DiagnosticRejection::new` records for `ROUTE_PROTOCOL_ADMISSION_PHASE` (no plugin hook phase and no rejecting plugin, so `source: gateway` and no `plugin`). `detail.rejection_phase` stays null because `src/retry.rs` `token_for_rejection_phase` maps the phase to no token. The fixture is the WebSocket upgrade refusal, a `403` on HTTP/1.1, which only an `all`-mode reference records. Reference, times and proxy are the example's illustrative values. | `25b37395ff61bfea0f3ffd189d9011c4984fa755` (v0.9.15) |
+| `vocabulary-gateway-headers/valid/authenticated-identity.json` | `vocabularies/gateway-headers.json` at this release: its top-level members, the `src/proxy/headers.rs` provenance entry and the `X-Consumer-Username` and `X-Authenticated-Identity` entries, copied | this repository |
 
 The existing backup/egress fixtures are canonical artifacts from published v0.9.11
 owner source. Distribution evidence is recorded in the [release notes](../docs/releases/contracts-edge-0.9.11.md);
@@ -184,6 +186,7 @@ fixtures retain their original bytes and provenance.
 | `diagnostic-ref/invalid/detail-missing-backend-dispatch.json` | `detail.backend_dispatch` is required |
 | `diagnostic-ref/invalid/created-at-not-rfc3339.json` | `created_at` is not an RFC 3339 `date-time` (format assertion) |
 | `diagnostic-ref/invalid/uppercase-replica-id.json` | `replica_id` is uppercase instead of eight lowercase hexadecimal digits |
+| `diagnostic-ref/invalid/route-protocol-admission-as-detail-phase.json` | From `valid/route-protocol-admission.json`: change only `detail.rejection_phase` to `route_protocol_admission`; that member carries the `X-Gateway-Error` token of the phase (`token_for_rejection_phase`), and this phase has none, so the label belongs only in `detail.rejection.phase` |
 | `diagnostic-report/invalid/unsupported-major.json` | `schema_version` `2.0`; readers reject other majors (Alloy's own fixture) |
 | `diagnostic-report/invalid/missing-collection.json` | `collection` is required |
 | `diagnostic-report/invalid/uppercase-span-id.json` | `span_id` must be 16 lowercase hex digits |
@@ -211,6 +214,7 @@ fixtures retain their original bytes and provenance.
 | `vocabulary-gateway-headers/invalid/prefix-without-trailing-dash.json` | a prefix entry whose name does not end in `-` |
 | `vocabulary-gateway-headers/invalid/unknown-role.json` | `role` outside the closed set |
 | `vocabulary-gateway-headers/invalid/short-commit.json` | a provenance commit that is not a full SHA |
+| `vocabulary-gateway-headers/invalid/availability-without-v.json` | From `valid/authenticated-identity.json`: change only the `X-Authenticated-Identity` `availability` to `0.9.15`; availability names an Edge tag (`v0.9.15`) or `unreleased` |
 | `vocabulary-provisioned-by/invalid/untrimmed-value.json` | a value with leading whitespace; Edge trims the header |
 | `vocabulary-provisioned-by/invalid/wrong-label-key.json` | label key `provisioned_by` |
 | `vocabulary-plugin-catalog/invalid/unknown-protocol.json` | protocol `http2`; the catalog uses Edge's five protocol families |

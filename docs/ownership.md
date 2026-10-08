@@ -32,14 +32,14 @@ reviewed, versioned form that every other product pins.
 | Contract | File here | Owner | Source of truth | Status |
 |---|---|---|---|---|
 | Gateway error vocabulary (`ErrorClass`, `X-Gateway-Error`) | `vocabularies/gateway-errors.json` | ferrum-edge | `src/retry.rs`, `docs/error_classification.md` | implemented |
-| Gateway-owned headers | `vocabularies/gateway-headers.json` | ferrum-edge | `src/proxy/headers.rs`, `docs/admin_api.md`, `openapi.yaml` | implemented |
+| Gateway-owned headers | `vocabularies/gateway-headers.json` | ferrum-edge | `src/proxy/headers.rs`, `src/proxy/mod.rs`, `src/plugins/mod.rs` (`RequestContext` identity accessors), `docs/plugins.md`, `docs/admin_api.md`, `openapi.yaml` | implemented |
 | `provisioned-by` label and `X-Ferrum-Provisioned-By` | `vocabularies/provisioned-by.json` | ferrum-edge | `src/admin/provisioning.rs`, `docs/admin_api.md` | implemented |
 | Plugin catalog index | `vocabularies/plugin-catalog.json` | ferrum-edge | `src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`, `openapi.yaml` | implemented |
-| `ferrum.diagnostic_ref.v1` | `schemas/diagnostic-ref/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DiagnosticRefLookup`), `src/diagnostic_ref.rs` | released in Edge v0.9.9 |
-| Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | released in Edge v0.9.11; wire shape unchanged through v0.9.14 |
-| Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `v2.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`, `DataPlaneEgressAttestation`), `src/admin/backend_egress_policy.rs`, `src/grpc/backend_egress_attestation.rs`, `src/config/env_config.rs` | v1 emitted by Edge v0.9.11 and v0.9.12; v2 released in Edge v0.9.13, with optional CP `data_plane_attestation` from v0.9.14 |
-| Deployment snapshot | `schemas/admin-deployment-snapshot/v1.schema.json`, `v2.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentSnapshot`, `StoredContentDigest`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs`, `db_backend.rs`, `db_loader.rs`, `mongo_store.rs` | v1 emitted by Edge v0.9.12; v2 released in Edge v0.9.13 |
-| Deployment mutation acknowledgement | `schemas/admin-deployment-mutation-acknowledgement/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentMutationAcknowledgement`, `NamespaceSnapshotTooLarge`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs` | released in Edge v0.9.12; shape unchanged through v0.9.14, which narrows the `durable: unknown` outcome |
+| `ferrum.diagnostic_ref.v1` | `schemas/diagnostic-ref/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DiagnosticRefLookup`), `src/diagnostic_ref.rs` | released in Edge v0.9.9; wire contract unchanged through v0.9.15, which adds the `route_protocol_admission` phase label |
+| Conditional backup metadata | `schemas/admin-conditional-snapshot/v1.schema.json` | ferrum-edge | `openapi.yaml` (`ConditionalBackupMetadata`, `ResourceETagMap`), `src/admin/conditional_snapshots.rs`, `preconditions.rs`, `backup.rs` | released in Edge v0.9.11; wire shape unchanged through v0.9.15 |
+| Backend egress policy response and vocabulary | `schemas/backend-egress-policy/v1.schema.json`, `v2.schema.json`, `vocabularies/backend-egress-policy.json` | ferrum-edge | `openapi.yaml` (`BackendEgressPolicyResponse`, `DataPlaneEgressAttestation`), `src/admin/backend_egress_policy.rs`, `src/grpc/backend_egress_attestation.rs`, `src/config/env_config.rs` | v1 emitted by Edge v0.9.11 and v0.9.12; v2 released in Edge v0.9.13, with optional CP `data_plane_attestation` from v0.9.14; unchanged in v0.9.15 |
+| Deployment snapshot | `schemas/admin-deployment-snapshot/v1.schema.json`, `v2.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentSnapshot`, `StoredContentDigest`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs`, `db_backend.rs`, `db_loader.rs`, `mongo_store.rs` | v1 emitted by Edge v0.9.12; v2 released in Edge v0.9.13; unchanged through v0.9.15 |
+| Deployment mutation acknowledgement | `schemas/admin-deployment-mutation-acknowledgement/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentMutationAcknowledgement`, `NamespaceSnapshotTooLarge`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs` | released in Edge v0.9.12; shape unchanged through v0.9.15; v0.9.14 narrows the `durable: unknown` outcome |
 | `DiagnosticFinding` | `schemas/diagnostic-finding/v1.schema.json` | ferrum-anvil | `contracts/schemas/DiagnosticFinding.schema.json` (generated from Rust) | implemented |
 | `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
 | `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | implemented; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
@@ -111,6 +111,13 @@ sources at `v0.9.14`, `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`. Its changes fi
 majors: an optional CP-only property in `backend-egress-policy` v2,
 descriptions in the acknowledgement, `admin-deployment-snapshot` v2 and the
 vocabularies.
+
+The [0.9.15 release](releases/contracts-edge-0.9.15.md) reads Edge-owned
+sources at `v0.9.15`, `25b37395ff61bfea0f3ffd189d9011c4984fa755`. No schema
+rule changes: `gateway-headers.json` adds `X-Authenticated-Identity` and the
+`Connection` nomination rules, `diagnostic-ref` v1 keeps its frozen bytes and
+gains fixtures for the new rejection phase, and the plugin catalog repins
+`openapi.yaml`.
 
 ## Reviewers
 
