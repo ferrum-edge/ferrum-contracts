@@ -55,8 +55,8 @@ Contracts for Ferrum Edge `v0.9.15`
   `sessions.max_sessions_per_principal` and `body_validator`
   `grpc_max_decompressed_size_bytes` minimum `1` (#6079), and the
   `soap_ws_security` `allow_mtom` description (#6077). Request-admission gating
-  (`gates_request_admission()`, #6090) depends on each instance's config and is
-  not a catalog field.
+  (`gates_request_admission()`, #6090) depends on instance config and the route's
+  per-protocol plugin set, so it is not a catalog field.
 - `gateway-errors.json` notes that `route_protocol_admission` maps to no
   `X-Gateway-Error` token. No class, token or meaning changes.
 - Admin, deployment, ownership, adoption, versioning and release-process

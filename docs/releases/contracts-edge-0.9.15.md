@@ -152,9 +152,11 @@ which [versioning.md](../versioning.md) allows within a major.
   `POST /batch` and `POST /restore` attach a proxy-scoped plugin config to its
   proxy on MongoDB as on SQL. Neither changes the conditional backup metadata,
   the restore preconditions or the deployment profile.
-- Edge `main` at `ffb264d5b7825bf2fb74863e833c90ddb4dc9fdb` changes none of
-  the contract sources above after `v0.9.15` (it adds h2 0.4.20 and
-  change-log paging), so no vocabulary carries a `main_branch_delta`.
+- Edge `main` at `ffb264d5b7825bf2fb74863e833c90ddb4dc9fdb` adds h2 0.4.20 and
+  change-log paging after `v0.9.15`. The paging change touches `db_backend.rs`,
+  `db_loader.rs` and `mongo_store.rs`, pinned sources of `admin-deployment-snapshot`
+  v2, but leaves the pinned functions unchanged, and no vocabulary cites those
+  files, so no vocabulary carries a `main_branch_delta`.
 - Other owners' schemas, availability notes and fixtures are unchanged.
 
 ## Fixtures and validation

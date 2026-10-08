@@ -126,8 +126,9 @@ changes plugin config schemas, but no schema here changes a wire rule:
   with the pinned `openapi.yaml` (for example the closed `LdapAuthConfig`
   drops `consumer_mapping`); the SHA-256 pin binds each tag to one Edge
   release's config rules.
-- `gates_request_admission()` depends on each plugin instance's config, so it
-  is not a per-type catalog field.
+- Whether a request is refused under `gates_request_admission()` depends on the
+  plugin instance's config and the route's per-protocol plugin set, so it is not
+  a per-type catalog field.
 
 ## Vocabulary versions
 
