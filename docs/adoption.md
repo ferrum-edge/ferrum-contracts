@@ -17,7 +17,7 @@ immutable pin snapshots.
 
 | Repository | Commit read (consumers: `main` on 2026-10-06; Edge: `v0.9.14` tag) | Pinned tag on `main` |
 |---|---|---|
-| ferrum-edge | `@@EDGE_0914_COMMIT@@` | producer: released `v0.9.14` source; maps to `contracts-edge-0.9.14`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
+| ferrum-edge | `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d` | producer: released `v0.9.14` source; maps to `contracts-edge-0.9.14`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
 | ferrum-anvil | `07f7182b3aa6c244140b7ec3edab5a1668318c96` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/07f7182b3aa6c244140b7ec3edab5a1668318c96/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.11` |
 | ferrum-alloy | `4d3b3aa8edaa67d4bc5a16388f59ee899d81348f` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/4d3b3aa8edaa67d4bc5a16388f59ee899d81348f/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.12` (ferrum-alloy#150, merged 2026-10-06) |
 | ferrum-nexus | `f357a37cd0bee81faa0f14ea26e6e38a17cf3152` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/f357a37cd0bee81faa0f14ea26e6e38a17cf3152/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9` vocabularies; [`SERVICE-MANIFEST-PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/f357a37cd0bee81faa0f14ea26e6e38a17cf3152/contracts/ferrum-contracts/SERVICE-MANIFEST-PIN): `contracts-edge-0.9.9-r2` manifest |
@@ -48,7 +48,7 @@ not in these contracts docs.
 
 The latest release is [`contracts-edge-0.9.14`](releases/contracts-edge-0.9.14.md),
 tagged on the merge commit of its release PR, for Edge `v0.9.14` at
-`@@EDGE_0914_COMMIT@@`. [`contracts-edge-0.9.13`](releases/contracts-edge-0.9.13.md),
+`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`. [`contracts-edge-0.9.13`](releases/contracts-edge-0.9.13.md),
 also tagged on the merge commit of its release PR, is for Edge `v0.9.13` at
 `9b83115de7ec23ab51ec4feae6bed65e596db425`. `contracts-edge-0.9.12` at
 `31f0a21d707795be293d15837c2f77c3d84219d8` refreshed all five Edge

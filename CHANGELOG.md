@@ -9,7 +9,7 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 ## [contracts-edge-0.9.14] - 2026-10-07
 
 Contracts for Ferrum Edge `v0.9.14`
-(`@@EDGE_0914_COMMIT@@`). See the
+(`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`). See the
 [release record](docs/releases/contracts-edge-0.9.14.md).
 
 ### Added

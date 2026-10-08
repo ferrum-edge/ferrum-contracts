@@ -8,7 +8,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/admin_api.md",
       "sections": [
         "Resource labels and application attribution"
@@ -17,7 +17,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/admin/provisioning.rs",
       "symbols": [
         "PROVISIONED_BY_LABEL",
@@ -29,7 +29,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "openapi.yaml",
       "symbols": [
         "components.parameters.ProvisionedBy"
@@ -38,7 +38,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/hardening.md",
       "note": "Minimum companion versions that inject labels.provisioned-by."
     }

@@ -8,7 +8,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "openapi.yaml",
       "symbols": [
         "components.schemas.BackendEgressPolicyResponse",
@@ -19,7 +19,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/admin/backend_egress_policy.rs",
       "symbols": [
         "BackendEgressPolicyResponse",
@@ -31,7 +31,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/grpc/backend_egress_attestation.rs",
       "symbols": [
         "ATTESTATION_REPORTED",
@@ -43,7 +43,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/config/env_config.rs",
       "symbols": [
         "BackendEgressPolicy",
@@ -55,7 +55,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/admin_api.md",
       "note": "Transcribed GET /backend-egress-policy labels, scope limits, v1 classifier, schema_version 2 and its local-enforcement guarantee rule, and the \"Data-plane attestation on a control plane\" rules; no raw CIDRs or credentials."
     }

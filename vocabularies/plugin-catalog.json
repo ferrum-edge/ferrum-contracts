@@ -8,7 +8,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/plugins/mod.rs",
       "symbols": [
         "BUILTIN_PLUGIN_REGISTRATIONS",
@@ -24,7 +24,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/plugins/builtin_parity.rs",
       "symbols": [
         "BUILTIN_PLUGIN_PARITY_META",
@@ -44,7 +44,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "openapi.yaml",
       "symbols": [
         "components.schemas.PluginConfigBase"
@@ -57,7 +57,7 @@
   "config_schema_document": {
     "repo": "ferrum-edge/ferrum-edge",
     "ref": "v0.9.14",
-    "commit": "@@EDGE_0914_COMMIT@@",
+    "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
     "path": "openapi.yaml",
     "sha256": "6d286649ae744691e2eeb7d16607c538ca02e31bdeaafe98ab07fc861e7b9da4",
     "openapi": "3.1.0",

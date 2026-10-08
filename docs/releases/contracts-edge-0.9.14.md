@@ -8,12 +8,12 @@ the tag reads the owner at `v0.9.14`.
 
 ## Edge source
 
-The Edge `v0.9.14` tag points to `@@EDGE_0914_COMMIT@@`, the merge of
+The Edge `v0.9.14` tag points to `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`, the merge of
 [Edge #6050](https://github.com/ferrum-edge/ferrum-edge/pull/6050)
-(first parent `@@EDGE_0914_PARENT1@@`, second parent
-`@@EDGE_0914_PARENT2@@`).
-[GitHub release @@EDGE_0914_RELEASE_ID@@](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.14)
-was published at @@EDGE_0914_PUBLISHED_AT@@. Edge `v0.9.14` has no
+(first parent `4f370a0b1921d231e9d0c498821e90e076aa64fb`, second parent
+`c89044a3cc5a9ad1dd5e5a197a19760745e5ebfb`).
+[GitHub release 405571232](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.14)
+was published at 08:59:56 UTC on 2026-10-07. Edge `v0.9.14` has no
 `docs/releases/v0.9.14.md`; its `CHANGELOG.md` `[0.9.14]` section and the
 upgrade guide's "Upgrading to 0.9.14" are the owner's release notes. Edge's
 assets, digests and attestations are recorded in that Edge release, not here.

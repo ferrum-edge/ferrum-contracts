@@ -26,7 +26,7 @@ digest, and the egress response moves to `schema_version: 2` with
 `backend-egress-policy` v2. Both changes are described below.
 
 [Contracts 0.9.14](releases/contracts-edge-0.9.14.md) reads Edge `v0.9.14` at
-`@@EDGE_0914_COMMIT@@`. A control plane's egress response gains the optional
+`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`. A control plane's egress response gains the optional
 `data_plane_attestation` object within `schema_version: 2`, and the conditional
 backup `ETag` is documented as a namespace state token. Both are described
 below; the backup metadata shape is unchanged.

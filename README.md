@@ -41,7 +41,7 @@ Every file records where it came from: owner repository, path, and commit.
 The latest contracts release is
 [`contracts-edge-0.9.14`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.14),
 tagged on the merge commit of its release PR. It maps to Edge `v0.9.14` at
-`@@EDGE_0914_COMMIT@@` and adds no new major: `backend-egress-policy` v2 gains
+`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d` and adds no new major: `backend-egress-policy` v2 gains
 the optional CP-only `data_plane_attestation` object (`schema_version` stays
 `2`), the deployment mutation acknowledgement describes the narrowed `durable`
 outcomes, and `gateway-errors.json` notes the HTTP/2 reset and buffered read

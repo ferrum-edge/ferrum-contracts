@@ -107,7 +107,7 @@ the backend egress response and the deployment snapshot incompatibly, so both
 have a v2 schema next to v1. `diagnostic-ref` v1 keeps its frozen bytes.
 
 The [0.9.14 release](releases/contracts-edge-0.9.14.md) reads Edge-owned
-sources at `v0.9.14`, `@@EDGE_0914_COMMIT@@`. Its changes fit the existing
+sources at `v0.9.14`, `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`. Its changes fit the existing
 majors: an optional CP-only property in `backend-egress-policy` v2,
 descriptions in the acknowledgement, `admin-deployment-snapshot` v2 and the
 vocabularies.

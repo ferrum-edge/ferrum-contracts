@@ -8,12 +8,12 @@
     "version": 2,
     "status": "implemented",
     "owner": "ferrum-edge/ferrum-edge",
-    "edge_availability": "Released in Ferrum Edge v0.9.13 at 9b83115de7ec23ab51ec4feae6bed65e596db425 (ferrum-edge#6017; see PRs #5999 and #6012). Replaces v1: api_spec_contents is required, spec bytes are digests, and the deployment_snapshot.v2 MAC domain rejects earlier tokens with 412. Unchanged wire shape re-read at Edge v0.9.14 source @@EDGE_0914_COMMIT@@, which documents that the token fences the whole namespace and the api_spec_contents peak server memory (ferrum-edge#6027).",
+    "edge_availability": "Released in Ferrum Edge v0.9.13 at 9b83115de7ec23ab51ec4feae6bed65e596db425 (ferrum-edge#6017; see PRs #5999 and #6012). Replaces v1: api_spec_contents is required, spec bytes are digests, and the deployment_snapshot.v2 MAC domain rejects earlier tokens with 412. Unchanged wire shape re-read at Edge v0.9.14 source 9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d, which documents that the token fences the whole namespace and the api_spec_contents peak server memory (ferrum-edge#6027).",
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.14",
-        "commit": "@@EDGE_0914_COMMIT@@",
+        "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
         "path": "openapi.yaml",
         "symbols": [
           "components.schemas.DeploymentSnapshot",
@@ -26,7 +26,7 @@
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.14",
-        "commit": "@@EDGE_0914_COMMIT@@",
+        "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
         "path": "src/admin/deployment_mutations.rs",
         "symbols": [
           "snapshot",
@@ -41,7 +41,7 @@
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.14",
-        "commit": "@@EDGE_0914_COMMIT@@",
+        "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
         "path": "src/config/deployment_mutation.rs",
         "symbols": [
           "DeploymentSnapshot::representation",
@@ -53,7 +53,7 @@
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.14",
-        "commit": "@@EDGE_0914_COMMIT@@",
+        "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
         "path": "src/config/db_backend.rs",
         "symbols": [
           "ConditionalNamespaceSnapshot::representation",
@@ -65,7 +65,7 @@
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.14",
-        "commit": "@@EDGE_0914_COMMIT@@",
+        "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
         "path": "src/config/types.rs",
         "symbols": [
           "ApiSpec"
@@ -75,7 +75,7 @@
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.14",
-        "commit": "@@EDGE_0914_COMMIT@@",
+        "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
         "path": "src/config/db_loader.rs",
         "symbols": [
           "deployment_snapshot_tx",
@@ -85,7 +85,7 @@
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.14",
-        "commit": "@@EDGE_0914_COMMIT@@",
+        "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
         "path": "src/config/mongo_store.rs",
         "symbols": [
           "deployment_snapshot_in_session"
@@ -95,7 +95,7 @@
       {
         "repo": "ferrum-edge/ferrum-edge",
         "ref": "v0.9.14",
-        "commit": "@@EDGE_0914_COMMIT@@",
+        "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
         "path": "docs/deployment_mutations.md",
         "note": "HTTP/runtime protocol, the namespace-wide token fence, the 64 MiB evidence bound, the 256 MiB api_spec_contents bound and its peak memory, and complete evidence retention are documented in docs/deployment-contracts.md."
       }

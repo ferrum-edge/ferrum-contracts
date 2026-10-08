@@ -195,7 +195,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.11` | `contracts-edge-0.9.11` | Edge admin contracts and accepted unchanged shared v1 freeze at `390edbd5b2485af0988e02f7827fde778d76ae0a` |
 | `v0.9.12` | `contracts-edge-0.9.12` | Refreshed Edge-owned sources and deployment-v1 contracts from released owner `0d917701b63ef38210c49df830f48cf0457cbc7d`, tagged at `31f0a21d707795be293d15837c2f77c3d84219d8` |
 | `v0.9.13` | `contracts-edge-0.9.13` | Backend egress policy v2 and deployment snapshot v2 from released owner `9b83115de7ec23ab51ec4feae6bed65e596db425`, tagged on the merge commit of its release PR |
-| `v0.9.14` | `contracts-edge-0.9.14` | Optional CP `data_plane_attestation` within backend egress policy v2, narrowed deployment `durable` outcomes and error-classification notes from released owner `@@EDGE_0914_COMMIT@@`, tagged on the merge commit of its release PR |
+| `v0.9.14` | `contracts-edge-0.9.14` | Optional CP `data_plane_attestation` within backend egress policy v2, narrowed deployment `durable` outcomes and error-classification notes from released owner `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`, tagged on the merge commit of its release PR |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to

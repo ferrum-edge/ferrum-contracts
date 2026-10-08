@@ -8,37 +8,37 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/proxy/headers.rs"
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/admin_api.md"
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/error_classification.md"
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/plugin_execution_order.md"
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "openapi.yaml"
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/api_specs.md",
       "sections": [
         "x-ferrum-mcp"
@@ -47,7 +47,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/admin/preconditions.rs",
       "symbols": [
         "resource_etag",
@@ -58,7 +58,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/admin/conditional_snapshots.rs",
       "symbols": [
         "consumer_verification",
@@ -69,7 +69,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/admin_backup_restore.md",
       "sections": [
         "Conditional snapshots and restore"
@@ -78,7 +78,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/admin/deployment_mutations.rs",
       "symbols": [
         "snapshot",
@@ -89,7 +89,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/deployment_mutations.md"
     }
   ],
@@ -118,7 +118,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "is_consumer_assertion_header",
@@ -128,7 +128,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/plugins.md",
           "sections": [
             "grpc_web"
@@ -148,7 +148,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "strip_reserved_gateway_assertion_headers"
@@ -157,7 +157,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/plugin_execution_order.md",
           "sections": [
             "Finalized Request Egress",
@@ -178,7 +178,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "strip_reserved_gateway_assertion_headers"
@@ -187,7 +187,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/plugin_execution_order.md",
           "sections": [
             "Finalized Request Egress",
@@ -208,7 +208,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "strip_reserved_gateway_assertion_headers"
@@ -217,7 +217,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/plugin_execution_order.md",
           "sections": [
             "Backend Request Trailers"
@@ -237,7 +237,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "is_forbidden_backend_request_trailer_name"
@@ -246,7 +246,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/plugin_execution_order.md",
           "sections": [
             "Backend Request Trailers"
@@ -255,7 +255,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/plugins.md",
           "sections": [
             "grpc_web"
@@ -275,7 +275,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "is_forbidden_backend_request_trailer_name"
@@ -284,7 +284,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/plugin_execution_order.md",
           "sections": [
             "Backend Request Trailers"
@@ -308,7 +308,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "X_GATEWAY_ERROR_HEADER",
@@ -318,7 +318,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/error_classification.md",
           "sections": [
             "HTTP observability vocabulary (X-Gateway-Error)"
@@ -343,7 +343,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "X_GATEWAY_UPSTREAM_STATUS_HEADER",
@@ -353,7 +353,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/load_balancing.md",
           "sections": [
             "X-Gateway-Upstream-Status"
@@ -373,7 +373,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "BACKEND_REQUEST_STRIP_HEADER_NAMES"
@@ -393,7 +393,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/plugins/grpc_web.rs",
           "symbols": [
             "HEADER_GRPC_WEB_TRAILER_NAMES",
@@ -404,7 +404,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "is_backend_response_strip_header"
@@ -424,7 +424,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/plugins/grpc_web.rs",
           "symbols": [
             "HEADER_GRPC_WEB_TRAILER_NAMES",
@@ -435,7 +435,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "is_backend_response_strip_header"
@@ -455,7 +455,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/plugins/grpc_web.rs",
           "symbols": [
             "HEADER_GRPC_WEB_TRAILER_NAMES",
@@ -466,7 +466,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "is_backend_response_strip_header"
@@ -486,13 +486,13 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/modes/mesh/hbone.rs"
         },
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/mesh.md",
           "sections": [
             "HBONE Protocol"
@@ -517,7 +517,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/modes/mesh/hbone.rs",
           "symbols": [
             "TUNNEL_REUSE_HEADER"
@@ -526,7 +526,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/mesh.md",
           "sections": [
             "HBONE Inner Application Connection Reuse"
@@ -551,7 +551,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "openapi.yaml",
           "symbols": [
             "components.parameters.XFerrumNamespace"
@@ -560,7 +560,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/admin_api.md"
         }
       ]
@@ -581,7 +581,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/admin/provisioning.rs",
           "symbols": [
             "PROVISIONED_BY_HEADER",
@@ -591,7 +591,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "openapi.yaml",
           "symbols": [
             "components.parameters.ProvisionedBy"
@@ -600,7 +600,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/admin_api.md",
           "sections": [
             "Resource labels and application attribution"
@@ -623,7 +623,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "openapi.yaml",
           "symbols": [
             "components.headers.X-Ferrum-Config-Cursor"
@@ -632,7 +632,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/admin_api.md"
         }
       ]
@@ -654,7 +654,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "openapi.yaml",
           "symbols": [
             "components.headers.X-Ferrum-Namespace-Unserved"
@@ -663,7 +663,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/admin_api.md"
         }
       ]
@@ -680,13 +680,13 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/notifications/channels/email.rs"
         },
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/notifications.md",
           "sections": [
             "Email (SMTP)"
@@ -706,13 +706,13 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/notifications/channels/email.rs"
         },
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/notifications.md",
           "sections": [
             "Email (SMTP)"
@@ -735,7 +735,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/proxy/headers.rs",
           "symbols": [
             "X_FERRUM_DIAGNOSTIC_REF_HEADER",
@@ -745,7 +745,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/error_classification.md",
           "sections": [
             "Gateway diagnostic references"
@@ -768,7 +768,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/diagnostic_ref.rs",
           "symbols": [
             "DIAGNOSTIC_REF_OWNER_REPLICA_HEADER"
@@ -777,7 +777,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "openapi.yaml"
         }
       ]
@@ -794,7 +794,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "openapi.yaml",
           "symbols": [
             "components.headers.ResourceETag",
@@ -806,7 +806,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/admin/preconditions.rs",
           "symbols": [
             "resource_etag",
@@ -817,7 +817,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/admin/conditional_snapshots.rs",
           "symbols": [
             "namespace_tag",
@@ -827,7 +827,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/admin/deployment_mutations.rs",
           "symbols": [
             "snapshot",
@@ -849,7 +849,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "openapi.yaml",
           "symbols": [
             "components.parameters.IfMatch",
@@ -861,7 +861,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/admin_api.md",
           "sections": [
             "Conditional writes (ETag / If-Match)"
@@ -870,7 +870,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "docs/admin_backup_restore.md",
           "sections": [
             "Conditional snapshots and restore"
@@ -879,7 +879,7 @@
         {
           "repo": "ferrum-edge/ferrum-edge",
           "ref": "v0.9.14",
-          "commit": "@@EDGE_0914_COMMIT@@",
+          "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
           "path": "src/admin/deployment_mutations.rs",
           "symbols": [
             "snapshot",

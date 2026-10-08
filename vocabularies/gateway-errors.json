@@ -8,7 +8,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "src/retry.rs",
       "symbols": [
         "ErrorClass",
@@ -30,7 +30,7 @@
     {
       "repo": "ferrum-edge/ferrum-edge",
       "ref": "v0.9.14",
-      "commit": "@@EDGE_0914_COMMIT@@",
+      "commit": "9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d",
       "path": "docs/error_classification.md",
       "sections": [
         "Canonical taxonomy (ErrorClass)",

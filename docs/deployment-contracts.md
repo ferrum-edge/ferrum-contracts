@@ -57,7 +57,7 @@ above.
 
 ## Edge v0.9.14: durable outcomes and namespace-wide fence
 
-Edge `v0.9.14` (`@@EDGE_0914_COMMIT@@`, Edge #6027, issue #6021) keeps the
+Edge `v0.9.14` (`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`, Edge #6027, issue #6021) keeps the
 `deployment-v1` profile, `admin-deployment-snapshot` v2 and the
 acknowledgement members and `durable` values. It narrows what each `durable`
 value reports, and it documents two limits of the existing profile. Owner
