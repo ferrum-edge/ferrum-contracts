@@ -15,9 +15,9 @@ the reviewed PR #15 merge. Consumer adoption has started but remains pending
 until each PR merges and qualifies; the table records the current verified
 immutable pin snapshots.
 
-| Repository | `main` commit read (2026-10-06) | Pinned tag on `main` |
+| Repository | Commit read (consumers: `main` on 2026-10-06; Edge: `v0.9.14` tag) | Pinned tag on `main` |
 |---|---|---|
-| ferrum-edge | `9b83115de7ec23ab51ec4feae6bed65e596db425` | producer: released `v0.9.13` source; maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
+| ferrum-edge | `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d` | producer: released `v0.9.14` source; maps to `contracts-edge-0.9.14`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
 | ferrum-anvil | `07f7182b3aa6c244140b7ec3edab5a1668318c96` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/07f7182b3aa6c244140b7ec3edab5a1668318c96/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.11` |
 | ferrum-alloy | `4d3b3aa8edaa67d4bc5a16388f59ee899d81348f` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/4d3b3aa8edaa67d4bc5a16388f59ee899d81348f/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.12` (ferrum-alloy#150, merged 2026-10-06) |
 | ferrum-nexus | `f357a37cd0bee81faa0f14ea26e6e38a17cf3152` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/f357a37cd0bee81faa0f14ea26e6e38a17cf3152/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9` vocabularies; [`SERVICE-MANIFEST-PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/f357a37cd0bee81faa0f14ea26e6e38a17cf3152/contracts/ferrum-contracts/SERVICE-MANIFEST-PIN): `contracts-edge-0.9.9-r2` manifest |
@@ -46,8 +46,10 @@ hosted signature/SLSA/SBOM/ABI facts are recorded in the
 [Edge v0.9.11 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11),
 not in these contracts docs.
 
-The latest release is [`contracts-edge-0.9.13`](releases/contracts-edge-0.9.13.md),
-tagged on the merge commit of its release PR, for Edge `v0.9.13` at
+The latest release is [`contracts-edge-0.9.14`](releases/contracts-edge-0.9.14.md),
+tagged on the merge commit of its release PR, for Edge `v0.9.14` at
+`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`. [`contracts-edge-0.9.13`](releases/contracts-edge-0.9.13.md),
+also tagged on the merge commit of its release PR, is for Edge `v0.9.13` at
 `9b83115de7ec23ab51ec4feae6bed65e596db425`. `contracts-edge-0.9.12` at
 `31f0a21d707795be293d15837c2f77c3d84219d8` refreshed all five Edge
 vocabularies and the plugin OpenAPI pin and added deployment snapshot and
@@ -57,6 +59,21 @@ Historical 0.9.11 remains at `390edbd5b2485af0988e02f7827fde778d76ae0a`, and
 historical r2 remains at `591c73a3f965fdab440c3a76b2707accdf491ba5`.
 
 ## Published admin and shared v1 adoption boundary
+
+### contracts-edge-0.9.14 data-plane attestation and durable outcomes
+
+Edge `v0.9.14` adds the optional `data_plane_attestation` object to a control
+plane's `GET /backend-egress-policy` response within `schema_version: 2`. The
+closed `backend-egress-policy` v2 schema in `contracts-edge-0.9.13` rejects such
+a response, so a consumer that validates CP responses from Edge `v0.9.14` needs
+`contracts-edge-0.9.14`. Edge names Nexus GHSA-93rq Part B as a consumer of the
+attestation. A public-only publisher that relies on it must still require
+`all_connected_public_only_guaranteed=true` and its expected live-stream count,
+and treat an absent object, an unknown status or an empty set as blocking.
+Deployment recovery consumers see `durable: "unknown"` only for commit or
+commit-acknowledgement uncertainty from Edge `v0.9.14`; `not_started` and
+`not_committed` remain non-authorizing. Consumer pins in the table above are
+unchanged by this release.
 
 ### contracts-edge-0.9.13 v2 contracts
 
