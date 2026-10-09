@@ -6,6 +6,11 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Changed
+
+- Run contract validation on the explicitly pinned Ubuntu 26.04 Actions image;
+  retain Python 3.13 and the existing hash-pinned x86_64 validator wheels.
+
 ## [contracts-edge-0.9.15] - 2026-10-08
 
 Contracts for Ferrum Edge `v0.9.15`
