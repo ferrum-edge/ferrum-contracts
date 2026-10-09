@@ -10,7 +10,7 @@
 #
 # rpds-py is a compiled wheel: the hash below is the CPython 3.13
 # manylinux x86_64 wheel only, which is what the workflow's pinned
-# Python 3.13 on ubuntu-24.04 installs. Changing the Python version or runner
+# Python 3.13 on ubuntu-26.04 installs. Changing the Python version or runner
 # architecture needs the matching wheel hash. See docs/release-process.md.
 attrs==26.1.0 \
     --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309
