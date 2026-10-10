@@ -6,8 +6,34 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+## [contracts-edge-0.9.17] - 2026-10-10
+
+Contracts for Ferrum Edge `v0.9.17` (`669c574c1d1e88e84dccb26a8159939e6694644d`). See the
+[release record](docs/releases/contracts-edge-0.9.17.md).
+
+### Added
+
+- `X-Ferrum-Hops`, including enabled count protection and zero-disable behavior,
+  and the `loop_detected` HTTP 508 token. Mirror the token in `diagnostic-ref`
+  v1 under the closed Edge-vocabulary exception; no new schema major.
+- Owner-derived diagnostic fixtures for the hop-limit and malformed-hop
+  refusals and a cancelled upload before dispatch. Each invalid counterpart
+  changes only `detail.rejection_phase` to an unmapped raw phase.
+- A hop-header vocabulary fixture and its single-field invalid availability
+  counterpart, plus the final release record.
+
 ### Changed
 
+- Refresh all five Edge vocabularies and current Edge-owned schema provenance
+  from the actual v0.9.17 tag. Pin the plugin OpenAPI document to SHA-256
+  `297b312ac1e7b2a7b7cfef74cdf4550063da0676edcee07d9652e3fb16d806b1`.
+- Clarify existing backend handoff timeout meaning, reserved metrics labels,
+  concrete plugin admission and AWS ambient credential endpoint rules without
+  inventing catalog fields or changing timeout values.
+- Describe canonical evidence-derived deployment inspection ordering,
+  namespace-bounded admin and metrics authorization, cancellation finalization
+  and authoritative cached-read failures. Retain existing wire majors and
+  prior fixture bytes, other-owner availability and consumer pin snapshots.
 - Run contract validation on the explicitly pinned Ubuntu 26.04 Actions image;
   retain Python 3.13 and the existing hash-pinned x86_64 validator wheels.
 

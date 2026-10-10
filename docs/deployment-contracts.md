@@ -103,6 +103,19 @@ plugin-graph admission, consumer deltas and MongoDB batch attachments; they do
 not change the snapshot evidence or the acknowledgement. Both schemas repin
 their provenance to `v0.9.15`.
 
+## Edge v0.9.17: canonical typed inspection ordering
+
+Edge `v0.9.17` (`669c574c1d1e88e84dccb26a8159939e6694644d`) retains
+snapshot v2 and acknowledgement v1 wire rules. `DeploymentSnapshot` derives
+the typed proxies, plugin configs, upstreams and API specs from canonical
+evidence resource slots 0, 3, 2 and 5, with ID ordering and proxy associations
+ordered by `plugin_config_id`. Typed inspection now matches the complete
+evidence authenticated by the original deployment token. This does not
+authorize fresh-token replay, partial evidence reconstruction or automatic
+cleanup. Preserve complete secret-bearing original evidence, full gzip spec
+bytes and original external references, and require explicit qualifying
+acknowledgements before cleanup. Prior major files and fixtures remain intact.
+
 ## Immutable owner sources and schema scope
 
 All paths below belong to `ferrum-edge/ferrum-edge` at the full commit above:

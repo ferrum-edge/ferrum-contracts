@@ -73,6 +73,17 @@ Do not open a cleanup PR after each release to rewrite a release record or
 changelog section. If a record is wrong, correct it in the next release PR, or
 link the Edge release and its release record instead of editing tagged history.
 
+## contracts-edge-0.9.17 owner refresh
+
+The [release record](releases/contracts-edge-0.9.17.md) binds to actual Edge
+`v0.9.17` at `669c574c1d1e88e84dccb26a8159939e6694644d`. It documents the
+closed Edge-vocabulary token addition within diagnostic-ref v1, hop-header
+protection, canonical deployment ordering and namespace-bounded authorization.
+All five vocabulary pins and current Edge schemas read that immutable source;
+prior fixtures, earlier majors, unrelated owners and recorded consumer pins are
+retained. Hosted final-head and main-push Validate contracts qualification and
+actual tag/release identities are recorded outside immutable tagged content.
+
 ## contracts-edge-0.9.12 completed publication
 
 The [release record](releases/contracts-edge-0.9.12.md) binds to actual

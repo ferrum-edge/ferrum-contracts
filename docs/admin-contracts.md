@@ -48,6 +48,16 @@ inline PEM, `system://` or a `k8s://` Secret in the addressed namespace gets
 `400` (Edge #6094, issue #6092); these are proxy and upstream field
 descriptions in the pinned OpenAPI.
 
+[Contracts 0.9.17](releases/contracts-edge-0.9.17.md) reads Edge `v0.9.17`
+at `669c574c1d1e88e84dccb26a8159939e6694644d`. The conditional backup and
+backend egress wire shapes remain unchanged. A present JWT `ns` claim always
+bounds the caller; the namespace-scoped flag controls whether a claim is
+required, not whether a present claim is enforced. Fleet-global routes and
+metrics return 403 for bounded tokens, including allowlisted callers. Tenant
+observability routes retain their tier restrictions. A cached read with no
+authoritative fallback proof of absence returns 503 rather than a false 404.
+These are runtime authorization/availability rules, not new envelope fields.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
