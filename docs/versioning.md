@@ -36,7 +36,7 @@ until every consumer in [adoption.md](adoption.md) has moved.
 ## Closed enumerations
 
 Some schemas copy a closed Edge vocabulary. `diagnostic-ref` v1 lists the
-eight `X-Gateway-Error` tokens in `gateway_error`, exactly as Edge's own
+nine `X-Gateway-Error` tokens in `gateway_error`, exactly as Edge's own
 `openapi.yaml` does, and CI fails if that list and
 `vocabularies/gateway-errors.json` differ.
 
@@ -106,6 +106,25 @@ v2 response schema in `contracts-edge-0.9.13` rejects a v0.9.14 CP response
 that carries the object; that is the tag binding a consumer to the Edge release
 it names. The new `ErrorClass` assignments for HTTP/2 resets and buffered read
 errors reuse existing values, so `gateway-errors.json` only notes them.
+
+### Additions in contracts-edge-0.9.17
+
+Edge `v0.9.17` adds `loop_detected` to its closed header-token vocabulary.
+The documented Edge-owned enumeration exception adds it to `gateway_error`
+and the token-mapped `detail.rejection_phase` enum in `diagnostic-ref` v1.
+The new raw phases `proxy_hop_limit`, `proxy_hops_invalid` and
+`client_disconnect_upload_before_dispatch` remain open `detail.rejection.phase`
+labels; none is a token-mapped detail phase. The hop fence records the header
+token but null detail token. A pinned older schema rejects the new header
+token in conformance validation; readers handling newer owners must preserve
+unknown values rather than map them to a known token.
+
+The protected `X-Ferrum-Hops` vocabulary entry, source provenance and
+descriptions change within existing majors. Conditional backup metadata,
+backend egress v2, deployment snapshot v2 and acknowledgement v1 keep their
+wire rules. Deployment inspection ordering and admin authorization are owner
+runtime requirements. Existing backend timeout wording is clarified to match
+the existing send() handoff, without changing any timeout value or meaning.
 
 ### Additions in contracts-edge-0.9.15
 
@@ -220,6 +239,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.13` | `contracts-edge-0.9.13` | Backend egress policy v2 and deployment snapshot v2 from released owner `9b83115de7ec23ab51ec4feae6bed65e596db425`, tagged on the merge commit of its release PR |
 | `v0.9.14` | `contracts-edge-0.9.14` | Optional CP `data_plane_attestation` within backend egress policy v2, narrowed deployment `durable` outcomes and error-classification notes from released owner `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`, tagged on the merge commit of its release PR |
 | `v0.9.15` | `contracts-edge-0.9.15` | `X-Authenticated-Identity`, `Connection` nomination and `_`/`-` assertion rules, the `route_protocol_admission` phase and plugin config schema changes within the current majors, from released owner `25b37395ff61bfea0f3ffd189d9011c4984fa755`, tagged on the merge commit of its release PR |
+| `v0.9.17` | `contracts-edge-0.9.17` | Protected hop-count assertion and mirrored loop token within existing majors, plus current source and deployment ordering from released owner `669c574c1d1e88e84dccb26a8159939e6694644d` |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
@@ -231,8 +251,10 @@ Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
 
-`contracts-edge-0.9.15` is the latest tag, on the merge commit of its release
-PR; its GitHub release records the tag commit. `contracts-edge-0.9.14` is at
+`contracts-edge-0.9.17` is the latest tag, on the merge commit of its release
+PR; its GitHub release records the tag commit. It maps to Edge `v0.9.17` at
+`669c574c1d1e88e84dccb26a8159939e6694644d`. Historical `contracts-edge-0.9.15`
+is at `6fb64c5dc2e014204c17609fc717d976f3b4589e`. `contracts-edge-0.9.14` is at
 `ddbdd845733b7046c4393ac951011dafb774db33`, the merge commit of PR #22, with
 release 406650065 published on 2026-10-08 at 09:22:24 UTC.
 `contracts-edge-0.9.13` is at `9626821eb089c71f5d4d71268c7b8276a8a5ab50`, the
