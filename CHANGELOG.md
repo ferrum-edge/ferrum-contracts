@@ -17,6 +17,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Note the unreleased Edge plugin-config hard bounds (Edge PRs #6638 and
+  #6640, issues #6612 and #6608) in `docs/admin-contracts.md`. They cover
+  `response_caching` `max_entries`, `openapi_validator` `max_body_bytes`, the
+  `ai_prompt_shield` and `ai_response_guard` `max_scan_bytes` and
+  custom-pattern list sizes, and the `ai_response_guard` pattern-name,
+  empty-match and rendered-placeholder bounds. No schema, vocabulary or
+  fixture changes. Marked unreleased until an Edge release ships them.
 - Note the unreleased Edge default-deny admission of gateway material
   references (Edge PR #6316, issue #6092, owner commit `d5417cd72312`) in
   `docs/admin-contracts.md`. A present `ns` claim confines an `operator`'s new backend TLS and TLS-material plugin

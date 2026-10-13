@@ -121,6 +121,20 @@ owner keeps the list as `KAFKA_NATIVE_PRODUCER_KEYS` in
 [`src/admin/crud/scoped_references.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/803d0f972383521a116022ad70b3b56d6f9dacf9/src/admin/crud/scoped_references.rs). This is an owner runtime refusal and
 OpenAPI description text, not a new envelope field or vocabulary value.
 
+**Edge `main`, unreleased (Edge PRs
+[#6638](https://github.com/ferrum-edge/ferrum-edge/pull/6638) and
+[#6640](https://github.com/ferrum-edge/ferrum-edge/pull/6640), issues #6612
+and #6608; owner commits recorded on merge).** No Edge release contains these
+changes yet; v0.9.17 and earlier admit the larger values. On Edge `main` the
+referenced plugin config components publish, and admission enforces, these
+hard bounds:
+- `response_caching` `max_entries` is at most `10000000`.
+- `openapi_validator` `max_body_bytes` is at most `67108864`.
+- `ai_prompt_shield` has `max_scan_bytes` at most `67108864` and `custom_patterns` at most 256 entries.
+- `ai_response_guard` has `max_scan_bytes` at most `67108864`, `custom_pii_patterns` and `blocked_patterns` at most 256 entries each, and `blocked_phrases` at most 1024. Pattern `name` values are at most 128 characters, a custom `regex` that matches the empty string is refused, and each rendered `redaction_placeholder` is at most 512 UTF-8 bytes.
+
+Catalog `config_schema` pointers are unchanged, and the `config_schema_document` pin stays at v0.9.17 until the release refresh. There are no new envelope fields or vocabulary values.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
