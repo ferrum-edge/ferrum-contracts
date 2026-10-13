@@ -130,6 +130,7 @@ referenced plugin config components publish, and admission enforces, these
 hard bounds:
 - `response_caching` `max_entries` is at most `10000000`.
 - `openapi_validator` `max_body_bytes` is at most `67108864`.
+- `body_validator` `grpc_max_decompressed_size_bytes` is at most `67108864`. An inherited `FERRUM_MAX_REQUEST_BODY_SIZE_BYTES` default above that is clamped to it.
 - `ai_prompt_shield` has `max_scan_bytes` at most `67108864` and `custom_patterns` at most 256 entries.
 - `ai_response_guard` has `max_scan_bytes` at most `67108864`, `custom_pii_patterns` and `blocked_patterns` at most 256 entries each, and `blocked_phrases` at most 1024. Pattern `name` values are at most 128 characters, a custom `regex` that matches the empty string is refused, and each rendered `redaction_placeholder` is at most 512 UTF-8 bytes.
 
