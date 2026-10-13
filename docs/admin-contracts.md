@@ -85,8 +85,10 @@ default-deny for an `operator` token that carries an `ns` claim, even when
   `ai_response_guard` and `ai_transcript_audit` `grpc.descriptor_path`,
   `body_validator` `protobuf_descriptor_path`, and `geo_restriction`
   `db_path`.
-- **Non-built-in (custom) plugins** cannot be created or changed by such a
-  token.
+- **Non-built-in (custom) plugins**: such a token cannot introduce a custom
+  plugin configuration or change an existing one's `plugin_name` or
+  `config`. Other updates to an existing custom plugin (for example
+  `enabled`) remain subject to ordinary validation.
 
 A value already stored at the same field path (same array index) stays
 admitted, and `admin` tokens are unaffected. The owner keeps the complete
