@@ -121,6 +121,42 @@ owner keeps the list as `KAFKA_NATIVE_PRODUCER_KEYS` in
 [`src/admin/crud/scoped_references.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/803d0f972383521a116022ad70b3b56d6f9dacf9/src/admin/crud/scoped_references.rs). This is an owner runtime refusal and
 OpenAPI description text, not a new envelope field or vocabulary value.
 
+**Edge `main`, unreleased plugin-config admission (Edge PRs
+[#6635](https://github.com/ferrum-edge/ferrum-edge/pull/6635),
+[#6637](https://github.com/ferrum-edge/ferrum-edge/pull/6637) and
+[#6645](https://github.com/ferrum-edge/ferrum-edge/pull/6645); issues #6607,
+#6610, #6620 and #6609).** No Edge release contains these changes yet; the
+catalog's `config_schema_document` stays pinned to the `v0.9.17`
+`openapi.yaml`, which still admits the configurations below. Every
+`config_schema.pointer` is unchanged. On Edge `main`:
+
+- `AccessControlConfig`: `allowed_consumers` and `allowed_groups` gain
+  `minItems: 1` and lose `default: []`. A present but empty allow-list is
+  refused at config validation instead of meaning "no allow restriction";
+  omit the key for that. Empty deny-lists stay valid.
+- `IpRestrictionConfig`: `mode` is marked `deprecated: true`. It never changed
+  the admission decision and still loads; it only selects the rejection reason
+  for an address that is both outside `allow` and on `deny`.
+- `JwksAuthConfig` (global and per-provider), `Oauth2IntrospectionConfig` and
+  `OidcRelyingPartyConfig` `claim_headers`: `maxProperties: 16`. The runtime
+  also refuses claim paths over 256 bytes or containing whitespace/control
+  characters, header names over 128 bytes, two mappings naming one header, and
+  the strict reserved-destination list `output_claim_headers` already used
+  (stated in the property descriptions, not as schema keywords). A resolved
+  claim value that is not a valid header value or exceeds 8192 bytes leaves
+  the destination absent.
+- `Oauth2IntrospectionConfig` description: a JSON `null` `exp`,
+  `active_until` or `expires_in` in an introspection response reads as
+  omitted (Edge PR #6637, issue #6611).
+- `LdapAuthConfig`: new optional `group_cache_ttl_seconds` (integer, default
+  `60`, `0`–`86400`) bounding how long a cached credential is admitted without
+  re-checking `required_groups`.
+
+A product that generates these plugin configs should stop emitting empty
+`access_control` allow-lists and `claim_headers` objects outside those bounds
+before it targets a release that ships them. The release refresh moves the
+`openapi.yaml` pin and records the Edge tag.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full

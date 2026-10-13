@@ -31,6 +31,17 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   commit `803d0f972383`) in
   `docs/admin-contracts.md`. No schema, vocabulary or fixture changes.
   Marked unreleased until an Edge release ships it.
+- Note the unreleased Edge plugin-config admission changes behind the pinned
+  `openapi.yaml` components (Edge PRs #6635, #6637 and #6645; issues #6607,
+  #6610, #6620 and #6609) in `docs/admin-contracts.md`: `access_control`
+  refuses an explicitly empty `allowed_consumers`/`allowed_groups`,
+  `ip_restriction` `mode` is deprecated and decision-neutral, `claim_headers`
+  takes the `output_claim_headers` bounds on `jwks_auth`,
+  `oauth2_introspection` and `oidc_relying_party`, and `ldap_auth` gains
+  `group_cache_ttl_seconds`. Catalog pointers are unchanged; the
+  `config_schema_document` pin stays at Edge `v0.9.17` until a release
+  refresh. No schema, vocabulary or fixture changes. Marked unreleased until
+  an Edge release ships it.
 
 ## [contracts-edge-0.9.17] - 2026-10-10
 
