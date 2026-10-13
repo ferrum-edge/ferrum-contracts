@@ -599,7 +599,8 @@ def download_capped(url: str, limit: int, timeout: float = 60) -> bytes:
 
     A declared Content-Length over the limit is refused before the body is
     read. Without one, the body is read in chunks and abandoned as soon as it
-    passes the limit, so memory stays bounded by `limit` plus one chunk.
+    passes the limit, so at most `limit` plus one chunk is read. Memory is
+    O(limit): the buffer, plus one immutable copy while it is returned.
     """
     opener = urllib.request.build_opener(_RefuseRedirect)
     with opener.open(url, timeout=timeout) as response:

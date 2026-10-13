@@ -12,6 +12,7 @@ import importlib.util
 import tempfile
 import threading
 import unittest
+import unittest.mock
 from pathlib import Path
 
 SPEC = importlib.util.spec_from_file_location(
@@ -87,6 +88,41 @@ class BoundedDownloadTests(unittest.TestCase):
     def test_an_undeclared_body_over_the_limit_is_abandoned(self) -> None:
         with self.assertRaisesRegex(validate.DownloadError, "exceeds the 4096 byte limit"):
             validate.download_capped(f"{self.base}/stream", LIMIT)
+
+    def test_an_endless_body_is_abandoned_after_one_chunk_past_the_limit(self) -> None:
+        # The response never ends and counts what is read: reading it whole,
+        # or past the limit plus one chunk, fails the test instead of passing.
+        chunk = validate.DOWNLOAD_CHUNK_BYTES
+        limit = 3 * chunk + 1
+
+        class EndlessResponse:
+            headers: dict[str, str] = {}
+            consumed = 0
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc) -> None:
+                return None
+
+            def read(self, amount: int = -1) -> bytes:
+                if amount is None or amount < 0:
+                    raise AssertionError("unbounded read")
+                type(self).consumed += amount
+                if type(self).consumed > limit + chunk:
+                    raise AssertionError(f"read {type(self).consumed} bytes past the cap")
+                return b"z" * amount
+
+        class Opener:
+            def open(self, url, timeout=None):
+                return EndlessResponse()
+
+        with unittest.mock.patch.object(
+            validate.urllib.request, "build_opener", lambda *handlers: Opener()
+        ):
+            with self.assertRaisesRegex(validate.DownloadError, "byte limit"):
+                validate.download_capped("https://example.invalid/openapi.yaml", limit)
+        self.assertLessEqual(EndlessResponse.consumed, limit + chunk)
 
     def test_a_declared_length_over_the_limit_is_refused_before_reading(self) -> None:
         with self.assertRaisesRegex(validate.DownloadError, "declares 4194304 bytes"):
