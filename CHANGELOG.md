@@ -6,6 +6,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Security
+
+- `ci/validate.py --fetch-openapi` no longer buffers an unbounded response
+  before the sha256 check (#29). The download refuses redirects, refuses a
+  declared `Content-Length` over 32 MiB, and reads in chunks that stop as soon
+  as the body passes 32 MiB. `--openapi PATH` applies the same cap. Loopback
+  tests in `ci/test_validate.py` run in the `Validate contracts` workflow. No
+  schema, vocabulary or fixture changes.
+
 ### Changed
 
 - Note the unreleased Edge default-deny admission of gateway material

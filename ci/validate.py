@@ -30,7 +30,9 @@ Checks, in order:
    config_schema pointer is the component that Edge's PluginConfigBase
    if/then block for that plugin_name references (and the component
    exists). --fetch-openapi downloads that file from
-   raw.githubusercontent.com at the pinned commit.
+   raw.githubusercontent.com at the pinned commit. The download refuses
+   redirects and stops at MAX_OPENAPI_BYTES, so an oversized response fails
+   before it is buffered whole or hashed; --openapi applies the same cap.
 
 Exit status is 0 when every check passes and 1 otherwise. Only the Python
 standard library and the pinned packages in ci/requirements.txt are used.
@@ -55,6 +57,11 @@ SCHEMA_FILE = re.compile(r"^v([1-9][0-9]*)\.schema\.json$")
 VERSION_DIR = re.compile(r"^v([1-9][0-9]*)$")
 NAME = re.compile(r"^[a-z][a-z0-9-]*$")
 EXPECTATIONS = "invalid-expectations.json"
+# Upper bound for the pinned Edge openapi.yaml, downloaded or local. The real
+# file is a small fraction of this; a response that reaches it is not the
+# pinned document, and reading it whole would only exhaust the runner.
+MAX_OPENAPI_BYTES = 32 * 1024 * 1024
+DOWNLOAD_CHUNK_BYTES = 64 * 1024
 FORMAT_CHECKER = Draft202012Validator.FORMAT_CHECKER
 # Every format the JSON Schema 2020-12 validation spec defines. A schema may
 # use a standard format only if this validator has a checker for it; otherwise
@@ -576,6 +583,46 @@ def plugin_config_refs(text: str, report: Report, label: str) -> dict[str, str]:
     return refs
 
 
+class DownloadError(OSError):
+    """A download refused for its size or a redirect."""
+
+
+class _RefuseRedirect(urllib.request.HTTPRedirectHandler):
+    # The URL names an immutable commit; a redirect means the response is not
+    # the pinned file, and following it would leave the allowlisted host.
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise DownloadError(f"refusing HTTP {code} redirect to {newurl}")
+
+
+def download_capped(url: str, limit: int, timeout: float = 60) -> bytes:
+    """Download `url` into memory, refusing redirects and more than `limit` bytes.
+
+    A declared Content-Length over the limit is refused before the body is
+    read. Without one, the body is read in chunks and abandoned as soon as it
+    passes the limit, so memory stays bounded by `limit` plus one chunk.
+    """
+    opener = urllib.request.build_opener(_RefuseRedirect)
+    with opener.open(url, timeout=timeout) as response:
+        declared = (response.headers.get("Content-Length") or "").strip()
+        if declared.isdigit() and int(declared) > limit:
+            raise DownloadError(f"response declares {declared} bytes; the limit is {limit}")
+        data = bytearray()
+        while chunk := response.read(DOWNLOAD_CHUNK_BYTES):
+            data += chunk
+            if len(data) > limit:
+                raise DownloadError(f"response exceeds the {limit} byte limit")
+        return bytes(data)
+
+
+def read_capped(path: Path, limit: int) -> bytes:
+    """Read a local file, refusing more than `limit` bytes."""
+    with path.open("rb") as handle:
+        data = handle.read(limit + 1)
+    if len(data) > limit:
+        raise DownloadError(f"{path} exceeds the {limit} byte limit")
+    return data
+
+
 def fetch_openapi(vocabularies: dict[str, dict], report: Report) -> bytes | None:
     catalog = vocabularies.get("plugin-catalog")
     if not catalog:
@@ -594,8 +641,7 @@ def fetch_openapi(vocabularies: dict[str, dict], report: Report) -> bytes | None
     url = f"https://raw.githubusercontent.com/{repo}/{commit}/{path}"
     print(f"  fetching {url}")
     try:
-        with urllib.request.urlopen(url, timeout=60) as response:
-            return response.read()
+        return download_capped(url, MAX_OPENAPI_BYTES)
     except OSError as exc:
         report.fail(url, f"download failed: {exc}")
         return None
@@ -670,7 +716,12 @@ def main() -> int:
     if args.openapi or args.fetch_openapi:
         print("plugin config schema pointers")
         if args.openapi:
-            data, label = args.openapi.read_bytes(), str(args.openapi)
+            label = str(args.openapi)
+            try:
+                data = read_capped(args.openapi, MAX_OPENAPI_BYTES)
+            except OSError as exc:
+                report.fail(label, f"read failed: {exc}")
+                data = None
         else:
             data, label = fetch_openapi(vocabularies, report), "pinned openapi.yaml"
         if data is not None:
