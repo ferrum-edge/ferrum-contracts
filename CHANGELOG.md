@@ -18,7 +18,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   ships it.
 - Note the unreleased Edge refusal of `kafka_logging` `producer_config`
   native-loader, command and gateway-file keys for every token unless
-  `FERRUM_KAFKA_ALLOW_NATIVE_CONFIG=true` (Edge PR #6551, issue #6539) in
+  `FERRUM_KAFKA_ALLOW_NATIVE_CONFIG=true` (Edge PR #6551, issue #6539, owner
+  commit `803d0f972383`) in
   `docs/admin-contracts.md`. No schema, vocabulary or fixture changes.
   Marked unreleased until an Edge release ships it.
 
