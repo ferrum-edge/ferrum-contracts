@@ -8,14 +8,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
-- Note the pending Edge default-deny admission of gateway material references
-  (Edge PR #6316, issue #6092) in `docs/admin-contracts.md`. A present `ns`
+- Note the unreleased Edge default-deny admission of gateway material
+  references (Edge PR #6316, issue #6092, owner commit `d5417cd72312`) in `docs/admin-contracts.md`. A present `ns`
   claim confines an `operator`'s new backend TLS and TLS-material plugin
   references to inline PEM, `system://` and same-namespace `k8s://` Secrets,
   and refuses plugin filesystem paths, native library settings and custom
   plugins, even with `FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`. No schema,
-  vocabulary or fixture changes. Marked pending until the owner merges it and
-  unreleased until it ships.
+  vocabulary or fixture changes. Marked unreleased until an Edge release
+  ships it.
 
 ## [contracts-edge-0.9.17] - 2026-10-10
 

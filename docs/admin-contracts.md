@@ -58,11 +58,13 @@ observability routes retain their tier restrictions. A cached read with no
 authoritative fallback proof of absence returns 503 rather than a false 404.
 These are runtime authorization/availability rules, not new envelope fields.
 
-**Pending owner change, not yet on Edge `main` or in any release (Edge PR
-[#6316](https://github.com/ferrum-edge/ferrum-edge/pull/6316), issue #6092).**
-Until that PR merges, Edge `main` and every release keep the behavior
-described above. Once merged, gateway material references are default-deny
-for an `operator` token that carries an `ns` claim, even when
+**Edge `main`, unreleased (Edge PR
+[#6316](https://github.com/ferrum-edge/ferrum-edge/pull/6316), issue #6092,
+owner commit
+[`d5417cd723120995666a7a14c6a4bc9022ba86a9`](https://github.com/ferrum-edge/ferrum-edge/commit/d5417cd723120995666a7a14c6a4bc9022ba86a9)).**
+No Edge release contains this change yet; v0.9.17 and earlier keep the
+behavior described above. On Edge `main`, gateway material references are
+default-deny for an `operator` token that carries an `ns` claim, even when
 `FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`.
 
 - **TLS material** admits only inline PEM, `system://` or a `k8s://` Secret
@@ -88,10 +90,12 @@ for an `operator` token that carries an `ns` claim, even when
 
 A value already stored at the same field path (same array index) stays
 admitted, and `admin` tokens are unaffected. The owner keeps the complete
-classified set in `src/admin/crud/scoped_references.rs`. These rules are owner
+classified set in
+[`src/admin/crud/scoped_references.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud/scoped_references.rs);
+the refusal is `tls_reference_refusal` in
+[`src/admin/crud.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud.rs). These rules are owner
 OpenAPI descriptions and a runtime refusal, not new envelope fields or
-vocabulary values. The merged owner commit is recorded here once the owner
-lands it, and the release refresh records the Edge tag.
+vocabulary values. The release refresh records the Edge tag that ships it.
 
 ## Owner sources and artifact scope
 
