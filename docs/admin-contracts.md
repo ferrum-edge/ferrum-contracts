@@ -58,6 +58,47 @@ observability routes retain their tier restrictions. A cached read with no
 authoritative fallback proof of absence returns 503 rather than a false 404.
 These are runtime authorization/availability rules, not new envelope fields.
 
+**Edge `main`, unreleased (Edge PR
+[#6316](https://github.com/ferrum-edge/ferrum-edge/pull/6316), issue #6092,
+owner commit
+[`d5417cd723120995666a7a14c6a4bc9022ba86a9`](https://github.com/ferrum-edge/ferrum-edge/commit/d5417cd723120995666a7a14c6a4bc9022ba86a9)).**
+No Edge release contains this change yet; v0.9.17 and earlier keep the
+behavior described above. On Edge `main`, gateway material references are
+default-deny for an `operator` token that carries an `ns` claim, even when
+`FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`.
+
+- **TLS material** admits only inline PEM, `system://` or a `k8s://` Secret
+  in the addressed namespace. This covers proxy and upstream
+  `backend_tls_client_cert_path`, `backend_tls_client_key_path` and
+  `backend_tls_server_ca_cert_path`, `mesh_route_dispatch`
+  `rules[].destination.backend_tls.{client_cert_path,client_key_path,server_ca_cert_path}`,
+  `udp_logging` `dtls_cert_path`, `dtls_key_path` and `dtls_ca_cert_path`, and
+  `soap_ws_security` `x509_signature.trusted_certs[]` and
+  `saml.trusted_signing_certs[]`.
+- **Gateway filesystem paths and native library settings** are refused with
+  `400` whatever the value. This covers `kafka_logging`
+  `ssl_certificate_location`, `ssl_key_location` and `ssl_ca_location`, and
+  every `kafka_logging` `producer_config` key outside the owner's reviewed
+  tuning-only list. It also covers `api_chargeback_sink`
+  `clickhouse.tls.ca_file`, `clickhouse.tls.client_cert_file`,
+  `clickhouse.tls.client_key_file` and `spool.dir`, the
+  `ai_response_guard` and `ai_transcript_audit` `grpc.descriptor_path`,
+  `body_validator` `protobuf_descriptor_path`, and `geo_restriction`
+  `db_path`.
+- **Non-built-in (custom) plugins**: such a token cannot introduce a custom
+  plugin configuration or change an existing one's `plugin_name` or
+  `config`. Other updates to an existing custom plugin (for example
+  `enabled`) remain subject to ordinary validation.
+
+A value already stored at the same field path (same array index) stays
+admitted, and `admin` tokens are unaffected. The owner keeps the complete
+classified set in
+[`src/admin/crud/scoped_references.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud/scoped_references.rs);
+the refusal is `tls_reference_refusal` in
+[`src/admin/crud.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud.rs). These rules are owner
+OpenAPI descriptions and a runtime refusal, not new envelope fields or
+vocabulary values. The release refresh records the Edge tag that ships it.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
