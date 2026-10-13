@@ -6,6 +6,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Changed
+
+- Note the unreleased Edge backend TLS reference admission change (Edge PR
+  #6316, issue #6092) in `docs/admin-contracts.md`: a present `ns` claim now
+  restricts an `operator`'s new backend TLS references even with
+  `FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`, and the rule also covers
+  `mesh_route_dispatch` route-local `backend_tls` fields. No schema,
+  vocabulary or fixture changes; marked unreleased until the owner ships it.
+
 ## [contracts-edge-0.9.17] - 2026-10-10
 
 Contracts for Ferrum Edge `v0.9.17` (`669c574c1d1e88e84dccb26a8159939e6694644d`). See the

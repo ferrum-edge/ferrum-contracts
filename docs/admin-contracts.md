@@ -58,6 +58,22 @@ observability routes retain their tier restrictions. A cached read with no
 authoritative fallback proof of absence returns 503 rather than a false 404.
 These are runtime authorization/availability rules, not new envelope fields.
 
+**Edge `main`, unreleased (Edge PR
+[#6316](https://github.com/ferrum-edge/ferrum-edge/pull/6316), issue #6092).**
+The backend TLS reference admission above now follows the same present-claim
+rule. An `operator` token that carries an `ns` claim gets `400` for a newly
+introduced `backend_tls_client_cert_path`, `backend_tls_client_key_path` or
+`backend_tls_server_ca_cert_path` value outside inline PEM, `system://` or a
+`k8s://` Secret in the addressed namespace, even when
+`FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`. The same admission covers the
+route-local `client_cert_path`, `client_key_path` and `server_ca_cert_path`
+under `rules[].destination.backend_tls` in `mesh_route_dispatch` plugin
+configs. A value already stored in the same field (same rule index for
+`mesh_route_dispatch`) stays admitted, and `admin` tokens are unaffected.
+These are owner OpenAPI field descriptions and a runtime refusal, not new
+envelope fields or vocabulary values. This item is not in any Edge release
+yet; the next release refresh records the owner commit.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
