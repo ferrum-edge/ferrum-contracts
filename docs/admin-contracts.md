@@ -105,8 +105,10 @@ owner commit
 [`803d0f972383521a116022ad70b3b56d6f9dacf9`](https://github.com/ferrum-edge/ferrum-edge/commit/803d0f972383521a116022ad70b3b56d6f9dacf9)).**
 No Edge release contains this change yet; v0.9.17 and earlier admit these keys. On Edge `main`, `kafka_logging`
 `producer_config` keys that load native code, run a host command, or make
-librdkafka read or write a gateway file are refused with `400` for **every**
-token, `admin` included: `plugin.library.paths`, `ssl.engine.location`,
+librdkafka read or write a gateway file are refused for **every** token,
+`admin` included (`400` on a direct plugin-config write, `422` on an API-spec
+import or replacement through `x-ferrum-plugins`; config loads and snapshot
+publication reject the generation): `plugin.library.paths`, `ssl.engine.location`,
 `ssl.engine.id`, `ssl.providers`, `sasl.kerberos.kinit.cmd`,
 `sasl.kerberos.keytab`, `sasl.oauthbearer.assertion.private.key.file`,
 `sasl.oauthbearer.assertion.file`,
