@@ -59,28 +59,39 @@ authoritative fallback proof of absence returns 503 rather than a false 404.
 These are runtime authorization/availability rules, not new envelope fields.
 
 **Pending owner change, not yet on Edge `main` or in any release (Edge PR
-[#6316](https://github.com/ferrum-edge/ferrum-edge/pull/6316), issue #6092,
-reviewed head `762bed884ebea56829830e5f0074200d0fb0aa7b`).** Until that PR
-merges, Edge `main` and every release keep the behavior described above. Once
-merged, backend TLS reference admission follows the present-claim rule. An
-`operator` token that carries an `ns` claim gets `400` for a newly introduced
-reference outside inline PEM, `system://` or a `k8s://` Secret in the
-addressed namespace, even when `FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`,
-in these fields:
+[#6316](https://github.com/ferrum-edge/ferrum-edge/pull/6316), issue #6092).**
+Until that PR merges, Edge `main` and every release keep the behavior
+described above. Once merged, gateway material references are default-deny
+for an `operator` token that carries an `ns` claim, even when
+`FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`.
 
-- Proxy and upstream `backend_tls_client_cert_path`,
-  `backend_tls_client_key_path` and `backend_tls_server_ca_cert_path`.
-- `mesh_route_dispatch` route-local `client_cert_path`, `client_key_path` and
-  `server_ca_cert_path` under `rules[].destination.backend_tls`.
-- `udp_logging` `dtls_cert_path`, `dtls_key_path` and `dtls_ca_cert_path`.
-- `kafka_logging` `ssl_certificate_location`, `ssl_key_location` and
-  `ssl_ca_location`.
+- **TLS material** admits only inline PEM, `system://` or a `k8s://` Secret
+  in the addressed namespace. This covers proxy and upstream
+  `backend_tls_client_cert_path`, `backend_tls_client_key_path` and
+  `backend_tls_server_ca_cert_path`, `mesh_route_dispatch`
+  `rules[].destination.backend_tls.{client_cert_path,client_key_path,server_ca_cert_path}`,
+  `udp_logging` `dtls_cert_path`, `dtls_key_path` and `dtls_ca_cert_path`, and
+  `soap_ws_security` `x509_signature.trusted_certs[]` and
+  `saml.trusted_signing_certs[]`.
+- **Gateway filesystem paths and native library settings** are refused with
+  `400` whatever the value. This covers `kafka_logging`
+  `ssl_certificate_location`, `ssl_key_location` and `ssl_ca_location`, and
+  every `kafka_logging` `producer_config` key outside the owner's reviewed
+  tuning-only list. It also covers `api_chargeback_sink`
+  `clickhouse.tls.ca_file`, `clickhouse.tls.client_cert_file`,
+  `clickhouse.tls.client_key_file` and `spool.dir`, the
+  `ai_response_guard` and `ai_transcript_audit` `grpc.descriptor_path`,
+  `body_validator` `protobuf_descriptor_path`, and `geo_restriction`
+  `db_path`.
+- **Non-built-in (custom) plugins** cannot be created or changed by such a
+  token.
 
-A value already stored in the same field (same rule index for
-`mesh_route_dispatch`) stays admitted, and `admin` tokens are unaffected.
-These are owner OpenAPI field descriptions and a runtime refusal, not new
-envelope fields or vocabulary values. The merged owner commit is recorded
-here once the owner lands it, and the release refresh records the Edge tag.
+A value already stored at the same field path (same array index) stays
+admitted, and `admin` tokens are unaffected. The owner keeps the complete
+classified set in `src/admin/crud/scoped_references.rs`. These rules are owner
+OpenAPI descriptions and a runtime refusal, not new envelope fields or
+vocabulary values. The merged owner commit is recorded here once the owner
+lands it, and the release refresh records the Edge tag.
 
 ## Owner sources and artifact scope
 
