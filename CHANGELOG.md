@@ -16,6 +16,11 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   changed custom-plugin `plugin_name`/`config`, even with `FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`. No schema,
   vocabulary or fixture changes. Marked unreleased until an Edge release
   ships it.
+- Note the unreleased Edge refusal of `kafka_logging` `producer_config`
+  native-loader, command and gateway-file keys for every token unless
+  `FERRUM_KAFKA_ALLOW_NATIVE_CONFIG=true` (Edge PR #6551, issue #6539) in
+  `docs/admin-contracts.md`. No schema, vocabulary or fixture changes.
+  Marked unreleased until an Edge release ships it.
 
 ## [contracts-edge-0.9.17] - 2026-10-10
 

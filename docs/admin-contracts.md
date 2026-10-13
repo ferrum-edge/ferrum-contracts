@@ -99,6 +99,23 @@ the refusal is `tls_reference_refusal` in
 OpenAPI descriptions and a runtime refusal, not new envelope fields or
 vocabulary values. The release refresh records the Edge tag that ships it.
 
+**Edge `main`, unreleased (Edge PR
+[#6551](https://github.com/ferrum-edge/ferrum-edge/pull/6551), issue #6539).**
+No Edge release contains this change yet. On Edge `main`, `kafka_logging`
+`producer_config` keys that load native code, run a host command, or make
+librdkafka read or write a gateway file are refused with `400` for **every**
+token, `admin` included: `plugin.library.paths`, `ssl.engine.location`,
+`ssl.engine.id`, `ssl.providers`, `sasl.kerberos.kinit.cmd`,
+`sasl.kerberos.keytab`, `sasl.oauthbearer.assertion.private.key.file`,
+`sasl.oauthbearer.assertion.file`,
+`sasl.oauthbearer.assertion.jwt.template.file`, `https.ca.location` and
+`offset.store.path`. Matching ignores case and a `topic.` prefix. A node that
+sets `FERRUM_KAFKA_ALLOW_NATIVE_CONFIG=true` admits them for unconfined
+tokens; an `ns`-claimed `operator` still cannot introduce or change them. The
+owner keeps the list as `KAFKA_NATIVE_PRODUCER_KEYS` in
+`src/admin/crud/scoped_references.rs`. This is an owner runtime refusal and
+OpenAPI description text, not a new envelope field or vocabulary value.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
