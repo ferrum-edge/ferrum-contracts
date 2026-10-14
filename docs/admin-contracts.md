@@ -196,6 +196,27 @@ presence-only `bypass.header_present` entries and `jwks_auth` provider sets
 outside those bounds before it targets a release that ships them. The release
 refresh moves the `openapi.yaml` pin and records the Edge tag.
 
+**Edge `main`, unreleased (Edge PRs
+[#6638](https://github.com/ferrum-edge/ferrum-edge/pull/6638) and
+[#6640](https://github.com/ferrum-edge/ferrum-edge/pull/6640), issues #6612
+and #6608; owner commits
+[`ea18b5afa98ced1cdd733f0fd0c828d3c5f7f84b`](https://github.com/ferrum-edge/ferrum-edge/commit/ea18b5afa98ced1cdd733f0fd0c828d3c5f7f84b)
+and
+[`fab77df069598065acb64a98bff1020645f4d546`](https://github.com/ferrum-edge/ferrum-edge/commit/fab77df069598065acb64a98bff1020645f4d546)).**
+No Edge release contains these changes yet; v0.9.17 and earlier admit the
+larger values. The bounds are published in
+[`openapi.yaml`](https://github.com/ferrum-edge/ferrum-edge/blob/fab77df069598065acb64a98bff1020645f4d546/openapi.yaml)
+and enforced by the plugin constructors. On Edge `main` the
+referenced plugin config components publish, and admission enforces, these
+hard bounds:
+- `response_caching` `max_entries` is at most `10000000`.
+- `openapi_validator` `max_body_bytes` is at most `67108864`.
+- `body_validator` `grpc_max_decompressed_size_bytes` is at most `67108864`. An inherited `FERRUM_MAX_REQUEST_BODY_SIZE_BYTES` default above that is clamped to it.
+- `ai_prompt_shield` has `max_scan_bytes` at most `67108864`, `custom_patterns` at most 256 entries, and `patterns` at most 8 unique built-in names (a repeated name is refused).
+- `ai_response_guard` has `max_scan_bytes` at most `67108864`, `pii_patterns` at most 8 unique built-in names (a repeated name is refused), `custom_pii_patterns` and `blocked_patterns` at most 256 entries each, and `blocked_phrases` at most 1024. Pattern `name` values are at most 128 characters, a custom `regex` that matches the empty string is refused, and each rendered `redaction_placeholder` is at most 512 UTF-8 bytes.
+
+Catalog `config_schema` pointers are unchanged, and the `config_schema_document` pin stays at v0.9.17 until the release refresh. There are no new envelope fields or vocabulary values.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
