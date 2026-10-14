@@ -184,7 +184,8 @@ unchanged. On Edge `main`:
   accordingly.
 - `JwksAuthConfig` `providers`: `maxItems: 64`. The runtime also refuses a
   set where the providers sharing one `issuer`, plus those without an
-  `issuer`, exceed 8 (stated in the description, not as a schema keyword).
+  `issuer`, exceed 8, and at most 8 providers may omit `issuer` (stated in
+  the description, not as schema keywords).
 - `CorsConfig` descriptions: with `allow_credentials`, a `*.suffix` origin
   over a single label, a numeric label, a public suffix or a domain with
   Public Suffix List rules beneath it is refused. A credentialed `regex`
