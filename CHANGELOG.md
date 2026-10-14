@@ -18,7 +18,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 ### Changed
 
 - Note the unreleased Edge plugin-config hard bounds (Edge PRs #6638 and
-  #6640, issues #6612 and #6608) in `docs/admin-contracts.md`. They cover
+  #6640, issues #6612 and #6608, owner commits `ea18b5afa98c` and
+  `fab77df06959`) in `docs/admin-contracts.md`. They cover
   `response_caching` `max_entries`, `openapi_validator` `max_body_bytes`,
   `body_validator` `grpc_max_decompressed_size_bytes` (and its clamped
   inherited default), the
