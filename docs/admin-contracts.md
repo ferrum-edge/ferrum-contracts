@@ -157,6 +157,44 @@ A product that generates these plugin configs should stop emitting empty
 before it targets a release that ships them. The release refresh moves the
 `openapi.yaml` pin and records the Edge tag.
 
+**Edge `main`, unreleased plugin-config hardening (Edge PRs
+[#6631](https://github.com/ferrum-edge/ferrum-edge/pull/6631) owner commit
+[`bf43642fa30aef69acd6a4e904b9cb92551f39de`](https://github.com/ferrum-edge/ferrum-edge/commit/bf43642fa30aef69acd6a4e904b9cb92551f39de),
+[#6634](https://github.com/ferrum-edge/ferrum-edge/pull/6634) owner commit
+[`0be964e7b04d51a7b94e4b1430c8fadc68af7c2e`](https://github.com/ferrum-edge/ferrum-edge/commit/0be964e7b04d51a7b94e4b1430c8fadc68af7c2e),
+[#6639](https://github.com/ferrum-edge/ferrum-edge/pull/6639) owner commit
+[`7466d819cd93c9046865393bd9882235b3e07001`](https://github.com/ferrum-edge/ferrum-edge/commit/7466d819cd93c9046865393bd9882235b3e07001)
+and [#6644](https://github.com/ferrum-edge/ferrum-edge/pull/6644) owner commit
+[`b862d25f6872aea17b3c2740edae17a6836459d2`](https://github.com/ferrum-edge/ferrum-edge/commit/b862d25f6872aea17b3c2740edae17a6836459d2)).**
+No Edge release contains these changes yet; the catalog's
+`config_schema_document` stays pinned to the `v0.9.17` `openapi.yaml`, which
+still admits the configurations below. Every `config_schema.pointer` is
+unchanged. On Edge `main`:
+
+- `OpenapiValidatorConfig` `bypass.header_present`: each value must be a
+  secret string of 16–4096 visible ASCII characters
+  (`pattern: "^[!-~]+$(?![\\s\\S])"`, `minLength: 16`, `maxLength: 4096`). A
+  `null` (presence-only) value is refused at construction.
+- `RequestMirrorConfig` `forward_sensitive_query_allowlist` items: the
+  pattern now admits only visible ASCII without `% + = & ? # / @ ;` or
+  surrounding whitespace (brackets such as `filter[key]` are allowed). Entries
+  that are not credential-shaped names, built-in or by operator pattern, are
+  still refused at construction (runtime-only rule). The description of
+  credential-shaped header and query names that are stripped by default widens
+  accordingly.
+- `JwksAuthConfig` `providers`: `maxItems: 64`. The runtime also refuses a
+  set where the providers sharing one `issuer`, plus those without an
+  `issuer`, exceed 8 (stated in the description, not as a schema keyword).
+- `CorsConfig` descriptions: with `allow_credentials`, a `*.suffix` origin
+  over a single label, a numeric label, a public suffix or a domain with
+  Public Suffix List rules beneath it is refused. A credentialed `regex`
+  origin must provably pin the host (runtime-only rule).
+
+A product that generates these plugin configs should stop emitting
+presence-only `bypass.header_present` entries and `jwks_auth` provider sets
+outside those bounds before it targets a release that ships them. The release
+refresh moves the `openapi.yaml` pin and records the Edge tag.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full

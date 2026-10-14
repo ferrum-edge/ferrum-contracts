@@ -43,6 +43,16 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   refresh. No schema, vocabulary or fixture changes. Marked unreleased until
   an Edge release ships it.
 
+- Note the unreleased Edge plugin-config hardening behind the pinned
+  `openapi.yaml` components (Edge PRs #6631, #6634, #6639 and #6644) in
+  `docs/admin-contracts.md`: `openapi_validator` `bypass.header_present`
+  values must be 16–4096-character visible-ASCII secrets, the
+  `request_mirror` query allowlist item pattern tightens, `jwks_auth`
+  `providers` gains `maxItems: 64` plus a per-issuer bound of 8, and the
+  `cors` credential interlock widens for public-suffix wildcards and
+  unprovable regexes. No schema, vocabulary or fixture changes. Marked
+  unreleased until an Edge release ships it.
+
 ## [contracts-edge-0.9.17] - 2026-10-10
 
 Contracts for Ferrum Edge `v0.9.17` (`669c574c1d1e88e84dccb26a8159939e6694644d`). See the
