@@ -53,6 +53,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `config_schema_document` pin stays at Edge `v0.9.17` until a release
   refresh. No schema, vocabulary or fixture changes. Marked unreleased until
   an Edge release ships it.
+- Correct that note: the pinned `v0.9.17` schema rejects `ldap_auth`
+  `group_cache_ttl_seconds` rather than admitting it, and record the owner
+  commits for Edge #6635 (`6f78ca1868d8`), #6645 (`7e5225af4d2b`) and #6637
+  (`fed841c6cbcb`), which reached Edge `main` after the note was written.
 
 - Note the unreleased Edge plugin-config hardening behind the pinned
   `openapi.yaml` components (Edge PRs #6631, #6634, #6639 and #6644) in

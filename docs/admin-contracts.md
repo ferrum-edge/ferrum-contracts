@@ -122,13 +122,19 @@ owner keeps the list as `KAFKA_NATIVE_PRODUCER_KEYS` in
 OpenAPI description text, not a new envelope field or vocabulary value.
 
 **Edge `main`, unreleased plugin-config admission (Edge PRs
-[#6635](https://github.com/ferrum-edge/ferrum-edge/pull/6635),
-[#6637](https://github.com/ferrum-edge/ferrum-edge/pull/6637) and
-[#6645](https://github.com/ferrum-edge/ferrum-edge/pull/6645); issues #6607,
-#6610, #6620 and #6609).** No Edge release contains these changes yet; the
-catalog's `config_schema_document` stays pinned to the `v0.9.17`
-`openapi.yaml`, which still admits the configurations below. Every
-`config_schema.pointer` is unchanged. On Edge `main`:
+[#6635](https://github.com/ferrum-edge/ferrum-edge/pull/6635), owner commit
+[`6f78ca1868d82aea7de74fd3738ca84720d7858b`](https://github.com/ferrum-edge/ferrum-edge/commit/6f78ca1868d82aea7de74fd3738ca84720d7858b),
+[#6645](https://github.com/ferrum-edge/ferrum-edge/pull/6645), owner commit
+[`7e5225af4d2b21f167a916afb17707091ab19804`](https://github.com/ferrum-edge/ferrum-edge/commit/7e5225af4d2b21f167a916afb17707091ab19804),
+and [#6637](https://github.com/ferrum-edge/ferrum-edge/pull/6637), owner commit
+[`fed841c6cbcb0d2e16f6ccbcc9df4447ad00b054`](https://github.com/ferrum-edge/ferrum-edge/commit/fed841c6cbcb0d2e16f6ccbcc9df4447ad00b054);
+issues #6607, #6610, #6609, #6620 and #6611).** No Edge release
+contains these changes yet, and the catalog's `config_schema_document` stays
+pinned to the `v0.9.17` `openapi.yaml`. That pinned schema still admits the
+empty `access_control` allow-lists and the `claim_headers` objects described
+below, but it does not know `group_cache_ttl_seconds`, so it rejects an
+`ldap_auth` config that sets it. Every `config_schema.pointer` is unchanged.
+On Edge `main`:
 
 - `AccessControlConfig`: `allowed_consumers` and `allowed_groups` gain
   `minItems: 1` and lose `default: []`. A present but empty allow-list is
@@ -137,8 +143,9 @@ catalog's `config_schema_document` stays pinned to the `v0.9.17`
 - `IpRestrictionConfig`: `mode` is marked `deprecated: true`. It never changed
   the admission decision and still loads; it only selects the rejection reason
   for an address that is both outside `allow` and on `deny`.
-- `JwksAuthConfig` (global and per-provider), `Oauth2IntrospectionConfig` and
-  `OidcRelyingPartyConfig` `claim_headers`: `maxProperties: 16`. The runtime
+- `JwksAuthConfig` (global and per-provider),
+  `Oauth2IntrospectionConfig` and `OidcRelyingPartyConfig` `claim_headers`:
+  `maxProperties: 16`. The runtime
   also refuses claim paths over 256 bytes or containing whitespace/control
   characters, header names over 128 bytes, two mappings naming one header, and
   the strict reserved-destination list `output_claim_headers` already used
@@ -150,7 +157,9 @@ catalog's `config_schema_document` stays pinned to the `v0.9.17`
   omitted (Edge PR #6637, issue #6611).
 - `LdapAuthConfig`: new optional `group_cache_ttl_seconds` (integer, default
   `60`, `0`–`86400`) bounding how long a cached credential is admitted without
-  re-checking `required_groups`.
+  re-checking `required_groups`. Validating such a config against the pinned
+  `v0.9.17` schema fails (`additionalProperties: false`) until the release
+  refresh moves the pin.
 
 A product that generates these plugin configs should stop emitting empty
 `access_control` allow-lists and `claim_headers` objects outside those bounds
