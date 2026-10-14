@@ -122,13 +122,19 @@ owner keeps the list as `KAFKA_NATIVE_PRODUCER_KEYS` in
 OpenAPI description text, not a new envelope field or vocabulary value.
 
 **Edge `main`, unreleased plugin-config admission (Edge PRs
-[#6635](https://github.com/ferrum-edge/ferrum-edge/pull/6635),
-[#6637](https://github.com/ferrum-edge/ferrum-edge/pull/6637) and
-[#6645](https://github.com/ferrum-edge/ferrum-edge/pull/6645); issues #6607,
-#6610, #6620 and #6609).** No Edge release contains these changes yet; the
-catalog's `config_schema_document` stays pinned to the `v0.9.17`
-`openapi.yaml`, which still admits the configurations below. Every
-`config_schema.pointer` is unchanged. On Edge `main`:
+[#6635](https://github.com/ferrum-edge/ferrum-edge/pull/6635), owner commit
+[`6f78ca1868d82aea7de74fd3738ca84720d7858b`](https://github.com/ferrum-edge/ferrum-edge/commit/6f78ca1868d82aea7de74fd3738ca84720d7858b),
+and [#6645](https://github.com/ferrum-edge/ferrum-edge/pull/6645), owner commit
+[`7e5225af4d2b21f167a916afb17707091ab19804`](https://github.com/ferrum-edge/ferrum-edge/commit/7e5225af4d2b21f167a916afb17707091ab19804);
+issues #6607, #6610 and #6609), with the `claim_headers` and introspection
+items pending Edge PR [#6637](https://github.com/ferrum-edge/ferrum-edge/pull/6637)
+(issues #6620 and #6611), which is not yet on `main`.** No Edge release
+contains these changes yet, and the catalog's `config_schema_document` stays
+pinned to the `v0.9.17` `openapi.yaml`. That pinned schema still admits the
+empty `access_control` allow-lists and the `claim_headers` objects described
+below, but it does not know `group_cache_ttl_seconds`, so it rejects an
+`ldap_auth` config that sets it. Every `config_schema.pointer` is unchanged.
+On Edge `main` (or, where marked, pending #6637):
 
 - `AccessControlConfig`: `allowed_consumers` and `allowed_groups` gain
   `minItems: 1` and lose `default: []`. A present but empty allow-list is
@@ -137,20 +143,23 @@ catalog's `config_schema_document` stays pinned to the `v0.9.17`
 - `IpRestrictionConfig`: `mode` is marked `deprecated: true`. It never changed
   the admission decision and still loads; it only selects the rejection reason
   for an address that is both outside `allow` and on `deny`.
-- `JwksAuthConfig` (global and per-provider), `Oauth2IntrospectionConfig` and
-  `OidcRelyingPartyConfig` `claim_headers`: `maxProperties: 16`. The runtime
+- Pending #6637: `JwksAuthConfig` (global and per-provider),
+  `Oauth2IntrospectionConfig` and `OidcRelyingPartyConfig` `claim_headers`:
+  `maxProperties: 16`. The runtime
   also refuses claim paths over 256 bytes or containing whitespace/control
   characters, header names over 128 bytes, two mappings naming one header, and
   the strict reserved-destination list `output_claim_headers` already used
   (stated in the property descriptions, not as schema keywords). A resolved
   claim value that is not a valid header value or exceeds 8192 bytes leaves
   the destination absent.
-- `Oauth2IntrospectionConfig` description: a JSON `null` `exp`,
+- Pending #6637: `Oauth2IntrospectionConfig` description: a JSON `null` `exp`,
   `active_until` or `expires_in` in an introspection response reads as
   omitted (Edge PR #6637, issue #6611).
 - `LdapAuthConfig`: new optional `group_cache_ttl_seconds` (integer, default
   `60`, `0`–`86400`) bounding how long a cached credential is admitted without
-  re-checking `required_groups`.
+  re-checking `required_groups`. Validating such a config against the pinned
+  `v0.9.17` schema fails (`additionalProperties: false`) until the release
+  refresh moves the pin.
 
 A product that generates these plugin configs should stop emitting empty
 `access_control` allow-lists and `claim_headers` objects outside those bounds
@@ -195,6 +204,27 @@ A product that generates these plugin configs should stop emitting
 presence-only `bypass.header_present` entries and `jwks_auth` provider sets
 outside those bounds before it targets a release that ships them. The release
 refresh moves the `openapi.yaml` pin and records the Edge tag.
+
+**Edge `main`, unreleased (Edge PRs
+[#6638](https://github.com/ferrum-edge/ferrum-edge/pull/6638) and
+[#6640](https://github.com/ferrum-edge/ferrum-edge/pull/6640), issues #6612
+and #6608; owner commits
+[`ea18b5afa98ced1cdd733f0fd0c828d3c5f7f84b`](https://github.com/ferrum-edge/ferrum-edge/commit/ea18b5afa98ced1cdd733f0fd0c828d3c5f7f84b)
+and
+[`fab77df069598065acb64a98bff1020645f4d546`](https://github.com/ferrum-edge/ferrum-edge/commit/fab77df069598065acb64a98bff1020645f4d546)).**
+No Edge release contains these changes yet; v0.9.17 and earlier admit the
+larger values. The bounds are published in
+[`openapi.yaml`](https://github.com/ferrum-edge/ferrum-edge/blob/fab77df069598065acb64a98bff1020645f4d546/openapi.yaml)
+and enforced by the plugin constructors. On Edge `main` the
+referenced plugin config components publish, and admission enforces, these
+hard bounds:
+- `response_caching` `max_entries` is at most `10000000`.
+- `openapi_validator` `max_body_bytes` is at most `67108864`.
+- `body_validator` `grpc_max_decompressed_size_bytes` is at most `67108864`. An inherited `FERRUM_MAX_REQUEST_BODY_SIZE_BYTES` default above that is clamped to it.
+- `ai_prompt_shield` has `max_scan_bytes` at most `67108864`, `custom_patterns` at most 256 entries, and `patterns` at most 8 unique built-in names (a repeated name is refused).
+- `ai_response_guard` has `max_scan_bytes` at most `67108864`, `pii_patterns` at most 8 unique built-in names (a repeated name is refused), `custom_pii_patterns` and `blocked_patterns` at most 256 entries each, and `blocked_phrases` at most 1024. Pattern `name` values are at most 128 characters, a custom `regex` that matches the empty string is refused, and each rendered `redaction_placeholder` is at most 512 UTF-8 bytes.
+
+Catalog `config_schema` pointers are unchanged, and the `config_schema_document` pin stays at v0.9.17 until the release refresh. There are no new envelope fields or vocabulary values.
 
 ## Owner sources and artifact scope
 

@@ -17,6 +17,17 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Note the unreleased Edge plugin-config hard bounds (Edge PRs #6638 and
+  #6640, issues #6612 and #6608, owner commits `ea18b5afa98c` and
+  `fab77df06959`) in `docs/admin-contracts.md`. They cover
+  `response_caching` `max_entries`, `openapi_validator` `max_body_bytes`,
+  `body_validator` `grpc_max_decompressed_size_bytes` (and its clamped
+  inherited default), the
+  `ai_prompt_shield` and `ai_response_guard` `max_scan_bytes` and
+  custom-pattern list sizes, unique built-in pattern lists (at most 8), and the
+  `ai_response_guard` pattern-name,
+  empty-match and rendered-placeholder bounds. No schema, vocabulary or
+  fixture changes. Marked unreleased until an Edge release ships them.
 - Note the unreleased Edge default-deny admission of gateway material
   references (Edge PR #6316, issue #6092, owner commit `d5417cd72312`) in
   `docs/admin-contracts.md`. A present `ns` claim confines an `operator`'s new backend TLS and TLS-material plugin
@@ -42,6 +53,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `config_schema_document` pin stays at Edge `v0.9.17` until a release
   refresh. No schema, vocabulary or fixture changes. Marked unreleased until
   an Edge release ships it.
+- Correct that note: the `claim_headers` and introspection items are pending
+  Edge PR #6637 (not yet on `main`), the pinned `v0.9.17` schema rejects
+  `ldap_auth` `group_cache_ttl_seconds` rather than admitting it, and record
+  the owner commits for #6635 (`6f78ca1868d8`) and #6645 (`7e5225af4d2b`).
 
 - Note the unreleased Edge plugin-config hardening behind the pinned
   `openapi.yaml` components (Edge PRs #6631, #6634, #6639 and #6644) in
