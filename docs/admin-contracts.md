@@ -124,17 +124,17 @@ OpenAPI description text, not a new envelope field or vocabulary value.
 **Edge `main`, unreleased plugin-config admission (Edge PRs
 [#6635](https://github.com/ferrum-edge/ferrum-edge/pull/6635), owner commit
 [`6f78ca1868d82aea7de74fd3738ca84720d7858b`](https://github.com/ferrum-edge/ferrum-edge/commit/6f78ca1868d82aea7de74fd3738ca84720d7858b),
-and [#6645](https://github.com/ferrum-edge/ferrum-edge/pull/6645), owner commit
-[`7e5225af4d2b21f167a916afb17707091ab19804`](https://github.com/ferrum-edge/ferrum-edge/commit/7e5225af4d2b21f167a916afb17707091ab19804);
-issues #6607, #6610 and #6609), with the `claim_headers` and introspection
-items pending Edge PR [#6637](https://github.com/ferrum-edge/ferrum-edge/pull/6637)
-(issues #6620 and #6611), which is not yet on `main`.** No Edge release
+[#6645](https://github.com/ferrum-edge/ferrum-edge/pull/6645), owner commit
+[`7e5225af4d2b21f167a916afb17707091ab19804`](https://github.com/ferrum-edge/ferrum-edge/commit/7e5225af4d2b21f167a916afb17707091ab19804),
+and [#6637](https://github.com/ferrum-edge/ferrum-edge/pull/6637), owner commit
+[`fed841c6cbcb0d2e16f6ccbcc9df4447ad00b054`](https://github.com/ferrum-edge/ferrum-edge/commit/fed841c6cbcb0d2e16f6ccbcc9df4447ad00b054);
+issues #6607, #6610, #6609, #6620 and #6611).** No Edge release
 contains these changes yet, and the catalog's `config_schema_document` stays
 pinned to the `v0.9.17` `openapi.yaml`. That pinned schema still admits the
 empty `access_control` allow-lists and the `claim_headers` objects described
 below, but it does not know `group_cache_ttl_seconds`, so it rejects an
 `ldap_auth` config that sets it. Every `config_schema.pointer` is unchanged.
-On Edge `main` (or, where marked, pending #6637):
+On Edge `main`:
 
 - `AccessControlConfig`: `allowed_consumers` and `allowed_groups` gain
   `minItems: 1` and lose `default: []`. A present but empty allow-list is
@@ -143,7 +143,7 @@ On Edge `main` (or, where marked, pending #6637):
 - `IpRestrictionConfig`: `mode` is marked `deprecated: true`. It never changed
   the admission decision and still loads; it only selects the rejection reason
   for an address that is both outside `allow` and on `deny`.
-- Pending #6637: `JwksAuthConfig` (global and per-provider),
+- `JwksAuthConfig` (global and per-provider),
   `Oauth2IntrospectionConfig` and `OidcRelyingPartyConfig` `claim_headers`:
   `maxProperties: 16`. The runtime
   also refuses claim paths over 256 bytes or containing whitespace/control
@@ -152,7 +152,7 @@ On Edge `main` (or, where marked, pending #6637):
   (stated in the property descriptions, not as schema keywords). A resolved
   claim value that is not a valid header value or exceeds 8192 bytes leaves
   the destination absent.
-- Pending #6637: `Oauth2IntrospectionConfig` description: a JSON `null` `exp`,
+- `Oauth2IntrospectionConfig` description: a JSON `null` `exp`,
   `active_until` or `expires_in` in an introspection response reads as
   omitted (Edge PR #6637, issue #6611).
 - `LdapAuthConfig`: new optional `group_cache_ttl_seconds` (integer, default
