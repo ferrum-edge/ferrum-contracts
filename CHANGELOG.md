@@ -17,6 +17,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Note the unreleased Edge `security_headers` token admission (Edge PRs
+  #6685 and #6705, issue #6617) in `docs/admin-contracts.md`:
+  `content_type_options`, `frame_options` and `referrer_policy` strings, and
+  `set` entries for the same three headers, must be values browsers
+  recognize. `SecurityHeadersConfig.set` gains `patternProperties`. No
+  vocabulary or fixture changes. Marked unreleased until an Edge release ships
+  it.
 - Correct the unreleased Edge metadata-allowlist note in
   `docs/admin-contracts.md` (follow-up to #36). The `[REDACTED]` placeholder
   applies to transaction-log metadata; trace spans omit a disallowed `mesh.*`
