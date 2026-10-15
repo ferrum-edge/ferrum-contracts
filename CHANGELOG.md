@@ -67,6 +67,19 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `cors` credential interlock widens for public-suffix wildcards and
   unprovable regexes. No schema, vocabulary or fixture changes. Marked
   unreleased until an Edge release ships it.
+- Note the unreleased Edge telemetry redaction, mirror provenance and
+  claim-header changes behind the pinned `openapi.yaml` components (Edge PRs
+  #6654, #6667 and #6668; issues #6619, #6658 and #6656; owner commits
+  `6535d61c58bd`, `4fa865c3bae0` and `1aeb94815087`) in
+  `docs/admin-contracts.md`: `TransactionDebuggerConfig` gains
+  `safe_text_fields`, `WorkloadMetricsConfig` gains `safe_tag_sources`,
+  log-schema output names refuse credential-class names, `request_mirror`
+  keeps credential provenance through renames, `mcp_gateway` session headers
+  are credential headers, and `output_claim_headers` / `claim_headers`
+  compare destinations with `_` treated as `-`. Catalog pointers are
+  unchanged; the `config_schema_document` pin stays at Edge `v0.9.17` until a
+  release refresh. No schema, vocabulary or fixture changes. Marked
+  unreleased until an Edge release ships them.
 
 ## [contracts-edge-0.9.17] - 2026-10-10
 

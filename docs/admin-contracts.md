@@ -226,6 +226,64 @@ hard bounds:
 
 Catalog `config_schema` pointers are unchanged, and the `config_schema_document` pin stays at v0.9.17 until the release refresh. There are no new envelope fields or vocabulary values.
 
+**Edge `main`, unreleased telemetry redaction, mirror provenance and claim-header
+admission (Edge PRs
+[#6654](https://github.com/ferrum-edge/ferrum-edge/pull/6654) owner commit
+[`6535d61c58bd1102f3157ddee38f0aa334abd1b4`](https://github.com/ferrum-edge/ferrum-edge/commit/6535d61c58bd1102f3157ddee38f0aa334abd1b4),
+[#6667](https://github.com/ferrum-edge/ferrum-edge/pull/6667) owner commit
+[`4fa865c3bae0343655f279a9fddb3a31c2e8b72f`](https://github.com/ferrum-edge/ferrum-edge/commit/4fa865c3bae0343655f279a9fddb3a31c2e8b72f)
+and [#6668](https://github.com/ferrum-edge/ferrum-edge/pull/6668) owner commit
+[`1aeb94815087f23d0b8e55a32f38164b28daaa0e`](https://github.com/ferrum-edge/ferrum-edge/commit/1aeb94815087f23d0b8e55a32f38164b28daaa0e);
+issues #6619, #6658 and #6656).** No Edge release contains these changes yet;
+the catalog's `config_schema_document` stays pinned to the `v0.9.17`
+`openapi.yaml`, which rejects the two new fields below (both components set
+`additionalProperties: false`) and still admits the claim-header spellings
+below. Every `config_schema.pointer` is unchanged. On Edge `main`:
+
+- `TransactionDebuggerConfig`: new optional `safe_text_fields` (array of
+  strings, each matching `^\s*[A-Za-z0-9_.-]{1,128}\s*$`). A nonempty list
+  requires `log_request_body` or `log_response_body` to be `true` (a new
+  `if`/`then` rule). In captured `text/plain` bodies a `name=value` /
+  `name: value` line is kept only when every field name parses cleanly and is
+  listed there. Credential-shaped entries are refused at construction
+  (runtime-only rule).
+- `WorkloadMetricsConfig`: new optional `safe_tag_sources` (at most 64
+  strings of 1–256 characters). A `custom_header_tags` or `custom_env_tags`
+  source not declared there is copied as `[REDACTED]`; credential-shaped
+  entries are refused at construction. The `custom_header_tags` and
+  `custom_env_tags` descriptions now state that fail-closed copy, and
+  `custom_env_tags` names the credential classes it rejects as sources.
+- `SummaryLogSchema` description and its `static_fields` description:
+  `rename` targets, `static_fields` keys and `derived_fields` names that match
+  a credential-class name (for example `session_id`, `client_assertion`,
+  `gpg_passphrase`) are refused at compile time, beside the existing
+  sensitive-substring rule.
+- `RequestMirrorConfig` description: credentials keep provenance through
+  `request_transformer` renames, and a header or query value equal to a
+  credential value seen on the request is withheld under whatever name it
+  now has.
+- `McpGatewayConfig` `sessions.upstream_session_header` description: both
+  configured session header names are registered as credential headers for
+  the route (redacted from diagnostics and policy calls, withheld from
+  `request_mirror`, bound into replay partitions).
+- `JwksAuthConfig` `output_claim_headers` and the `claim_headers`
+  descriptions on `JwksAuthConfig`, `Oauth2IntrospectionConfig` and
+  `OidcRelyingPartyConfig`: in both forms, reserved names and duplicate
+  destinations are compared case-insensitively with `_` treated as `-`
+  (`X_Real_IP` is reserved, `X_Tenant_Id` duplicates `X-Tenant-Id`).
+
+The metadata allowlist itself is runtime behavior, not a schema keyword:
+transaction-log and trace metadata values are emitted only under the owner's
+exact built-in keys or names an operator lists in
+`FERRUM_LOG_SAFE_METADATA_KEYS`, and every other value is written as
+`[REDACTED]`. A Kubernetes RequestAuthentication that Ferrum refuses now makes
+its selected workloads answer inbound HTTP requests with `503` instead of
+being dropped. A product that generates these plugin configs should stop
+emitting credential-shaped log-schema names and underscore spellings of
+reserved or duplicate claim-header destinations before it targets a release
+that ships them. There are no new envelope fields or vocabulary values. The
+release refresh moves the `openapi.yaml` pin and records the Edge tag.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
