@@ -17,6 +17,16 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Correct the `connection_refused` meaning in
+  `vocabularies/gateway-errors.json`. It said a TLS handshake failure after TCP
+  connect is always `tls_error`. Edge's phase-aware classifier
+  (`classify_rustls_error` in `src/retry.rs` at v0.9.17, commit
+  669c574c1d1e88e84dccb26a8159939e6694644d, issue #4536) makes one carrying a
+  typed rustls error `tls_error` only with setup-phase evidence and
+  `connection_reset` otherwise (a reqwest pool cancellation stays
+  `connection_pool_error`), as the
+  `connection_reset` and `tls_error` entries already state. Companion to Edge
+  PR #6732. No value, token or schema changes.
 - Note the unreleased Edge `security_headers` token admission (Edge PRs
   #6685 and #6705, issue #6617) in `docs/admin-contracts.md`:
   `content_type_options`, `frame_options` and `referrer_policy` strings, and
