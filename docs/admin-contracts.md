@@ -282,12 +282,37 @@ instead of emitting a placeholder. Custom tags declared on `workload_metrics`
 the global allowlist: a header or environment tag whose source is not listed in
 `safe_tag_sources` carries `[REDACTED]`, and a tag name that matches the
 sensitive-name rules is dropped. A Kubernetes RequestAuthentication that
-Ferrum refuses now makes its selected workloads answer inbound HTTP requests with `503` instead of
-being dropped. A product that generates these plugin configs should stop
+Ferrum refuses now makes its selected workloads answer inbound HTTP requests
+with `503` instead of being dropped. A product that generates these plugin configs should stop
 emitting credential-shaped log-schema names and underscore spellings of
 reserved or duplicate claim-header destinations before it targets a release
 that ships them. There are no new envelope fields or vocabulary values. The
 release refresh moves the `openapi.yaml` pin and records the Edge tag.
+
+**Edge `main`, unreleased `security_headers` token admission (Edge PRs
+[#6685](https://github.com/ferrum-edge/ferrum-edge/pull/6685) owner commit
+[`63cb25bab81c765b3a6dd243f8a0bdc722b1d68c`](https://github.com/ferrum-edge/ferrum-edge/commit/63cb25bab81c765b3a6dd243f8a0bdc722b1d68c)
+and [#6705](https://github.com/ferrum-edge/ferrum-edge/pull/6705) owner commit
+[`3e69a2d2f765f4a27d8d3aa5a1d4865f9f4c2e6a`](https://github.com/ferrum-edge/ferrum-edge/commit/3e69a2d2f765f4a27d8d3aa5a1d4865f9f4c2e6a),
+issue #6617).** No Edge release contains these changes yet; v0.9.17 and
+earlier admit any printable string. On Edge `main`, `SecurityHeadersConfig`
+publishes, and admission enforces:
+- `content_type_options`, `frame_options` and `referrer_policy` strings must be
+  `nosniff`; `DENY` or `SAMEORIGIN`; or a comma-separated list of
+  Referrer-Policy tokens (`no-referrer`, `no-referrer-when-downgrade`,
+  `origin`, `origin-when-cross-origin`, `same-origin`, `strict-origin`,
+  `strict-origin-when-cross-origin`, `unsafe-url`). Matching is ASCII
+  case-insensitive with optional surrounding spaces and tabs; `""` still
+  disables the header.
+- `set` gains `patternProperties` for `X-Content-Type-Options`,
+  `X-Frame-Options` and `Referrer-Policy` (case-insensitive names) holding
+  their values to the same tokens, with an empty value refused.
+
+A product that generates `security_headers` configs should stop emitting other
+values (for example `ALLOW-FROM`) before it targets a release that ships them.
+Catalog `config_schema` pointers are unchanged, and the `config_schema_document`
+pin stays at v0.9.17 until the release refresh. There are no new envelope
+fields or vocabulary values.
 
 ## Owner sources and artifact scope
 
