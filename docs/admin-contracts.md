@@ -273,11 +273,16 @@ below. Every `config_schema.pointer` is unchanged. On Edge `main`:
   (`X_Real_IP` is reserved, `X_Tenant_Id` duplicates `X-Tenant-Id`).
 
 The metadata allowlist itself is runtime behavior, not a schema keyword:
-transaction-log and trace metadata values are emitted only under the owner's
-exact built-in keys or names an operator lists in
-`FERRUM_LOG_SAFE_METADATA_KEYS`, and every other value is written as
-`[REDACTED]`. A Kubernetes RequestAuthentication that Ferrum refuses now makes
-its selected workloads answer inbound HTTP requests with `503` instead of
+transaction-log metadata values are emitted only under the owner's exact
+built-in keys or names an operator lists in `FERRUM_LOG_SAFE_METADATA_KEYS`,
+and every other value is written as `[REDACTED]`. Trace spans apply the same
+allowlist to gateway-set `mesh.*` attributes but omit a disallowed attribute
+instead of emitting a placeholder. Custom tags declared on `workload_metrics`
+(`custom_tags`, `custom_header_tags`, `custom_env_tags`) reach spans without
+the global allowlist: a header or environment tag whose source is not listed in
+`safe_tag_sources` carries `[REDACTED]`, and a tag name that matches the
+sensitive-name rules is dropped. A Kubernetes RequestAuthentication that
+Ferrum refuses now makes its selected workloads answer inbound HTTP requests with `503` instead of
 being dropped. A product that generates these plugin configs should stop
 emitting credential-shaped log-schema names and underscore spellings of
 reserved or duplicate claim-header destinations before it targets a release
