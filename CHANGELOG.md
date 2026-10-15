@@ -21,7 +21,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `docs/admin-contracts.md` (follow-up to #36). The `[REDACTED]` placeholder
   applies to transaction-log metadata; trace spans omit a disallowed `mesh.*`
   attribute, and `workload_metrics` custom tags reach spans without the global
-  allowlist (redacted unless their source is in `safe_tag_sources`). No
+  allowlist (header and environment tag values are redacted unless their
+  source is in `safe_tag_sources`). No
   schema, vocabulary or fixture changes.
 - Note the unreleased Edge plugin-config hard bounds (Edge PRs #6638 and
   #6640, issues #6612 and #6608, owner commits `ea18b5afa98c` and
