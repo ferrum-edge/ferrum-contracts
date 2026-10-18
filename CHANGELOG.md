@@ -17,6 +17,12 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Note the unreleased Edge association precondition in
+  `docs/admin-contracts.md` (Edge PR #6744, forge-ops issue #569):
+  `PUT`/`DELETE /plugins/config/{id}` require `expected_proxy_ids`, and a
+  referencing proxy outside the caller's expected set refuses the write
+  with `412` under the namespace admission lease. No schema, vocabulary,
+  or fixture changes.
 - Correct the `connection_refused` meaning in
   `vocabularies/gateway-errors.json`. It said a TLS handshake failure after TCP
   connect is always `tls_error`. Edge's phase-aware classifier

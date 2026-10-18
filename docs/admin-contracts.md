@@ -360,6 +360,20 @@ lists match any member, malformed/empty headers return `400`. Comparison and
 write serialize under the namespace admission lease across admin writers.
 Cached row reads and write responses carry no tag: read the accepted state again.
 
+On Edge `main` (unreleased; Edge PR #6744, forge-ops issue #569),
+`PUT`/`DELETE /plugins/config/{id}` additionally require the
+`expected_proxy_ids` query parameter: a comma-separated list of every proxy
+the caller expects to reference the configuration (present-but-empty expects
+none; absent, repeated, or malformed is `400`). A row tag cannot cover
+association rows, which live on proxies and which those writes remove, so
+the gateway compares the currently referencing proxies against the expected
+set (plus a `proxy`-scoped `PUT`'s kept target) under the same namespace
+admission lease and refuses with `412`, naming the unexpected proxies,
+instead of silently detaching one attached after the caller's read. Clients
+must send the parameter on every plugin-config update and delete once they
+target a release that ships it; earlier gateways ignore it. No schema,
+vocabulary, or fixture changes.
+
 The namespace tag instead covers one coherent snapshot of all four resource
 families, proxy/plugin associations, API-spec documents and ownership, gateway
 trust bundles, namespace registry metadata, and the durable change watermark.
