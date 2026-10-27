@@ -18,12 +18,14 @@
         "HTTP_OBSERVABILITY_ERROR_CLASSES",
         "HTTP_METRICS_GATEWAY_ERROR_CLASSES",
         "HTTP_METRICS_ERROR_CLASS_BOUND",
+        "http_observability_error_class",
         "x_gateway_error_token_for_class",
         "token_for_rejection_phase",
         "request_reached_wire",
         "error_class_log_kind",
         "classify_body_error",
         "classify_reqwest_error",
+        "classify_stream_setup_kind",
         "is_backend_h2_reset"
       ]
     },
@@ -37,9 +39,20 @@
         "HTTP observability vocabulary (X-Gateway-Error)",
         "Header tokens (X-Gateway-Error)",
         "Granular class to header token",
-        "Response body-read failures"
+        "Response body-read failures",
+        "Client-abort terminal"
       ],
-      "note": "v0.9.17 adds loop_detected for the pre-routing proxy_hop_limit HTTP 508 fence; proxy_hops_invalid and route_protocol_admission map to no token. The closed header vocabulary has nine tokens, the reserved HTTP metrics vocabulary 25 labels, and ErrorClass 19 values. The hop fence emits status counters and bounded warnings, not a transaction summary or loop_detected metric row. Timeout descriptions clarify existing behavior: the backend handoff is marked immediately before send(), including connection setup, rather than after remote acceptance. Re-read at v0.9.19: the same nine tokens, 19 ErrorClass values and 25 reserved HTTP metric labels remain; no token-mapped phase is added."
+      "note": "v0.9.17 adds loop_detected for the pre-routing proxy_hop_limit HTTP 508 fence; proxy_hops_invalid and route_protocol_admission map to no token. The closed header vocabulary has nine tokens, the reserved HTTP metrics vocabulary 25 labels, and ErrorClass 19 values. The hop fence emits status counters and bounded warnings, not a transaction summary or loop_detected metric row. Timeout descriptions clarify existing behavior: the backend handoff is marked immediately before send(), including connection setup, rather than after remote acceptance. Re-read at v0.9.19: the same nine tokens, 19 ErrorClass values and 25 reserved HTTP metric labels remain; no token-mapped phase is added. Transcribed connection_failure statuses widen from 502 to 502/504/503: connect timeouts answer 504 (Edge #6770), and pooled-transport DestinationRule maxConnections refusals answer 503 (Edge #6771), retaining their pre-wire class and token. The TLS meaning also includes typed setup errors without an underlying rustls source."
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.19",
+      "commit": "510ce7121c3d9754110d330a30a3bd9b7a7b278e",
+      "path": "src/proxy/mod.rs",
+      "symbols": [
+        "http_backend_failure_status_and_body"
+      ],
+      "note": "Transcribed HTTP-family dispatch-failure status mapping: ConnectionTimeout and ReadWriteTimeout answer 504 (Edge #6770), BackendConnectionLimit answers 503 (Edge #6771), and other classes answer 502. src/retry.rs retains connection_failure for pre-wire classes regardless of status."
     }
   ],
   "header": "X-Gateway-Error",
@@ -69,7 +82,7 @@
       "request_reached_wire": false,
       "log_kind": "connect_timeout",
       "x_gateway_error": "connection_failure",
-      "meaning": "TCP connect did not complete before the configured timeout."
+      "meaning": "TCP connect did not complete before the configured timeout. Pre-wire HTTP connect timeouts answer 504 with connection_failure (Edge #6770 at v0.9.19), preserving connect-retry and target-rotation behavior. An established QUIC connection timing out while waiting on the backend also answers 504, but the dispatch records connection_error=false, so backend_timeout and status/method retry rules apply."
     },
     {
       "value": "connection_refused",
@@ -109,7 +122,7 @@
       "request_reached_wire": false,
       "log_kind": "tls_error",
       "x_gateway_error": "connection_failure",
-      "meaning": "TLS or DTLS handshake failed with a typed rustls error in the chain while the gateway independently knew it was still setting up. A missing close_notify is teardown, not this class."
+      "meaning": "TLS or DTLS handshake failed with independently established setup-phase evidence: a caller observing a typed rustls error while it knows it is dialing or handshaking, or a typed setup error such as StreamSetupKind::BackendDtlsHandshake even without an underlying source. Without setup-phase evidence a typed rustls error is connection_reset. A missing close_notify is teardown, not this class."
     },
     {
       "value": "read_write_timeout",
@@ -125,7 +138,7 @@
       "request_reached_wire": true,
       "log_kind": "client_disconnect",
       "x_gateway_error": "backend_error",
-      "meaning": "The client gave up before the gateway could complete the response.",
+      "meaning": "A client-side, backend-health-neutral terminal: client departure, malformed or stalled upload, client RPC deadline, or authorization expiry. This class alone does not prove client departure. Only a typed proven client abort justifies the 499 log/metric terminal (native gRPC CANCELLED under HTTP 200); other terminals retain their own statuses. After response headers are committed, the committed HTTP status stands.",
       "x_gateway_error_note": "Only when the public status is 5xx."
     },
     {
@@ -208,7 +221,7 @@
       "request_reached_wire": false,
       "log_kind": "backend_connection_limit",
       "x_gateway_error": "connection_failure",
-      "meaning": "The gateway refused to open a new backend connection because the destination is at its DestinationRule connectionPool.tcp.maxConnections ceiling. Pre-wire and neutral to backend health."
+      "meaning": "The gateway refused to open a new backend connection because the destination is at its DestinationRule connectionPool.tcp.maxConnections ceiling. HTTP-family terminal refusals answer 503 (Edge #6771 at v0.9.19); pooled transports retain connection_failure. Native gRPC uses UNAVAILABLE under HTTP 200. The reqwest/HTTP-1.1 and WebSocket lanes also answer 503 but use DispatchPolicyRejected because they do not rotate. Pre-wire and neutral to backend health."
     },
     {
       "value": "trust_withdrawn",
@@ -231,11 +244,13 @@
     {
       "token": "connection_failure",
       "http_statuses": [
-        "502"
+        "502",
+        "504",
+        "503"
       ],
       "metric_label_without_error_class": false,
       "rejection_phases": [],
-      "meaning": "Pre-wire connect, DNS or TLS failure: the gateway could not set up a connection to the backend. Also the token for every ErrorClass whose request_reached_wire is false."
+      "meaning": "Pre-wire connect-refused, DNS, TLS or pool failure (502), connect timeout (504; Edge #6770), or a pooled-transport (direct H2, native H3, HBONE, sidecar mTLS) DestinationRule maxConnections refusal before dialing (503; Edge #6771). Also the token for every ErrorClass whose request_reached_wire is false."
     },
     {
       "token": "backend_timeout",

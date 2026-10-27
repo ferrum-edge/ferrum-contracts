@@ -67,7 +67,18 @@ products' recorded provenance. No canonical schema needs a new major.
   records `openapi_validator` as proxy-scoped.
 - **Gateway errors.** The 19 `ErrorClass` values, nine header tokens, 25
   reserved HTTP metric labels and token-mapped rejection phases remain the
-  same. Retain the corrected `connection_refused` prose: a typed rustls
+  same. Widen `connection_failure.http_statuses` from 502 to 502/504/503:
+  connect timeouts answer 504 (Edge #6770), and pooled-transport DestinationRule
+  `maxConnections` refusals before dialing answer 503 (Edge #6771), with the
+  same pre-wire class and `connection_failure` token. The related
+  `connection_timeout` and `backend_connection_limit` meanings follow the
+  tagged `docs/error_classification.md` and the status mapper in
+  `src/proxy/mod.rs`; `src/retry.rs` retains the class-to-token mapping.
+  Every vocabulary `http_statuses` and `meaning` field was re-checked against
+  the tag and the owner diffs from `v0.9.17`. Clarify that `tls_error` also
+  accepts typed setup errors without an underlying rustls source, and
+  `client_disconnect` alone does not prove departure or justify a 499.
+  Retain the corrected `connection_refused` prose: a typed rustls
   handshake error is `tls_error` only with setup-phase evidence and otherwise
   `connection_reset`; a reqwest pool cancellation remains
   `connection_pool_error`. The timeout handoff and hop-limit semantics remain

@@ -6,6 +6,11 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Changed
+
+- Correct the Edge `v0.9.19` gateway-error status and meaning transcription
+  from the tagged owner sources, as detailed in the release entry below.
+
 ## [contracts-edge-0.9.19] - 2026-10-27
 
 Contracts for published Ferrum Edge `v0.9.19`
@@ -56,6 +61,16 @@ because ARM64 fat-LTO compilation exhausted host memory; there is no
   handshake error maps to `tls_error` only with setup-phase evidence and to
   `connection_reset` otherwise; a reqwest pool cancellation stays
   `connection_pool_error`. No class, token or schema rule changes.
+- Widen `connection_failure.http_statuses` from 502 to 502/504/503: connect
+  timeouts answer 504 (Edge #6770), and pooled-transport DestinationRule
+  `maxConnections` refusals answer 503 (Edge #6771). Refresh the related
+  `connection_timeout` and `backend_connection_limit` meanings and record the
+  tagged status mapper. Clarify that `tls_error` also covers typed setup
+  errors without an underlying rustls source and `client_disconnect` alone
+  does not prove departure or justify a 499. All vocabulary `http_statuses`
+  and `meaning` fields were re-checked against `v0.9.19` and the owner diffs
+  from `v0.9.17`; these corrections require no schema change and preserve
+  historical fixture bytes.
 - Update adoption, ownership, versioning and release guidance while preserving
   other owners' availability and the independently recorded consumer pins.
 
