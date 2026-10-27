@@ -6,11 +6,6 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
-### Changed
-
-- Correct the Edge `v0.9.19` gateway-error status and meaning transcription
-  from the tagged owner sources, as detailed in the release entry below.
-
 ## [contracts-edge-0.9.19] - 2026-10-27
 
 Contracts for published Ferrum Edge `v0.9.19`

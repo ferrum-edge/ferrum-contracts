@@ -52,7 +52,7 @@
       "symbols": [
         "http_backend_failure_status_and_body"
       ],
-      "note": "Transcribed HTTP-family dispatch-failure status mapping: ConnectionTimeout and ReadWriteTimeout answer 504 (Edge #6770), BackendConnectionLimit answers 503 (Edge #6771), and other classes answer 502. src/retry.rs retains connection_failure for pre-wire classes regardless of status."
+      "note": "Transcribed HTTP-family dispatch-failure status mapping: ReadWriteTimeout answers 504; ConnectionTimeout also answers 504 (Edge #6770); BackendConnectionLimit answers 503 (Edge #6771); other classes answer 502. src/retry.rs retains connection_failure for pre-wire classes regardless of status."
     }
   ],
   "header": "X-Gateway-Error",
