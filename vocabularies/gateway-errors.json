@@ -39,7 +39,7 @@
         "Granular class to header token",
         "Response body-read failures"
       ],
-      "note": "v0.9.17 adds loop_detected for the pre-routing proxy_hop_limit HTTP 508 fence; proxy_hops_invalid and route_protocol_admission map to no token. The closed header vocabulary has nine tokens, the reserved HTTP metrics vocabulary 25 labels, and ErrorClass 19 values. The hop fence emits status counters and bounded warnings, not a transaction summary or loop_detected metric row. Timeout descriptions clarify existing behavior: the backend handoff is marked immediately before send(), including connection setup, rather than after remote acceptance. Re-read at v0.9.19: the same nine tokens, 19 ErrorClass values and 25 reserved HTTP metric labels remain; no token or phase mapping is added."
+      "note": "v0.9.17 adds loop_detected for the pre-routing proxy_hop_limit HTTP 508 fence; proxy_hops_invalid and route_protocol_admission map to no token. The closed header vocabulary has nine tokens, the reserved HTTP metrics vocabulary 25 labels, and ErrorClass 19 values. The hop fence emits status counters and bounded warnings, not a transaction summary or loop_detected metric row. Timeout descriptions clarify existing behavior: the backend handoff is marked immediately before send(), including connection setup, rather than after remote acceptance. Re-read at v0.9.19: the same nine tokens, 19 ErrorClass values and 25 reserved HTTP metric labels remain; no token-mapped phase is added."
     }
   ],
   "header": "X-Gateway-Error",

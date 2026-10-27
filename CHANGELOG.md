@@ -22,6 +22,11 @@ because ARM64 fat-LTO compilation exhausted host memory; there is no
   caller identity headers on `mesh_authz` CUSTOM provider checks.
 - Owner-derived header and plugin metadata fixtures, each with an invalid
   counterpart changing exactly one availability or failure-policy field.
+- Owner-derived diagnostic fixtures for the new raw rejection-phase labels
+  `query_trigger_admission` (matched-proxy HTTP 400 before plugin hooks) and
+  `gateway_closed_h3_upload` (gateway-closed HTTP/3 upload, HTTP 503). Each
+  invalid counterpart changes only `detail.rejection_phase` from null to the
+  raw label, which has no token mapping.
 - Final release record with source paths, OpenAPI hash, unchanged wire
   contracts and consumer adoption requirements.
 
@@ -31,8 +36,9 @@ because ARM64 fat-LTO compilation exhausted host memory; there is no
   schema provenance from `v0.9.19`. Pin `openapi.yaml` to SHA-256
   `610e2645961e7a5deca73468439be9c4a5b7070045099506c212a0a36b045e90`.
   Keep diagnostic-ref v1 byte for byte under the existing consumer freeze:
-  its fields, patterns, nine gateway tokens and open raw phase labels match
-  the owner tag. Earlier majors and historical fixtures retain their pins.
+  its fields, patterns, nine gateway tokens and open raw phase field match
+  the owner tag; the new raw labels get fixtures. Earlier majors and historical
+  fixtures retain their pins.
 - Transcribe current plugin registration/parity metadata: `stdout_logging`
   uses `keep_last_known_good`, `ai_token_metrics` priority is 4070,
   `request_transformer` supports WebSocket handshake headers/query, and

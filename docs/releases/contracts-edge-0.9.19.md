@@ -88,7 +88,15 @@ products' recorded provenance. No canonical schema needs a new major.
   of completeness or consumer DTO acceptance.
 - **Diagnostic-ref freeze.** The tagged OpenAPI and `src/diagnostic_ref.rs`
   retain the existing v1 fields, reference/replica patterns, nine gateway
-  tokens, mapped phases and open raw rejection-phase labels. Following
+  tokens, mapped phases and open raw rejection-phase field. The new raw labels
+  `query_trigger_admission` and `gateway_closed_h3_upload` each gain a valid
+  fixture and a single-field invalid counterpart: they belong in
+  `detail.rejection.phase`, while `detail.rejection_phase` remains null because
+  `src/retry.rs` maps neither label to a token. The query-trigger gate refuses
+  an unencoded `;` on a matched chain with a query-reading execution trigger
+  before plugin hooks run (HTTP 400; native gRPC trailers-only
+  `INVALID_ARGUMENT`). A gateway-closed H3 upload records HTTP 503 (native
+  gRPC `UNAVAILABLE`), with no client-disconnect error class. Following
   `docs/release-process.md`, preserve canonical v1 byte for byte, including
   its historical provenance. Its SHA-256 is
   `11508c19f571b57be7e755b5f17409ebc73cd270debd015d1a4ea49a37950520`.
@@ -141,6 +149,9 @@ All Edge paths in this section are at
 `510ce7121c3d9754110d330a30a3bd9b7a7b278e`:
 
 - Errors: `src/retry.rs`, `docs/error_classification.md`.
+- Diagnostic phases: `src/diagnostic_ref.rs`, `src/proxy/mod.rs`,
+  `src/proxy/client_abort.rs`, `src/http3/server.rs`, `docs/plugins.md`,
+  `openapi.yaml` (`GET /diagnostics/v1/refs/{ref}` `plugin_rejection` example).
 - Headers: `src/proxy/headers.rs`, `src/proxy/mod.rs`, `src/plugins/mod.rs`,
   `src/plugins/mesh/spiffe_identity.rs`, `src/plugins/mesh/ext_authz.rs`,
   `docs/plugins.md`, `docs/mesh.md`, `docs/plugin_execution_order.md`, the admin
@@ -161,13 +172,17 @@ All Edge paths in this section are at
   `src/admin/crud/scoped_references.rs`, `docs/admin_api.md`, `docs/plugins.md`,
   `docs/upgrade_guide.md`, `openapi.yaml`.
 
-New fixtures copy the five mesh identity entries and four representative
-changed plugin entries from the refreshed vocabularies. Each invalid fixture
-changes exactly one field: availability loses its `v` prefix, or failure
-policy becomes an unknown value. `fixtures/README.md` records the source and
-`fixtures/invalid-expectations.json` records the required instance path and
-keyword. Prior fixtures, earlier schema majors, other owners' availability and
-recorded consumer pin snapshots retain their original bytes and identities.
+New vocabulary fixtures copy the five mesh identity entries and four
+representative changed plugin entries from the refreshed vocabularies. Their
+invalid counterparts change exactly one field: availability loses its `v`
+prefix, or failure policy becomes an unknown value. Diagnostic fixtures
+transcribe the owner's OpenAPI example with the tagged query-trigger and
+gateway-closed H3 upload emission fields; each invalid counterpart changes
+only `detail.rejection_phase` to its unmapped raw label. `fixtures/README.md`
+records the source and `fixtures/invalid-expectations.json` records the required
+instance path and keyword. Prior fixtures, earlier schema majors, other owners'
+availability and recorded consumer pin snapshots retain their original bytes
+and identities.
 
 ## Validation and adoption
 

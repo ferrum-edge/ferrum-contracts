@@ -83,10 +83,12 @@ identity headers are sent to the authorization provider and do not imply
 backend forwarding. `stdout_logging` reloads retain the last known good
 configuration, `ai_token_metrics` runs at priority 4070, and protocol/lifecycle
 metadata follows the owner catalog. The diagnostic-ref schema is byte-identical
-to 0.9.17; all existing wire majors remain in place. Edge 0.9.18 has no published
-release and no Contracts mapping. Each consumer still needs its own
-pin/copy/checksum change and qualification; the dated consumer snapshots above
-are unchanged.
+to 0.9.17; fixtures cover the new raw `query_trigger_admission` and
+`gateway_closed_h3_upload` labels in open `detail.rejection.phase`, with null
+token-mapped `detail.rejection_phase`. All existing wire majors remain in place.
+Edge 0.9.18 has no published release and no Contracts mapping. Each consumer
+still needs its own pin/copy/checksum change and qualification; the dated
+consumer snapshots above are unchanged.
 
 ### contracts-edge-0.9.17 hop budget and bounded authorization
 

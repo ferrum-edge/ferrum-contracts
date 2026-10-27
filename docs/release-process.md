@@ -89,9 +89,11 @@ conditionals; do not refresh only their pins. OpenAPI SHA-256 is
 `610e2645961e7a5deca73468439be9c4a5b7070045099506c212a0a36b045e90`.
 Every prior Edge-main note in admin-contracts now ships at this tag, including
 plugin association preconditions. Diagnostic-ref v1 is re-checked against the
-tag but retains its bytes because its wire contract did not change. Current
-backup, egress and deployment schema provenance is refreshed; earlier majors,
-historical fixtures, other owners and recorded consumer pins retain their
+tag but retains its bytes because its wire contract did not change. The new
+raw `query_trigger_admission` and `gateway_closed_h3_upload` labels each get
+valid and single-field invalid fixtures; neither adds a token-mapped phase.
+Current backup, egress and deployment schema provenance is refreshed; earlier
+majors, historical fixtures, other owners and recorded consumer pins retain their
 source identities.
 
 For this refresh, run `python3 -I ci/validate.py` and `git diff --check`, plus

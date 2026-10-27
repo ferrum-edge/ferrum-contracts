@@ -378,6 +378,11 @@
     "instance_path": "/detail",
     "keyword": "required"
   },
+  "diagnostic-ref/invalid/gateway-closed-h3-upload-as-detail-phase.json": {
+    "instance_path": "/detail/rejection_phase",
+    "keyword": "enum",
+    "top_keyword": "oneOf"
+  },
   "diagnostic-ref/invalid/granular-class-as-token.json": {
     "instance_path": "/gateway_error",
     "keyword": "enum"
@@ -392,6 +397,11 @@
     "top_keyword": "oneOf"
   },
   "diagnostic-ref/invalid/proxy-hops-invalid-as-detail-phase.json": {
+    "instance_path": "/detail/rejection_phase",
+    "keyword": "enum",
+    "top_keyword": "oneOf"
+  },
+  "diagnostic-ref/invalid/query-trigger-admission-as-detail-phase.json": {
     "instance_path": "/detail/rejection_phase",
     "keyword": "enum",
     "top_keyword": "oneOf"

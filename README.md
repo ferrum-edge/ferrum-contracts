@@ -46,8 +46,10 @@ published Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e`.
 It refreshes all five vocabularies, the plugin OpenAPI hash and current admin
 schema provenance. New mesh identity assertions and the current registration,
 priority, protocol and lifecycle metadata are transcribed from that owner tag.
-Previously documented plugin admission changes now ship there. Existing schema
-majors, frozen diagnostic-ref v1 bytes, historical fixtures, other-owner
+Previously documented plugin admission changes now ship there. New diagnostic
+fixtures cover the raw `query_trigger_admission` and `gateway_closed_h3_upload`
+labels without changing the frozen schema. Existing schema majors,
+frozen diagnostic-ref v1 bytes, historical fixtures, other-owner
 availability and recorded consumer pins are retained. Edge `v0.9.18` was tagged
 but never published, so there is no `contracts-edge-0.9.18`.
 

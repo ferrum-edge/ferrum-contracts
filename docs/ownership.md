@@ -130,6 +130,8 @@ vocabularies and admin schema sources at published `v0.9.19`,
 `510ce7121c3d9754110d330a30a3bd9b7a7b278e`. Mesh identity assertions and plugin
 registration/parity metadata come directly from the tag. Diagnostic-ref v1 is
 verified there but retains its frozen bytes and introduction/source history.
+The new raw `query_trigger_admission` and `gateway_closed_h3_upload` labels
+gain fixtures under the existing open rejection-phase field.
 Earlier majors and other owners retain their provenance. Edge `v0.9.18` was
 never published and has no matching Contracts release.
 

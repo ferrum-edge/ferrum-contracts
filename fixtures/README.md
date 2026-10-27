@@ -95,8 +95,8 @@ fixtures retain their original bytes and provenance.
 
 ## Edge v0.9.19 refresh fixtures
 
-The four new fixtures below copy vocabulary metadata transcribed from
-`ferrum-edge/ferrum-edge` tag `v0.9.19`, full commit
+The eight new fixtures below transcribe vocabulary metadata and diagnostic
+emission fields from `ferrum-edge/ferrum-edge` tag `v0.9.19`, full commit
 `510ce7121c3d9754110d330a30a3bd9b7a7b278e`. Historical fixture bytes retain their
 original source identity.
 
@@ -104,14 +104,23 @@ original source identity.
 |---|---|
 | `vocabulary-gateway-headers/valid/mesh-identity-assertions.json` | Current vocabulary metadata plus the five new mesh assertion entries; names and behavior come from `src/plugins/mesh/spiffe_identity.rs` (`FORWARDED_IDENTITY_HEADER`, `before_proxy`), `src/plugins/mesh/ext_authz.rs` (the four `*_CHECK_HEADER` constants and `stamp_identity_check_headers`), `src/proxy/headers.rs` (folded trailer boundary), `openapi.yaml` (`SpiffeIdentityConfig`), `docs/plugins.md` and `docs/mesh.md`, all at the full owner commit above. |
 | `vocabulary-plugin-catalog/valid/edge-0.9.19-metadata.json` | Current vocabulary metadata and the `stdout_logging`, `request_transformer`, `ai_token_metrics` and `ws_frame_logging` entries, copied. Failure policy is from `src/plugins/mod.rs` `BUILTIN_PLUGIN_REGISTRATIONS`; priority/phases/protocols/rationale are from `src/plugins/builtin_parity.rs`; config references are from `openapi.yaml` `PluginConfigBase`, all at the full owner commit above. |
+| `diagnostic-ref/valid/query-trigger-admission.json` | Transcription of the tagged `openapi.yaml` `GET /diagnostics/v1/refs/{ref}` `plugin_rejection` example, with `protocol: http1`, `status: 400`, null `detail.backend_target`, and gateway `detail.rejection.phase: query_trigger_admission`. `src/proxy/mod.rs`'s `QUERY_TRIGGER_ADMISSION_PHASE` emission uses `log_pre_backend_rejected_request`, omitting the backend target; `docs/plugins.md`'s terminal-logging table gives the matched-proxy 400 refusal before plugin hooks for an unencoded `;` with a query-reading execution trigger. `src/http3/server.rs` emits the same phase for H3. `src/diagnostic_ref.rs` `DiagnosticRejection::new` supplies `source: gateway`; `src/retry.rs` `token_for_rejection_phase` leaves `detail.rejection_phase` null. All sources are at the full owner commit above. |
+| `diagnostic-ref/valid/gateway-closed-h3-upload.json` | Transcription of the same tagged OpenAPI example, with `protocol: http3`, `status: 503`, and gateway `detail.rejection.phase: gateway_closed_h3_upload`. `src/http3/server.rs` `boxed_finalize_h3_upload_read_failure` selects `src/proxy/client_abort.rs` `GATEWAY_CLOSED_UPLOAD_TERMINAL` for a gateway-closed stream, then calls `finalize_h3_terminal_body_rejection_with_headers` with `client_disconnected=false`. Its `log_rejected_request_with_path` call retains the illustrative configured backend target, leaves the error class null and records no backend dispatch. `src/diagnostic_ref.rs` admits the raw gateway phase; `src/retry.rs` maps it to no token. All sources are at the full owner commit above. |
 
 The corresponding invalid fixtures each change exactly one field; their
 instance paths and keywords are in `invalid-expectations.json`.
+The owner has no JSON examples for these two raw phases, so the diagnostic
+fixtures transcribe the emission branches above. Reference, namespace, proxy,
+timestamps, duration bucket and the H3 fixture's configured backend origin are
+illustrative values retained from the tagged OpenAPI example, not captured
+traffic. Both fixtures represent `all`-mode references with no gateway token.
 
 ## Invalid fixtures
 
 | Fixture | Why it must fail |
 |---|---|
+| `diagnostic-ref/invalid/query-trigger-admission-as-detail-phase.json` | From `valid/query-trigger-admission.json`: change only `/detail/rejection_phase` from null to `query_trigger_admission`; the raw label has no token mapping, so the closed `enum` rejects it with top-level `oneOf`. |
+| `diagnostic-ref/invalid/gateway-closed-h3-upload-as-detail-phase.json` | From `valid/gateway-closed-h3-upload.json`: change only `/detail/rejection_phase` from null to `gateway_closed_h3_upload`; the raw label has no token mapping, so the closed `enum` rejects it with top-level `oneOf`. |
 | `vocabulary-gateway-headers/invalid/mesh-identity-availability-without-v.json` | From `valid/mesh-identity-assertions.json`: change only `/headers/0/availability` from `v0.9.19` to `0.9.19`; `pattern` requires an Edge tag. |
 | `vocabulary-plugin-catalog/invalid/edge-0.9.19-unknown-failure-policy.json` | From `valid/edge-0.9.19-metadata.json`: change only `/plugins/0/failure_policy` from `keep_last_known_good` to `fail_open`; `enum` rejects the unknown policy. |
 | `diagnostic-ref/invalid/proxy-hop-limit-as-detail-phase.json`, `proxy-hops-invalid-as-detail-phase.json`, `client-disconnect-upload-as-detail-phase.json` | From each same-named valid response, change only detail.rejection_phase from null to its raw label. The closed token-mapped enum rejects it at /detail/rejection_phase; the top-level failure is oneOf. |
