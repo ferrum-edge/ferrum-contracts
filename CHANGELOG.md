@@ -6,110 +6,75 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
-### Security
+## [contracts-edge-0.9.19] - 2026-10-27
 
-- `ci/validate.py --fetch-openapi` no longer buffers an unbounded response
-  before the sha256 check (#29). The download refuses redirects, refuses a
-  declared `Content-Length` over 32 MiB, and reads in chunks that stop as soon
-  as the body passes 32 MiB. `--openapi PATH` applies the same cap. Loopback
-  tests in `ci/test_validate.py` run in the `Validate contracts` workflow. No
-  schema, vocabulary or fixture changes.
+Contracts for published Ferrum Edge `v0.9.19`
+(`510ce7121c3d9754110d330a30a3bd9b7a7b278e`). See the
+[release record](docs/releases/contracts-edge-0.9.19.md). Edge `v0.9.18` at
+`57966eb9d047378ef6ebf8aa97c94ebf96a38fa6` was tagged but never published
+because ARM64 fat-LTO compilation exhausted host memory; there is no
+`contracts-edge-0.9.18`. Edge `v0.9.19` carries those changes forward once.
+
+### Added
+
+- Gateway header entries for `spiffe_identity`'s opt-in
+  `x-ferrum-peer-spiffe-id` backend assertion and the four gateway-asserted
+  caller identity headers on `mesh_authz` CUSTOM provider checks.
+- Owner-derived header and plugin metadata fixtures, each with an invalid
+  counterpart changing exactly one availability or failure-policy field.
+- Owner-derived diagnostic fixtures for the new raw rejection-phase labels
+  `query_trigger_admission` (matched-proxy HTTP 400 before plugin hooks) and
+  `gateway_closed_h3_upload` (gateway-closed HTTP/3 upload, HTTP 503). Each
+  invalid counterpart changes only `detail.rejection_phase` from null to the
+  raw label, which has no token mapping.
+- Final release record with source paths, OpenAPI hash, unchanged wire
+  contracts and consumer adoption requirements.
 
 ### Changed
 
-- Note the unreleased Edge association precondition in
-  `docs/admin-contracts.md` (Edge PR #6744, forge-ops issue #569):
-  `PUT`/`DELETE /plugins/config/{id}` require `expected_proxy_ids`, and a
-  referencing proxy outside the caller's expected set refuses the write
-  with `412` under the namespace admission lease. No schema, vocabulary,
-  or fixture changes.
-- Correct the `connection_refused` meaning in
-  `vocabularies/gateway-errors.json`. It said a TLS handshake failure after TCP
-  connect is always `tls_error`. Edge's phase-aware classifier
-  (`classify_rustls_error` in `src/retry.rs` at v0.9.17, commit
-  669c574c1d1e88e84dccb26a8159939e6694644d, issue #4536) makes one carrying a
-  typed rustls error `tls_error` only with setup-phase evidence and
-  `connection_reset` otherwise (a reqwest pool cancellation stays
-  `connection_pool_error`), as the
-  `connection_reset` and `tls_error` entries already state. Companion to Edge
-  PR #6732. No value, token or schema changes.
-- Note the unreleased Edge `security_headers` token admission (Edge PRs
-  #6685 and #6705, issue #6617) in `docs/admin-contracts.md`:
-  `content_type_options`, `frame_options` and `referrer_policy` strings, and
-  `set` entries for the same three headers, must be values browsers
-  recognize. `SecurityHeadersConfig.set` gains `patternProperties`. No
-  vocabulary or fixture changes. Marked unreleased until an Edge release ships
-  it.
-- Correct the unreleased Edge metadata-allowlist note in
-  `docs/admin-contracts.md` (follow-up to #36). The `[REDACTED]` placeholder
-  applies to transaction-log metadata; trace spans omit a disallowed `mesh.*`
-  attribute, and `workload_metrics` custom tags reach spans without the global
-  allowlist (header and environment tag values are redacted unless their
-  source is in `safe_tag_sources`). No schema, vocabulary or fixture
-  changes.
-- Note the unreleased Edge plugin-config hard bounds (Edge PRs #6638 and
-  #6640, issues #6612 and #6608, owner commits `ea18b5afa98c` and
-  `fab77df06959`) in `docs/admin-contracts.md`. They cover
-  `response_caching` `max_entries`, `openapi_validator` `max_body_bytes`,
-  `body_validator` `grpc_max_decompressed_size_bytes` (and its clamped
-  inherited default), the
-  `ai_prompt_shield` and `ai_response_guard` `max_scan_bytes` and
-  custom-pattern list sizes, unique built-in pattern lists (at most 8), and the
-  `ai_response_guard` pattern-name,
-  empty-match and rendered-placeholder bounds. No schema, vocabulary or
-  fixture changes. Marked unreleased until an Edge release ships them.
-- Note the unreleased Edge default-deny admission of gateway material
-  references (Edge PR #6316, issue #6092, owner commit `d5417cd72312`) in
-  `docs/admin-contracts.md`. A present `ns` claim confines an `operator`'s new backend TLS and TLS-material plugin
-  references to inline PEM, `system://` and same-namespace `k8s://` Secrets,
-  and refuses plugin filesystem paths, native library settings and new or
-  changed custom-plugin `plugin_name`/`config`, even with `FERRUM_ADMIN_REQUIRE_NAMESPACE_CLAIM=false`. No schema,
-  vocabulary or fixture changes. Marked unreleased until an Edge release
-  ships it.
-- Note the unreleased Edge refusal of `kafka_logging` `producer_config`
-  native-loader, command and gateway-file keys for every token unless
-  `FERRUM_KAFKA_ALLOW_NATIVE_CONFIG=true` (Edge PR #6551, issue #6539, owner
-  commit `803d0f972383`) in
-  `docs/admin-contracts.md`. No schema, vocabulary or fixture changes.
-  Marked unreleased until an Edge release ships it.
-- Note the unreleased Edge plugin-config admission changes behind the pinned
-  `openapi.yaml` components (Edge PRs #6635, #6637 and #6645; issues #6607,
-  #6610, #6620 and #6609) in `docs/admin-contracts.md`: `access_control`
-  refuses an explicitly empty `allowed_consumers`/`allowed_groups`,
-  `ip_restriction` `mode` is deprecated and decision-neutral, `claim_headers`
-  takes the `output_claim_headers` bounds on `jwks_auth`,
-  `oauth2_introspection` and `oidc_relying_party`, and `ldap_auth` gains
-  `group_cache_ttl_seconds`. Catalog pointers are unchanged; the
-  `config_schema_document` pin stays at Edge `v0.9.17` until a release
-  refresh. No schema, vocabulary or fixture changes. Marked unreleased until
-  an Edge release ships it.
-- Correct that note: the pinned `v0.9.17` schema rejects `ldap_auth`
-  `group_cache_ttl_seconds` rather than admitting it, and record the owner
-  commits for Edge #6635 (`6f78ca1868d8`), #6645 (`7e5225af4d2b`) and #6637
-  (`fed841c6cbcb`), which reached Edge `main` after the note was written.
+- Refresh all five Edge vocabularies and current backup, egress and deployment
+  schema provenance from `v0.9.19`. Pin `openapi.yaml` to SHA-256
+  `610e2645961e7a5deca73468439be9c4a5b7070045099506c212a0a36b045e90`.
+  Keep diagnostic-ref v1 byte for byte under the existing consumer freeze:
+  its fields, patterns, nine gateway tokens and open raw phase field match
+  the owner tag; the new raw labels get fixtures. Earlier majors and historical
+  fixtures retain their pins.
+- Transcribe current plugin registration/parity metadata: `stdout_logging`
+  uses `keep_last_known_good`, `ai_token_metrics` priority is 4070,
+  `request_transformer` supports WebSocket handshake headers/query, and
+  lifecycle hooks and rationales follow the owner. Record the
+  `openapi_validator` proxy scope from `PluginConfigBase`. All 82 registered names,
+  removed names and per-plugin configuration pointers remain the same.
+- Record the shipping plugin association precondition (`expected_proxy_ids`,
+  Edge #6744), scoped gateway-material admission (#6316), Kafka native-key
+  refusal (#6551), plugin admission and hardening (#6631, #6634, #6635,
+  #6637, #6638, #6639, #6640, #6644, #6645), telemetry/mirror/claim-header
+  rules (#6654, #6667, #6668) and security-header token admission (#6685,
+  #6705). The pinned OpenAPI now carries these rules and the later
+  production-launch plugin changes, including multi-location `key_auth`.
+- Retain the `connection_refused` wording correction (#6732): a typed rustls
+  handshake error maps to `tls_error` only with setup-phase evidence and to
+  `connection_reset` otherwise; a reqwest pool cancellation stays
+  `connection_pool_error`. No class, token or schema rule changes.
+- Widen `connection_failure.http_statuses` from 502 to 502/504/503: connect
+  timeouts answer 504 (Edge #6770), and pooled-transport DestinationRule
+  `maxConnections` refusals answer 503 (Edge #6771). Refresh the related
+  `connection_timeout` and `backend_connection_limit` meanings and record the
+  tagged status mapper. Clarify that `tls_error` also covers typed setup
+  errors without an underlying rustls source and `client_disconnect` alone
+  does not prove departure or justify a 499. All vocabulary `http_statuses`
+  and `meaning` fields were re-checked against `v0.9.19` and the owner diffs
+  from `v0.9.17`; these corrections require no schema change and preserve
+  historical fixture bytes.
+- Update adoption, ownership, versioning and release guidance while preserving
+  other owners' availability and the independently recorded consumer pins.
 
-- Note the unreleased Edge plugin-config hardening behind the pinned
-  `openapi.yaml` components (Edge PRs #6631, #6634, #6639 and #6644) in
-  `docs/admin-contracts.md`: `openapi_validator` `bypass.header_present`
-  values must be 16–4096-character visible-ASCII secrets, the
-  `request_mirror` query allowlist item pattern tightens, `jwks_auth`
-  `providers` gains `maxItems: 64` plus a per-issuer bound of 8, and the
-  `cors` credential interlock widens for public-suffix wildcards and
-  unprovable regexes. No schema, vocabulary or fixture changes. Marked
-  unreleased until an Edge release ships it.
-- Note the unreleased Edge telemetry redaction, mirror provenance and
-  claim-header changes behind the pinned `openapi.yaml` components (Edge PRs
-  #6654, #6667 and #6668; issues #6619, #6658 and #6656; owner commits
-  `6535d61c58bd`, `4fa865c3bae0` and `1aeb94815087`) in
-  `docs/admin-contracts.md`: `TransactionDebuggerConfig` gains
-  `safe_text_fields`, `WorkloadMetricsConfig` gains `safe_tag_sources`,
-  log-schema output names refuse credential-class names, `request_mirror`
-  keeps credential provenance through renames, `mcp_gateway` session headers
-  are credential headers, and `output_claim_headers` / `claim_headers`
-  compare destinations with `_` treated as `-`. Catalog pointers are
-  unchanged; the `config_schema_document` pin stays at Edge `v0.9.17` until a
-  release refresh. No schema, vocabulary or fixture changes. Marked
-  unreleased until an Edge release ships them.
+### Security
+
+- Bound `ci/validate.py --fetch-openapi` downloads to 32 MiB (#29), refuse
+  redirects and oversized declared lengths, and apply the same cap to
+  `--openapi PATH`. Loopback tests run in `Validate contracts`; the release
+  refresh adds no validator, workflow or dependency exception.
 
 ## [contracts-edge-0.9.17] - 2026-10-10
 

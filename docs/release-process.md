@@ -73,6 +73,36 @@ Do not open a cleanup PR after each release to rewrite a release record or
 changelog section. If a record is wrong, correct it in the next release PR, or
 link the Edge release and its release record instead of editing tagged history.
 
+## contracts-edge-0.9.19 owner refresh
+
+The [release record](releases/contracts-edge-0.9.19.md) binds to published Edge
+`v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e`. Confirm the immutable tag
+commit and the published GitHub release before refreshing. Edge `v0.9.18` was
+tagged but never published after ARM64 fat-LTO host OOM; keep that tag intact
+and create no `contracts-edge-0.9.18`, following the 0.9.16/0.9.17 precedent.
+
+Read all five vocabulary sources, header-local source entries and current
+Edge admin schemas from that tag, including
+`src/plugins/mesh/{spiffe_identity,ext_authz}.rs`. Re-transcribe registration
+failure policies, parity phases/priorities/protocols and all `PluginConfigBase`
+conditionals; do not refresh only their pins. OpenAPI SHA-256 is
+`610e2645961e7a5deca73468439be9c4a5b7070045099506c212a0a36b045e90`.
+Every prior Edge-main note in admin-contracts now ships at this tag, including
+plugin association preconditions. Diagnostic-ref v1 is re-checked against the
+tag but retains its bytes because its wire contract did not change. The new
+raw `query_trigger_admission` and `gateway_closed_h3_upload` labels each get
+valid and single-field invalid fixtures; neither adds a token-mapped phase.
+Current backup, egress and deployment schema provenance is refreshed; earlier
+majors, historical fixtures, other owners and recorded consumer pins retain their
+source identities.
+
+For this refresh, run `python3 -I ci/validate.py` and `git diff --check`, plus
+pinned OpenAPI validation with `--openapi PATH` using the tag's bytes. Install
+`ci/requirements.txt` with the documented hash/binary/no-dependency flags in an
+isolated environment; the compiled wheel requires Linux x86_64 Python 3.13.
+GitHub-hosted `Validate contracts` confirms the exact PR head. The release
+controller owns CI monitoring, review, merge and subsequent tag/publication.
+
 ## contracts-edge-0.9.17 owner refresh
 
 The [release record](releases/contracts-edge-0.9.17.md) binds to actual Edge

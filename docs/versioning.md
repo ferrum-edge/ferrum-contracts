@@ -107,6 +107,27 @@ that carries the object; that is the tag binding a consumer to the Edge release
 it names. The new `ErrorClass` assignments for HTTP/2 resets and buffered read
 errors reuse existing values, so `gateway-errors.json` only notes them.
 
+### Refresh in contracts-edge-0.9.19
+
+Published Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e` retains the
+existing diagnostic, conditional backup, egress and deployment wire shapes,
+closed error tokens and egress labels. No schema major changes. Diagnostic-ref
+v1 stays byte for byte equal to 0.9.17 under the consumer freeze. The new raw
+labels `query_trigger_admission` and `gateway_closed_h3_upload` get fixtures
+in the open `detail.rejection.phase`; neither maps to a token in the closed
+`detail.rejection_phase`. Release verification is recorded in the
+[release record](releases/contracts-edge-0.9.19.md).
+
+The five vocabularies name `edge_release: v0.9.19`. Mesh header assertions and
+registration/parity metadata change as owner data within the existing
+vocabulary shapes. The catalog points at the tagged OpenAPI and its new hash;
+that referenced document contains plugin configuration and admission changes,
+some of which refuse inputs older published gateways accepted. These are
+owner config rules, not new canonical response-schema majors. Existing
+consumer pins and prior fixture/major bytes keep their original meaning.
+There is no `contracts-edge-0.9.18`: Edge tagged 0.9.18 but never published it,
+and 0.9.19 carries its changes forward once, as 0.9.17 did for 0.9.16.
+
 ### Additions in contracts-edge-0.9.17
 
 Edge `v0.9.17` adds `loop_detected` to its closed header-token vocabulary.
@@ -240,6 +261,7 @@ contains no contract-source changes after v0.9.9, so it maps to
 | `v0.9.14` | `contracts-edge-0.9.14` | Optional CP `data_plane_attestation` within backend egress policy v2, narrowed deployment `durable` outcomes and error-classification notes from released owner `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`, tagged on the merge commit of its release PR |
 | `v0.9.15` | `contracts-edge-0.9.15` | `X-Authenticated-Identity`, `Connection` nomination and `_`/`-` assertion rules, the `route_protocol_admission` phase and plugin config schema changes within the current majors, from released owner `25b37395ff61bfea0f3ffd189d9011c4984fa755`, tagged on the merge commit of its release PR |
 | `v0.9.17` | `contracts-edge-0.9.17` | Protected hop-count assertion and mirrored loop token within existing majors, plus current source and deployment ordering from released owner `669c574c1d1e88e84dccb26a8159939e6694644d` |
+| `v0.9.19` | `contracts-edge-0.9.19` | Mesh identity assertions, plugin metadata and OpenAPI repin, plus raw diagnostic rejection-phase fixtures within existing majors, from released owner `510ce7121c3d9754110d330a30a3bd9b7a7b278e`, tagged on the merge commit of its release PR |
 
 Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
 pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
@@ -251,9 +273,11 @@ Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
 
-`contracts-edge-0.9.17` is the latest tag, on the merge commit of its release
-PR; its GitHub release records the tag commit. It maps to Edge `v0.9.17` at
-`669c574c1d1e88e84dccb26a8159939e6694644d`. Historical `contracts-edge-0.9.15`
+`contracts-edge-0.9.19` is the latest tag, on the merge commit of its release
+PR; its GitHub release records the tag commit. It maps to Edge `v0.9.19` at
+`510ce7121c3d9754110d330a30a3bd9b7a7b278e`. Historical `contracts-edge-0.9.17`
+is at `f7ba1a9b9885900d1e110f76d38e37a02eda13c8`, mapping to Edge `v0.9.17`
+at `669c574c1d1e88e84dccb26a8159939e6694644d`. Historical `contracts-edge-0.9.15`
 is at `6fb64c5dc2e014204c17609fc717d976f3b4589e`. `contracts-edge-0.9.14` is at
 `ddbdd845733b7046c4393ac951011dafb774db33`, the merge commit of PR #22, with
 release 406650065 published on 2026-10-08 at 09:22:24 UTC.

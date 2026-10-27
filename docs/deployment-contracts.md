@@ -116,6 +116,17 @@ cleanup. Preserve complete secret-bearing original evidence, full gzip spec
 bytes and original external references, and require explicit qualifying
 acknowledgements before cleanup. Prior major files and fixtures remain intact.
 
+## Edge v0.9.19: unchanged deployment envelopes
+
+Published Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e` retains
+snapshot v2 and acknowledgement v1, canonical typed ordering, complete original
+evidence and explicit cleanup authorization. Their current provenance is
+re-read at the release tag; earlier majors and fixtures remain intact. The
+new plugin-config association precondition `expected_proxy_ids` applies to
+ordinary row updates/deletes as described in
+[admin-contracts.md](admin-contracts.md); it does not replace original
+deployment-token authority or authorize replay or cleanup.
+
 ## Immutable owner sources and schema scope
 
 All paths below belong to `ferrum-edge/ferrum-edge` at the full commit above:

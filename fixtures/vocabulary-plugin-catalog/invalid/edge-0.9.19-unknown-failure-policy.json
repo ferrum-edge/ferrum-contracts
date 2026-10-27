@@ -1,0 +1,184 @@
+{
+  "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-plugin-catalog/v1.schema.json",
+  "vocabulary": "plugin-catalog",
+  "version": 1,
+  "edge_release": "v0.9.19",
+  "description": "Index of every built-in Ferrum Edge plugin at v0.9.19: name, registration failure policy, documented priority, phases and protocol surface, and a pointer to the plugin's config schema in Edge's published openapi.yaml. Build-time custom plugins are not listed.",
+  "provenance": [
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.19",
+      "commit": "510ce7121c3d9754110d330a30a3bd9b7a7b278e",
+      "path": "src/plugins/mod.rs",
+      "symbols": [
+        "BUILTIN_PLUGIN_REGISTRATIONS",
+        "REMOVED_PLUGIN_REGISTRATIONS",
+        "ProxyProtocol"
+      ],
+      "fields": [
+        "name",
+        "failure_policy",
+        "removed_plugins"
+      ]
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.19",
+      "commit": "510ce7121c3d9754110d330a30a3bd9b7a7b278e",
+      "path": "src/plugins/builtin_parity.rs",
+      "symbols": [
+        "BUILTIN_PLUGIN_PARITY_META",
+        "BUILTIN_RESPONSE_BODY_PRODUCERS",
+        "BUILTIN_WEBSOCKET_FRAMING_PLUGINS"
+      ],
+      "fields": [
+        "classification",
+        "priority",
+        "active_phases",
+        "protocols",
+        "protocol_rationale",
+        "response_body_producer",
+        "websocket_framing_plugins"
+      ]
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.19",
+      "commit": "510ce7121c3d9754110d330a30a3bd9b7a7b278e",
+      "path": "openapi.yaml",
+      "symbols": [
+        "components.schemas.PluginConfigBase"
+      ],
+      "fields": [
+        "config_schema"
+      ],
+      "note": "v0.9.19 retains the 82 registered types, removed names and PluginConfigBase pointers. Configuration components include the production-launch plugin hardening, multi-location key_auth, SPIFFE forwarding, external-identity access rules, telemetry redaction, resource bounds and plugin association preconditions documented in the owner upgrade guide. Registration failure policy and parity metadata are transcribed from the same tag; referenced config schemas are not copied here."
+    }
+  ],
+  "config_schema_document": {
+    "repo": "ferrum-edge/ferrum-edge",
+    "ref": "v0.9.19",
+    "commit": "510ce7121c3d9754110d330a30a3bd9b7a7b278e",
+    "path": "openapi.yaml",
+    "sha256": "610e2645961e7a5deca73468439be9c4a5b7070045099506c212a0a36b045e90",
+    "openapi": "3.1.0",
+    "note": "Each config_schema.pointer is a JSON Pointer into this exact file. The schemas are OpenAPI 3.1 (JSON Schema 2020-12 dialect) and may $ref other components in the same document. They apply to `config` only when the plugin config is enabled. They are referenced, not copied, in this release; see docs/adoption.md (follow-ups)."
+  },
+  "protocol_values": {
+    "http": "HTTP/1.1, HTTP/2 and HTTP/3, including HTTPS",
+    "grpc": "gRPC over HTTP/2",
+    "websocket": "WebSocket and WSS",
+    "tcp": "Raw TCP stream proxy, including TLS termination and origination",
+    "udp": "Raw UDP datagram proxy, including DTLS termination and origination"
+  },
+  "websocket_framing_plugins": [
+    "waf",
+    "ws_frame_logging",
+    "ws_message_size_limiting",
+    "ws_rate_limiting"
+  ],
+  "plugins": [
+    {
+      "name": "stdout_logging",
+      "classification": "public",
+      "priority": 9000,
+      "failure_policy": "fail_open",
+      "active_phases": [
+        "log",
+        "on_stream_disconnect",
+        "on_ws_disconnect"
+      ],
+      "protocols": [
+        "http",
+        "grpc",
+        "websocket",
+        "tcp",
+        "udp"
+      ],
+      "protocol_rationale": "Observability applies everywhere",
+      "response_body_producer": false,
+      "config_schema": {
+        "document": "openapi.yaml",
+        "pointer": "#/components/schemas/StdoutLoggingConfig",
+        "config_required_when_enabled": false
+      }
+    },
+    {
+      "name": "request_transformer",
+      "classification": "public",
+      "priority": 3000,
+      "failure_policy": "keep_last_known_good",
+      "active_phases": [
+        "before_proxy",
+        "transform_request_body_with_context"
+      ],
+      "protocols": [
+        "http",
+        "grpc",
+        "websocket"
+      ],
+      "protocol_rationale": "Modifies HTTP headers/query/body; WebSocket handshake headers/query only",
+      "response_body_producer": false,
+      "config_schema": {
+        "document": "openapi.yaml",
+        "pointer": "#/components/schemas/RequestTransformerConfig",
+        "config_required_when_enabled": false
+      }
+    },
+    {
+      "name": "ai_token_metrics",
+      "classification": "public",
+      "priority": 4070,
+      "failure_policy": "optional_fail_open",
+      "active_phases": [
+        "on_response_body",
+        "response_stream_inspector",
+        "on_response_stream_terminated"
+      ],
+      "protocols": [
+        "http"
+      ],
+      "protocol_rationale": "HTTP JSON/SSE accounting only; native gRPC protobuf has no supported provider schema contract",
+      "response_body_producer": false,
+      "config_schema": {
+        "document": "openapi.yaml",
+        "pointer": "#/components/schemas/AiTokenMetricsConfig",
+        "config_required_when_enabled": false
+      }
+    },
+    {
+      "name": "ws_frame_logging",
+      "classification": "public",
+      "priority": 9050,
+      "failure_policy": "optional_fail_open",
+      "active_phases": [
+        "on_ws_policy_close",
+        "prepare_ws_frame_delivery",
+        "emit_ws_frame_delivery",
+        "on_ws_disconnect"
+      ],
+      "protocols": [
+        "websocket"
+      ],
+      "protocol_rationale": "`on_ws_policy_close` records final policy Close decisions; delivery observations are emitted after successful destination sends",
+      "response_body_producer": false,
+      "config_schema": {
+        "document": "openapi.yaml",
+        "pointer": "#/components/schemas/WsFrameLoggingConfig",
+        "config_required_when_enabled": false
+      }
+    }
+  ],
+  "removed_plugins": [
+    {
+      "name": "oauth2_auth",
+      "failure_policy": "fail_closed",
+      "note": "Removed built-in. Edge refuses a config that names it, so an upgrade cannot silently drop the protection it provided."
+    },
+    {
+      "name": "semantic_ai_firewall",
+      "failure_policy": "fail_closed",
+      "note": "Removed built-in. Edge refuses a config that names it, so an upgrade cannot silently drop the protection it provided."
+    }
+  ]
+}
