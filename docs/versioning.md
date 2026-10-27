@@ -107,6 +107,24 @@ that carries the object; that is the tag binding a consumer to the Edge release
 it names. The new `ErrorClass` assignments for HTTP/2 resets and buffered read
 errors reuse existing values, so `gateway-errors.json` only notes them.
 
+### Refresh in contracts-edge-0.9.19
+
+Published Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e` retains the
+existing diagnostic, conditional backup, egress and deployment wire shapes and
+vocabulary labels. No schema major changes. Diagnostic-ref v1 stays byte for
+byte equal to 0.9.17 under the consumer freeze, with release verification
+recorded in the [release record](releases/contracts-edge-0.9.19.md).
+
+The five vocabularies name `edge_release: v0.9.19`. Mesh header assertions and
+registration/parity metadata change as owner data within the existing
+vocabulary shapes. The catalog points at the tagged OpenAPI and its new hash;
+that referenced document contains plugin configuration and admission changes,
+some of which refuse inputs older published gateways accepted. These are
+owner config rules, not new canonical response-schema majors. Existing
+consumer pins and prior fixture/major bytes keep their original meaning.
+There is no `contracts-edge-0.9.18`: Edge tagged 0.9.18 but never published it,
+and 0.9.19 carries its changes forward once, as 0.9.17 did for 0.9.16.
+
 ### Additions in contracts-edge-0.9.17
 
 Edge `v0.9.17` adds `loop_detected` to its closed header-token vocabulary.

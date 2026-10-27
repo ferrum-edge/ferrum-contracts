@@ -521,6 +521,10 @@
     "instance_path": "/headers/1/availability",
     "keyword": "pattern"
   },
+  "vocabulary-gateway-headers/invalid/mesh-identity-availability-without-v.json": {
+    "instance_path": "/headers/0/availability",
+    "keyword": "pattern"
+  },
   "vocabulary-gateway-headers/invalid/prefix-without-trailing-dash.json": {
     "instance_path": "/headers/0/name",
     "keyword": "pattern"
@@ -540,6 +544,10 @@
   "vocabulary-plugin-catalog/invalid/bad-schema-pointer.json": {
     "instance_path": "/plugins/0/config_schema/pointer",
     "keyword": "pattern"
+  },
+  "vocabulary-plugin-catalog/invalid/edge-0.9.19-unknown-failure-policy.json": {
+    "instance_path": "/plugins/0/failure_policy",
+    "keyword": "enum"
   },
   "vocabulary-plugin-catalog/invalid/unknown-failure-policy.json": {
     "instance_path": "/plugins/0/failure_policy",

@@ -15,9 +15,9 @@ the reviewed PR #15 merge. Consumer adoption has started but remains pending
 until each PR merges and qualifies; the table records the current verified
 immutable pin snapshots.
 
-| Repository | Commit read (consumers: `main` on 2026-10-06; Edge: `v0.9.17` tag) | Pinned tag on `main` |
+| Repository | Commit read (consumers: `main` on 2026-10-06; Edge: `v0.9.19` tag) | Pinned tag on `main` |
 |---|---|---|
-| ferrum-edge | `669c574c1d1e88e84dccb26a8159939e6694644d` | producer: released `v0.9.17` source; maps to `contracts-edge-0.9.17`; `v0.9.15` maps to `contracts-edge-0.9.15` at `6fb64c5dc2e014204c17609fc717d976f3b4589e`; `v0.9.14` (`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`) maps to `contracts-edge-0.9.14` at `ddbdd845733b7046c4393ac951011dafb774db33`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
+| ferrum-edge | `510ce7121c3d9754110d330a30a3bd9b7a7b278e` | producer: released `v0.9.19` source; maps to `contracts-edge-0.9.19`; `v0.9.18` was tagged but never published (no matching Contracts release); `v0.9.17` maps to `contracts-edge-0.9.17`; `v0.9.15` maps to `contracts-edge-0.9.15` at `6fb64c5dc2e014204c17609fc717d976f3b4589e`; `v0.9.14` (`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`) maps to `contracts-edge-0.9.14` at `ddbdd845733b7046c4393ac951011dafb774db33`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
 | ferrum-anvil | `07f7182b3aa6c244140b7ec3edab5a1668318c96` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/07f7182b3aa6c244140b7ec3edab5a1668318c96/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.11` |
 | ferrum-alloy | `4d3b3aa8edaa67d4bc5a16388f59ee899d81348f` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/4d3b3aa8edaa67d4bc5a16388f59ee899d81348f/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.12` (ferrum-alloy#150, merged 2026-10-06) |
 | ferrum-nexus | `f357a37cd0bee81faa0f14ea26e6e38a17cf3152` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/f357a37cd0bee81faa0f14ea26e6e38a17cf3152/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.9` vocabularies; [`SERVICE-MANIFEST-PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/f357a37cd0bee81faa0f14ea26e6e38a17cf3152/contracts/ferrum-contracts/SERVICE-MANIFEST-PIN): `contracts-edge-0.9.9-r2` manifest |
@@ -46,8 +46,10 @@ hosted signature/SLSA/SBOM/ABI facts are recorded in the
 [Edge v0.9.11 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11),
 not in these contracts docs.
 
-The latest release is [`contracts-edge-0.9.17`](releases/contracts-edge-0.9.17.md),
-for Edge `v0.9.17` at `669c574c1d1e88e84dccb26a8159939e6694644d`.
+The current release mapping is [`contracts-edge-0.9.19`](releases/contracts-edge-0.9.19.md),
+for published Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e`.
+Historical [`contracts-edge-0.9.17`](releases/contracts-edge-0.9.17.md) maps to
+Edge `v0.9.17` at `669c574c1d1e88e84dccb26a8159939e6694644d`.
 Consumer snapshots below retain their recorded inspection date and exact pins.
 Historical [`contracts-edge-0.9.15`](releases/contracts-edge-0.9.15.md),
 tagged on the merge commit of its release PR, for Edge `v0.9.15` at
@@ -65,6 +67,26 @@ Historical 0.9.11 remains at `390edbd5b2485af0988e02f7827fde778d76ae0a`, and
 historical r2 remains at `591c73a3f965fdab440c3a76b2707accdf491ba5`.
 
 ## Published admin and shared v1 adoption boundary
+
+### contracts-edge-0.9.19 plugin admission and mesh assertions
+
+Consumers targeting Edge `v0.9.19` must generate configs accepted by its pinned
+OpenAPI, including the hard resource bounds, authentication/claim-header and
+security-header admission rules, telemetry allowlists and native Kafka-key
+restrictions in [admin-contracts.md](admin-contracts.md). Plugin-config updates
+and deletes must send `expected_proxy_ids`; handle `412` by reading current
+associations before retrying. Do not treat a row tag as association authority.
+The owner upgrade guide covers the further production-launch plugin changes.
+
+The gateway-owned peer SPIFFE assertion is opt-in; the four CUSTOM check
+identity headers are sent to the authorization provider and do not imply
+backend forwarding. `stdout_logging` reloads retain the last known good
+configuration, `ai_token_metrics` runs at priority 4070, and protocol/lifecycle
+metadata follows the owner catalog. The diagnostic-ref schema is byte-identical
+to 0.9.17; all existing wire majors remain in place. Edge 0.9.18 has no published
+release and no Contracts mapping. Each consumer still needs its own
+pin/copy/checksum change and qualification; the dated consumer snapshots above
+are unchanged.
 
 ### contracts-edge-0.9.17 hop budget and bounded authorization
 
