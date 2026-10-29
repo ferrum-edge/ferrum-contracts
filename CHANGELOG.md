@@ -6,6 +6,16 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Changed
+
+- Record the unreleased Edge pre-routing refusal framing (Edge PR #6965, issue
+  #6943) as a `main_branch_delta` in `vocabularies/gateway-errors.json`.
+  HTTP/1.1 and HTTP/2 answer native gRPC and gRPC-Web clients in their own
+  framing before routing, as HTTP/3 already does, and the
+  `docs/error_classification.md` parse-layer qualifier changes to match. No
+  error class, `X-Gateway-Error` token, metrics label, or fixture changes;
+  `edge_release` stays `v0.9.19` until an Edge release ships it.
+
 ## [contracts-edge-0.9.19] - 2026-10-27
 
 Contracts for published Ferrum Edge `v0.9.19`
