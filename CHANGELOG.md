@@ -6,6 +6,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Security
+
+- Require SSH-signed annotated future release tags, with no unsigned fallback.
+  Document owner-approved public signer setup, independently pinned consumer
+  verification, rotation and revocation (#30). Add public trust-policy files
+  that authorize no signer until owner approval and offline verification tests
+  using an existing public signature; historical release tags stay unchanged.
+
 ### Changed
 
 - Record the unreleased Edge pre-routing refusal framing (Edge PR #6965, issue

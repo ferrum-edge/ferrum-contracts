@@ -42,7 +42,7 @@ jobs:
             --no-deps --only-binary=:all: --require-hashes \
             -r ci/requirements.txt
 
-      - name: Test the validator's bounded download
+      - name: Test bounded downloads and release signature verification
         run: |
           set -euo pipefail
           "$RUNNER_TEMP/contracts-venv/bin/python" -I -m unittest discover -s ci -p 'test_*.py' -v
