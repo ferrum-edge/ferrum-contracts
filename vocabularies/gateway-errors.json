@@ -336,5 +336,11 @@
       ],
       "meaning": "The received X-Ferrum-Hops count reached FERRUM_MAX_PROXY_HOPS; the gateway refuses before routing and contacts no backend. Only the refusing hop writes this token; an outer gateway relaying 508 uses backend_error. HTTP 508 is never retried, regardless of retryable_status_codes. Native gRPC returns trailers-only FAILED_PRECONDITION with no HTTP 5xx token; malformed hop fields return 400 or native gRPC INVALID_ARGUMENT with no token. The metrics label is reserved: this fence currently emits no transaction summary/error-class metric row."
     }
-  ]
+  ],
+  "main_branch_delta": {
+    "repo": "ferrum-edge/ferrum-edge",
+    "ref": "main",
+    "commit": "b91389eab251e0463051a42f6e33ea27d72d20d4",
+    "summary": "No change to the 19 ErrorClass values, the nine X-Gateway-Error tokens, the 25 reserved HTTP metric labels, the class-to-token mapping, or the transcribed dispatch-failure statuses; src/retry.rs and http_backend_failure_status_and_body are unchanged from v0.9.19. docs/error_classification.md (HTTP/1.1 parse-layer 400 contract) now says duplicate Host and combined Content-Length + Transfer-Encoding that reach the handler keep their JSON 400 for ordinary HTTP and WebSocket handshakes, while native gRPC and gRPC-Web receive a framed INVALID_ARGUMENT refusal (Edge #6965, issue #6943, not in any release yet). On Edge main the HTTP/1.1 and HTTP/2 pre-routing refusals are framed as on HTTP/3: native gRPC gets HTTP 200 Trailers-Only grpc-status and gRPC-Web a status in its body trailer frame, except that gRPC-Web keeps the JSON 431 for the header limits and the plain answer at the hop limit and connection-level admission fences; a WebSocket handshake carrying a gRPC Content-Type keeps its HTTP refusal. These refusals carry no X-Gateway-Error token, and loop_detected keeps its HTTP 508 / native-gRPC FAILED_PRECONDITION meaning."
+  }
 }
