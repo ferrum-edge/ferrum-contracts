@@ -179,5 +179,36 @@ class ConsumerVerificationTests(unittest.TestCase):
                     self.env[name] = saved
 
 
+class TrustPolicyTests(unittest.TestCase):
+    """Each allowed_signers entry is exact, git-only and fingerprint-annotated."""
+
+    def test_entries_follow_the_documented_form(self) -> None:
+        lines = (ROOT / "docs" / "allowed_signers").read_text().splitlines()
+        fixture_key = (FIXTURE / "signer.pub").read_text().split()[1]
+        entries = 0
+        for index, line in enumerate(lines):
+            if not line.strip() or line.startswith("#"):
+                continue
+            entries += 1
+            with self.subTest(line=index + 1):
+                principal, options, key_type, key = line.split(" ")
+                self.assertNotIn("*", principal)
+                self.assertNotIn("?", principal)
+                self.assertEqual(options, 'namespaces="git"')
+                self.assertEqual(key_type, "ssh-ed25519")
+                self.assertNotEqual(key, fixture_key)
+                with tempfile.TemporaryDirectory() as temp:
+                    pub = Path(temp) / "key.pub"
+                    pub.write_text(f"{key_type} {key}\n")
+                    listing = subprocess.run(
+                        ["ssh-keygen", "-lf", str(pub), "-E", "sha256"],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                        text=True, check=True,
+                    ).stdout
+                fingerprint = listing.split()[1]
+                self.assertTrue(lines[index - 1].endswith(" " + fingerprint), fingerprint)
+        self.assertGreater(entries, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

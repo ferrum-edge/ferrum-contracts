@@ -171,7 +171,9 @@ an inert public SSH-signed fixture. It tests success and rejection of altered
 content, unsigned/lightweight tags, an untrusted key, a revoked key, a wrong
 namespace, a tag published under another name, and mismatched release
 object/commit pins. It generates no keys and
-does not authorize the fixture signer for Ferrum. Run it with
+does not authorize the fixture signer for Ferrum. It also checks that every
+`allowed_signers` entry is `git`-only, names no wildcard or CA, and has a
+matching fingerprint comment. Run it with
 `python3 -I -m unittest discover -s ci -p 'test_release_signing.py' -v`.
 
 ## Rotation and revocation

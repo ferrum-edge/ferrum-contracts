@@ -21,9 +21,12 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 - Require SSH-signed annotated future release tags, with no unsigned fallback.
   Document signer setup, independently pinned consumer verification (Git
   2.35+), rotation and revocation (#30). Add the public trust-policy files
-  `docs/allowed_signers` and `docs/revoked_signers`, and offline tests that run
-  the documented verification against an existing public signature. Historical
-  release tags stay unchanged.
+  `docs/allowed_signers` and `docs/revoked_signers`, authorizing one signer:
+  `jeremyjpj0916`'s dedicated Ed25519 release key,
+  `SHA256:Vmu4Mlo+BWuA7Utxg3kBmxCak87nfJxwNN1uWKXRDJQ`. Add offline tests that
+  run the documented verification against an existing public signature and
+  check the form of every trust-policy entry. Historical release tags stay
+  unchanged.
 
 ## [contracts-edge-0.9.19] - 2026-10-27
 
