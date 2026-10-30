@@ -22,7 +22,7 @@ complete; the issue is closed and remains as project history.
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | Repository guidance for contract provenance, schemas and releases |
 | [`CHANGELOG.md`](CHANGELOG.md) | Changes recorded by contracts release |
-| [`ci/`](ci) | Contract validation workflow and pinned dependencies |
+| [`ci/`](ci) | Validator (`validate.py`), its tests and hash-pinned requirements; the workflow is [`.github/workflows/validate.yml`](.github/workflows/validate.yml) |
 | [`vocabularies/`](vocabularies) | Edge-owned vocabularies: `ErrorClass` and `X-Gateway-Error` tokens, gateway-owned headers, `provisioned-by` values, and the plugin catalog index |
 | [`schemas/`](schemas) | JSON Schemas (2020-12), one directory per contract, one file per major version |
 | [`fixtures/`](fixtures) | Payloads producers must emit and consumers must accept (`valid/`) or reject (`invalid/`); one `v<N>/` directory per major when a schema has several |
@@ -30,128 +30,23 @@ complete; the issue is closed and remains as project history.
 | [`docs/versioning.md`](docs/versioning.md) | Schema versions and `contracts-edge-X.Y.Z` tags |
 | [`docs/adoption.md`](docs/adoption.md) | Consumer pins, qualification evidence and remaining contract gaps |
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
-| [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions and process egress discovery |
+| [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions, namespace-scoped admin authorization and process egress discovery |
 | [`docs/deployment-contracts.md`](docs/deployment-contracts.md) | Original deployment authority, dependency-fenced partial writes and explicit cleanup acknowledgements |
-| [`docs/releases/contracts-edge-0.9.19.md`](docs/releases/contracts-edge-0.9.19.md) | Published Edge v0.9.19 source, mesh identity assertions, plugin metadata and admission changes; skipped Edge v0.9.18 publication |
-| [`docs/releases/contracts-edge-0.9.17.md`](docs/releases/contracts-edge-0.9.17.md) | Edge v0.9.17 source, hop-count and diagnostic token additions, deployment ordering and authorization boundaries |
-| [`docs/releases/contracts-edge-0.9.15.md`](docs/releases/contracts-edge-0.9.15.md) | Edge v0.9.15 source, the `X-Authenticated-Identity` header, `Connection` nomination rules, the `route_protocol_admission` phase and plugin config schema changes |
-| [`docs/releases/contracts-edge-0.9.14.md`](docs/releases/contracts-edge-0.9.14.md) | Edge v0.9.14 source, the CP data-plane egress attestation, narrowed deployment durable outcomes and error-classification notes |
-| [`docs/releases/contracts-edge-0.9.13.md`](docs/releases/contracts-edge-0.9.13.md) | Edge v0.9.13 source, the v2 egress and deployment snapshot contracts, and what stayed unchanged |
-| [`docs/releases/contracts-edge-0.9.12.md`](docs/releases/contracts-edge-0.9.12.md) | Actual canonical publication and pending consumer adoption |
-| [`docs/releases/contracts-edge-0.9.11.md`](docs/releases/contracts-edge-0.9.11.md) | Actual canonical publication/owner evidence and pending consumer adoption |
+| [`docs/plugin-config-admission.md`](docs/plugin-config-admission.md) | Edge plugin configuration admission changes reached through the plugin catalog's pinned `openapi.yaml` |
+| [`docs/release-signing.md`](docs/release-signing.md) | Signed release tags: signer setup, consumer verification, rotation and revocation; trust policy in [`docs/allowed_signers`](docs/allowed_signers) and [`docs/revoked_signers`](docs/revoked_signers) |
+| [`docs/releases/`](docs/releases) | Release records from `contracts-edge-0.9.11` on: Edge source, changes and what stayed unchanged |
 
 Every file records where it came from: owner repository, path, and commit.
-[`contracts-edge-0.9.19`](docs/releases/contracts-edge-0.9.19.md) maps to
-published Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e`.
-It refreshes all five vocabularies, the plugin OpenAPI hash and current admin
-schema provenance. New mesh identity assertions and the current registration,
-priority, protocol and lifecycle metadata are transcribed from that owner tag.
-Previously documented plugin admission changes now ship there. New diagnostic
-fixtures cover the raw `query_trigger_admission` and `gateway_closed_h3_upload`
-labels without changing the frozen schema. Existing schema majors,
-frozen diagnostic-ref v1 bytes, historical fixtures, other-owner
-availability and recorded consumer pins are retained. Edge `v0.9.18` was tagged
-but never published, so there is no `contracts-edge-0.9.18`.
-
-Historical
-[`contracts-edge-0.9.17`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.17)
-maps to Edge `v0.9.17` at `669c574c1d1e88e84dccb26a8159939e6694644d`.
-It adds the protected `X-Ferrum-Hops` request header and mirrored
-`loop_detected` token, deployment inspection ordering and bounded admin/metrics
-authorization. See the [release record](docs/releases/contracts-edge-0.9.17.md).
-
-Historical
-[`contracts-edge-0.9.15`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.15)
-at `6fb64c5dc2e014204c17609fc717d976f3b4589e` maps to Edge `v0.9.15`
-at `25b37395ff61bfea0f3ffd189d9011c4984fa755`. It adds external identity
-header meaning, Connection nomination rules and route-protocol-admission
-fixtures with unchanged schema rules.
-
-Historical
-[`contracts-edge-0.9.14`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.14)
-at `ddbdd845733b7046c4393ac951011dafb774db33` (release 406650065, published
-2026-10-08) maps to Edge `v0.9.14` at
-`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d` and adds no new major: `backend-egress-policy` v2 gains
-the optional CP-only `data_plane_attestation` object (`schema_version` stays
-`2`), the deployment mutation acknowledgement describes the narrowed `durable`
-outcomes, and `gateway-errors.json` notes the HTTP/2 reset and buffered read
-reclassification without adding a class or token. See the
-[release record](docs/releases/contracts-edge-0.9.14.md).
-
-Historical
-[`contracts-edge-0.9.13`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.13)
-is tagged on the merge commit of its release PR and maps to Edge `v0.9.13` at
-`9b83115de7ec23ab51ec4feae6bed65e596db425` and adds new majors for two
-response contracts Edge changed incompatibly: `backend-egress-policy` v2
-(`schema_version: 2`; `public_only_guaranteed` requires local enforcement) and
-`admin-deployment-snapshot` v2 (spec bytes as SHA-256 digests plus a separate
-`api_spec_contents` copy). The v1 files stay for consumers of earlier Edge
-releases. See the [release record](docs/releases/contracts-edge-0.9.13.md).
-
-Historical
-[`contracts-edge-0.9.12`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
-at `31f0a21d707795be293d15837c2f77c3d84219d8` was published on 2026-10-05 at
-13:58:38 UTC after [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
-merged and its main PUSH validation succeeded. It maps to Edge's actual unsigned
-lightweight `v0.9.12` tag at `0d917701b63ef38210c49df830f48cf0457cbc7d`.
-Edge's release assets, digests, image identities, attestations and ABI gates are
-recorded in the [Edge v0.9.12 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.12).
-That release refreshed all five Edge vocabularies and the plugin OpenAPI
-pin and added separate deployment snapshot and mutation acknowledgement schemas.
-
-Historical
-[`contracts-edge-0.9.11`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
-at `390edbd5b2485af0988e02f7827fde778d76ae0a` was published on 2026-10-04 at
-22:41:21 UTC and maps to Edge's `v0.9.11` tag at
-`c764084b3b51c3f7ffde268c039688d35e49c553`; it includes Alloy owner
-`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` and root's accepted unchanged shared
-v1 freeze. Historical
-[`contracts-edge-0.9.9-r2`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.9-r2)
-adds Alloy's optional service-manifest `[agents]` section to
-[`contracts-edge-0.9.9`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.9);
-both retain their Edge v0.9.9/v0.9.10 mappings. The initial
-[`contracts-edge-0.9.8`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.8)
-release remains available. Prepared/pending wording in the immutable 0.9.11 and
-0.9.12 tagged sources records their pre-publication state; it is not a new
-approval requirement. Consumer pins are refreshed in
-[docs/adoption.md](docs/adoption.md), and 0.9.12 adoption remains pending until
-the consumer PRs merge and qualify. See the
-[release records](docs/releases/contracts-edge-0.9.12.md).
-
-The 0.9.12 release added separate deployment snapshot and mutation
-acknowledgement schemas plus refreshed Edge provenance from actually released
-Edge `v0.9.12` at `0d917701b63ef38210c49df830f48cf0457cbc7d`. Complete original
-secret-bearing evidence and its deployment token fence partial proxy removal and
-API-spec replacement. Cleanup requires the explicit owner acknowledgement; even
-HTTP 200 can be durable-only and prohibit cleanup. The existing backup/row
-contracts keep their semantics. See [the deployment contract](docs/deployment-contracts.md)
-and [release record](docs/releases/contracts-edge-0.9.12.md) for provenance and
-verified Edge facts. Other-owner unreleased features and pending publisher
-profiles are not promoted.
-
-The 0.9.11 release adds metadata schemas for coherent admin conditional backup and
-process-scoped backend egress discovery, plus the egress vocabulary and sanitized
-fixtures. Standard HTTP `ETag`/`If-Match` admin semantics are documented against
-the owner implementation. JSON validation checks shape and owner-derived
-invariants; authorization, token validity and serving-DP enforcement remain
-runtime requirements in [the admin contract](docs/admin-contracts.md).
+Latest: [`contracts-edge-0.9.19`](docs/releases/contracts-edge-0.9.19.md), for
+Edge `v0.9.19` (Edge commit `510ce7121c3d9754110d330a30a3bd9b7a7b278e`). There
+is no `contracts-edge-0.9.18`: Edge `v0.9.18` was tagged but never published.
+Release history: [`CHANGELOG.md`](CHANGELOG.md) and [`docs/releases/`](docs/releases);
+Edge-to-tag mapping: [docs/versioning.md](docs/versioning.md#release-tags).
 
 ## Consumers
 
 See [docs/adoption.md](docs/adoption.md) for each consumer's pinned tag,
 adoption status and remaining contract gaps.
-
-The 2026-10-06 snapshot records qualified Anvil diagnostic import, GitForgeOps
-validation of actual Alloy-generated resource trees, and Nexus/Foundry manifest
-previews with their bounded trust and presentation rules. Alloy, Foundry and
-GitForgeOps now pin `contracts-edge-0.9.12`; Anvil pins `contracts-edge-0.9.11`;
-Nexus pins `contracts-edge-0.9.9` for vocabularies and `contracts-edge-0.9.9-r2`
-for the manifest. The published release marks the shared diagnostic report
-and service manifest **EXISTING**/implemented after root's accepted coordinated v1
-freeze, preserving all wire fields, bounds, fixtures and reader behavior.
-Historical r2 metadata stays unchanged. Alloy remains unpublished; this decision
-grants no separate crate publishing approval. [Alloy #27](https://github.com/ferrum-edge/ferrum-alloy/issues/27)
-remains open for root disposition after coordinated adoption.
 
 ## License
 

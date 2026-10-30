@@ -16,15 +16,17 @@ When Ferrum Edge publishes `vX.Y.Z`:
    - `vocabularies/gateway-headers.json`: `src/proxy/headers.rs`,
      `src/proxy/mod.rs` (`refresh_backend_gateway_assertion_headers`),
      `src/plugins/mod.rs` (`RequestContext` identity accessors),
-     `docs/plugins.md` ("Consumer Identity Headers"), `docs/admin_api.md`,
-     `openapi.yaml`.
+     `src/plugins/mesh/{spiffe_identity,ext_authz}.rs`, `docs/plugins.md`
+     ("Consumer Identity Headers"), `docs/admin_api.md`, `openapi.yaml`.
    - `vocabularies/provisioned-by.json`: `src/admin/provisioning.rs`,
      `docs/admin_api.md`.
    - `vocabularies/plugin-catalog.json`: `src/plugins/mod.rs`
      (`BUILTIN_PLUGIN_REGISTRATIONS`, `REMOVED_PLUGIN_REGISTRATIONS`),
      `src/plugins/builtin_parity.rs`, and the per-plugin `if`/`then` blocks
-     of `PluginConfigBase` in `openapi.yaml`. Record the new
-     `openapi.yaml` sha256 (`git show vX.Y.Z:openapi.yaml | shasum -a 256`).
+     of `PluginConfigBase` in `openapi.yaml`. Re-transcribe registration
+     failure policies, parity phases/priorities/protocols and every
+     `PluginConfigBase` conditional; do not refresh only their pins. Record the
+     new `openapi.yaml` sha256 (`git show vX.Y.Z:openapi.yaml | shasum -a 256`).
    - `vocabularies/backend-egress-policy.json`: `openapi.yaml`,
      `src/admin/backend_egress_policy.rs`,
      `src/grpc/backend_egress_attestation.rs`, `src/config/env_config.rs`, and
@@ -35,8 +37,11 @@ When Ferrum Edge publishes `vX.Y.Z`:
    commit. Update each `main_branch_delta` against Edge `main`.
 3. Re-check Edge-owned schemas (`diagnostic-ref`, conditional backup metadata,
    backend egress policy, deployment snapshot and mutation acknowledgement)
-   against the release. Move entries marked `unreleased` only when that owner
-   release actually ships them. Preserve unrelated owners' unreleased markers.
+   against the release, reading the owner sources listed in
+   [admin-contracts.md](admin-contracts.md#owner-sources-and-artifact-scope) and
+   [deployment-contracts.md](deployment-contracts.md#immutable-owner-sources-and-schema-scope).
+   Move entries marked `unreleased` only when that owner release actually
+   ships them. Preserve unrelated owners' unreleased markers.
    Consumers vendor `diagnostic-ref` v1 byte for byte, so its bytes stay
    frozen while its wire contract is unchanged; a new label in the open
    `rejection.phase` (Edge v0.9.15 `route_protocol_admission`) gets fixtures,
@@ -51,8 +56,10 @@ When Ferrum Edge publishes `vX.Y.Z`:
    (`docs/releases/contracts-edge-X.Y.Z.md`) in final form. Both are tagged
    content and must not carry status words; see
    [Release records and publication status](#release-records-and-publication-status).
-6. Open a PR. The `Validate contracts` workflow must pass. An owner of each
-   changed contract approves (see [ownership.md](ownership.md)).
+6. Open a PR. Repository tooling is not executed locally: local review uses
+   static source/diff inspection and integrity hashing, and the GitHub-hosted
+   `Validate contracts` workflow on the exact PR head is the gate. An owner of
+   each changed contract approves (see [ownership.md](ownership.md)).
 
 ## Release records and publication status
 
@@ -72,166 +79,8 @@ Publication status lives outside the tagged content:
 Do not open a cleanup PR after each release to rewrite a release record or
 changelog section. If a record is wrong, correct it in the next release PR, or
 link the Edge release and its release record instead of editing tagged history.
-
-## contracts-edge-0.9.19 owner refresh
-
-The [release record](releases/contracts-edge-0.9.19.md) binds to published Edge
-`v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e`. Confirm the immutable tag
-commit and the published GitHub release before refreshing. Edge `v0.9.18` was
-tagged but never published after ARM64 fat-LTO host OOM; keep that tag intact
-and create no `contracts-edge-0.9.18`, following the 0.9.16/0.9.17 precedent.
-
-Read all five vocabulary sources, header-local source entries and current
-Edge admin schemas from that tag, including
-`src/plugins/mesh/{spiffe_identity,ext_authz}.rs`. Re-transcribe registration
-failure policies, parity phases/priorities/protocols and all `PluginConfigBase`
-conditionals; do not refresh only their pins. OpenAPI SHA-256 is
-`610e2645961e7a5deca73468439be9c4a5b7070045099506c212a0a36b045e90`.
-Every prior Edge-main note in admin-contracts now ships at this tag, including
-plugin association preconditions. Diagnostic-ref v1 is re-checked against the
-tag but retains its bytes because its wire contract did not change. The new
-raw `query_trigger_admission` and `gateway_closed_h3_upload` labels each get
-valid and single-field invalid fixtures; neither adds a token-mapped phase.
-Current backup, egress and deployment schema provenance is refreshed; earlier
-majors, historical fixtures, other owners and recorded consumer pins retain their
-source identities.
-
-For this refresh, run `python3 -I ci/validate.py` and `git diff --check`, plus
-pinned OpenAPI validation with `--openapi PATH` using the tag's bytes. Install
-`ci/requirements.txt` with the documented hash/binary/no-dependency flags in an
-isolated environment; the compiled wheel requires Linux x86_64 Python 3.13.
-GitHub-hosted `Validate contracts` confirms the exact PR head. The release
-controller owns CI monitoring, review, merge and subsequent tag/publication.
-
-## contracts-edge-0.9.17 owner refresh
-
-The [release record](releases/contracts-edge-0.9.17.md) binds to actual Edge
-`v0.9.17` at `669c574c1d1e88e84dccb26a8159939e6694644d`. It documents the
-closed Edge-vocabulary token addition within diagnostic-ref v1, hop-header
-protection, canonical deployment ordering and namespace-bounded authorization.
-All five vocabulary pins and current Edge schemas read that immutable source;
-prior fixtures, earlier majors, unrelated owners and recorded consumer pins are
-retained. Hosted final-head and main-push Validate contracts qualification and
-actual tag/release identities are recorded outside immutable tagged content.
-
-## contracts-edge-0.9.12 completed publication
-
-The [release record](releases/contracts-edge-0.9.12.md) binds to actual
-Edge `v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`, after qualified
-protected release PR #6013 and all 14 main PUSH successes before tag creation.
-Release 403693646 is published and actual run 37298358313 completed at
-12:36:32 UTC on 2026-10-05 with all 20 jobs successful. Edge's published
-assets/checksums, image digests and hosted signature/SLSA/SBOM/ABI facts live in
-the [Edge v0.9.12 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.12)
-and its Edge release record, not here. The previous published Contracts 0.9.11
-record remains immutable history.
-
-Read deployment owner sources using `git show` at the actual tag commit:
-`openapi.yaml`, `src/admin/deployment_mutations.rs`, `src/admin/mod.rs`,
-`src/admin/api_specs/handlers.rs`, `src/config/{deployment_mutation,db_backend,
-db_loader,mongo_store,types}.rs`, and `docs/deployment_mutations.md` plus admin
-and API-spec docs. [deployment-contracts.md](deployment-contracts.md) transcribes
-the source protocol and distinguishes it from backup/restore and row tags.
-Preserve complete secret-bearing original evidence, full gzip specs and stored
-external references, strict single original deployment token, partial transaction
-fences and explicit acknowledgement-based cleanup. Durable-only and uncertain
-results prohibit automatic cleanup/replay; no fresh-token or unconditional fallback.
-Open owner envelopes do not certify nested completeness or consumer DTO acceptance.
-
-All five vocabulary source pins/Edge releases and current Edge-owned schema
-provenance are refreshed; plugin OpenAPI SHA-256 is
-`f7242228d73d34ad2d7da3c989ec6ba15bb6ae1f2f4c94a8e0a181b000caae77`.
-Unchanged tokens, catalog metadata, historical availability/fixtures, original
-conditional snapshot semantics and other-owner unreleased metadata are retained.
-Edge #6011's unfinished rejection contract is absent from the owner release.
-No validator/workflow/dependency exception is introduced. Repository tooling is
-not executed locally; the exact final head requires hosted `Validate contracts`.
-
-Canonical Contracts publication is complete. [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
-merged the exact final reviewed head `d9c84810152732524c54a9ed292dc59103f0619d`
-as the second parent of `31f0a21d707795be293d15837c2f77c3d84219d8`, with an equal
-tree. The final head and every actual applicable main PUSH workflow succeeded
-before tag creation; the immutable `contracts-edge-0.9.12` tag and
-[release 403772929](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
-were published at 13:58:38 UTC on 2026-10-05. See the
-[release record](releases/contracts-edge-0.9.12.md).
-
-Consumer pin/copy/checksum adoption follows actual canonical qualification.
-Nexus #522/Part B, Foundry #544, GitForgeOps and supported publisher profile
-decisions remain independent and pending; no advisory closure is inferred.
-Alloy's accepted shared v1 freeze and owner-unreleased availability remain
-unchanged. Root owns profile decisions and advisory disposition.
-
-## contracts-edge-0.9.11 completed publication
-
-The [release record](releases/contracts-edge-0.9.11.md) pins published Edge
-`v0.9.11` at `c764084b3b51c3f7ffde268c039688d35e49c553`, its qualified merge
-parents/PR and OpenAPI hash. All 20 Release jobs succeeded. Edge's published
-assets/checksums, image digests and hosted signature/SLSA/SBOM/ABI facts live in
-the [Edge v0.9.11 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11)
-and its Edge release record, not here.
-
-The new owner sources are `src/admin/conditional_snapshots.rs`, `preconditions.rs`,
-`crud.rs`, `backup.rs`, `backend_egress_policy.rs`, admin routing, transaction
-backends, `src/config/env_config.rs`, the admin docs and `openapi.yaml`.
-Preserve complete stored credentials, all four coherent row maps, namespace
-revision and atomic lease-fenced replacement, standard header semantics,
-runtime refusals and unconditional restore. Transcribe bounded process policy
-metadata without credentials/raw CIDRs or CP-to-DP attestation; see
-[admin-contracts.md](admin-contracts.md).
-
-Final Alloy annotations bind to qualified owner
-`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, an ordinary squash of reviewed
-PR #144. Its exact immutable sources, full report pairing, root/fresh owner
-review and all 18 main PUSH jobs/checks qualify that owner commit. The ordinary
-owner squash is not the canonical release/tag target and requires no second
-parent. Root accepted the coordinated freeze: report and manifest shared v1 are
-EXISTING/implemented in the published release, retaining owner-unreleased
-availability. This is the authorized canonical metadata decision, not separate
-prior human approval or Alloy crate publishing permission. Preserve every v1
-wire field, bound, fixture and unknown-reader rule. Full report pairing includes
-descriptions outside `$id`/`x-contract`; the manifest remains a transcription
-with documented post-default/cross-field limits.
-
-[PR #13](https://github.com/ferrum-edge/ferrum-contracts/pull/13) completed final
-review at `0cf926686f2164ad0b4de7b27e2eb5a25df6a261`; root reviewed the full
-change and fresh independent final-delta review reported no findings. Hosted
-[run 37240041628](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240041628)
-passed at that final head, including all 116 validation cases. The earlier
-`26a2797f15286da8e32002c4971b68013e134be9` candidate's 45-file review, fresh
-review 3 and 116-check hosted validation remain historical evidence; they were
-not substituted for final-head qualification.
-
-PR #13 merged at 22:40:08 UTC on 2026-10-04 as
-`390edbd5b2485af0988e02f7827fde778d76ae0a`. Its first parent is
-`d098c81a50f1baaa8c081d511868c74e957ddf43`; its **second parent equals the
-exact final reviewed PR head**, `0cf926686f2164ad0b4de7b27e2eb5a25df6a261`.
-Every actual main PUSH workflow succeeded before tag creation: sole applicable
-[run 37240886730](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240886730)
-and required [Schemas, fixtures and vocabularies job 111549212572](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37240886730/job/111549212572).
-The immutable unsigned lightweight `contracts-edge-0.9.11` tag points to that
-merge commit; [release 403239814](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
-was published at 22:41:21 UTC. Earlier PR-head checks were not substituted for
-merge-commit qualification.
-
-The immutable tag captured prepared/pending prose and annotations before
-publication, including the `[contracts-edge-0.9.11]` changelog section. That
-historical wording is preserved and is not a new approval requirement. The
-release record and current documentation record the subsequent publication;
-the released section and every historical tag remain unchanged.
-
-Consumer pins/checksums/local copies and Alloy's matching local
-annotations/descriptions still need coordinated adoption PRs with full hosted
-parity. Record new adoption only after those PRs merge and qualify. Existing r2
-bytes and consumer snapshots remain historical. Canonical metadata does not
-patch a product advisory or qualify production apply/performance. Root owns
-issue disposition and separate publishing permission.
-
-Documentation updates use static source/diff inspection and integrity hashing
-only; repository execution is prohibited locally. GitHub-hosted `Validate contracts`
-is the schema/fixture/OpenAPI gate. The existing validator discovers the added
-files and shared label/order references without workflow, permission, dependency
-or validation exceptions.
+Historical per-release evidence is in [releases/](releases) and each GitHub
+release.
 
 ## Tagging
 

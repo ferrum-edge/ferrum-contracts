@@ -15,6 +15,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `docs/error_classification.md` parse-layer qualifier changes to match. No
   error class, `X-Gateway-Error` token, metrics label, or fixture changes;
   `edge_release` stays `v0.9.19` until an Edge release ships it.
+- Align the docs with current state: refresh consumer pins in
+  `docs/adoption.md` (read 2026-10-30) and record ferrum-alloy#27 as closed;
+  replace repeated release narratives in `README.md`, `docs/versioning.md`,
+  `docs/release-process.md` and `docs/ownership.md` with links to the release
+  records; move the Edge `v0.9.19` plugin configuration admission notes from
+  `docs/admin-contracts.md` to the new `docs/plugin-config-admission.md`; and
+  document the `main` rulesets. No schema, vocabulary or fixture changes.
 
 ### Security
 
