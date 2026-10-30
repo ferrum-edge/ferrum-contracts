@@ -4,7 +4,7 @@ Versioned wire contracts shared by the Ferrum products (Edge, Anvil, Alloy,
 Nexus, Foundry, GitForgeOps), kept as data: JSON Schemas, machine-readable
 vocabularies, and conformance fixtures. There is no application code. The
 only executable files are the repository's own CI check, `ci/validate.py`,
-and its tests, `ci/test_validate.py`.
+and its tests, `ci/test_*.py`.
 License: PolyForm Noncommercial 1.0.0.
 
 Proposal and adoption history: ferrum-edge/.github#4 (closed; adoption
@@ -22,11 +22,15 @@ completed).
 - `fixtures/<name>/{valid,invalid}/*.json`: conformance payloads; a schema
   with several majors uses `fixtures/<name>/v<N>/{valid,invalid}/` per major.
   Provenance and the reason each invalid fixture fails: `fixtures/README.md`.
-- `docs/`: `ownership.md`, `versioning.md`, `adoption.md`, `release-process.md`.
+- `docs/`: `ownership.md`, `versioning.md`, `adoption.md`, `release-process.md`,
+  `release-signing.md`, and the release trust policy `allowed_signers` and
+  `revoked_signers`.
 - `ci/validate.py`, `ci/requirements.txt`: validation script and its
   hash-pinned dependencies. `ci/test_validate.py`: loopback tests for the
-  bounded `--fetch-openapi` download. `.github/workflows/validate.yml` runs
-  them.
+  bounded `--fetch-openapi` download. `ci/test_release_signing.py`: offline
+  tests of the documented release verification using public signed data;
+  no keys are generated or private keys accessed. `.github/workflows/validate.yml`
+  runs both.
 
 ## Rules
 

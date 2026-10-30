@@ -1,0 +1,9 @@
+# SSH public keys authorized to sign Ferrum Contracts release tags.
+# A file with no entries authorizes no key, so verification fails closed.
+# Each entry is added in a reviewed PR with its SHA-256 fingerprint in a
+# comment directly above it; see release-signing.md. Never add a private key,
+# wildcard principal, or CA.
+
+# jeremyjpj0916, Ferrum Contracts release signing key, registered as a GitHub
+# Signing key. SHA256:Vmu4Mlo+BWuA7Utxg3kBmxCak87nfJxwNN1uWKXRDJQ
+31913027+jeremyjpj0916@users.noreply.github.com namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICx4NDY7p1XJaP8CuEph8oe9yykcQjXxeQP9acyTtZdg

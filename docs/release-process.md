@@ -235,29 +235,55 @@ or validation exceptions.
 
 ## Tagging
 
-After the PR merges, a maintainer tags the merge commit. When a signing key
-is configured, create a signed annotated tag:
+Every future release, including a revision (`-rN`), requires an SSH-signed
+annotated tag made by an authorized maintainer. If the approved signing key
+or trusted verification policy is unavailable, stop publication. There is no
+unsigned fallback. See [Release signing](release-signing.md) for approval,
+setup, public trust files, consumer verification, rotation and revocation.
+
+After the release PR merges and its merge commit passes the required checks,
+the authorized maintainer performs the following in the configured release
+checkout. Set `RELEASE_TAG` to the actual authorized version,
+`RELEASE_COMMIT` to its full merge commit SHA, and `TRUSTED_SIGNERS` and
+`TRUSTED_REVOKED_KEYS` to absolute paths to the independently reviewed public
+trust files. These commands are publication steps, not permission to publish.
 
 ```sh
+set -eu
+: "${RELEASE_TAG:?Set the actual authorized release tag}"
+: "${RELEASE_COMMIT:?Set the full qualified merge commit SHA}"
+: "${TRUSTED_SIGNERS:?Set the approved allowed_signers path}"
+: "${TRUSTED_REVOKED_KEYS:?Set the approved revoked_signers path}"
+test -f "$TRUSTED_SIGNERS"
+test -r "$TRUSTED_SIGNERS"
+test -f "$TRUSTED_REVOKED_KEYS"
+test -r "$TRUSTED_REVOKED_KEYS"
 git fetch origin
-git tag -s contracts-edge-X.Y.Z <merge-commit-sha> -m "Contracts for Ferrum Edge vX.Y.Z"
-git push origin contracts-edge-X.Y.Z
+test "$(git config --get gpg.format)" = ssh
+git merge-base --is-ancestor "$RELEASE_COMMIT" origin/main
+git tag -s "$RELEASE_TAG" "$RELEASE_COMMIT" -m "Ferrum Contracts $RELEASE_TAG"
+git -c gpg.ssh.allowedSignersFile="$TRUSTED_SIGNERS" \
+    -c gpg.ssh.revocationFile="$TRUSTED_REVOKED_KEYS" \
+    -c gpg.openpgp.program=false -c gpg.x509.program=false \
+    verify-tag "refs/tags/$RELEASE_TAG"
+test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$RELEASE_COMMIT"
+git rev-parse "refs/tags/$RELEASE_TAG"
+git push origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
 ```
 
-If signing is unavailable, a lightweight tag is acceptable:
+Record the printed tag object SHA separately from the commit SHA. Before
+creating a GitHub release, verify the remote tag from a clean consumer clone
+using the [documented test](release-signing.md#verify-a-downloaded-tag).
 
-```sh
-git fetch origin
-git tag contracts-edge-X.Y.Z <merge-commit-sha>
-git push origin contracts-edge-X.Y.Z
-```
-
-The tags published so far are lightweight and unsigned. Do not describe
-existing tags as signed.
+Existing tags through `contracts-edge-0.9.19` are lightweight and unsigned.
+Preserve them; never describe them as signed or replace them to add a signature.
 
 Then create a GitHub release for the tag with the changelog section as its
-notes. Never move or delete a pushed tag; publish `contracts-edge-X.Y.Z-rN`
-instead.
+notes, plus both object SHAs, the public signer fingerprint, trust-policy
+commit, verification result and CI evidence. Never move or delete a pushed
+tag; use a separately authorized `contracts-edge-X.Y.Z-rN` for a correction.
+The existing immutable-tag rules remain in force. A GitHub release's
+`immutable` field is separate from tag protection and cryptographic verification.
 
 A revision tag (`-rN`) follows the same steps for a change that is not an
 Edge release: a new or changed non-Edge schema, a fixture fix, or a
