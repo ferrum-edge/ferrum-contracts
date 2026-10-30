@@ -98,6 +98,10 @@ class ConsumerVerificationTests(unittest.TestCase):
         self.signers.write_bytes((ROOT / "docs" / "allowed_signers").read_bytes())
         self.verify(accepted=False)
 
+    def test_ferrum_revocation_file_is_accepted_by_the_verifier(self) -> None:
+        self.revoked.write_bytes((ROOT / "docs" / "revoked_signers").read_bytes())
+        self.verify(accepted=True)
+
     def test_empty_trust_store_rejects_a_valid_signature(self) -> None:
         self.signers.write_text("")
         self.verify(accepted=False)
@@ -139,6 +143,11 @@ class ConsumerVerificationTests(unittest.TestCase):
     def test_lightweight_tag_is_rejected(self) -> None:
         self.git("update-ref", "refs/tags/v4.4.1", COMMIT_OBJECT)
         self.env["RELEASE_TAG_OBJECT"] = COMMIT_OBJECT
+        self.verify(accepted=False)
+
+    def test_signed_tag_under_another_name_is_rejected(self) -> None:
+        self.git("update-ref", "refs/tags/v9.9.9", TAG_OBJECT)
+        self.env["RELEASE_TAG"] = "v9.9.9"
         self.verify(accepted=False)
 
     def test_wrong_tag_object_pin_is_rejected(self) -> None:

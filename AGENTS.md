@@ -22,7 +22,9 @@ completed).
 - `fixtures/<name>/{valid,invalid}/*.json`: conformance payloads; a schema
   with several majors uses `fixtures/<name>/v<N>/{valid,invalid}/` per major.
   Provenance and the reason each invalid fixture fails: `fixtures/README.md`.
-- `docs/`: `ownership.md`, `versioning.md`, `adoption.md`, `release-process.md`.
+- `docs/`: `ownership.md`, `versioning.md`, `adoption.md`, `release-process.md`,
+  `release-signing.md`, and the release trust policy `allowed_signers` and
+  `revoked_signers`.
 - `ci/validate.py`, `ci/requirements.txt`: validation script and its
   hash-pinned dependencies. `ci/test_validate.py`: loopback tests for the
   bounded `--fetch-openapi` download. `ci/test_release_signing.py`: offline

@@ -1,4 +1,5 @@
 # SSH public keys authorized to sign Ferrum Contracts release tags.
-# No key is authorized by this file yet. Verification must fail closed.
-# Add an owner-approved principal and public key in a reviewed PR; see
-# release-signing.md. Never add a private key, wildcard principal, or CA.
+# A file with no entries authorizes no key, so verification fails closed.
+# Each entry is added in a reviewed PR with its SHA-256 fingerprint in a
+# comment directly above it; see release-signing.md. Never add a private key,
+# wildcard principal, or CA.

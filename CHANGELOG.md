@@ -6,14 +6,6 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
-### Security
-
-- Require SSH-signed annotated future release tags, with no unsigned fallback.
-  Document owner-approved public signer setup, independently pinned consumer
-  verification, rotation and revocation (#30). Add public trust-policy files
-  that authorize no signer until owner approval and offline verification tests
-  using an existing public signature; historical release tags stay unchanged.
-
 ### Changed
 
 - Record the unreleased Edge pre-routing refusal framing (Edge PR #6965, issue
@@ -23,6 +15,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `docs/error_classification.md` parse-layer qualifier changes to match. No
   error class, `X-Gateway-Error` token, metrics label, or fixture changes;
   `edge_release` stays `v0.9.19` until an Edge release ships it.
+
+### Security
+
+- Require SSH-signed annotated future release tags, with no unsigned fallback.
+  Document signer setup, independently pinned consumer verification (Git
+  2.35+), rotation and revocation (#30). Add the public trust-policy files
+  `docs/allowed_signers` and `docs/revoked_signers`, and offline tests that run
+  the documented verification against an existing public signature. Historical
+  release tags stay unchanged.
 
 ## [contracts-edge-0.9.19] - 2026-10-27
 
