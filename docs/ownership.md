@@ -46,32 +46,20 @@ reviewed, versioned form that every other product pins.
 | GitForgeOps resource file envelope (`kind` + `spec`) | `schemas/gitforgeops-resource/v1.schema.json` | ferrum-edge-git-forge-ops | `src/config/schema.rs` (`Resource`) | implemented |
 
 Owner implementation, shared freeze and publication are separate facts. Both
-Alloy contracts now have `x-contract.status: implemented` and **EXISTING** shared
-v1 status in the [published 0.9.11 release](releases/contracts-edge-0.9.11.md).
-Root accepted the unchanged wire freeze on 2026-10-04 after reviewed owner and
-[consumer qualification](adoption.md). This is the authorized canonical metadata
-decision, not an invented prior human approval or separate Alloy crate publishing
-approval. Alloy's owner availability remains `unreleased` (`publish = false`).
+Alloy contracts have `x-contract.status: implemented` and **EXISTING** shared v1
+status from [contracts-edge-0.9.11](releases/contracts-edge-0.9.11.md). That
+status does not release Alloy: its owner availability remains `unreleased`
+(`publish = false`), and no separate crate publishing approval is implied.
+Diagnostic-report pairing covers every description outside `$id`/`x-contract`,
+so the copy keeps the owner's historical PROPOSED wording; current shared status
+is recorded in `x-contract`. The manifest schema is a transcription of owner
+code, with documented post-default/cross-field limits, not an owner-exported
+schema. Release and consumer evidence: [releases/](releases) and
+[adoption.md](adoption.md).
 
-Final provenance reads qualified owner
-`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, the ordinary squash of Alloy #144;
-its sole applicable main PUSH workflow and all 18 jobs/checks passed. Full
-diagnostic-report pairing includes every description outside `$id`/`x-contract`.
-The copied report retains historical PROPOSED wording in those owner descriptions;
-current shared status is recorded in `x-contract` and these docs. The manifest
-remains a transcription of owner code, with documented post-default/cross-field
-limits, not an owner-exported schema. Every v1 field, bound and fixture is retained.
-
-Canonical publication is complete: PR #13 merged at
-`390edbd5b2485af0988e02f7827fde778d76ae0a`, main PUSH validation succeeded,
-and release 403239814 was published on 2026-10-04 at 22:41:21 UTC. Prepared/pending
-wording in the immutable tagged source is historical, not a new approval
-requirement. Existing r2 bytes and consumer pins remain historical; owner
-pin/local annotations and consumer copies still need coordinated adoption PRs
-that merge with full hosted parity before the ledger records new pins.
-
-The new Edge artifacts check metadata syntax/shape and owner-derived egress
-invariants. [HTTP/runtime semantics](admin-contracts.md), including credential
+The Edge admin artifacts check metadata syntax/shape and owner-derived egress
+invariants. [HTTP/runtime semantics](admin-contracts.md) and the
+[deployment-v1 protocol](deployment-contracts.md), including credential
 verification, audit admission, snapshot coherence, lease fences and serving-DP
 checks, remain the owning implementation's responsibility; schema conformance
 alone grants no authorization or enforcement attestation.
@@ -87,53 +75,6 @@ recorded in `CHANGELOG.md`; published tags remain immutable.
 The vocabulary schemas (`schemas/vocabulary-*`) describe the shape of the
 vocabulary files. This repository owns those shapes; the values inside the
 vocabularies belong to Edge.
-
-The [0.9.12 release](releases/contracts-edge-0.9.12.md) reads Edge-owned
-sources at actual released `0d917701b63ef38210c49df830f48cf0457cbc7d`.
-Backup metadata, egress labels and diagnostic-ref wire content are retained;
-their current provenance is re-read at that owner. Deployment-v1 is a separate
-profile, with separate schemas and [runtime protocol](deployment-contracts.md).
-OpenAPI leaves raw evidence/resource objects open and acknowledgement
-profile/target optional for refusals; consumers must retain complete original
-evidence and require explicit success identity/cleanup authorization. Schema
-conformance cannot supply those runtime guarantees. The changed Edge contracts
-were reviewed by the Edge maintainer and published as `contracts-edge-0.9.12`
-at `31f0a21d707795be293d15837c2f77c3d84219d8` on 2026-10-05. Alloy and other
-owners retain their own availability and adoption boundaries.
-
-The [0.9.13 release](releases/contracts-edge-0.9.13.md) reads Edge-owned
-sources at `v0.9.13`, `9b83115de7ec23ab51ec4feae6bed65e596db425`. Edge changed
-the backend egress response and the deployment snapshot incompatibly, so both
-have a v2 schema next to v1. `diagnostic-ref` v1 keeps its frozen bytes.
-
-The [0.9.14 release](releases/contracts-edge-0.9.14.md) reads Edge-owned
-sources at `v0.9.14`, `9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`. Its changes fit the existing
-majors: an optional CP-only property in `backend-egress-policy` v2,
-descriptions in the acknowledgement, `admin-deployment-snapshot` v2 and the
-vocabularies.
-
-The [0.9.15 release](releases/contracts-edge-0.9.15.md) reads Edge-owned
-sources at `v0.9.15`, `25b37395ff61bfea0f3ffd189d9011c4984fa755`. No schema
-rule changes: `gateway-headers.json` adds `X-Authenticated-Identity` and the
-`Connection` nomination rules, `diagnostic-ref` v1 keeps its frozen bytes and
-gains fixtures for the new rejection phase, and the plugin catalog repins
-`openapi.yaml`.
-
-The [0.9.17 release](releases/contracts-edge-0.9.17.md) reads all current
-Edge-owned artifacts at `v0.9.17`, `669c574c1d1e88e84dccb26a8159939e6694644d`.
-The token-mirroring exception adds `loop_detected` within diagnostic-ref v1;
-other Edge wire majors remain unchanged. Other owners' contracts and historical
-source annotations are retained.
-
-The [0.9.19 release](releases/contracts-edge-0.9.19.md) reads current Edge
-vocabularies and admin schema sources at published `v0.9.19`,
-`510ce7121c3d9754110d330a30a3bd9b7a7b278e`. Mesh identity assertions and plugin
-registration/parity metadata come directly from the tag. Diagnostic-ref v1 is
-verified there but retains its frozen bytes and introduction/source history.
-The new raw `query_trigger_admission` and `gateway_closed_h3_upload` labels
-gain fixtures under the existing open rejection-phase field.
-Earlier majors and other owners retain their provenance. Edge `v0.9.18` was
-never published and has no matching Contracts release.
 
 ## Reviewers
 
@@ -154,5 +95,10 @@ Anvil team, `vocabularies/` to the Edge team) and keep `ci/` and
 - the status check **`Schemas, fixtures and vocabularies`** (the only job of
   the `Validate contracts` workflow, `.github/workflows/validate.yml`), and
 - no approving reviews (ruleset 24239605; the repository is solo-maintained).
+
+Changes land by pull request with all review threads resolved; force-push and
+deletion are blocked. Ruleset 24979475 also requires the `validate.yml`
+workflow from `main` to run (renaming or moving that file needs a ruleset
+update).
 
 If the job is renamed, update the required check in the same PR.

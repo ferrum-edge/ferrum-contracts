@@ -107,68 +107,11 @@ that carries the object; that is the tag binding a consumer to the Edge release
 it names. The new `ErrorClass` assignments for HTTP/2 resets and buffered read
 errors reuse existing values, so `gateway-errors.json` only notes them.
 
-### Refresh in contracts-edge-0.9.19
-
-Published Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e` retains the
-existing diagnostic, conditional backup, egress and deployment wire shapes,
-closed error tokens and egress labels. No schema major changes. Diagnostic-ref
-v1 stays byte for byte equal to 0.9.17 under the consumer freeze. The new raw
-labels `query_trigger_admission` and `gateway_closed_h3_upload` get fixtures
-in the open `detail.rejection.phase`; neither maps to a token in the closed
-`detail.rejection_phase`. Release verification is recorded in the
-[release record](releases/contracts-edge-0.9.19.md).
-
-The five vocabularies name `edge_release: v0.9.19`. Mesh header assertions and
-registration/parity metadata change as owner data within the existing
-vocabulary shapes. The catalog points at the tagged OpenAPI and its new hash;
-that referenced document contains plugin configuration and admission changes,
-some of which refuse inputs older published gateways accepted. These are
-owner config rules, not new canonical response-schema majors. Existing
-consumer pins and prior fixture/major bytes keep their original meaning.
-There is no `contracts-edge-0.9.18`: Edge tagged 0.9.18 but never published it,
-and 0.9.19 carries its changes forward once, as 0.9.17 did for 0.9.16.
-
-### Additions in contracts-edge-0.9.17
-
-Edge `v0.9.17` adds `loop_detected` to its closed header-token vocabulary.
-The documented Edge-owned enumeration exception adds it to `gateway_error`
-and the token-mapped `detail.rejection_phase` enum in `diagnostic-ref` v1.
-The new raw phases `proxy_hop_limit`, `proxy_hops_invalid` and
-`client_disconnect_upload_before_dispatch` remain open `detail.rejection.phase`
-labels; none is a token-mapped detail phase. The hop fence records the header
-token but null detail token. A pinned older schema rejects the new header
-token in conformance validation; readers handling newer owners must preserve
-unknown values rather than map them to a known token.
-
-The protected `X-Ferrum-Hops` vocabulary entry, source provenance and
-descriptions change within existing majors. Conditional backup metadata,
-backend egress v2, deployment snapshot v2 and acknowledgement v1 keep their
-wire rules. Deployment inspection ordering and admin authorization are owner
-runtime requirements. Existing backend timeout wording is clarified to match
-the existing send() handoff, without changing any timeout value or meaning.
-
-### Additions in contracts-edge-0.9.15
-
-Edge `v0.9.15` changes header meaning, adds a gateway rejection phase and
-changes plugin config schemas, but no schema here changes a wire rule:
-
-- `gateway-headers.json` adds `X-Authenticated-Identity` and narrows
-  `X-Consumer-Username` to a mapped Consumer. Vocabulary values follow the
-  Edge release named by `edge_release`; no schema copies these header names,
-  so no major is needed, and `vocabulary-gateway-headers` v1 keeps its shape.
-  The meaning change is Edge's breaking change, recorded in each entry's
-  `edge_behavior` and bound to Edge `v0.9.15` by the tag.
-- `diagnostic-ref` v1 keeps its frozen bytes. Its `rejection.phase` is an open
-  label of at most 64 characters, so `route_protocol_admission` is already
-  valid, and `detail.rejection_phase` keeps its closed token-mapped enum
-  because `token_for_rejection_phase` maps the new phase to no token.
-- The plugin catalog's pointers are unchanged. The configs they reach change
-  with the pinned `openapi.yaml` (for example the closed `LdapAuthConfig`
-  drops `consumer_mapping`); the SHA-256 pin binds each tag to one Edge
-  release's config rules.
-- Whether a request is refused under `gates_request_admission()` depends on the
-  plugin instance's config and the route's per-protocol plugin set, so it is not
-  a per-type catalog field.
+Later releases' changes within the existing majors are recorded in their
+[release records](releases). Plugin configuration changes reached through the
+catalog's pinned `openapi.yaml` are owner config rules bound to one Edge
+release by that file's SHA-256 pin, not new schema majors; see
+[plugin-config-admission.md](plugin-config-admission.md).
 
 ## Vocabulary versions
 
@@ -178,15 +121,6 @@ The values change with Edge releases; `edge_release` names the Edge tag they
 were read from. A vocabulary may also list entries that exist only on Edge
 `main`; those are marked (`availability: unreleased`, or the
 `main_branch_delta` block) and are never presented as released.
-
-For the [published 0.9.11 release](releases/contracts-edge-0.9.11.md),
-`edge_release: v0.9.11` identifies the actual immutable tagged owner source
-`c764084b3b51c3f7ffde268c039688d35e49c553`. Edge distribution is recorded in
-the Edge release itself. The canonical contracts tag points to
-`390edbd5b2485af0988e02f7827fde778d76ae0a` and was published on 2026-10-04.
-Prepared/pending schema annotations captured in that immutable source are
-historical pre-publication wording, not a new approval requirement. Existing
-first-availability entries and immutable released tag bytes stay historical.
 
 Backend egress response version 2, current from Edge v0.9.13, and
 `ferrum-private-reserved-v1` identify the owner's exact classifier and label
@@ -202,17 +136,11 @@ Conditional metadata v1 checks quoted strong token syntax and all four maps.
 It cannot distinguish cryptographic row/namespace bindings or authorize restore;
 the owner's HTTP precondition and transaction semantics remain authoritative.
 
-The [published 0.9.12 release](releases/contracts-edge-0.9.12.md) refreshes all
-five vocabulary `edge_release`/current Edge source pins to actually released
-`v0.9.12`, `0d917701b63ef38210c49df830f48cf0457cbc7d`. The canonical
-`contracts-edge-0.9.12` tag points to `31f0a21d707795be293d15837c2f77c3d84219d8`
-and was published on 2026-10-05. First availability,
-historical fixtures and other-owner unreleased annotations are preserved.
-Deployment snapshot and acknowledgement are new v1 contracts; they do not
-change the meaning of `admin-conditional-snapshot` v1. Their original strong
-`deployment-v1-` token cannot substitute for backup namespace or row authority.
-Open raw evidence/resource objects follow owner OpenAPI; producer labels are
-strict and unknown acknowledgement states grant no cleanup/replay authority.
+Deployment snapshot and mutation acknowledgement v1 do not change the meaning
+of `admin-conditional-snapshot` v1. Their original strong `deployment-v1-` token
+cannot substitute for backup namespace or row authority. Open raw
+evidence/resource objects follow owner OpenAPI; producer labels are strict and
+unknown acknowledgement states grant no cleanup/replay authority.
 See [deployment-contracts.md](deployment-contracts.md) for runtime requirements.
 
 ## Formats
@@ -250,6 +178,10 @@ An Edge release that changes no contract source maps to the latest
 contains no contract-source changes after v0.9.9, so it maps to
 `contracts-edge-0.9.9`.
 
+An Edge tag that was never published (`v0.9.16`, `v0.9.18`) gets no
+Contracts tag; the next published Edge release carries its changes forward
+once.
+
 | Edge release | Contracts tag | Reason |
 |---|---|---|
 | `v0.9.8` | `contracts-edge-0.9.8` | Initial Edge-aligned contracts release |
@@ -272,38 +204,5 @@ A non-Edge contract change, such as the Alloy-owned `[agents]` addition to
 Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
-
-`contracts-edge-0.9.19` is the latest tag, on the merge commit of its release
-PR; its GitHub release records the tag commit. It maps to Edge `v0.9.19` at
-`510ce7121c3d9754110d330a30a3bd9b7a7b278e`. Historical `contracts-edge-0.9.17`
-is at `f7ba1a9b9885900d1e110f76d38e37a02eda13c8`, mapping to Edge `v0.9.17`
-at `669c574c1d1e88e84dccb26a8159939e6694644d`. Historical `contracts-edge-0.9.15`
-is at `6fb64c5dc2e014204c17609fc717d976f3b4589e`. `contracts-edge-0.9.14` is at
-`ddbdd845733b7046c4393ac951011dafb774db33`, the merge commit of PR #22, with
-release 406650065 published on 2026-10-08 at 09:22:24 UTC.
-`contracts-edge-0.9.13` is at `9626821eb089c71f5d4d71268c7b8276a8a5ab50`, the
-merge commit of its own release PR. `contracts-edge-0.9.12` is at
-`31f0a21d707795be293d15837c2f77c3d84219d8`. [PR #15](https://github.com/ferrum-edge/ferrum-contracts/pull/15)
-merged on 2026-10-05 at 13:57:00 UTC with exact reviewed second parent
-`d9c84810152732524c54a9ed292dc59103f0619d` and that reviewed head's tree. Its
-final-head hosted [run 37319873697](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37319873697)
-and the sole applicable main PUSH [run 37320780987](https://github.com/ferrum-edge/ferrum-contracts/actions/runs/37320780987)
-succeeded before tag creation; [release 403772929](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
-was published at 13:58:38 UTC. Historical
-[`contracts-edge-0.9.11`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
-remains at `390edbd5b2485af0988e02f7827fde778d76ae0a`, published on 2026-10-04
-at 22:41:21 UTC. Historical 0.9.8, 0.9.9, 0.9.10 and r2 mappings remain unchanged.
-
-Root has accepted the unchanged shared Alloy v1 freeze after reviewed owner and
-consumer qualification. The release records **EXISTING**/implemented shared v1
-metadata at owner `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`, while retaining
-owner-unreleased availability. Wire fields, bounds, fixtures and unknown-member/
-open-enum reader behavior are unchanged. Full report parity includes descriptions
-outside `$id`/`x-contract`, including historical PROPOSED wording in the owner
-copy. Alloy remains unpublished, and the canonical publication grants no separate
-Alloy crate publishing approval. Consumers continue using their recorded immutable
-pins until their adoption PRs merge and qualify; publication alone does not update
-those pins. Prepared/pending wording in the tagged source records the earlier
-pre-publication state. See the release record for the subsequent publication facts.
 
 See [release-process.md](release-process.md) for the release steps.

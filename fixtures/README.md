@@ -73,20 +73,21 @@ fixtures alone do not establish consumer adoption. Their schemas
 check JSON conformance only: token authenticity, authorization, authoritative
 state/coherence, audit admission and serving-DP policy are runtime requirements.
 Existing Alloy fixtures are unchanged and retain their historical source
-provenance; the candidate re-reads schema/manifest source at qualified Alloy
+provenance; Alloy schema/manifest provenance is re-read at qualified owner
 `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` without altering fixture semantics.
 All fixture bytes are retained. The egress vocabulary fixtures include the initial
 candidate description from before upstream publication; that historical fixture
 text is not current availability metadata. Current availability is recorded above
 and in the release record.
 
-The new deployment fixtures prepare canonical 0.9.12 artifacts from actual
-released owner source. [The preparation record](../docs/releases/contracts-edge-0.9.12.md)
-distinguishes verified Edge distribution from pending Contracts publication and
-consumer adoption. Empty-state fixtures cover exact SQL versus MongoDB evidence
-families; no populated secret-bearing HTTP golden or generated gzip bytes are
-invented. Nested evidence is open in owner OpenAPI and requires runtime
-completeness checks, including full raw/spec/external-reference retention.
+The original v1 deployment fixtures transcribe released Edge `v0.9.12` owner
+source (see the [0.9.12 release record](../docs/releases/contracts-edge-0.9.12.md));
+the table above records the later v2 fixtures from `v0.9.13`, including the
+explicitly synthetic `one-spec-sql.json`. Empty-state fixtures cover exact SQL
+versus MongoDB evidence families. No populated secret-bearing HTTP golden is
+invented, and the only gzip bytes are the synthetic one-spec document's.
+Nested evidence is open in owner OpenAPI and requires runtime completeness
+checks, including full raw/spec/external-reference retention.
 Acknowledgement fixtures cover explicit success, CP durable-only, stale,
 not-started, uncertain and committed-not-live results. Optional profile/target
 on refusals remain optional; consumers must require expected success identity

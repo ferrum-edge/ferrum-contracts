@@ -23,8 +23,9 @@ completed).
   with several majors uses `fixtures/<name>/v<N>/{valid,invalid}/` per major.
   Provenance and the reason each invalid fixture fails: `fixtures/README.md`.
 - `docs/`: `ownership.md`, `versioning.md`, `adoption.md`, `release-process.md`,
-  `release-signing.md`, and the release trust policy `allowed_signers` and
-  `revoked_signers`.
+  `admin-contracts.md`, `deployment-contracts.md`, `plugin-config-admission.md`,
+  `release-signing.md`, the release trust policy `allowed_signers` and
+  `revoked_signers`, and `releases/` (tagged release records).
 - `ci/validate.py`, `ci/requirements.txt`: validation script and its
   hash-pinned dependencies. `ci/test_validate.py`: loopback tests for the
   bounded `--fetch-openapi` download. `ci/test_release_signing.py`: offline
@@ -80,6 +81,10 @@ completed).
   (`.github/dependabot.yml`).
 - `main` requires the `Schemas, fixtures and vocabularies` check and no
   approving reviews (ruleset 24239605; the repository is solo-maintained).
+  Changes land by pull request with all review threads resolved; force-push
+  and deletion are blocked. Ruleset 24979475 also requires the
+  `validate.yml` workflow from `main` to run (renaming or moving that file
+  needs a ruleset update).
 
 ## PR and commit workflow
 
