@@ -22,6 +22,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   records; move the Edge `v0.9.19` plugin configuration admission notes from
   `docs/admin-contracts.md` to the new `docs/plugin-config-admission.md`; and
   document the `main` rulesets. No schema, vocabulary or fixture changes.
+- State in `docs/versioning.md` that the `service-manifest` `[agents]`
+  section first appeared in `contracts-edge-0.9.9-r2` and remains in later
+  tags, and point to `docs/adoption.md` for current consumer pins (Nexus pins
+  `contracts-edge-0.9.17`). No schema, vocabulary or fixture changes.
 
 ### Security
 
