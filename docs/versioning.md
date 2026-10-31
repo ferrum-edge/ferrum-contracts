@@ -195,9 +195,10 @@ once.
 | `v0.9.17` | `contracts-edge-0.9.17` | Protected hop-count assertion and mirrored loop token within existing majors, plus current source and deployment ordering from released owner `669c574c1d1e88e84dccb26a8159939e6694644d` |
 | `v0.9.19` | `contracts-edge-0.9.19` | Mesh identity assertions, plugin metadata and OpenAPI repin, plus raw diagnostic rejection-phase fixtures within existing majors, from released owner `510ce7121c3d9754110d330a30a3bd9b7a7b278e`, tagged on the merge commit of its release PR |
 
-Consumers that need the Alloy-owned `[agents]` section of `service-manifest`
-pin `contracts-edge-0.9.9-r2`; it is otherwise identical to
-`contracts-edge-0.9.9`.
+The Alloy-owned `[agents]` section of `service-manifest` first appeared in
+`contracts-edge-0.9.9-r2`, which is otherwise identical to
+`contracts-edge-0.9.9`, and remains in every later tag. Current consumer pins,
+including Nexus at `contracts-edge-0.9.17`, are in [adoption.md](adoption.md).
 
 A non-Edge contract change, such as the Alloy-owned `[agents]` addition to
 `service-manifest` in #8, is released as a revision of the latest applicable
