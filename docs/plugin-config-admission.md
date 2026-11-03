@@ -8,11 +8,62 @@ rules and runtime refusals, not new envelope fields, vocabulary values or
 schema majors. Namespace-scoped material-reference rules are in
 [admin-contracts.md](admin-contracts.md#admin-authorization-and-write-rules).
 
-`contracts-edge-0.9.19` pins Edge `v0.9.19` `openapi.yaml`
-(`610e2645961e7a5deca73468439be9c4a5b7070045099506c212a0a36b045e90`), which
-ships every change below. Further production-launch plugin changes are in the
-pinned OpenAPI and the owner's
-[upgrade guide](https://github.com/ferrum-edge/ferrum-edge/blob/510ce7121c3d9754110d330a30a3bd9b7a7b278e/docs/upgrade_guide.md).
+`contracts-edge-0.9.20` pins Edge `v0.9.20` `openapi.yaml`
+(`8fa7232d96e1094578dee03cfa1966a4fdd9df77b8e027a9625f56ce6bfd355e`), which
+ships every change below. The `v0.9.19` rules below are unchanged in it; only
+the configuration components named under
+[Closed nested plugin configs](#closed-nested-plugin-configs) differ from the
+`v0.9.19` document. Further plugin changes are in the pinned OpenAPI and the
+owner's
+[upgrade guide](https://github.com/ferrum-edge/ferrum-edge/blob/e4a606a00352674daaef08636e3e359e6c48ba18/docs/upgrade_guide.md).
+
+## Closed nested plugin configs
+
+Source: Edge PRs
+[#6967](https://github.com/ferrum-edge/ferrum-edge/pull/6967) owner commit
+[`ac8190eb27a707103380f386a183e178eaa417d1`](https://github.com/ferrum-edge/ferrum-edge/commit/ac8190eb27a707103380f386a183e178eaa417d1)
+and [#6972](https://github.com/ferrum-edge/ferrum-edge/pull/6972) owner commit
+[`85921720bf8b0fdf2b1a8d02379e52a6e6316cac`](https://github.com/ferrum-edge/ferrum-edge/commit/85921720bf8b0fdf2b1a8d02379e52a6e6316cac),
+issue #6616.
+
+Plugin configs were already closed at their root. Edge `v0.9.19` and earlier
+ignore unknown keys in some nested objects; from `v0.9.20` every built-in
+plugin config rejects an unknown key at every depth, at admission and when
+stored configuration is loaded. Operator-named maps, such as header maps, are
+unchanged. Every `config_schema.pointer`, registration, failure policy and
+`PluginConfigBase` conditional is unchanged. The pinned OpenAPI publishes the
+closure in these referenced components:
+
+- `WorkloadMetricsConfig` (`workload_metrics`): `metrics`, each
+  `tag_overrides` entry and its `operation`, `direction_emit`, and each
+  tracing `provider` envelope and its `config` gain
+  `additionalProperties: false`. An `operation` carries only its own type's
+  members: `remove` none, `rename` `new_name`, `set` `value`, and `set_expr`
+  exactly one of `expression` and `cel` (`v0.9.19` accepted either or both).
+- `MeshAuthzPolicyScope` (`mesh_authz` policy `scope`): every `kind`
+  variant is closed, including `mesh_wide`. Each `target_refs` attachment is
+  closed and requires `kind` and `name`; `namespace` is required for the
+  `service` and `gateway` kinds and refused for `gateway_class`.
+- `MeshAuthzConfig` (`mesh_authz`): `node_waypoint_route_upstreams` entries
+  and their targets are closed. The description states that the embedded
+  `mesh_slice` root and `ext_authz_providers` entries, with their header and
+  body objects, are closed too; the runtime deserializer enforces that, not a
+  schema keyword.
+
+The owner changelog lists further runtime-only closures in `mesh_authz`: the
+`custom` action, `request_authentications` and their JWT rules,
+`peer_authentications`, and `multi_cluster` with its remote-cluster and
+east-west-gateway entries. Mesh inventory objects (`workloads`, `services`)
+stay tolerant of unknown fields. Mesh Telemetry documents on native, file and
+Ferrum xDS slices are closed at every level in the same release. From
+`v0.9.20` a data plane refuses a mesh slice from a newer control plane that
+adds a closed member and keeps serving its last-good slice, so the owner
+upgrades mesh control and data planes together.
+
+A product that generates these plugin configs or mesh policies should remove
+misspelled or obsolete nested keys and send `name`, plus `namespace` where
+required, on every `targetRefs` attachment before targeting Edge `v0.9.20`.
+There are no new envelope fields or vocabulary values.
 
 ## Native Kafka producer keys
 
@@ -50,8 +101,8 @@ and [#6637](https://github.com/ferrum-edge/ferrum-edge/pull/6637), owner commit
 [`fed841c6cbcb0d2e16f6ccbcc9df4447ad00b054`](https://github.com/ferrum-edge/ferrum-edge/commit/fed841c6cbcb0d2e16f6ccbcc9df4447ad00b054);
 issues #6607, #6610, #6609, #6620 and #6611.
 
-The catalog now pins
-`v0.9.19` `openapi.yaml`, which enforces the changes below and admits the new
+Edge `v0.9.19`
+`openapi.yaml` enforces the changes below and admits the new
 `ldap_auth` field. Edge `v0.9.17` admitted empty `access_control` allow-lists
 and the older `claim_headers` objects, and rejected `group_cache_ttl_seconds`
 as an unknown property. Every `config_schema.pointer` is unchanged.
@@ -83,8 +134,7 @@ From Edge `v0.9.19`:
 
 A product that generates these plugin configs should stop emitting empty
 `access_control` allow-lists and `claim_headers` objects outside those bounds
-before targeting Edge `v0.9.19`. The catalog pins that release
-by its full commit and OpenAPI hash.
+before targeting Edge `v0.9.19`.
 
 ## Validator bypass, mirror allowlist, JWKS providers and CORS
 
@@ -98,7 +148,7 @@ Source: Edge PRs
 and [#6644](https://github.com/ferrum-edge/ferrum-edge/pull/6644) owner commit
 [`b862d25f6872aea17b3c2740edae17a6836459d2`](https://github.com/ferrum-edge/ferrum-edge/commit/b862d25f6872aea17b3c2740edae17a6836459d2).
 
-The catalog pins `v0.9.19` `openapi.yaml`, which enforces the changes
+Edge `v0.9.19` `openapi.yaml` enforces the changes
 below; `v0.9.17` admitted the older configurations. Every
 `config_schema.pointer` is unchanged. From Edge `v0.9.19`:
 
@@ -124,8 +174,7 @@ below; `v0.9.17` admitted the older configurations. Every
 
 A product that generates these plugin configs should stop emitting
 presence-only `bypass.header_present` entries and `jwks_auth` provider sets
-outside those bounds before targeting Edge `v0.9.19`. The catalog pins
-that release by its full commit and OpenAPI hash.
+outside those bounds before targeting Edge `v0.9.19`.
 
 ## Hard resource bounds
 
@@ -149,7 +198,7 @@ hard bounds:
 - `ai_prompt_shield` has `max_scan_bytes` at most `67108864`, `custom_patterns` at most 256 entries, and `patterns` at most 8 unique built-in names (a repeated name is refused).
 - `ai_response_guard` has `max_scan_bytes` at most `67108864`, `pii_patterns` at most 8 unique built-in names (a repeated name is refused), `custom_pii_patterns` and `blocked_patterns` at most 256 entries each, and `blocked_phrases` at most 1024. Pattern `name` values are at most 128 characters, a custom `regex` that matches the empty string is refused, and each rendered `redaction_placeholder` is at most 512 UTF-8 bytes.
 
-Catalog `config_schema` pointers are unchanged, and the `config_schema_document` pin is v0.9.19. There are no new envelope fields or vocabulary values.
+Catalog `config_schema` pointers are unchanged. There are no new envelope fields or vocabulary values.
 
 ## Telemetry redaction, mirror provenance and claim-header names
 
@@ -162,8 +211,8 @@ and [#6668](https://github.com/ferrum-edge/ferrum-edge/pull/6668) owner commit
 [`1aeb94815087f23d0b8e55a32f38164b28daaa0e`](https://github.com/ferrum-edge/ferrum-edge/commit/1aeb94815087f23d0b8e55a32f38164b28daaa0e);
 issues #6619, #6658 and #6656.
 
-The catalog pins `v0.9.19`
-`openapi.yaml`, which admits the two new fields below and enforces the
+Edge `v0.9.19`
+`openapi.yaml` admits the two new fields below and enforces the
 claim-header rules. The earlier `v0.9.17` schemas rejected those fields
 (`additionalProperties: false`) and admitted the older claim-header spellings.
 Every `config_schema.pointer` is unchanged. From Edge `v0.9.19`:
@@ -214,8 +263,7 @@ Ferrum refuses now makes its selected workloads answer inbound HTTP requests
 with `503` instead of being dropped. A product that generates these plugin configs should stop
 emitting credential-shaped log-schema names and underscore spellings of
 reserved or duplicate claim-header destinations before targeting Edge
-`v0.9.19`. These changes add no envelope fields or vocabulary values; the
-catalog pins the shipping OpenAPI.
+`v0.9.19`. These changes add no envelope fields or vocabulary values.
 
 ## `security_headers` tokens
 
@@ -242,6 +290,5 @@ publishes, and admission enforces:
 
 A product that generates `security_headers` configs should stop emitting other
 values (for example `ALLOW-FROM`) before targeting Edge `v0.9.19`.
-Catalog `config_schema` pointers are unchanged, and the `config_schema_document`
-pin is v0.9.19. There are no new envelope
+Catalog `config_schema` pointers are unchanged. There are no new envelope
 fields or vocabulary values.

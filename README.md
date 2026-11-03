@@ -37,8 +37,8 @@ complete; the issue is closed and remains as project history.
 | [`docs/releases/`](docs/releases) | Release records from `contracts-edge-0.9.11` on: Edge source, changes and what stayed unchanged |
 
 Every file records where it came from: owner repository, path, and commit.
-Latest: [`contracts-edge-0.9.19`](docs/releases/contracts-edge-0.9.19.md), for
-Edge `v0.9.19` (Edge commit `510ce7121c3d9754110d330a30a3bd9b7a7b278e`). There
+Latest: [`contracts-edge-0.9.20`](docs/releases/contracts-edge-0.9.20.md), for
+Edge `v0.9.20` (Edge commit `e4a606a00352674daaef08636e3e359e6c48ba18`). There
 is no `contracts-edge-0.9.18`: Edge `v0.9.18` was tagged but never published.
 Release history: [`CHANGELOG.md`](CHANGELOG.md) and [`docs/releases/`](docs/releases);
 Edge-to-tag mapping: [docs/versioning.md](docs/versioning.md#release-tags).

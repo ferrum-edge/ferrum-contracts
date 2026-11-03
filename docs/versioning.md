@@ -194,6 +194,7 @@ once.
 | `v0.9.15` | `contracts-edge-0.9.15` | `X-Authenticated-Identity`, `Connection` nomination and `_`/`-` assertion rules, the `route_protocol_admission` phase and plugin config schema changes within the current majors, from released owner `25b37395ff61bfea0f3ffd189d9011c4984fa755`, tagged on the merge commit of its release PR |
 | `v0.9.17` | `contracts-edge-0.9.17` | Protected hop-count assertion and mirrored loop token within existing majors, plus current source and deployment ordering from released owner `669c574c1d1e88e84dccb26a8159939e6694644d` |
 | `v0.9.19` | `contracts-edge-0.9.19` | Mesh identity assertions, plugin metadata and OpenAPI repin, plus raw diagnostic rejection-phase fixtures within existing majors, from released owner `510ce7121c3d9754110d330a30a3bd9b7a7b278e`, tagged on the merge commit of its release PR |
+| `v0.9.20` | `contracts-edge-0.9.20` | Closed nested plugin and mesh Telemetry configs through the OpenAPI repin, and the released gRPC pre-routing refusal framing, within existing majors, from released owner `e4a606a00352674daaef08636e3e359e6c48ba18`, tagged on the merge commit of its release PR |
 
 The Alloy-owned `[agents]` section of `service-manifest` first appeared in
 `contracts-edge-0.9.9-r2`, which is otherwise identical to

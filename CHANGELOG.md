@@ -6,15 +6,59 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+## [contracts-edge-0.9.20] - 2026-11-03
+
+Contracts for published Ferrum Edge `v0.9.20`
+(`e4a606a00352674daaef08636e3e359e6c48ba18`). See the
+[release record](docs/releases/contracts-edge-0.9.20.md). This is the first
+Contracts release under the signed-tag policy in
+[docs/release-signing.md](docs/release-signing.md) (#44). Every schema
+accepts the same payloads as in `contracts-edge-0.9.19`.
+
+### Added
+
+- `docs/plugin-config-admission.md` section for the closed nested plugin
+  configs that ship in Edge `v0.9.20` (Edge #6967, #6972, issue #6616):
+  unknown keys are refused at every depth, policy `targetRefs` attachments
+  require `name` (and `namespace` for `service` and `gateway`), and
+  `workload_metrics` tag-override operations carry only their own type's
+  members.
+- Final release record with source paths, OpenAPI hash, unchanged wire
+  contracts and consumer adoption requirements.
+
 ### Changed
 
-- Record the unreleased Edge pre-routing refusal framing (Edge PR #6965, issue
-  #6943) as a `main_branch_delta` in `vocabularies/gateway-errors.json`.
-  HTTP/1.1 and HTTP/2 answer native gRPC and gRPC-Web clients in their own
-  framing before routing, as HTTP/3 already does, and the
-  `docs/error_classification.md` parse-layer qualifier changes to match. No
-  error class, `X-Gateway-Error` token, metrics label, or fixture changes;
-  `edge_release` stays `v0.9.19` until an Edge release ships it.
+- Refresh all five Edge vocabularies and current backup, egress and deployment
+  schema provenance from `v0.9.20`. Pin `openapi.yaml` to SHA-256
+  `8fa7232d96e1094578dee03cfa1966a4fdd9df77b8e027a9625f56ce6bfd355e`.
+  Keep diagnostic-ref v1 byte for byte under the existing consumer freeze:
+  `src/diagnostic_ref.rs`, `src/retry.rs` and the diagnostic OpenAPI
+  components are unchanged from `v0.9.19`, so no rejection-phase label is
+  added. Earlier majors and historical fixtures retain their pins, and no
+  fixture changes.
+- Re-transcribe the plugin catalog from `v0.9.20`: the 82 registered names,
+  two removed names, failure policies, parity priorities, phases, protocols
+  and rationales, response-body producer and WebSocket framing membership, and
+  every `PluginConfigBase` pointer, config-required and scope conditional are
+  unchanged. Record the closed `WorkloadMetricsConfig`,
+  `MeshAuthzPolicyScope` and `MeshAuthzConfig` components in the OpenAPI
+  provenance note. The new built-in `lifecycle_hooks()` declarations (Edge
+  #6975) agree with every catalog `active_phases` entry and add no field.
+- Record the HTTP/1.1 and HTTP/2 pre-routing refusal framing for native gRPC
+  and gRPC-Web clients that ships in Edge `v0.9.20` (Edge #6965 and #6969,
+  issue #6943) in the released `gateway-errors.json` provenance, with a new
+  `docs/size_limits.md` source and the `docs/error_classification.md`
+  parse-layer section. The framed HTTP `200` refusals carry no
+  `X-Gateway-Error` token; plain HTTP answers keep theirs, and every
+  non-WebSocket CONNECT keeps its HTTP refusal. This replaces the
+  `main_branch_delta` recorded by #43, which is removed. No error class,
+  token, metrics label or class-to-token mapping changes.
+- Note in `protocol_error` that a gRPC backend failure observed at or after
+  the client RPC deadline is settled as that deadline (`DEADLINE_EXCEEDED`,
+  health-neutral) from Edge `v0.9.20` (Edge #6973, #6979).
+- Update the README, versioning mapping, adoption, ownership, admin,
+  deployment and plugin-admission docs for `contracts-edge-0.9.20`, keeping
+  recorded consumer pins and other owners' availability unchanged.
 - Align the docs with current state: refresh consumer pins in
   `docs/adoption.md` (read 2026-10-30) and record ferrum-alloy#27 as closed;
   replace repeated release narratives in `README.md`, `docs/versioning.md`,
