@@ -17,6 +17,7 @@ configuration admission changes reached through the plugin catalog's pinned
 | [0.9.15](releases/contracts-edge-0.9.15.md) | `v0.9.15`, `25b37395ff61bfea0f3ffd189d9011c4984fa755` | Backup/egress sources byte-identical to `v0.9.14`; MongoDB batch/restore and TLS-reference [write rules](#admin-authorization-and-write-rules) |
 | [0.9.17](releases/contracts-edge-0.9.17.md) | `v0.9.17`, `669c574c1d1e88e84dccb26a8159939e6694644d` | Wire shapes unchanged; [bounded-token authorization](#admin-authorization-and-write-rules) |
 | [0.9.19](releases/contracts-edge-0.9.19.md) | `v0.9.19`, `510ce7121c3d9754110d330a30a3bd9b7a7b278e` | Wire shapes unchanged; [material-reference default-deny](#admin-authorization-and-write-rules) and the plugin-config [`expected_proxy_ids`](#authoritative-verification-and-replacement) precondition |
+| [0.9.20](releases/contracts-edge-0.9.20.md) | `v0.9.20`, `e4a606a00352674daaef08636e3e359e6c48ba18` | Wire shapes and admin rules unchanged: `src/admin/` and the backup, egress and deployment OpenAPI components are byte-identical to `v0.9.19`; [closed nested plugin configs](plugin-config-admission.md#closed-nested-plugin-configs) |
 
 ## Admin authorization and write rules
 
@@ -76,7 +77,7 @@ classified set in
 [`src/admin/crud/scoped_references.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud/scoped_references.rs);
 the refusal is `tls_reference_refusal` in
 [`src/admin/crud.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud.rs).
-The current catalog pins the shipping `v0.9.19` OpenAPI.
+These rules are unchanged in Edge `v0.9.20`; the current catalog pins its OpenAPI.
 
 ## Owner sources and artifact scope
 

@@ -10,9 +10,9 @@ complete; that issue is closed. The later Alloy consumer work tracked by
 [ferrum-alloy#27](https://github.com/ferrum-edge/ferrum-alloy/issues/27) is
 complete; that issue closed on 2026-10-06.
 
-| Repository | Commit read (consumers: `main` on 2026-10-30; Edge: `v0.9.19` tag) | Pinned tag on `main` |
+| Repository | Commit read (consumers: `main` on 2026-10-30; Edge: `v0.9.20` tag) | Pinned tag on `main` |
 |---|---|---|
-| ferrum-edge | `510ce7121c3d9754110d330a30a3bd9b7a7b278e` | producer: released `v0.9.19` source; maps to `contracts-edge-0.9.19`; `v0.9.18` was tagged but never published (no matching Contracts release); `v0.9.17` maps to `contracts-edge-0.9.17`; `v0.9.15` maps to `contracts-edge-0.9.15` at `6fb64c5dc2e014204c17609fc717d976f3b4589e`; `v0.9.14` (`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`) maps to `contracts-edge-0.9.14` at `ddbdd845733b7046c4393ac951011dafb774db33`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
+| ferrum-edge | `e4a606a00352674daaef08636e3e359e6c48ba18` | producer: released `v0.9.20` source; maps to `contracts-edge-0.9.20`; `v0.9.19` (`510ce7121c3d9754110d330a30a3bd9b7a7b278e`) maps to `contracts-edge-0.9.19` at `d96b0292a0f87647f7552f25e0e5ce1b4ae30f8b`; `v0.9.18` was tagged but never published (no matching Contracts release); `v0.9.17` maps to `contracts-edge-0.9.17`; `v0.9.15` maps to `contracts-edge-0.9.15` at `6fb64c5dc2e014204c17609fc717d976f3b4589e`; `v0.9.14` (`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`) maps to `contracts-edge-0.9.14` at `ddbdd845733b7046c4393ac951011dafb774db33`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
 | ferrum-anvil | `7b4a6b367476208e8a1ffbc0483f8e3d6c681e3e` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/7b4a6b367476208e8a1ffbc0483f8e3d6c681e3e/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.15` |
 | ferrum-alloy | `9a8dbad2b9aa984e4818e8d502fa58299cac263c` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/9a8dbad2b9aa984e4818e8d502fa58299cac263c/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.17` |
 | ferrum-nexus | `a19d4bafa8b202eafb0f25d7fbdd19ea6242c4bf` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/a19d4bafa8b202eafb0f25d7fbdd19ea6242c4bf/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.17`; [`SERVICE-MANIFEST-PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/a19d4bafa8b202eafb0f25d7fbdd19ea6242c4bf/contracts/ferrum-contracts/SERVICE-MANIFEST-PIN): `contracts-edge-0.9.17` manifest |
@@ -40,8 +40,10 @@ hosted signature/SLSA/SBOM/ABI facts are recorded in the
 [Edge v0.9.11 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11),
 not in these contracts docs.
 
-The current release mapping is [`contracts-edge-0.9.19`](releases/contracts-edge-0.9.19.md),
-for published Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e`.
+The current release mapping is [`contracts-edge-0.9.20`](releases/contracts-edge-0.9.20.md),
+for published Edge `v0.9.20` at `e4a606a00352674daaef08636e3e359e6c48ba18`.
+Historical [`contracts-edge-0.9.19`](releases/contracts-edge-0.9.19.md) maps to
+Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e`.
 Historical [`contracts-edge-0.9.17`](releases/contracts-edge-0.9.17.md) maps to
 Edge `v0.9.17` at `669c574c1d1e88e84dccb26a8159939e6694644d`.
 Consumer snapshots below retain their recorded inspection date and exact pins.
@@ -61,6 +63,25 @@ Historical 0.9.11 remains at `390edbd5b2485af0988e02f7827fde778d76ae0a`, and
 historical r2 remains at `591c73a3f965fdab440c3a76b2707accdf491ba5`.
 
 ## Published admin and shared v1 adoption boundary
+
+### contracts-edge-0.9.20 closed plugin configs and gRPC refusal framing
+
+Consumers targeting Edge `v0.9.20` must generate plugin configs with no
+unknown keys in any nested object: Edge rejects them at admission and when it
+loads stored configuration, and the closed mesh Telemetry documents and
+policy `targetRefs` attachments follow the same rule. Every policy
+`targetRefs` attachment needs `name`, plus `namespace` on `service` and
+`gateway` kinds. See [plugin-config-admission.md](plugin-config-admission.md).
+Every plugin `config_schema.pointer`, registration, failure policy and
+lifecycle phase is unchanged from 0.9.19; only the pinned OpenAPI hash moves.
+
+gRPC and gRPC-Web clients of Edge `v0.9.20` receive pre-routing refusals on
+HTTP/1.1 and HTTP/2 in their own framing, as on HTTP/3: read `grpc-status`
+rather than the JSON `400`, `414` or `429` body. These framed HTTP `200`
+refusals carry no `X-Gateway-Error` token. The error vocabularies, header
+vocabulary and every schema accept the same payloads as in
+`contracts-edge-0.9.19`, so no consumer pin has to move for validation alone.
+Each consumer still needs its own pin/copy/checksum change and qualification.
 
 ### contracts-edge-0.9.19 plugin admission and mesh assertions
 

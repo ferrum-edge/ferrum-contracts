@@ -12,8 +12,8 @@
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.19",
-        "commit": "510ce7121c3d9754110d330a30a3bd9b7a7b278e",
+        "ref": "v0.9.20",
+        "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
         "path": "openapi.yaml",
         "symbols": [
           "components.schemas.BackendEgressPolicyResponse",
@@ -23,15 +23,15 @@
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.19",
-        "commit": "510ce7121c3d9754110d330a30a3bd9b7a7b278e",
+        "ref": "v0.9.20",
+        "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
         "path": "src/admin/backend_egress_policy.rs",
         "note": "Vocabulary shape is contracts-owned; v2 labels/order are transcribed from the Edge-owned response and reused by its canonical schema."
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
-        "ref": "v0.9.19",
-        "commit": "510ce7121c3d9754110d330a30a3bd9b7a7b278e",
+        "ref": "v0.9.20",
+        "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
         "path": "src/grpc/backend_egress_attestation.rs",
         "symbols": [
           "ATTESTATION_REPORTED",
