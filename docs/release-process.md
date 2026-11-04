@@ -11,8 +11,10 @@ When Ferrum Edge publishes `vX.Y.Z`:
    owner's files with `git show vX.Y.Z:<path>` from a clean clone; never copy
    from another consumer.
    - `vocabularies/gateway-errors.json`: `src/retry.rs` (`ErrorClass`,
-     `OBS_*`, `x_gateway_error_token_for_class`, `token_for_rejection_phase`)
-     and `docs/error_classification.md`.
+     `OBS_*`, `x_gateway_error_token_for_class`, `token_for_rejection_phase`),
+     `src/proxy/mod.rs` (`http_backend_failure_status_and_body`),
+     `docs/error_classification.md`, and `docs/size_limits.md` ("gRPC and
+     gRPC-Web framing of pre-routing refusals").
    - `vocabularies/gateway-headers.json`: `src/proxy/headers.rs`,
      `src/proxy/mod.rs` (`refresh_backend_gateway_assertion_headers`),
      `src/plugins/mod.rs` (`RequestContext` identity accessors),
