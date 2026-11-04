@@ -6,6 +6,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/release-process.md` step 1 lists every owner source of
+  `vocabularies/gateway-errors.json`. It adds `docs/size_limits.md`, a source
+  since `contracts-edge-0.9.20` (#47), and `src/proxy/mod.rs`
+  (`http_backend_failure_status_and_body`), a source since
+  `contracts-edge-0.9.19`. No schema, vocabulary or fixture changes.
+
 ## [contracts-edge-0.9.20] - 2026-11-03
 
 Contracts for published Ferrum Edge `v0.9.20`
