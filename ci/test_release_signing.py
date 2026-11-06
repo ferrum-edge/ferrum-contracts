@@ -18,18 +18,18 @@ ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = ROOT / "ci" / "testdata" / "release-signing"
 TAG_OBJECT = "42ebad84b0585498c0413b0967cf4e80ec0e1d19"
 COMMIT_OBJECT = "ac638b010cf58a27ee6c972d7336334ccaf61c96"
+_VERIFICATION_BLOCK_RE = re.compile(
+    r"<!-- consumer-verification-test -->\n```sh\n(.*?)\n```\n"
+    r"<!-- /consumer-verification-test -->",
+    re.DOTALL,
+)
 
 
 class ConsumerVerificationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         doc = (ROOT / "docs" / "release-signing.md").read_text()
-        blocks = re.findall(
-            r"<!-- consumer-verification-test -->\n```sh\n(.*?)\n```\n"
-            r"<!-- /consumer-verification-test -->",
-            doc,
-            re.DOTALL,
-        )
+        blocks = _VERIFICATION_BLOCK_RE.findall(doc)
         if len(blocks) != 1:
             raise AssertionError("Expected exactly one documented verification test")
         cls.script = blocks[0]

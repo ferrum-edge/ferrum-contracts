@@ -56,6 +56,17 @@ META = "https://json-schema.org/draft/2020-12/schema"
 SCHEMA_FILE = re.compile(r"^v([1-9][0-9]*)\.schema\.json$")
 VERSION_DIR = re.compile(r"^v([1-9][0-9]*)$")
 NAME = re.compile(r"^[a-z][a-z0-9-]*$")
+# Pinned Edge openapi.yaml structure (plugin_config_refs, check_openapi).
+_SCHEMA_ENTRY_RE = re.compile(r"^    [A-Za-z]")
+_PLUGIN_NAME_CONST_RE = re.compile(r"const: ([A-Za-z0-9_]+)")
+_COMPONENT_REF_RE = re.compile(r'\$ref: "#/components/schemas/([A-Za-z0-9]+)"')
+_COMPONENTS_SCHEMAS_RE = re.compile(r"^components:\n(?:.*\n)*?^  schemas:\n", re.M)
+_NEXT_COMPONENTS_KEY_RE = re.compile(r"^  [A-Za-z]", re.M)
+_SCHEMA_NAME_RE = re.compile(r"^    ([A-Za-z0-9]+):\s*$", re.M)
+# config_schema_document fields that may be fetched (fetch_openapi).
+_FETCH_REPO_RE = re.compile(r"ferrum-edge/[A-Za-z0-9._-]+")
+_FETCH_COMMIT_RE = re.compile(r"[0-9a-f]{40}")
+_FETCH_PATH_RE = re.compile(r"[A-Za-z0-9._/-]+")
 EXPECTATIONS = "invalid-expectations.json"
 # Upper bound for the pinned Edge openapi.yaml, downloaded or local. The real
 # file is a small fraction of this; a response that reaches it is not the
@@ -563,13 +574,13 @@ def plugin_config_refs(text: str, report: Report, label: str) -> dict[str, str]:
     current = None
     previous = ""
     for line in lines[start + 1 :]:
-        if re.match(r"^    [A-Za-z]", line):
+        if _SCHEMA_ENTRY_RE.match(line):
             break
         stripped = line.strip()
-        const = re.fullmatch(r"const: ([A-Za-z0-9_]+)", stripped)
+        const = _PLUGIN_NAME_CONST_RE.fullmatch(stripped)
         if const and previous == "plugin_name:":
             current = [const.group(1), None]
-        ref = re.fullmatch(r'\$ref: "#/components/schemas/([A-Za-z0-9]+)"', stripped)
+        ref = _COMPONENT_REF_RE.fullmatch(stripped)
         if ref and current and current[1] is None:
             current[1] = ref.group(1)
             name = current[0]
@@ -632,9 +643,9 @@ def fetch_openapi(vocabularies: dict[str, dict], report: Report) -> bytes | None
     doc = catalog["config_schema_document"]
     repo, commit, path = doc["repo"], doc["commit"], doc["path"]
     if not (
-        re.fullmatch(r"ferrum-edge/[A-Za-z0-9._-]+", repo)
-        and re.fullmatch(r"[0-9a-f]{40}", commit)
-        and re.fullmatch(r"[A-Za-z0-9._/-]+", path)
+        _FETCH_REPO_RE.fullmatch(repo)
+        and _FETCH_COMMIT_RE.fullmatch(commit)
+        and _FETCH_PATH_RE.fullmatch(path)
         and ".." not in path
     ):
         report.fail("vocabularies/plugin-catalog.json", "config_schema_document is not fetchable")
@@ -661,14 +672,14 @@ def check_openapi(
         report.fail(openapi, f"sha256 {actual} does not match the catalog's {expected}")
         return
     text = data.decode("utf-8")
-    start = re.search(r"^components:\n(?:.*\n)*?^  schemas:\n", text, re.M)
+    start = _COMPONENTS_SCHEMAS_RE.search(text)
     if not start:
         report.fail(openapi, "no components.schemas section")
         return
     section = text[start.end():]
-    end = re.search(r"^  [A-Za-z]", section, re.M)
+    end = _NEXT_COMPONENTS_KEY_RE.search(section)
     section = section[: end.start()] if end else section
-    components = set(re.findall(r"^    ([A-Za-z0-9]+):\s*$", section, re.M))
+    components = set(_SCHEMA_NAME_RE.findall(section))
     refs = plugin_config_refs(text, report, openapi)
     names = set()
     for plugin in catalog["plugins"]:

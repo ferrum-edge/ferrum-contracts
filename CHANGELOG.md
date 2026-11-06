@@ -13,6 +13,9 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   since `contracts-edge-0.9.20` (#47), and `src/proxy/mod.rs`
   (`http_backend_failure_status_and_body`), a source since
   `contracts-edge-0.9.19`. No schema, vocabulary or fixture changes.
+- `ci/validate.py` and `ci/test_release_signing.py` compile their constant
+  regular expressions once at module level instead of on every call. Same
+  patterns and flags; no schema, vocabulary or fixture changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 
