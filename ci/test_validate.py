@@ -1,14 +1,19 @@
-"""Tests for the bounded --fetch-openapi download in ci/validate.py.
+"""Tests for ci/validate.py: the bounded --fetch-openapi download and the
+cross-contract fixture check.
 
 Run with: python -I -m unittest discover -s ci -p 'test_*.py'
 Every request goes to a loopback server this test starts; nothing leaves the
-runner.
+runner. Cross-check tests build synthetic schema and fixture trees in a
+temporary directory, plus one read-only pass over this repository.
 """
 
 from __future__ import annotations
 
+import contextlib
 import http.server
 import importlib.util
+import io
+import json
 import tempfile
 import threading
 import unittest
@@ -20,6 +25,7 @@ SPEC = importlib.util.spec_from_file_location(
 )
 validate = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(validate)
+ROOT = Path(__file__).resolve().parent.parent
 
 LIMIT = 4096
 
@@ -147,6 +153,108 @@ class BoundedDownloadTests(unittest.TestCase):
 
     def test_the_pinned_document_cap_is_32_mib(self) -> None:
         self.assertEqual(validate.MAX_OPENAPI_BYTES, 32 * 1024 * 1024)
+
+
+def _write(path: Path, data) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
+def _schema(name: str, version: int, body: dict) -> dict:
+    return {
+        "$schema": validate.META,
+        "$id": f"{validate.BASE}/{name}/v{version}.schema.json",
+        "x-contract": {"name": name, "version": version, "status": "proposed", "owner": "test"},
+        **body,
+    }
+
+
+class CrossCheckTests(unittest.TestCase):
+    """A cross-check covers every major's valid fixtures and never passes vacuously."""
+
+    CHECKS = [("finding", "report", "#/$defs/Finding")]
+
+    def setUp(self) -> None:
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name)
+        _write(
+            self.root / "schemas" / "report" / "v1.schema.json",
+            _schema(
+                "report",
+                1,
+                {"type": "object", "$defs": {"Finding": {"type": "object", "required": ["owner"]}}},
+            ),
+        )
+        _write(self.root / "fixtures" / "report" / "valid" / "report.json", {})
+        _write(self.root / "fixtures" / "report" / "invalid" / "not-object.json", [])
+        self.expectations = {
+            "report/invalid/not-object.json": {"instance_path": "", "keyword": "type"}
+        }
+
+    def add_finding_major(self, version: int, fixture_dir: Path, valid: dict) -> None:
+        _write(
+            self.root / "schemas" / "finding" / f"v{version}.schema.json",
+            _schema("finding", version, {"type": "object", "required": ["id"]}),
+        )
+        _write(fixture_dir / "valid" / "finding.json", valid)
+        _write(fixture_dir / "invalid" / "no-id.json", {})
+        key = (fixture_dir / "invalid" / "no-id.json").relative_to(self.root / "fixtures")
+        self.expectations[key.as_posix()] = {"instance_path": "", "keyword": "required"}
+
+    def run_checks(self, checks=None) -> tuple[list[str], int]:
+        _write(self.root / "fixtures" / validate.EXPECTATIONS, self.expectations)
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            sets = validate.check_fixtures(self.root, schemas, registry, report)
+            self.assertEqual(report.errors, [], "the synthetic tree itself must be valid")
+            before = report.checked
+            with unittest.mock.patch.object(validate, "CROSS_CHECKS", checks or self.CHECKS):
+                validate.check_cross(schemas, registry, sets, report)
+        return report.errors, report.checked - before
+
+    def test_a_single_major_set_is_cross_checked(self) -> None:
+        fixtures = self.root / "fixtures" / "finding"
+        self.add_finding_major(1, fixtures, {"id": "a"})
+        errors, checked = self.run_checks()
+        self.assertEqual(checked, 0)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("finding/valid/finding.json: valid finding fixture fails report", errors[0])
+
+    def test_every_major_of_a_multi_major_set_is_cross_checked(self) -> None:
+        fixtures = self.root / "fixtures" / "finding"
+        self.add_finding_major(1, fixtures / "v1", {"id": "a", "owner": "o"})
+        self.add_finding_major(2, fixtures / "v2", {"id": "a"})
+        errors, checked = self.run_checks()
+        self.assertEqual(checked, 1)
+        self.assertEqual(len(errors), 1)
+        self.assertIn(
+            "finding/v2/valid/finding.json: valid finding fixture fails report", errors[0]
+        )
+
+    def test_a_cross_check_without_valid_fixtures_fails(self) -> None:
+        self.add_finding_major(1, self.root / "fixtures" / "finding", {"id": "a", "owner": "o"})
+        errors, checked = self.run_checks([("missing", "report", "#/$defs/Finding")])
+        self.assertEqual(checked, 0)
+        self.assertEqual(errors, ["cross-check missing->report: no valid missing fixture to check"])
+
+    def test_the_repository_cross_check_covers_every_valid_finding_fixture(self) -> None:
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(ROOT, report)
+            registry = validate.build_registry(schemas)
+            sets = validate.check_fixtures(ROOT, schemas, registry, report)
+            before = report.checked
+            validate.check_cross(schemas, registry, sets, report)
+        self.assertEqual(report.errors, [])
+        expected = sum(
+            len(list((ROOT / "fixtures" / fixture_set).glob("**/valid/*.json")))
+            for fixture_set, _, _ in validate.CROSS_CHECKS
+        )
+        self.assertGreater(expected, 0)
+        self.assertEqual(report.checked - before, expected)
 
 
 if __name__ == "__main__":

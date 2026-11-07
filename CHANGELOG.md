@@ -16,6 +16,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 - `ci/validate.py` and `ci/test_release_signing.py` compile their constant
   regular expressions once at module level instead of on every call. Same
   patterns and flags; no schema, vocabulary or fixture changes.
+- `ci/validate.py` takes the cross-contract fixture directories (the
+  `diagnostic-finding` to `diagnostic-report#/$defs/Finding` check) from the
+  fixture-set layout instead of rebuilding `fixtures/<name>/valid/`, so the
+  valid fixtures of every major are checked once a set has several, and a
+  cross-check that finds no valid fixture fails instead of passing
+  vacuously. Same checks and results on the current tree;
+  `ci/test_validate.py` covers both cases. No schema, vocabulary or fixture
+  changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 
