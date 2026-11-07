@@ -28,7 +28,8 @@ completed).
   `revoked_signers`, and `releases/` (tagged release records).
 - `ci/validate.py`, `ci/requirements.txt`: validation script and its
   hash-pinned dependencies. `ci/test_validate.py`: loopback tests for the
-  bounded `--fetch-openapi` download. `ci/test_release_signing.py`: offline
+  bounded `--fetch-openapi` download and offline tests of the cross-contract
+  fixture check. `ci/test_release_signing.py`: offline
   tests of the documented release verification using public signed data;
   no keys are generated or private keys accessed. `.github/workflows/validate.yml`
   runs both.
