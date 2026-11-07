@@ -8,6 +8,17 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Record the unreleased Edge WebSocket backend handshake strip set (Edge PR
+  #7048, squash `ca06d94041d06d70b77785da057c697648d154a4`) as a
+  `main_branch_delta` in `vocabularies/gateway-headers.json`. On Edge `main`,
+  `src/proxy/headers.rs` adds `WEBSOCKET_HANDSHAKE_STRIP_HEADER_NAMES` and
+  `is_websocket_backend_request_strip_header`, which the HTTP/1.1, HTTP/2 and
+  HTTP/3 WebSocket upgrades now share. HTTP/3 handshakes also strip a client's
+  `Content-Length`, `Expect`, `X-Ferrum-Original-Content-Encoding` and
+  `x-grpc-web-mode`, as HTTP/1.1 and HTTP/2 already did.
+  `BACKEND_REQUEST_STRIP_HEADER_NAMES` is unchanged. No header entry, schema
+  or fixture changes; `edge_release` stays `v0.9.20` until an Edge release
+  ships it.
 - `docs/release-process.md` step 1 lists every owner source of
   `vocabularies/gateway-errors.json`. It adds `docs/size_limits.md`, a source
   since `contracts-edge-0.9.20` (#47), and `src/proxy/mod.rs`

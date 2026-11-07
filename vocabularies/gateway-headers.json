@@ -1239,5 +1239,11 @@
         }
       ]
     }
-  ]
+  ],
+  "main_branch_delta": {
+    "repo": "ferrum-edge/ferrum-edge",
+    "ref": "main",
+    "commit": "ca06d94041d06d70b77785da057c697648d154a4",
+    "summary": "Edge #7048 (squash commit on main, not in any release yet) adds to src/proxy/headers.rs the public WEBSOCKET_HANDSHAKE_STRIP_HEADER_NAMES set (host, proxy-authenticate, sec-websocket-key, sec-websocket-version, sec-websocket-accept, sec-websocket-extensions, x-geo-country) with its predicate is_websocket_handshake_strip_header, and is_websocket_backend_request_strip_header, which combines BACKEND_REQUEST_STRIP_HEADER_NAMES, that set and the consumer-assertion namespace (is_consumer_assertion_header: x-consumer-* and X-Authenticated-Identity). The HTTP/1.1, HTTP/2 and HTTP/3 WebSocket upgrades all apply this one predicate to the backend handshake. HTTP/1.1 and HTTP/2 strip the same names as in v0.9.20. The HTTP/3 handshake, which in v0.9.20 used its own list and forwarded a client's Content-Length, Expect, X-Ferrum-Original-Content-Encoding and x-grpc-web-mode to the backend, now strips all four, so the X-Ferrum-Original-Content-Encoding rule (never forwarded to a backend) also holds for HTTP/3 WebSocket handshakes on main. BACKEND_REQUEST_STRIP_HEADER_NAMES and is_backend_request_strip_header are unchanged from v0.9.20. The frontend-specific arms are unchanged: HTTP/1.1 and HTTP/2 also drop Connection-nominated names and forward Early-Data as received; HTTP/3 drops pseudo-headers and replaces a client Early-Data with its own 0-RTT value. No header name, prefix, role, direction or availability in this vocabulary changes. The other sources of this vocabulary that changed on main after v0.9.20 (docs/admin_api.md, docs/error_classification.md, docs/mesh.md, docs/upgrade_guide.md, openapi.yaml, src/proxy/mod.rs) change none of the headers listed here."
+  }
 }
