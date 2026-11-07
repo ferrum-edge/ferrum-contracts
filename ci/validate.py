@@ -25,6 +25,8 @@ Checks, in order:
    diagnostic-ref gateway_error enum and ref / replica_id patterns).
 6. Cross-contract fixture checks (for example: every valid Anvil
    DiagnosticFinding fixture is also a valid Alloy diagnostic_report Finding).
+   The valid fixtures of every major are checked, wherever the layout of
+   step 3 puts them; a cross-check with no valid fixture fails.
 7. Optional (--openapi PATH or --fetch-openapi): the Edge openapi.yaml the
    plugin catalog pins has the recorded sha256, and every plugin's
    config_schema pointer is the component that Edge's PluginConfigBase
@@ -308,11 +310,15 @@ def fixture_sets(entry: Path, name: str, versions, report: Report) -> list[tuple
     return sets
 
 
-def check_fixtures(root: Path, schemas, registry, report: Report) -> None:
+def check_fixtures(
+    root: Path, schemas, registry, report: Report
+) -> dict[str, list[tuple[Path, int]]]:
+    """Check every fixture set; return each set's (directory, major) pairs for check_cross."""
     fixture_root = root / "fixtures"
     expectations = load_expectations(root, report)
     used = set()
     seen = set()
+    sets_by_name: dict[str, list[tuple[Path, int]]] = {}
     for entry in sorted(fixture_root.iterdir()):
         if not entry.is_dir():
             if entry.name not in ("README.md", EXPECTATIONS):
@@ -323,7 +329,8 @@ def check_fixtures(root: Path, schemas, registry, report: Report) -> None:
         if name not in schemas:
             report.fail(entry, f"no schema named {name!r}")
             continue
-        for fixture_dir, version in fixture_sets(entry, name, schemas[name], report):
+        sets_by_name[name] = fixture_sets(entry, name, schemas[name], report)
+        for fixture_dir, version in sets_by_name[name]:
             v = validator(schemas[name][version], registry)
             check_fixture_dir(
                 fixture_root, fixture_dir, name, version, v, expectations, used, report
@@ -333,6 +340,7 @@ def check_fixtures(root: Path, schemas, registry, report: Report) -> None:
     for name in schemas:
         if name not in seen:
             report.fail(f"fixtures/{name}", "schema has no fixture set")
+    return sets_by_name
 
 
 def check_fixture_dir(
@@ -402,14 +410,30 @@ def check_fixture_dir(
                 print(f"  ok (rejected) {rel}: {describe(errors)}")
 
 
-def check_cross(root: Path, schemas, registry, report: Report) -> None:
+def check_cross(
+    schemas, registry, fixture_sets_by_name: dict[str, list[tuple[Path, int]]], report: Report
+) -> None:
+    """Every valid fixture of every major of a set must also pass the target fragment.
+
+    Fixture directories come from check_fixtures (fixture_sets owns the layout),
+    and a cross-check that finds no valid fixture fails rather than passing vacuously.
+    """
     for fixture_set, target, fragment in CROSS_CHECKS:
+        where = f"cross-check {fixture_set}->{target}"
         if target not in schemas:
-            report.fail(f"cross-check {fixture_set}->{target}", "target schema missing")
+            report.fail(where, "target schema missing")
             continue
         target_id = schemas[target][max(schemas[target])]["$id"]
         v = validator({"$ref": target_id + fragment}, registry)
-        for path in sorted((root / "fixtures" / fixture_set / "valid").glob("*.json")):
+        paths = [
+            path
+            for fixture_dir, _ in fixture_sets_by_name.get(fixture_set, [])
+            for path in sorted((fixture_dir / "valid").glob("*.json"))
+        ]
+        if not paths:
+            report.fail(where, f"no valid {fixture_set} fixture to check")
+            continue
+        for path in paths:
             instance = load_json(path, report)
             if instance is None:
                 continue
@@ -718,9 +742,9 @@ def main() -> int:
     check_formats(schemas, report)
     registry = build_registry(schemas)
     print("fixtures")
-    check_fixtures(root, schemas, registry, report)
+    fixture_sets_by_name = check_fixtures(root, schemas, registry, report)
     print("cross-contract fixtures")
-    check_cross(root, schemas, registry, report)
+    check_cross(schemas, registry, fixture_sets_by_name, report)
     print("vocabularies")
     vocabularies = check_vocabularies(root, schemas, registry, report)
     check_vocabulary_consistency(vocabularies, report)
