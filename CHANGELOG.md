@@ -8,6 +8,31 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Record the unreleased Edge plugin config bounds (Edge PR #7081, squash
+  `0eced6cd412b6bd6c7c74867ab8fb37e5217d9c6`) as a `main_branch_delta` in
+  `vocabularies/plugin-catalog.json`. On Edge `main`, `openapi.yaml` caps
+  `AiResponseGuardConfig` `grpc.max_messages` at 1024 and
+  `grpc.max_message_bytes` at 64 MiB, and the `AiTranscriptAuditConfig`
+  `grpc` description says that enrollment uses the bound backend path's
+  `/Service/Method`. The delta also records Edge PR #7080, which is on `main`
+  before that commit. Gateway-dialed cleartext auth endpoints in
+  `JwksAuthConfig`, `Oauth2IntrospectionConfig`, `OidcRelyingPartyConfig` and
+  the `ai_transcript_audit` sink (which still needs
+  `allow_insecure_loopback: true`) are admitted only for loopback IP literals,
+  not for the name `localhost`. Configured OIDC browser-followed URLs and the
+  `issuer` keep the `localhost` development case. Under
+  `client_auth.method: none`, OIDC and OAuth2 introspection admit only a
+  loopback IP-literal endpoint, whatever its scheme. This applies to the
+  configured token or introspection endpoint, or to the `discovery_url` when
+  none is configured. OAuth2 pins the discovered introspection endpoint to
+  the discovery origin, and OIDC refuses a discovered token endpoint that
+  breaks the rule. A discovered OIDC revocation endpoint that fails the
+  general URL, scheme or origin checks still refuses the discovery document.
+  Under `none`, one that passes them but is not a loopback IP literal is
+  dropped, and logout skips revocation. The delta records these per-plugin
+  rules. No plugin name, pointer, phase, protocol or
+  failure policy changes. `config_schema_document` and `edge_release` stay
+  pinned to `v0.9.20`, and no schema or fixture changes.
 - Record the unreleased Edge WebSocket backend handshake strip set (Edge PR
   #7048, squash `ca06d94041d06d70b77785da057c697648d154a4`) as a
   `main_branch_delta` in `vocabularies/gateway-headers.json`. On Edge `main`,
