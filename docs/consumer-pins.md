@@ -20,13 +20,13 @@ or trailing spaces on any line. The lines are, in this order:
 
 | Line | Form | Rule |
 |---|---|---|
-| 1 | `tag <tag>` | The pinned release tag. It matches `^contracts-edge-[0-9]+\.[0-9]+\.[0-9]+(-r[0-9]+)?$` (see [versioning.md](versioning.md#release-tags)). |
+| 1 | `tag <tag>` | The pinned release tag. It matches `^contracts-edge-[0-9]+\.[0-9]+\.[0-9]+(-r([2-9]|[1-9][0-9]+))?$`: a revision number starts at 2 (see [versioning.md](versioning.md#release-tags)). |
 | 2 | `commit <sha>` | The full commit the tag points to (the peeled tag), as 40 lowercase hex digits. |
 | 3, optional | `edge_version <version>` | The Ferrum Edge release the consumer targets with this pin, such as `v0.9.20`. It matches `^v[0-9]+\.[0-9]+\.[0-9]+$`. Use it when the consumer's own checks depend on the Edge release (GitForgeOps does). |
 | rest, at least one | `<sha256>  <path>` | One row per vendored file: 64 lowercase hex digits, **two** spaces, then the path. |
 
-A single space separates a header key from its value. Each header appears
-exactly once, in the order above. A row is the `sha256sum` text-mode line for
+A single space separates a header key from its value. `tag` and `commit`
+appear exactly once, and `edge_version` at most once, in the order above. A row is the `sha256sum` text-mode line for
 that file, run from the vendored directory.
 
 A row's `<path>` is the file's path in this repository at the tag. It is also
@@ -36,10 +36,13 @@ keeps the repository's layout. The path:
 - uses `/` separators, and has no leading `/`, no trailing `/` and no empty
   segment;
 - has segments that match `^[A-Za-z0-9._-]+$` and are not `.` or `..`;
-- never names `PIN` itself.
+- is not `PIN`: the `PIN` file at the top of the vendored directory never
+  lists itself.
 
-Rows are sorted by path in ascending byte order (`LC_ALL=C sort -k2`), so a
-duplicate is adjacent to its twin and a diff shows one line per changed file.
+Rows are sorted by path, comparing the path strings byte by byte (for the
+rows alone, `LC_ALL=C sort -k2` gives this order). Compare whole strings, not
+path components: `a-b/x` sorts before `a/x`. A duplicate is then adjacent to
+its twin, and a diff shows one line per changed file.
 
 Example (`contracts-edge-0.9.20`, abbreviated):
 
@@ -68,8 +71,8 @@ following:
    between hash and path, a path that breaks the path rules, and a blank,
    commented, CR-terminated or unterminated line. Unknown lines are never
    skipped.
-2. **Tag and commit.** `tag` and `commit` are present exactly once, with the
-   forms above.
+2. **Headers.** `tag` and `commit` are present exactly once and
+   `edge_version` at most once, in that order, with the forms above.
 3. **No duplicates, sorted.** Paths are strictly ascending in byte order. This
    also refuses a path listed twice.
 4. **Tree equality.** The set of row paths equals the set of files under the
@@ -88,13 +91,19 @@ Some properties cannot be checked offline. The author of the pin/copy/checksum
 PR establishes them before writing the `PIN`, from a clean clone of this
 repository:
 
-- the tag verifies as described in
-  [release-signing.md](release-signing.md#verify-a-downloaded-tag);
+- a signed tag (`contracts-edge-0.9.20` and later) verifies as described in
+  [release-signing.md](release-signing.md#verify-a-downloaded-tag). Tags
+  through `contracts-edge-0.9.19` are lightweight and unsigned, so there is
+  no signature to verify. For those, take the commit from the immutable tag
+  in this repository and check it against the tag's release record when
+  there is one (from `contracts-edge-0.9.11` on);
 - `commit` is `git rev-parse 'refs/tags/<tag>^{commit}'`;
 - every vendored file is `git show <tag>:<path>` byte for byte. Copy files from
   the tag, never from `main` or from another consumer's copy;
-- `edge_version`, when present, is the Edge release that the tag's
-  [release record](releases/) maps to.
+- `edge_version`, when present, is an Edge release that
+  [versioning.md](versioning.md#release-tags) maps to the tag. One tag can
+  back several Edge releases: Edge `v0.9.10` maps to `contracts-edge-0.9.9`
+  (and so to `-r2`).
 
 Copies must keep their bytes on every platform CI runs on. Mark the vendored
 directory `-text` in the consumer's `.gitattributes` (for example
@@ -103,7 +112,8 @@ directory `-text` in the consumer's `.gitattributes` (for example
 
 ## Checking by hand
 
-From the vendored directory, in bash or zsh, with GNU coreutils or macOS:
+From the consumer repository's root, in bash or zsh, with GNU coreutils or
+macOS:
 
 ```bash
 cd contracts/ferrum-contracts
