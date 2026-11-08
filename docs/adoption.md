@@ -392,6 +392,29 @@ claim that human acceptance in GitForgeOps #266 passed.
   `fixtures/diagnostic-finding/invalid/alloy-only-evidence-source.json`
   records the difference.
 
+## PIN format convergence
+
+[consumer-pins.md](consumer-pins.md) defines one `PIN` format and the checks
+every consumer drift test makes. Consumers move to it at their next
+pin/copy/checksum PR; there is no flag day. Each consumer's test changes in
+its own repository. The table records each consumer's `PIN` on `main` on
+2026-11-08 and what it still differs in. A row's status changes only when the
+consumer's own PR merges.
+
+| Consumer (`main` read) | Current `PIN` | Differences from the canonical format and checks | Status |
+|---|---|---|---|
+| ferrum-anvil (`8d1bad38bbdf05cc44ba7203385a0277535826bb`) | `tag X` / `commit X` / `sha256 <hash> <path>`, `contracts-edge-0.9.20` | Checksum rows carry a `sha256 ` prefix and one space; rows are not sorted; a duplicate row silently overwrites the earlier one (`crates/anvil-diagnostics/tests/contracts_adoption.rs`). | not converged |
+| ferrum-nexus (`ecb81ad1dd299f41b716d345cd62a6c5b6806a9e`) | `tag: X` / `commit: X` / `sha256: <hash>  <path>`, `contracts-edge-0.9.17` | Key syntax `key: value`; a second `SERVICE-MANIFEST-PIN` in the same directory. **Tree equality is not checked**: `shared/src/ferrum-contracts.test.ts` compares rows with a hard-coded list, so an unpinned vendored file passes. | not converged |
+| ferrum-foundry (`c0cf0270c00857917200646e0378f4615b96c461`) | `tag=X` / `commit=X` / `sha256  <hash>  <path>`, `contracts-edge-0.9.15` | Key syntax `key=value`; checksum rows carry a `sha256` prefix; rows are not sorted. **A line that does not match the checksum pattern is silently ignored** by `scripts/ferrum-contracts.test.mjs`. | not converged |
+| ferrum-alloy (`f5aa959905be68490cf69fe78dfc21058cc8c906`) | JSON `{"tag", "commit", "files": {path: hash}}`, `contracts-edge-0.9.20` | JSON instead of text; paths are repository-relative (`contracts/ferrum-contracts/...`) instead of relative to the vendored directory; duplicate JSON keys collapse silently when parsed (`crates/ferrum-alloy-edge/tests/pairing.rs`). | not converged |
+| ferrum-edge-git-forge-ops (`a62627fca90999be1b2168bee9bc0f5d7433a192`) | `tag=X` / `commit=X` / `edge_version=X` / `sha256 <path> <hash>`, `contracts-edge-0.9.20` | Key syntax `key=value`; checksum rows put the path before the hash. Its test already refuses unknown and duplicate rows; `edge_version` is the canonical optional header. | not converged |
+
+Ferrum Edge is the producer and vendors nothing. Every `commit` above is its
+tag's commit (`contracts-edge-0.9.20` at
+`39da322083044c2e92617209e62983c92387f0ad`, `0.9.17` at
+`f7ba1a9b9885900d1e110f76d38e37a02eda13c8`, `0.9.15` at
+`6fb64c5dc2e014204c17609fc717d976f3b4589e`).
+
 ## Remaining follow-ups
 
 - **Plugin config schemas are referenced, not vendored.** Edge publishes a

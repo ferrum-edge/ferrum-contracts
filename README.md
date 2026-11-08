@@ -29,6 +29,7 @@ complete; the issue is closed and remains as project history.
 | [`docs/ownership.md`](docs/ownership.md) | Who owns each contract and how changes land |
 | [`docs/versioning.md`](docs/versioning.md) | Schema versions and `contracts-edge-X.Y.Z` tags |
 | [`docs/adoption.md`](docs/adoption.md) | Consumer pins, qualification evidence and remaining contract gaps |
+| [`docs/consumer-pins.md`](docs/consumer-pins.md) | The consumer `PIN` file format and the checks every consumer drift test makes |
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
 | [`docs/admin-contracts.md`](docs/admin-contracts.md) | Authoritative conditional snapshots, restore preconditions, namespace-scoped admin authorization and process egress discovery |
 | [`docs/deployment-contracts.md`](docs/deployment-contracts.md) | Original deployment authority, dependency-fenced partial writes and explicit cleanup acknowledgements |

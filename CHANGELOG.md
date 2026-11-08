@@ -6,6 +6,17 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Added
+
+- `docs/consumer-pins.md` defines one consumer `PIN` format and the minimum
+  checks every consumer drift test makes (#52). The format is `tag` and
+  `commit` header lines, an optional `edge_version`, then `sha256sum`-style
+  `<hash>  <path>` rows sorted by path. The checks are a strict parse,
+  equality between the vendored tree and the PIN rows, and per-file hashes.
+  `docs/adoption.md` tracks each consumer's convergence at its next
+  pin/copy/checksum PR. Documentation only: no schema, vocabulary or fixture
+  changes.
+
 ### Changed
 
 - Record the unreleased Edge plugin config bounds (Edge PR #7081, squash
