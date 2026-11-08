@@ -15,10 +15,16 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `grpc.max_message_bytes` at 64 MiB, and the `AiTranscriptAuditConfig`
   `grpc` description says that enrollment uses the bound backend path's
   `/Service/Method`. The delta also records Edge PR #7080, which is on `main`
-  before that commit: cleartext auth endpoints in `JwksAuthConfig`,
-  `Oauth2IntrospectionConfig`, `OidcRelyingPartyConfig` and the
-  `ai_transcript_audit` sink are admitted only for loopback IP literals, not
-  for the name `localhost`. No plugin name, pointer, phase, protocol or
+  before that commit: gateway-dialed cleartext auth endpoints in
+  `JwksAuthConfig`, `Oauth2IntrospectionConfig`, `OidcRelyingPartyConfig` and
+  the `ai_transcript_audit` sink (which still needs
+  `allow_insecure_loopback: true`) are admitted only for loopback IP literals,
+  not for the name `localhost`. OIDC browser-followed URLs and the `issuer`
+  keep the `localhost` development case. Under OIDC `client_auth.method:
+  none`, a discovered token endpoint that is not a loopback IP literal fails
+  discovery, while such a revocation endpoint is dropped and logout skips
+  revocation. The delta records these differences. No plugin name, pointer,
+  phase, protocol or
   failure policy changes. `config_schema_document` and `edge_release` stay
   pinned to `v0.9.20`, and no schema or fixture changes.
 - Record the unreleased Edge WebSocket backend handshake strip set (Edge PR
