@@ -144,7 +144,9 @@ provenance correction.
 
 Each consumer then opens a PR in its own repository that moves its pin to the
 new tag and updates its local copy, and records the change in
-[adoption.md](adoption.md) here.
+[adoption.md](adoption.md) here. The `PIN` file and the checks its drift test
+makes are defined in [consumer-pins.md](consumer-pins.md); a consumer that has
+not converged yet moves to that format in the same PR.
 
 ## Maintaining the validation workflow
 
