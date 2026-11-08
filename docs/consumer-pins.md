@@ -103,9 +103,9 @@ directory `-text` in the consumer's `.gitattributes` (for example
 
 ## Checking by hand
 
-From the vendored directory, with GNU coreutils or macOS:
+From the vendored directory, in bash or zsh, with GNU coreutils or macOS:
 
-```sh
+```bash
 cd contracts/ferrum-contracts
 # Content (check 5). On macOS use `shasum -a 256 -c` instead of `sha256sum -c`.
 grep -E '^[0-9a-f]{64}  ' PIN | sha256sum -c
