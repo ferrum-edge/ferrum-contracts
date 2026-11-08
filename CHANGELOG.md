@@ -15,18 +15,22 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `grpc.max_message_bytes` at 64 MiB, and the `AiTranscriptAuditConfig`
   `grpc` description says that enrollment uses the bound backend path's
   `/Service/Method`. The delta also records Edge PR #7080, which is on `main`
-  before that commit: gateway-dialed cleartext auth endpoints in
+  before that commit. Gateway-dialed cleartext auth endpoints in
   `JwksAuthConfig`, `Oauth2IntrospectionConfig`, `OidcRelyingPartyConfig` and
   the `ai_transcript_audit` sink (which still needs
   `allow_insecure_loopback: true`) are admitted only for loopback IP literals,
-  not for the name `localhost`. OIDC browser-followed URLs and the `issuer`
-  keep the `localhost` development case. Under `client_auth.method: none`,
-  OIDC and OAuth2 introspection admit only a loopback IP-literal endpoint,
-  whatever its scheme. For OIDC this applies to a configured or discovered
-  token endpoint. In discovery, a token endpoint that breaks the rule fails
-  discovery, while such a revocation endpoint is dropped and logout skips
-  revocation. The delta records these differences. No plugin name, pointer,
-  phase, protocol or
+  not for the name `localhost`. Configured OIDC browser-followed URLs and the
+  `issuer` keep the `localhost` development case. Under
+  `client_auth.method: none`, OIDC and OAuth2 introspection admit only a
+  loopback IP-literal endpoint, whatever its scheme. This applies to the
+  configured token or introspection endpoint, or to the `discovery_url` when
+  none is configured. OAuth2 pins the discovered introspection endpoint to
+  the discovery origin, and OIDC refuses a discovered token endpoint that
+  breaks the rule. A discovered OIDC revocation endpoint that fails the
+  general URL, scheme or origin checks still refuses the discovery document.
+  Under `none`, one that passes them but is not a loopback IP literal is
+  dropped, and logout skips revocation. The delta records these per-plugin
+  rules. No plugin name, pointer, phase, protocol or
   failure policy changes. `config_schema_document` and `edge_release` stay
   pinned to `v0.9.20`, and no schema or fixture changes.
 - Record the unreleased Edge WebSocket backend handshake strip set (Edge PR
