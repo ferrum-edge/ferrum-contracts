@@ -20,8 +20,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   the `ai_transcript_audit` sink (which still needs
   `allow_insecure_loopback: true`) are admitted only for loopback IP literals,
   not for the name `localhost`. OIDC browser-followed URLs and the `issuer`
-  keep the `localhost` development case. Under OIDC `client_auth.method:
-  none`, a discovered token endpoint that is not a loopback IP literal fails
+  keep the `localhost` development case. Under `client_auth.method: none`,
+  OIDC and OAuth2 introspection admit only a loopback IP-literal endpoint,
+  whatever its scheme. For OIDC this applies to a configured or discovered
+  token endpoint. In discovery, a token endpoint that breaks the rule fails
   discovery, while such a revocation endpoint is dropped and logout skips
   revocation. The delta records these differences. No plugin name, pointer,
   phase, protocol or
