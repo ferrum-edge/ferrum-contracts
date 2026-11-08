@@ -92,11 +92,10 @@ PR establishes them before writing the `PIN`, from a clean clone of this
 repository:
 
 - a signed tag (`contracts-edge-0.9.20` and later) verifies as described in
-  [release-signing.md](release-signing.md#verify-a-downloaded-tag). Tags
-  through `contracts-edge-0.9.19` are lightweight and unsigned, so there is
-  no signature to verify. For those, take the commit from the immutable tag
-  in this repository and check it against the tag's release record when
-  there is one (from `contracts-edge-0.9.11` on);
+  [release-signing.md](release-signing.md#verify-a-downloaded-tag). The
+  existing tags through `contracts-edge-0.9.19` are lightweight and
+  unsigned, so they have no signature to verify. Their commit is the
+  immutable tag itself, read as in the next item;
 - `commit` is `git rev-parse 'refs/tags/<tag>^{commit}'`;
 - every vendored file is `git show <tag>:<path>` byte for byte. Copy files from
   the tag, never from `main` or from another consumer's copy;
