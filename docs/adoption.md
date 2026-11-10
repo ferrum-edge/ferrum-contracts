@@ -150,8 +150,13 @@ closed `backend-egress-policy` v2 schema in `contracts-edge-0.9.13` rejects such
 a response, so a consumer that validates CP responses from Edge `v0.9.14` needs
 `contracts-edge-0.9.14`. Edge names Nexus GHSA-93rq Part B as a consumer of the
 attestation. A public-only publisher that relies on it must still require
-`all_connected_public_only_guaranteed=true` and its expected live-stream count,
-and treat an absent object, an unknown status or an empty set as blocking.
+`all_connected_public_only_guaranteed=true` together with a count of distinct
+`node_id` values in `data_planes` that reaches the number of data-plane
+processes it expects for the namespace, as the vocabulary `consumer_rule` and
+[admin-contracts.md](admin-contracts.md) say (`connected_data_planes` counts
+streams, so a reconnect overlap can double-count one process). It must treat an
+absent object, an unknown status or an empty set as blocking. Nexus counts
+distinct settled `node_id`s against `NEXUS_EXPECTED_DATA_PLANES`.
 Deployment recovery consumers see `durable: "unknown"` only for commit or
 commit-acknowledgement uncertainty from Edge `v0.9.14`; `not_started` and
 `not_committed` remain non-authorizing. Consumer pins in the table above are

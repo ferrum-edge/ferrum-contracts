@@ -1,5 +1,6 @@
 """Tests for ci/validate.py: the bounded --fetch-openapi download, the
-schema provenance check and the cross-contract fixture check.
+schema provenance check, the gateway-headers availability check and the
+cross-contract fixture check.
 
 Run with: python -I -m unittest discover -s ci -p 'test_*.py'
 Every request goes to a loopback server this test starts; nothing leaves the
@@ -229,6 +230,58 @@ class ProvenanceTests(unittest.TestCase):
             for version in versions
         }
         self.assertGreater(len(owners - {validate.CONTRACTS_REPO}), 0)
+
+
+class HeaderAvailabilityTests(unittest.TestCase):
+    """A gateway-headers availability is a published Edge release no later
+    than the vocabulary's edge_release, or unreleased."""
+
+    def check(self, availability: str, edge_release: str = "v0.9.20") -> list[str]:
+        vocabulary = {
+            "edge_release": edge_release,
+            "headers": [{"name": "X-Test", "availability": availability}],
+        }
+        report = validate.Report()
+        validate.check_vocabulary_consistency({"gateway-headers": vocabulary}, report)
+        return report.errors
+
+    def test_published_releases_up_to_edge_release_pass(self) -> None:
+        for availability in ("v0.9.4", "v0.9.5", "v0.9.7", "v0.9.17", "v0.9.20", "unreleased"):
+            with self.subTest(availability=availability):
+                self.assertEqual(self.check(availability), [])
+
+    def test_an_unpublished_tag_fails(self) -> None:
+        for availability in ("v0.9.0", "v0.9.3", "v0.9.6", "v0.9.16", "v0.9.18"):
+            with self.subTest(availability=availability):
+                self.assertEqual(
+                    self.check(availability),
+                    [
+                        "vocabularies/gateway-headers.json: "
+                        f"X-Test availability {availability} was never published"
+                    ],
+                )
+
+    def test_a_release_after_edge_release_fails(self) -> None:
+        cases = (("v0.9.21", "v0.9.20"), ("v0.9.10", "v0.9.9"), ("v1.0.0", "v0.9.20"))
+        for availability, edge_release in cases:
+            with self.subTest(availability=availability):
+                self.assertEqual(
+                    self.check(availability, edge_release),
+                    [
+                        "vocabularies/gateway-headers.json: "
+                        f"X-Test availability {availability} is after {edge_release}"
+                    ],
+                )
+
+    def test_the_repository_vocabulary_passes(self) -> None:
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(ROOT, report)
+            registry = validate.build_registry(schemas)
+            vocabularies = validate.check_vocabularies(ROOT, schemas, registry, report)
+            validate.check_vocabulary_consistency(vocabularies, report)
+        self.assertEqual(report.errors, [])
+        self.assertIn("gateway-headers", vocabularies)
 
 
 class CrossCheckTests(unittest.TestCase):

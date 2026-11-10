@@ -1,6 +1,14 @@
 # contracts-edge-0.9.12 release record
 
-**Published on 2026-10-05 at 13:58:38 UTC.** The latest canonical release is
+*Historical record, annotated on 2026-11-10.* The text below describes the state
+when this release was recorded. The documentation update that records its
+publication landed in PR
+[#17](https://github.com/ferrum-edge/ferrum-contracts/pull/17). Nexus #522 and
+Foundry #544 merged on 2026-10-06, consumer adoption is recorded in
+[adoption.md](../adoption.md), and later releases have their own records in this
+directory.
+
+**Published on 2026-10-05 at 13:58:38 UTC.** This release is
 [`contracts-edge-0.9.12`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.12)
 at `31f0a21d707795be293d15837c2f77c3d84219d8`. It refreshes all five Edge
 vocabularies and the plugin OpenAPI pin and adds separate deployment snapshot and

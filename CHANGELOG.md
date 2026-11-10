@@ -116,6 +116,55 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `docs/releases/contracts-edge-0.9.11.md` and `contracts-edge-0.9.12.md`
   records are unchanged. Documentation only: no schema, vocabulary or
   fixture changes.
+- `vocabularies/gateway-headers.json` `availability` now holds the first
+  published Edge release that has each header, as the vocabulary schema
+  defines it (#59). The entries seeded from Edge v0.9.8 had carried the seed
+  tag instead. Read from Edge tags `v0.9.0` to `v0.9.8` with `git grep`
+  over each entry's sources: `X-Ferrum-Namespace-Unserved` is `v0.9.5`;
+  `X-Ferrum-Mesh-Tunnel-Reuse` (first in the unpublished tag `v0.9.6`) and
+  the admin conditional-write `ETag` and `If-Match` (`ResourceETag` and
+  `IfMatch` in `openapi.yaml`) are `v0.9.7`, not `v0.9.8` and `v0.9.9`; the
+  other 17 seeded entries are present from `v0.9.0`, so they are `v0.9.4`,
+  the first published release. The vocabulary `description` now says
+  "first published Edge release" and names the unpublished tags, matching
+  the schema. The copies of these entries in
+  `fixtures/vocabulary-gateway-headers/` carry the same values. No header
+  name, role, direction or schema changes. A consumer that gates on
+  `availability` now treats these headers as present on Edge v0.9.4 to
+  v0.9.8.
+- `ci/validate.py` checks each `vocabularies/gateway-headers.json`
+  `availability` (#59): it must be `unreleased` or a published Edge release
+  no later than the vocabulary's `edge_release`. The never-published tags
+  `v0.9.0` to `v0.9.3`, `v0.9.6`, `v0.9.16` and `v0.9.18` are refused.
+  `docs/versioning.md` lists those tags, and `ci/test_validate.py` covers
+  accepted, unpublished and too-late values plus a pass over this
+  repository. No schema, vocabulary or fixture changes.
+- `service-manifest` v1 checks `api.public_path`, `api.service_base_path`
+  and `health.path` with the same pattern as `agents.endpoint_path` (#58).
+  All four transcribe Alloy's `valid_path` at the recorded owner commit
+  `81cbb410`, which refuses `;`, `%`, `\` and a `.` segment; the three
+  fields had accepted them. A tighter pattern that every producer meets is
+  allowed within a major by `docs/versioning.md`: Alloy at `81cbb410` and on
+  `main` refuses all four. New invalid fixtures `public-path-semicolon.json`
+  and `health-path-dot-segment.json` cover it. The provenance note records
+  that Alloy `main` since #210 (`5fe4daa`) uses an ASCII `pchar` allow-list
+  that admits `~` and `*`, which this v1 schema still refuses. Consumer
+  checksums for the schema change at their next pin.
+- `docs/adoption.md` states the `data_plane_attestation` inventory rule as
+  the vocabulary `consumer_rule` and `docs/admin-contracts.md` do (#61): a
+  count of distinct `node_id` values in `data_planes` that reaches the
+  expected number of data-plane processes, not the live-stream count. Nexus,
+  the consumer Edge names, already counts distinct `node_id`s. Documentation
+  only: no schema, vocabulary or fixture changes.
+- `docs/releases/contracts-edge-0.9.11.md` and `contracts-edge-0.9.12.md`
+  open with a dated note that they are historical records (#63). Each note
+  names the PR that recorded the publication (#14, #17) and points to
+  `docs/adoption.md` for consumer adoption; the 0.9.12 note adds that Nexus
+  #522 and Foundry #544 merged on 2026-10-06. "The latest canonical release
+  is" now reads "This release is". The rest of each record, including its
+  adoption step and closing paragraph, is unchanged. The tagged bytes of both
+  tags are unaffected: the files on `main` were already edited after their
+  tags. Documentation only: no schema, vocabulary or fixture changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 

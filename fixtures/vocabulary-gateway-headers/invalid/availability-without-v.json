@@ -27,7 +27,7 @@
       "direction": "gateway_to_backend",
       "role": "gateway_assertion",
       "edge_behavior": "Set by the gateway only after a principal is resolved; never trusted from clients. Any client copy is removed before dispatch. From v0.9.15 (ferrum-edge#6088, issue #6082) the value is only the username of a gateway Consumer that the authentication flow mapped. An external identity or display claim without a mapped Consumer is sent as X-Authenticated-Identity instead, and external authentication no longer maps a principal to a Consumer by matching a username, ID or custom ID. Up to v0.9.14 this header fell back to the external display identity, then the raw external identity.",
-      "availability": "v0.9.8",
+      "availability": "v0.9.4",
       "sources": [
         {
           "repo": "ferrum-edge/ferrum-edge",

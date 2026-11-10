@@ -22,8 +22,10 @@ Checks, in order:
    `$schema` names, which must be schemas/vocabulary-<v>/v<version>.
 5. Vocabulary consistency checks that JSON Schema cannot express (unique
    values, cross-references between vocabularies, required cardinality
-   surfaces), and values copied from a vocabulary into a schema (the
-   diagnostic-ref gateway_error enum and ref / replica_id patterns).
+   surfaces, a gateway-headers availability that is a published Edge
+   release no later than edge_release), and values copied from a
+   vocabulary into a schema (the diagnostic-ref gateway_error enum and
+   ref / replica_id patterns).
 6. Cross-contract fixture checks (for example: every valid Anvil
    DiagnosticFinding fixture is also a valid Alloy diagnostic_report Finding).
    The valid fixtures of every major are checked, wherever the layout of
@@ -71,6 +73,11 @@ _FETCH_REPO_RE = re.compile(r"ferrum-edge/[A-Za-z0-9._-]+")
 _FETCH_COMMIT_RE = re.compile(r"[0-9a-f]{40}")
 _FETCH_PATH_RE = re.compile(r"[A-Za-z0-9._/-]+")
 EXPECTATIONS = "invalid-expectations.json"
+# Edge tags with no published release (docs/versioning.md). A gateway-headers
+# `availability` names the first published release, never one of these.
+UNPUBLISHED_EDGE_TAGS = frozenset(
+    {"v0.9.0", "v0.9.1", "v0.9.2", "v0.9.3", "v0.9.6", "v0.9.16", "v0.9.18"}
+)
 # Schemas this repository owns (the vocabulary shapes) transcribe no other
 # repository; every other schema records where its content was read.
 CONTRACTS_REPO = "ferrum-edge/ferrum-contracts"
@@ -525,6 +532,24 @@ def unique(report: Report, where: str, values: list[str], label: str) -> None:
         seen.add(key)
 
 
+def edge_version(tag: str) -> tuple[int, ...]:
+    """`vX.Y.Z` as a comparable tuple (the vocabulary schemas fix the form)."""
+    return tuple(int(part) for part in tag.removeprefix("v").split("."))
+
+
+def check_header_availability(where: str, header: dict, edge_release: str, report: Report) -> None:
+    """A header's availability is a published Edge release no later than the
+    release the vocabulary was read from, or `unreleased`."""
+    availability = header["availability"]
+    if availability == "unreleased":
+        return
+    name = header["name"]
+    if availability in UNPUBLISHED_EDGE_TAGS:
+        report.fail(where, f"{name} availability {availability} was never published")
+    elif edge_version(availability) > edge_version(edge_release):
+        report.fail(where, f"{name} availability {availability} is after {edge_release}")
+
+
 def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) -> None:
     errors = vocabularies.get("gateway-errors")
     if errors:
@@ -569,6 +594,7 @@ def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) 
             ref = h.get("values", {}).get("vocabulary")
             if ref and ref not in vocabularies:
                 report.fail(where, f"{h['name']} names unknown vocabulary {ref!r}")
+            check_header_availability(where, h, headers["edge_release"], report)
         report.ok()
     provisioned = vocabularies.get("provisioned-by")
     if provisioned:

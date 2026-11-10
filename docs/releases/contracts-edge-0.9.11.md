@@ -1,6 +1,13 @@
 # contracts-edge-0.9.11 release record
 
-**Published on 2026-10-04 at 22:41:21 UTC.** The latest canonical release is
+*Historical record, annotated on 2026-11-10.* The text below describes the state
+when this release was recorded. The documentation update that records its
+publication landed in PR
+[#14](https://github.com/ferrum-edge/ferrum-contracts/pull/14), consumer adoption
+is recorded in [adoption.md](../adoption.md), and later releases have their own
+records in this directory.
+
+**Published on 2026-10-04 at 22:41:21 UTC.** This release is
 [`contracts-edge-0.9.11`](https://github.com/ferrum-edge/ferrum-contracts/releases/tag/contracts-edge-0.9.11)
 at `390edbd5b2485af0988e02f7827fde778d76ae0a`. It includes root's accepted
 unchanged shared Alloy v1 freeze after reviewed owner/consumer qualification.
