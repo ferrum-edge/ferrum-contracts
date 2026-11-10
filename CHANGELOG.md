@@ -149,6 +149,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   expected number of data-plane processes, not the live-stream count. Nexus,
   the consumer Edge names, already counts distinct `node_id`s. Documentation
   only: no schema, vocabulary or fixture changes.
+- `docs/releases/contracts-edge-0.9.11.md` and `contracts-edge-0.9.12.md`
+  open with a dated note that they are historical records (#63). Each note
+  names the PR that recorded the publication (#14, #17) and points to
+  `docs/adoption.md` for consumer adoption; the 0.9.12 note adds that Nexus
+  #522 and Foundry #544 merged on 2026-10-06. "The latest canonical release
+  is" now reads "This release is". The rest of each record, including its
+  adoption step and closing paragraph, is unchanged. The tagged bytes of both
+  tags are unaffected: the files on `main` were already edited after their
+  tags. Documentation only: no schema, vocabulary or fixture changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 
