@@ -71,6 +71,18 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   vacuously. Same checks and results on the current tree;
   `ci/test_validate.py` covers both cases. No schema, vocabulary or fixture
   changes.
+- `docs/release-signing.md` opens with the current state: tags from
+  `contracts-edge-0.9.20` on are SSH-signed annotated tags, and tags through
+  `contracts-edge-0.9.19` are lightweight and unsigned. It previously
+  described signing as future and every existing tag as unsigned.
+  Documentation only: no schema, vocabulary or fixture changes.
+- `docs/adoption.md` records the consumer pins read on `main` on 2026-11-08
+  in its top table and "Status by consumer" rows, matching its PIN format
+  convergence table: Anvil, Alloy and GitForgeOps pin
+  `contracts-edge-0.9.20` (GitForgeOps with `edge_version=v0.9.20`), Nexus
+  `contracts-edge-0.9.17` and Foundry `contracts-edge-0.9.15`. The checked
+  tag identities now include `contracts-edge-0.9.20`. Documentation only: no
+  schema, vocabulary or fixture changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 
