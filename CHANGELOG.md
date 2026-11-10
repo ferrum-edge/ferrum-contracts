@@ -83,6 +83,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `contracts-edge-0.9.17` and Foundry `contracts-edge-0.9.15`. The checked
   tag identities now include `contracts-edge-0.9.20`. Documentation only: no
   schema, vocabulary or fixture changes.
+- `ci/test_release_signing.py` accepts the `allowed_signers` entry that
+  `docs/release-signing.md` "Rotation and revocation" prescribes (#57). An
+  entry's options may now add `valid-after="YYYYMMDDHHMMSSZ"` and
+  `valid-before="YYYYMMDDHHMMSSZ"` to `namespaces="git"`, so a retired key
+  bounded by `valid-before` no longer fails the required check. Any other
+  option, `cert-authority` included, a repeated option or an empty interval
+  is still refused, and a new case covers both sets. No schema, vocabulary or
+  fixture changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 
