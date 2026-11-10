@@ -31,7 +31,8 @@ completed).
 - `ci/validate.py`, `ci/requirements.txt`: validation script and its
   hash-pinned dependencies. `ci/test_validate.py`: loopback tests for the
   bounded `--fetch-openapi` download and offline tests of the schema
-  provenance check and the cross-contract fixture check. `ci/test_release_signing.py`: offline
+  provenance check, the gateway-headers availability check and the
+  cross-contract fixture check. `ci/test_release_signing.py`: offline
   tests of the documented release verification using public signed data;
   no keys are generated or private keys accessed. `.github/workflows/validate.yml`
   runs both.
@@ -74,7 +75,8 @@ completed).
   meta-schema, `$id`/version/file-name consistency, provenance of schemas
   owned by another repository, fixtures (valid pass,
   invalid fail with the expected path and keyword, formats asserted), vocabularies against their schemas plus cross-reference
-  checks, the diagnostic-finding to diagnostic-report cross-check, and the
+  checks and the gateway-headers `availability` rule (a published Edge
+  release no later than `edge_release`), the diagnostic-finding to diagnostic-report cross-check, and the
   plugin catalog's pointers into the pinned Edge `openapi.yaml`.
 - Actions are pinned by full commit SHA with a version comment.
   `permissions: contents: read`; no secrets; `persist-credentials: false`.
