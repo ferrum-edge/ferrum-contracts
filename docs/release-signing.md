@@ -1,9 +1,11 @@
 # Release signing
 
-Future Contracts release tags use free Git/OpenSSH signing. This authenticates
-the annotated tag and the commit it names. It does not sign separately edited
-GitHub release notes or certify artifacts built by consumers. Existing tags
-remain immutable and unsigned; this process does not retrofit them.
+Contracts release tags from `contracts-edge-0.9.20` on are annotated tags
+signed with free Git/OpenSSH signing. This authenticates the annotated tag and
+the commit it names. It does not sign separately edited GitHub release notes or
+certify artifacts built by consumers. Tags through `contracts-edge-0.9.19` are
+lightweight and unsigned; they remain immutable, and this process does not
+retrofit them.
 
 ## Signer identity and trust policy
 
