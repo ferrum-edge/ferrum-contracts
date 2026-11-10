@@ -116,6 +116,22 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `docs/releases/contracts-edge-0.9.11.md` and `contracts-edge-0.9.12.md`
   records are unchanged. Documentation only: no schema, vocabulary or
   fixture changes.
+- `vocabularies/gateway-headers.json` `availability` now holds the first
+  published Edge release that has each header, as the vocabulary schema
+  defines it (#59). The entries seeded from Edge v0.9.8 had carried the seed
+  tag instead. Read from Edge tags `v0.9.0` to `v0.9.8` with `git grep`
+  over each entry's sources: `X-Ferrum-Namespace-Unserved` is `v0.9.5`;
+  `X-Ferrum-Mesh-Tunnel-Reuse` (first in the unpublished tag `v0.9.6`) and
+  the admin conditional-write `ETag` and `If-Match` (`ResourceETag` and
+  `IfMatch` in `openapi.yaml`) are `v0.9.7`, not `v0.9.8` and `v0.9.9`; the
+  other 17 seeded entries are present from `v0.9.0`, so they are `v0.9.4`,
+  the first published release. The vocabulary `description` now says
+  "first published Edge release" and names the unpublished tags, matching
+  the schema. The copies of these entries in
+  `fixtures/vocabulary-gateway-headers/` carry the same values. No header
+  name, role, direction or schema changes. A consumer that gates on
+  `availability` now treats these headers as present on Edge v0.9.4 to
+  v0.9.8.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 

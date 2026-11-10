@@ -20,7 +20,7 @@
       "direction": "gateway_to_backend",
       "role": "gateway_assertion",
       "edge_behavior": "Gateway-owned consumer assertion namespace. Matching is ASCII case-insensitive and treats _ as equivalent to -. The gateway may emit only its authenticated identity values beneath this prefix; backend boundaries reject client or plugin values across the whole prefix, and it is forbidden in request and response trailers.",
-      "availability": "v0.9.8",
+      "availability": "v0.9.4",
       "sources": [
         {
           "repo": "ferrum-edge/ferrum-edge",
@@ -54,7 +54,7 @@
         "vocabulary": "gateway-errors",
         "field": "x_gateway_error_tokens"
       },
-      "availability": "v0.9.8",
+      "availability": "v0.9.4",
       "sources": [
         {
           "repo": "ferrum-edge/ferrum-edge",
