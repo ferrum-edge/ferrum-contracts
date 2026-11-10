@@ -5,7 +5,8 @@ Checks, in order:
 
 1. Layout: every schema lives at schemas/<name>/v<N>.schema.json, its `$id`
    is BASE/<name>/v<N>.schema.json, and its `x-contract` block names the same
-   <name> and <N>.
+   <name> and <N>, a status and an owner. A schema whose owner is not this
+   repository also lists its `provenance`: repo, path and full commit SHA.
 2. Every schema is valid against the JSON Schema 2020-12 meta-schema.
 3. Fixtures: every file under fixtures/<name>/valid/ must validate against
    schema <name>, and every file under fixtures/<name>/invalid/ must fail it
@@ -70,6 +71,10 @@ _FETCH_REPO_RE = re.compile(r"ferrum-edge/[A-Za-z0-9._-]+")
 _FETCH_COMMIT_RE = re.compile(r"[0-9a-f]{40}")
 _FETCH_PATH_RE = re.compile(r"[A-Za-z0-9._/-]+")
 EXPECTATIONS = "invalid-expectations.json"
+# Schemas this repository owns (the vocabulary shapes) transcribe no other
+# repository; every other schema records where its content was read.
+CONTRACTS_REPO = "ferrum-edge/ferrum-contracts"
+_PROVENANCE_COMMIT_RE = re.compile(r"[0-9a-f]{40}")
 # Upper bound for the pinned Edge openapi.yaml, downloaded or local. The real
 # file is a small fraction of this; a response that reaches it is not the
 # pinned document, and reading it whole would only exhaust the runner.
@@ -190,6 +195,7 @@ def load_schemas(root: Path, report: Report) -> dict[str, dict[int, dict]]:
                     report.fail(path, "x-contract.status must be implemented or proposed")
                 if not contract.get("owner"):
                     report.fail(path, "x-contract.owner is required")
+                check_provenance(path, contract, report)
             try:
                 Draft202012Validator.check_schema(schema)
             except Exception as exc:  # jsonschema.SchemaError
@@ -200,6 +206,32 @@ def load_schemas(root: Path, report: Report) -> dict[str, dict[int, dict]]:
         if name not in schemas:
             report.fail(entry, "directory holds no valid schema")
     return schemas
+
+
+def check_provenance(path: Path, contract: dict, report: Report) -> None:
+    """A schema owned by another repository names the sources it was read from.
+
+    `x-contract.provenance` is a non-empty list; each entry names `repo`,
+    `path` and the full 40-hex `commit`. Schemas owned by this repository
+    may carry provenance and are not required to.
+    """
+    if contract.get("owner") == CONTRACTS_REPO:
+        return
+    provenance = contract.get("provenance")
+    if not isinstance(provenance, list) or not provenance:
+        report.fail(path, "x-contract.provenance must be a non-empty list")
+        return
+    for index, entry in enumerate(provenance):
+        where = f"x-contract.provenance[{index}]"
+        if not isinstance(entry, dict):
+            report.fail(path, f"{where} must be an object")
+            continue
+        for key in ("repo", "path"):
+            if not isinstance(entry.get(key), str) or not entry[key]:
+                report.fail(path, f"{where}.{key} is required")
+        commit = entry.get("commit")
+        if not isinstance(commit, str) or not _PROVENANCE_COMMIT_RE.fullmatch(commit):
+            report.fail(path, f"{where}.commit must be a full 40-hex commit SHA")
 
 
 def collect_formats(node) -> set[str]:

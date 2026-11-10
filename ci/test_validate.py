@@ -1,5 +1,5 @@
-"""Tests for ci/validate.py: the bounded --fetch-openapi download and the
-cross-contract fixture check.
+"""Tests for ci/validate.py: the bounded --fetch-openapi download, the
+schema provenance check and the cross-contract fixture check.
 
 Run with: python -I -m unittest discover -s ci -p 'test_*.py'
 Every request goes to a loopback server this test starts; nothing leaves the
@@ -164,9 +164,71 @@ def _schema(name: str, version: int, body: dict) -> dict:
     return {
         "$schema": validate.META,
         "$id": f"{validate.BASE}/{name}/v{version}.schema.json",
-        "x-contract": {"name": name, "version": version, "status": "proposed", "owner": "test"},
+        "x-contract": {
+            "name": name,
+            "version": version,
+            "status": "proposed",
+            "owner": "test",
+            "provenance": [{"repo": "test", "path": "schema.json", "commit": "0" * 40}],
+        },
         **body,
     }
+
+
+class ProvenanceTests(unittest.TestCase):
+    """A schema owned by another repository records repo, path and commit."""
+
+    def check(self, contract: dict) -> list[str]:
+        report = validate.Report()
+        validate.check_provenance(Path("schema.json"), contract, report)
+        return report.errors
+
+    def test_a_full_provenance_entry_passes(self) -> None:
+        entry = {"repo": "ferrum-edge/ferrum-edge", "path": "openapi.yaml", "commit": "a" * 40}
+        contract = {"owner": "ferrum-edge/ferrum-edge", "provenance": [entry]}
+        self.assertEqual(self.check(contract), [])
+
+    def test_this_repository_needs_no_provenance(self) -> None:
+        self.assertEqual(self.check({"owner": validate.CONTRACTS_REPO}), [])
+
+    def test_another_owner_without_provenance_fails(self) -> None:
+        for provenance in (None, [], {}):
+            with self.subTest(provenance=provenance):
+                contract = {"owner": "ferrum-edge/ferrum-alloy"}
+                if provenance is not None:
+                    contract["provenance"] = provenance
+                self.assertEqual(
+                    self.check(contract),
+                    ["schema.json: x-contract.provenance must be a non-empty list"],
+                )
+
+    def test_an_incomplete_entry_fails(self) -> None:
+        cases = {
+            "repo": ({"path": "p", "commit": "a" * 40}, "repo is required"),
+            "path": ({"repo": "r", "path": "", "commit": "a" * 40}, "path is required"),
+            "short commit": ({"repo": "r", "path": "p", "commit": "a" * 12}, "commit must be"),
+            "tag as commit": ({"repo": "r", "path": "p", "commit": "v0.9.20"}, "commit must be"),
+            "uppercase commit": ({"repo": "r", "path": "p", "commit": "A" * 40}, "commit must be"),
+            "not an object": ("r/p@" + "a" * 40, "must be an object"),
+        }
+        for label, (entry, message) in cases.items():
+            with self.subTest(label):
+                errors = self.check({"owner": "ferrum-edge/ferrum-edge", "provenance": [entry]})
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn("x-contract.provenance[0]", errors[0])
+                self.assertIn(message, errors[0])
+
+    def test_every_repository_schema_passes(self) -> None:
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(ROOT, report)
+        self.assertEqual(report.errors, [])
+        owners = {
+            versions[version]["x-contract"]["owner"]
+            for versions in schemas.values()
+            for version in versions
+        }
+        self.assertGreater(len(owners - {validate.CONTRACTS_REPO}), 0)
 
 
 class CrossCheckTests(unittest.TestCase):

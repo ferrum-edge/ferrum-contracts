@@ -91,6 +91,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   option, `cert-authority` included, a repeated option or an empty interval
   is still refused, and a new case covers both sets. No schema, vocabulary or
   fixture changes.
+- `ci/validate.py` requires `x-contract.provenance` on every schema whose
+  `owner` is not `ferrum-edge/ferrum-contracts` (#62): a non-empty list whose
+  entries each name `repo`, `path` and a full 40-hex `commit`. Every current
+  schema already passes; `ci/test_validate.py` covers the check.
+  `docs/ownership.md` rule 5 and `AGENTS.md` now say the rule applies to
+  schemas owned by another repository: the four `vocabulary-*` shape schemas
+  without provenance describe files this repository owns. No schema,
+  vocabulary or fixture changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 
