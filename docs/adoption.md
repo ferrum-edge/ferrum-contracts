@@ -184,10 +184,13 @@ mapping stays historical.
 and raw dependency authority, atomic partial cascade removal and conditional
 API-spec replacement with explicit durable/live cleanup acknowledgements.
 It does not widen backup/restore or row-token authority. No supported
-public-only profile, Part B completion or advisory closure is recorded here. Foundry's pending guarded-write decision is not
-resolved by the existence of this owner capability. Publisher serving-DP egress
-requirements and other owner-unreleased features remain intact. Edge #6011's
-unfinished rejection contract is not part of released v0.9.12.
+public-only profile, Part B completion or advisory closure is recorded here.
+Foundry decided its guarded-write behavior separately, in Foundry #544 (merged
+on 2026-10-06: guarded writes without a usable initial strong ETag are
+refused), not through the existence of this owner capability. Publisher
+serving-DP egress requirements and other owner-unreleased features remain
+intact. Edge #6011 was closed without merging on 2026-10-06 and is not part of
+v0.9.12.
 
 The owner exports OpenAPI envelope schemas, but no standalone machine-readable
 schema for complete raw SQL/BSON deployment evidence. The canonical snapshot

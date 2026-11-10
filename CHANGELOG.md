@@ -109,6 +109,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `docs/versioning.md`: both schemas accept the same payloads, and no
   fixture changes. Consumer checksums for both files change at their next
   pin.
+- `docs/deployment-contracts.md` and `docs/adoption.md` state facts instead
+  of stale status (#63). Nexus #522 and Foundry #544 merged on 2026-10-06,
+  and Edge #6011 was closed without merging on 2026-10-06; the docs had
+  called the first two open decisions and #6011 unfinished work. The tagged
+  `docs/releases/contracts-edge-0.9.11.md` and `contracts-edge-0.9.12.md`
+  records are unchanged. Documentation only: no schema, vocabulary or
+  fixture changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 
