@@ -99,6 +99,16 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   schemas owned by another repository: the four `vocabulary-*` shape schemas
   without provenance describe files this repository owns. No schema,
   vocabulary or fixture changes.
+- Make two stale Edge ranges open-ended (#64). The
+  `admin-deployment-snapshot` v2 `description` said "from Edge v0.9.13
+  through v0.9.17" and now says "from Edge v0.9.13". The
+  `backend-egress-policy` v2 `x-contract.edge_availability` said "v0.9.13
+  through v0.9.15 never emit schema_version 1" and now says "v0.9.13 and
+  later". Both files already record the unchanged wire shape re-read at Edge
+  v0.9.19 and v0.9.20. Description text only, allowed within a major by
+  `docs/versioning.md`: both schemas accept the same payloads, and no
+  fixture changes. Consumer checksums for both files change at their next
+  pin.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 
