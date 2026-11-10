@@ -132,6 +132,17 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   name, role, direction or schema changes. A consumer that gates on
   `availability` now treats these headers as present on Edge v0.9.4 to
   v0.9.8.
+- `service-manifest` v1 checks `api.public_path`, `api.service_base_path`
+  and `health.path` with the same pattern as `agents.endpoint_path` (#58).
+  All four transcribe Alloy's `valid_path` at the recorded owner commit
+  `81cbb410`, which refuses `;`, `%`, `\` and a `.` segment; the three
+  fields had accepted them. A tighter pattern that every producer meets is
+  allowed within a major by `docs/versioning.md`: Alloy at `81cbb410` and on
+  `main` refuses all four. New invalid fixtures `public-path-semicolon.json`
+  and `health-path-dot-segment.json` cover it. The provenance note records
+  that Alloy `main` since #210 (`5fe4daa`) uses an ASCII `pchar` allow-list
+  that admits `~` and `*`, which this v1 schema still refuses. Consumer
+  checksums for the schema change at their next pin.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 

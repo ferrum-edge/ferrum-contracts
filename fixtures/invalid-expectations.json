@@ -475,9 +475,17 @@
     "instance_path": "/upstream",
     "keyword": "dependentRequired"
   },
+  "service-manifest/invalid/health-path-dot-segment.json": {
+    "instance_path": "/health/path",
+    "keyword": "pattern"
+  },
   "service-manifest/invalid/http3-protocol.json": {
     "instance_path": "/upstream/protocols/1",
     "keyword": "enum"
+  },
+  "service-manifest/invalid/public-path-semicolon.json": {
+    "instance_path": "/api/public_path",
+    "keyword": "pattern"
   },
   "service-manifest/invalid/tls-path-with-http-scheme.json": {
     "instance_path": "/upstream/scheme",

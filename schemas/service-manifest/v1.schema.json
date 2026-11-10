@@ -28,7 +28,7 @@
           "ManifestAgents",
           "ServiceManifest::validate"
         ],
-        "note": "Alloy publishes no JSON Schema for the manifest. This schema transcribes the serde structs (deny_unknown_fields, defaults) and the checks in validate(). Cross-field rules validate() applies after defaults (for example the proxy_id default and agents.endpoint_path being below api.public_path) are not all expressible here. Re-read at the qualified 81cbb410 owner: field/bound transcription is retained; validate() also checks derived resource ID lengths after defaults, outside this schema's existing assertions."
+        "note": "Alloy publishes no JSON Schema for the manifest. This schema transcribes the serde structs (deny_unknown_fields, defaults) and the checks in validate(). Cross-field rules validate() applies after defaults (for example the proxy_id default and agents.endpoint_path being below api.public_path) are not all expressible here. Re-read at the qualified 81cbb410 owner: field/bound transcription is retained; validate() also checks derived resource ID lengths after defaults, outside this schema's existing assertions. api.public_path, api.service_base_path, health.path and agents.endpoint_path share one pattern transcribing valid_path at 81cbb410: a literal absolute path with no {, }, *, ~, space, ?, #, ;, % or \\, no // and no . or .. segment. Alloy main from #210 (5fe4daa) checks an ASCII pchar allow-list instead, which admits ~ and * and refuses other characters; this v1 schema does not follow that change."
       },
       {
         "repo": "ferrum-edge/ferrum-edge",
@@ -97,7 +97,7 @@
       "properties": {
         "public_path": {
           "type": "string",
-          "pattern": "^(?!.*//)(?!(.*/)?\\.\\.(/|$))/[^{}*~ ?#]*$",
+          "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$",
           "description": "Gateway listen path prefix, a literal absolute path."
         },
         "service_base_path": {
@@ -105,7 +105,7 @@
           "default": "/",
           "allOf": [
             {
-              "pattern": "^(?!.*//)(?!(.*/)?\\.\\.(/|$))/[^{}*~ ?#]*$"
+              "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$"
             },
             {
               "pattern": "/$"
@@ -210,7 +210,7 @@
       "properties": {
         "path": {
           "type": "string",
-          "pattern": "^(?!.*//)(?!(.*/)?\\.\\.(/|$))/[^{}*~ ?#]*$"
+          "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$"
         },
         "interval_seconds": {
           "type": "integer",
