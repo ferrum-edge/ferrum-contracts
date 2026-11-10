@@ -180,7 +180,10 @@ contains no contract-source changes after v0.9.9, so it maps to
 
 An Edge tag that was never published (`v0.9.16`, `v0.9.18`) gets no
 Contracts tag; the next published Edge release carries its changes forward
-once.
+once. Edge `v0.9.4` is the first published release: tags `v0.9.0` to `v0.9.3`
+and `v0.9.6` were never published either. A vocabulary entry's
+`availability` names a published release, and `ci/validate.py` refuses one of
+these tags or a release later than the vocabulary's `edge_release`.
 
 | Edge release | Contracts tag | Reason |
 |---|---|---|

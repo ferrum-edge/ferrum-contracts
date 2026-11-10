@@ -132,6 +132,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   name, role, direction or schema changes. A consumer that gates on
   `availability` now treats these headers as present on Edge v0.9.4 to
   v0.9.8.
+- `ci/validate.py` checks each `vocabularies/gateway-headers.json`
+  `availability` (#59): it must be `unreleased` or a published Edge release
+  no later than the vocabulary's `edge_release`. The never-published tags
+  `v0.9.0` to `v0.9.3`, `v0.9.6`, `v0.9.16` and `v0.9.18` are refused.
+  `docs/versioning.md` lists those tags, and `ci/test_validate.py` covers
+  accepted, unpublished and too-late values plus a pass over this
+  repository. No schema, vocabulary or fixture changes.
 - `service-manifest` v1 checks `api.public_path`, `api.service_base_path`
   and `health.path` with the same pattern as `agents.endpoint_path` (#58).
   All four transcribe Alloy's `valid_path` at the recorded owner commit
