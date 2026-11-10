@@ -15,7 +15,8 @@ completed).
 - `schemas/<name>/v<N>.schema.json`: JSON Schema 2020-12. `$id` is
   `https://github.com/ferrum-edge/ferrum-contracts/schemas/<name>/v<N>.schema.json`;
   `x-contract` carries `name`, `version`, `status` (`implemented` or
-  `proposed`), `owner`, and `provenance`.
+  `proposed`), `owner`, and `provenance` (required, and checked by CI, when
+  the owner is another repository).
 - `schemas/vocabulary-<v>/v<N>.schema.json`: the shape of `vocabularies/<v>.json`.
 - `vocabularies/<v>.json`: Edge-owned vocabularies. `$schema` names the
   vocabulary schema; `edge_release` names the Edge tag the values came from.
@@ -29,8 +30,8 @@ completed).
   `revoked_signers`, and `releases/` (tagged release records).
 - `ci/validate.py`, `ci/requirements.txt`: validation script and its
   hash-pinned dependencies. `ci/test_validate.py`: loopback tests for the
-  bounded `--fetch-openapi` download and offline tests of the cross-contract
-  fixture check. `ci/test_release_signing.py`: offline
+  bounded `--fetch-openapi` download and offline tests of the schema
+  provenance check and the cross-contract fixture check. `ci/test_release_signing.py`: offline
   tests of the documented release verification using public signed data;
   no keys are generated or private keys accessed. `.github/workflows/validate.yml`
   runs both.
@@ -70,7 +71,8 @@ completed).
 ## CI and supply chain
 
 - The `Validate contracts` workflow is the gate: schemas against the 2020-12
-  meta-schema, `$id`/version/file-name consistency, fixtures (valid pass,
+  meta-schema, `$id`/version/file-name consistency, provenance of schemas
+  owned by another repository, fixtures (valid pass,
   invalid fail with the expected path and keyword, formats asserted), vocabularies against their schemas plus cross-reference
   checks, the diagnostic-finding to diagnostic-report cross-check, and the
   plugin catalog's pointers into the pinned Edge `openapi.yaml`.

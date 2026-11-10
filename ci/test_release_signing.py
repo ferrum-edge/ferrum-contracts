@@ -23,6 +23,38 @@ _VERIFICATION_BLOCK_RE = re.compile(
     r"<!-- /consumer-verification-test -->",
     re.DOTALL,
 )
+_SIGNING_BOUND_RE = re.compile(r'"[0-9]{14}Z"')
+
+
+def _options_error(options: str) -> str | None:
+    """Say why an allowed_signers options field breaks the documented form.
+
+    release-signing.md allows `namespaces="git"`, alone or with the
+    `valid-after` / `valid-before` bounds that a rotation puts on a key, each
+    written as "YYYYMMDDHHMMSSZ". Any other option, `cert-authority` included,
+    is refused.
+    """
+    values: dict[str, str] = {}
+    for option in options.split(","):
+        name, separator, value = option.partition("=")
+        if not separator:
+            return f"option {option!r} is not allowed"
+        if name in values:
+            return f"option {name!r} appears more than once"
+        values[name] = value
+    if values.get("namespaces") != '"git"':
+        return 'namespaces="git" is required'
+    for name, value in values.items():
+        if name == "namespaces":
+            continue
+        if name not in ("valid-after", "valid-before"):
+            return f"option {name!r} is not allowed"
+        if not _SIGNING_BOUND_RE.fullmatch(value):
+            return f'{name} must be "YYYYMMDDHHMMSSZ"'
+    after, before = values.get("valid-after"), values.get("valid-before")
+    if after is not None and before is not None and after >= before:
+        return "valid-after must be earlier than valid-before"
+    return None
 
 
 class ConsumerVerificationTests(unittest.TestCase):
@@ -194,7 +226,7 @@ class TrustPolicyTests(unittest.TestCase):
                 principal, options, key_type, key = line.split(" ")
                 self.assertNotIn("*", principal)
                 self.assertNotIn("?", principal)
-                self.assertEqual(options, 'namespaces="git"')
+                self.assertIsNone(_options_error(options), options)
                 self.assertEqual(key_type, "ssh-ed25519")
                 self.assertNotEqual(key, fixture_key)
                 with tempfile.TemporaryDirectory() as temp:
@@ -208,6 +240,36 @@ class TrustPolicyTests(unittest.TestCase):
                 fingerprint = listing.split()[1]
                 self.assertTrue(lines[index - 1].endswith(" " + fingerprint), fingerprint)
         self.assertGreater(entries, 0)
+
+    def test_rotation_bounds_are_the_only_other_options(self) -> None:
+        # A retired key keeps its entry with valid-before, as "Rotation and
+        # revocation" in release-signing.md says; its replacement may carry
+        # valid-after.
+        accepted = (
+            'namespaces="git"',
+            'namespaces="git",valid-before="20270101000000Z"',
+            'valid-after="20270101000000Z",namespaces="git"',
+            'namespaces="git",valid-after="20250101000000Z",valid-before="20260101000000Z"',
+        )
+        for options in accepted:
+            with self.subTest(options=options):
+                self.assertIsNone(_options_error(options))
+        refused = (
+            'namespaces="file"',
+            'namespaces="git,file"',
+            'cert-authority,namespaces="git"',
+            'namespaces="git",cert-authority',
+            'namespaces="git",verify-required',
+            'namespaces="git",namespaces="git"',
+            'valid-before="20270101000000Z"',
+            'namespaces="git",valid-before="20270101000000Z",valid-before="20280101000000Z"',
+            'namespaces="git",valid-before="202701010000Z"',
+            'namespaces="git",valid-before=20270101000000Z',
+            'namespaces="git",valid-after="20270101000000Z",valid-before="20260101000000Z"',
+        )
+        for options in refused:
+            with self.subTest(options=options):
+                self.assertIsNotNone(_options_error(options))
 
 
 if __name__ == "__main__":

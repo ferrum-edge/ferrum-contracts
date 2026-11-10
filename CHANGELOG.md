@@ -83,6 +83,39 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `contracts-edge-0.9.17` and Foundry `contracts-edge-0.9.15`. The checked
   tag identities now include `contracts-edge-0.9.20`. Documentation only: no
   schema, vocabulary or fixture changes.
+- `ci/test_release_signing.py` accepts the `allowed_signers` entry that
+  `docs/release-signing.md` "Rotation and revocation" prescribes (#57). An
+  entry's options may now add `valid-after="YYYYMMDDHHMMSSZ"` and
+  `valid-before="YYYYMMDDHHMMSSZ"` to `namespaces="git"`, so a retired key
+  bounded by `valid-before` no longer fails the required check. Any other
+  option, `cert-authority` included, a repeated option or an empty interval
+  is still refused, and a new case covers both sets. No schema, vocabulary or
+  fixture changes.
+- `ci/validate.py` requires `x-contract.provenance` on every schema whose
+  `owner` is not `ferrum-edge/ferrum-contracts` (#62): a non-empty list whose
+  entries each name `repo`, `path` and a full 40-hex `commit`. Every current
+  schema already passes; `ci/test_validate.py` covers the check.
+  `docs/ownership.md` rule 5 and `AGENTS.md` now say the rule applies to
+  schemas owned by another repository: the four `vocabulary-*` shape schemas
+  without provenance describe files this repository owns. No schema,
+  vocabulary or fixture changes.
+- Make two stale Edge ranges open-ended (#64). The
+  `admin-deployment-snapshot` v2 `description` said "from Edge v0.9.13
+  through v0.9.17" and now says "from Edge v0.9.13". The
+  `backend-egress-policy` v2 `x-contract.edge_availability` said "v0.9.13
+  through v0.9.15 never emit schema_version 1" and now says "v0.9.13 and
+  later". Both files already record the unchanged wire shape re-read at Edge
+  v0.9.19 and v0.9.20. Description text only, allowed within a major by
+  `docs/versioning.md`: both schemas accept the same payloads, and no
+  fixture changes. Consumer checksums for both files change at their next
+  pin.
+- `docs/deployment-contracts.md` and `docs/adoption.md` state facts instead
+  of stale status (#63). Nexus #522 and Foundry #544 merged on 2026-10-06,
+  and Edge #6011 was closed without merging on 2026-10-06; the docs had
+  called the first two open decisions and #6011 unfinished work. The tagged
+  `docs/releases/contracts-edge-0.9.11.md` and `contracts-edge-0.9.12.md`
+  records are unchanged. Documentation only: no schema, vocabulary or
+  fixture changes.
 
 ## [contracts-edge-0.9.20] - 2026-11-03
 

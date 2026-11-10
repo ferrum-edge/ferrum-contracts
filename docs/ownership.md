@@ -22,10 +22,13 @@ reviewed, versioned form that every other product pins.
    changes a contract without a matching owner commit is not merged.
 4. **Consumers do not edit a contract to fit their code.** A consumer that
    needs a change asks the owner, in the owner's repository.
-5. **Provenance is mandatory.** Every schema has `x-contract.provenance` and
-   every vocabulary has `provenance`: owner repository, path, and the full
-   commit SHA the content was read from. Fixture provenance is in
-   [fixtures/README.md](../fixtures/README.md).
+5. **Provenance is mandatory.** Every schema owned by another repository has
+   `x-contract.provenance` and every vocabulary has `provenance`: owner
+   repository, path, and the full commit SHA the content was read from. CI
+   enforces the schema rule. The `vocabulary-*` schemas describe the shape of
+   files this repository owns; they carry provenance only where they also
+   transcribe owner content (`vocabulary-backend-egress-policy`). Fixture
+   provenance is in [fixtures/README.md](../fixtures/README.md).
 
 ## Contracts and owners
 

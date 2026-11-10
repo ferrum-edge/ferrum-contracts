@@ -174,8 +174,10 @@ content, unsigned/lightweight tags, an untrusted key, a revoked key, a wrong
 namespace, a tag published under another name, and mismatched release
 object/commit pins. It generates no keys and
 does not authorize the fixture signer for Ferrum. It also checks that every
-`allowed_signers` entry is `git`-only, names no wildcard or CA, and has a
-matching fingerprint comment. Run it with
+`allowed_signers` entry is `git`-only, names no wildcard or CA, carries no
+other option than the `valid-after` and `valid-before` bounds that
+[rotation](#rotation-and-revocation) uses, and has a matching fingerprint
+comment. Run it with
 `python3 -I -m unittest discover -s ci -p 'test_release_signing.py' -v`.
 
 ## Rotation and revocation
