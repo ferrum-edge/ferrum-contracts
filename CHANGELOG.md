@@ -19,6 +19,37 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Refresh the Edge `main_branch_delta` records against Edge `main` at
+  `ff6eb0cb5305911d761f461a9630565fa0d42d92`, the merge of Edge PR #7338
+  (#60). `vocabularies/plugin-catalog.json` and
+  `vocabularies/gateway-headers.json` move their delta `commit` there from
+  `0eced6cd` and `ca06d940`, and `vocabularies/gateway-errors.json` gains
+  its first delta. Each `summary` now covers every contract-visible change
+  since v0.9.20, including the #7080, #7081 and #7048 facts recorded below.
+  Plugin catalog: no registered or removed name, failure policy, parity
+  value or `PluginConfigBase` conditional changes, except that the
+  `compression` rationale names zstd. Edge `main` removes the
+  `hmac_auth` `ferrum-hmac-v1` profile, `ip_restriction` `mode`,
+  the `jwks_auth` `audience` alias, `mcp_gateway`
+  `discovery.hide_denied_items` and the `allow_immediately`, `expose` and
+  `startup` enum aliases, the `response_caching` key toggles, `tcp_connection_throttle`
+  `cleanup_interval_seconds` and the `workload_metrics` aliases. It adds the
+  `stdout_logging` `latency_above_ms` filter op and the shared
+  `MeshTrustedHboneAssertors` component, among other config changes. The
+  delta records the new `openapi.yaml` SHA-256
+  `eb9d5bdbb2867b378af50084863700ee547a7bd26308c717ece3023fdf1ee9c4`.
+  Gateway headers: no name, strip set, role or direction changes. The
+  delta adds the route-owned gateway-assertion rules (Edge #7064 and
+  follow-ups) that now also cover `x-ferrum-peer-spiffe-id`. Gateway errors: no
+  token, `ErrorClass` value, metric label or class-to-token mapping changes.
+  The delta records the removed `circuit_breaker` rejection-phase alias, the
+  phase-gated post-connect classification (#7213), the new
+  `StreamSetupKind` variants, seven new raw `diagnostic_ref` phases that map
+  to no token, and gRPC-Web framing of more H1/H2 refusals.
+  `config_schema_document`, every `provenance` entry and `edge_release`
+  stay pinned to `v0.9.20`. No schema or fixture changes;
+  `schemas/diagnostic-ref/v1.schema.json` is unchanged because Edge's
+  `DiagnosticRef*` components are unchanged.
 - Record the unreleased Edge plugin config bounds (Edge PR #7081, squash
   `0eced6cd412b6bd6c7c74867ab8fb37e5217d9c6`) as a `main_branch_delta` in
   `vocabularies/plugin-catalog.json`. On Edge `main`, `openapi.yaml` caps
