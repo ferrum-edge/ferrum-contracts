@@ -8,6 +8,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Added
 
+- `LICENSE-COMMERCIAL.md` gives this repository the commercial license the
+  other Ferrum repositories ship (#65): ferrum-edge's text with the product
+  name "Ferrum Contracts". The README license section points to it next to
+  the unchanged PolyForm Noncommercial 1.0.0 `LICENSE`.
+- Invalid `service-manifest` fixtures `public-path-tilde.json`
+  (`/catalog/~staff`) and `public-path-star.json` (`/catalog/*`) pin the v1
+  rule that manifest paths refuse `~` and `*` (#58).
 - `docs/consumer-pins.md` defines one consumer `PIN` format and the minimum
   checks every consumer drift test makes (#52). The format is `tag` and
   `commit` header lines, an optional `edge_version`, then `sha256sum`-style
@@ -19,6 +26,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- The Alloy provenance note on `schemas/service-manifest/v1.schema.json` now
+  records that Alloy main conforms to the v1 path pattern again:
+  ferrum-alloy#303 makes `valid_path` refuse `~` and `*` again after #210 had
+  admitted them (#58). The schema pattern is unchanged.
 - Refresh the Edge `main_branch_delta` records against Edge `main` at
   `ff6eb0cb5305911d761f461a9630565fa0d42d92`, the merge of Edge PR #7338
   (#60). `vocabularies/plugin-catalog.json` and

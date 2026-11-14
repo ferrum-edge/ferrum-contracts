@@ -487,6 +487,14 @@
     "instance_path": "/api/public_path",
     "keyword": "pattern"
   },
+  "service-manifest/invalid/public-path-star.json": {
+    "instance_path": "/api/public_path",
+    "keyword": "pattern"
+  },
+  "service-manifest/invalid/public-path-tilde.json": {
+    "instance_path": "/api/public_path",
+    "keyword": "pattern"
+  },
   "service-manifest/invalid/tls-path-with-http-scheme.json": {
     "instance_path": "/upstream/scheme",
     "keyword": "const"

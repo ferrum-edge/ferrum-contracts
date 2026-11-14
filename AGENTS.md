@@ -5,7 +5,8 @@ Nexus, Foundry, GitForgeOps), kept as data: JSON Schemas, machine-readable
 vocabularies, and conformance fixtures. There is no application code. The
 only executable files are the repository's own CI check, `ci/validate.py`,
 and its tests, `ci/test_*.py`.
-License: PolyForm Noncommercial 1.0.0.
+License: PolyForm Noncommercial 1.0.0 (`LICENSE`); commercial use needs the
+commercial license in `LICENSE-COMMERCIAL.md`.
 
 Proposal and adoption history: ferrum-edge/.github#4 (closed; adoption
 completed).

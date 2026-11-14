@@ -236,6 +236,8 @@ traffic. Both fixtures represent `all`-mode references with no gateway token.
 | `service-manifest/invalid/client-cert-without-key.json` | client certificate without its key |
 | `service-manifest/invalid/http3-protocol.json` | `http3` is not a supported service protocol |
 | `service-manifest/invalid/public-path-semicolon.json` | From `valid/plain-http.json`: change only `api.public_path` to `/catalog;v=1`; Alloy's `valid_path` refuses `;` |
+| `service-manifest/invalid/public-path-tilde.json` | From `valid/plain-http.json`: change only `api.public_path` to `/catalog/~staff`; v1 and Alloy's `valid_path` refuse `~` |
+| `service-manifest/invalid/public-path-star.json` | From `valid/plain-http.json`: change only `api.public_path` to `/catalog/*`; v1 and Alloy's `valid_path` refuse `*` |
 | `service-manifest/invalid/health-path-dot-segment.json` | From `valid/orders-api.json`: change only `health.path` to `/./readyz`; Alloy's `valid_path` refuses a `.` segment |
 | `gitforgeops-resource/invalid/unknown-kind.json` | `kind` `Service` does not exist |
 | `gitforgeops-resource/invalid/lowercase-kind.json` | `kind` is case-sensitive (`proxy`) |

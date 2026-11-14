@@ -51,4 +51,8 @@ adoption status and remaining contract gaps.
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](LICENSE), the same as the rest of the suite.
+Copyright (c) 2026 Ferrum Edge LLC
+
+Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE), the same as the rest of the suite.
+
+**TL;DR**: Permitted noncommercial use is defined by [LICENSE](LICENSE) (PolyForm Noncommercial 1.0.0). For-profit infrastructure use and evaluation with anticipated commercial application require a [commercial license](LICENSE-COMMERCIAL.md). See [LICENSE](LICENSE) and [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md) for the controlling terms and use-case table.
