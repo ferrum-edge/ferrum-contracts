@@ -29,7 +29,9 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 - The Alloy provenance note on `schemas/service-manifest/v1.schema.json` now
   records that Alloy main conforms to the v1 path pattern again:
   ferrum-alloy#303 makes `valid_path` refuse `~` and `*` again after #210 had
-  admitted them (#58). The schema pattern is unchanged.
+  admitted them (#58). The note cites ferrum-alloy#303 and its merge commit
+  `bcd0ac55af5e334f24fbef3539895842081f3968` for that state. The schema
+  pattern is unchanged.
 - Refresh the Edge `main_branch_delta` records against Edge `main` at
   `ff6eb0cb5305911d761f461a9630565fa0d42d92`, the merge of Edge PR #7338
   (#60). `vocabularies/plugin-catalog.json` and
@@ -189,9 +191,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   allowed within a major by `docs/versioning.md`: Alloy at `81cbb410` and on
   `main` refuses all four. New invalid fixtures `public-path-semicolon.json`
   and `health-path-dot-segment.json` cover it. The provenance note records
-  that Alloy `main` since #210 (`5fe4daa`) uses an ASCII `pchar` allow-list
-  that admits `~` and `*`, which this v1 schema still refuses. Consumer
-  checksums for the schema change at their next pin.
+  that Alloy #210 (`5fe4daa`) briefly admitted `~` and `*`, which this v1
+  schema refuses, through an ASCII `pchar` allow-list; ferrum-alloy#303
+  refuses them again (see Changed). Consumer checksums for the schema change
+  at their next pin.
 - `docs/adoption.md` states the `data_plane_attestation` inventory rule as
   the vocabulary `consumer_rule` and `docs/admin-contracts.md` do (#61): a
   count of distinct `node_id` values in `data_planes` that reaches the
