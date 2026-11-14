@@ -191,9 +191,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   allowed within a major by `docs/versioning.md`: Alloy at `81cbb410` and on
   `main` refuses all four. New invalid fixtures `public-path-semicolon.json`
   and `health-path-dot-segment.json` cover it. The provenance note records
-  that Alloy `main` since #210 (`5fe4daa`) uses an ASCII `pchar` allow-list
-  that admits `~` and `*`, which this v1 schema still refuses. Consumer
-  checksums for the schema change at their next pin.
+  that Alloy #210 (`5fe4daa`) briefly admitted `~` and `*`, which this v1
+  schema refuses, through an ASCII `pchar` allow-list; ferrum-alloy#303
+  refuses them again (see Changed). Consumer checksums for the schema change
+  at their next pin.
 - `docs/adoption.md` states the `data_plane_attestation` inventory rule as
   the vocabulary `consumer_rule` and `docs/admin-contracts.md` do (#61): a
   count of distinct `node_id` values in `data_planes` that reaches the
