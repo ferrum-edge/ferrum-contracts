@@ -26,6 +26,40 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Refresh the Edge `main_branch_delta` records against Edge `main` at
+  `b45afb94940fa48487af0dd946d8042078e820bd`, the merge of Edge PR #7388.
+  `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`
+  and `vocabularies/gateway-errors.json` move their delta `commit` there
+  from `ff6eb0cb`, and each `summary` still covers every contract-visible
+  change since v0.9.20. Plugin catalog: no registered or removed name
+  changes, but five registration failure policies do (Edge #7369):
+  `http_logging`, `udp_logging`, `statsd_logging`, `loki_logging` and
+  `ws_frame_logging` move from `optional_fail_open` to
+  `keep_last_known_good`, so an invalid enabled config for any log sink
+  rejects the candidate and the previous generation keeps serving.
+  `http_logging`, `tcp_logging`,
+  `kafka_logging`, `loki_logging` and `udp_logging` add `on_ws_disconnect`
+  to their active phases. Config changes: `jwks_auth` and
+  `oidc_relying_party` gain `providers[].jwks_source`, a managed JWKS
+  reference with its own `oneOf` branch (Edge #7373, #7378); `mesh_authz`
+  gains the read-only, mesh-populated `node_waypoint_route_branches`
+  (Edge #7384); `request_mirror` gains `allow_plaintext`, without which a
+  cleartext mirror is admitted only to a loopback IP literal (Edge #7340);
+  and `api_chargeback_sink` refuses `clickhouse.tls.verify_hostname: false`
+  without `ca_file` or `insecure_skip_verify: true` (Edge #7340). The delta
+  records the new `openapi.yaml` SHA-256
+  `ea3e2e22a0a62d552e837ce3c69c5293bb55bf878303b1d12d9aa89727bf9ac6`.
+  Gateway headers: no name, strip set, role or direction changes; the delta
+  adds that a NodeWaypoint dispatch branch's `mesh_authz` CUSTOM check runs
+  only when the request reaches that destination, with the same
+  `x-ferrum-source-*` and `x-ferrum-request-principal` assertions (Edge
+  #7384). Gateway errors: no token, `ErrorClass` value, metric label,
+  mapping or phase changes. `config_schema_document`, every `provenance`
+  entry and `edge_release` stay pinned to `v0.9.20`; no schema or fixture
+  changes. `docs/admin-contracts.md` records, as unreleased Edge `main`
+  facts, the `jwks_source` TLS-material rule and the stricter
+  `/admin/tls/jwks` admission (Edge #7373, #7378), and ConfigSync protocol
+  revision 5 (Edge #7371; revision 4 came with Edge #7338).
 - The Alloy provenance note on `schemas/service-manifest/v1.schema.json` now
   records that Alloy main conforms to the v1 path pattern again:
   ferrum-alloy#303 makes `valid_path` refuse `~` and `*` again after #210 had
