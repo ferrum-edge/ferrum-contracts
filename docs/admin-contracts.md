@@ -79,6 +79,25 @@ the refusal is `tls_reference_refusal` in
 [`src/admin/crud.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud.rs).
 These rules are unchanged in Edge `v0.9.20`; the current catalog pins its OpenAPI.
 
+Edge `main` at `b45afb94940fa48487af0dd946d8042078e820bd` adds two fields to
+the TLS material above; they are not in a release yet. Edge PR
+[#7373](https://github.com/ferrum-edge/ferrum-edge/pull/7373) (issue #7277,
+owner commit
+[`374297514e3b9e7ec6dc7782fe16c7e8eabddd6f`](https://github.com/ferrum-edge/ferrum-edge/commit/374297514e3b9e7ec6dc7782fe16c7e8eabddd6f))
+registers `jwks_auth` and `oidc_relying_party` `providers[].jwks_source` as
+TLS material. The field admits only a `managed://` reference to an
+admin-managed JWKS record (`managed://jwks/<id>#jwks`), which a
+namespace-bounded operator token cannot introduce. The same PR narrows
+`POST`/`PUT /admin/tls/jwks`: `jwks_json` is admitted only with at least one
+usable signing key, at most 1 MiB and 256 keys, and no duplicate usable
+`kid`. A plugin write, `POST /batch` or `POST /restore` row whose
+`jwks_source` names a missing, wrong-kind or keyless record gets `400`; an
+API-spec `x-ferrum-plugins` entry gets `422` (Edge PR
+[#7378](https://github.com/ferrum-edge/ferrum-edge/pull/7378)).
+`DELETE /admin/tls/jwks/{id}` returns `409` while a config references the
+record. The plugin catalog's `main_branch_delta` records the config schema
+changes.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
@@ -282,13 +301,30 @@ check that the counts add up or that `weakest_policy` is the combination of
 the listed policies; consumers that rely on them must recompute.
 
 The reports come from JWT-authenticated data planes running the CP's exact
-build (ConfigSync protocol revision 3), but each is the data plane's own
+build (ConfigSync protocol revision 3 from Edge `v0.9.14` through `v0.9.20`;
+see below for Edge `main`), but each is the data plane's own
 description, not a cryptographic attestation of its host. The set is a
 point-in-time view: a data plane partitioned from the CP keeps serving its
 cached config without being listed, and one using another CP is never seen.
 Another namespace's streams never appear. On a CP the endpoint discloses the
 namespace's DP `node_id`s, connection times and reported policies to
 namespace-authorized `viewer` tokens.
+
+Edge `main` at `b45afb94940fa48487af0dd946d8042078e820bd`, not in a release
+yet, uses ConfigSync protocol revision 5 (build identity
+`<crate version>+configsync.r5`). Revision 4 came with Edge PR
+[#7338](https://github.com/ferrum-edge/ferrum-edge/pull/7338) (owner commit
+[`ad7063e1cc0a688e98fe049fafccc7ee1a836b32`](https://github.com/ferrum-edge/ferrum-edge/commit/ad7063e1cc0a688e98fe049fafccc7ee1a836b32),
+a snapshot JSON change), and revision 5 with Edge PR
+[#7371](https://github.com/ferrum-edge/ferrum-edge/pull/7371) (issue #7233,
+owner commit
+[`6289427f35b3213cc366f748d71c1349b5420694`](https://github.com/ferrum-edge/ferrum-edge/commit/6289427f35b3213cc366f748d71c1349b5420694)),
+which adds `MeshConfig.virtual_service_http_routes` and
+`MeshSlice.http_routes`. A CP and DP from different builds still refuse
+each other at `Subscribe`, so the exact-build rule above holds. The
+attestation sources (`src/grpc/backend_egress_attestation.rs`,
+`src/admin/backend_egress_policy.rs`) and the egress OpenAPI components are
+unchanged from `v0.9.20`, so `backend-egress-policy` v2 is unaffected.
 
 `GET /cluster` (admin-only) gains per-DP `backend_egress_policy_attestation`
 and `backend_egress_policy` and a cluster-wide
