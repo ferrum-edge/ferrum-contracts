@@ -27,6 +27,31 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 ### Changed
 
 - Refresh the Edge `main_branch_delta` records against Edge `main` at
+  `0bf12260d69ff9ecef821b0c0e107b7d87ae8420`, the merge of Edge PR #7389.
+  `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`
+  and `vocabularies/gateway-errors.json` move their delta `commit` there
+  from `b45afb94`, and each `summary` still covers every contract-visible
+  change since v0.9.20. Plugin catalog: no registered or removed name,
+  failure policy, parity value or `PluginConfigBase` conditional changes.
+  `mesh_route_dispatch` gains `weighted_splits` (Edge #7389): up to 64
+  closed entries, each a split `upstream_id` with 1 to 32 legs
+  (`upstream_id`, `weight`, optional `originate_tls`), dispatched leg by
+  leg. `rules` may now be empty when `weighted_splits` is set. Split ids and
+  legs are upstream references like a rule's `destination.upstream_id`.
+  `mesh_authz` `node_waypoint_route_branches` entries gain the read-only
+  `weighted_split` and `own_is_weighted_split` flags. The delta records the
+  new `openapi.yaml` SHA-256
+  `730679640b387222ad85d83c94b59f0b00a0e5423bab6ef9bfe9f4352771e553`.
+  Gateway headers: no name, strip set, role or direction changes; a selected
+  weighted-split leg runs only its own CUSTOM check, with the same check
+  assertions. Gateway errors: no token, `ErrorClass` value, metric label,
+  mapping or phase changes; an unresolved or denied leg gets the existing
+  403 policy refusal. `config_schema_document`, every `provenance` entry and
+  `edge_release` stay pinned to `v0.9.20`; no schema or fixture changes.
+  The two Edge `main` notes in `docs/admin-contracts.md` (the `jwks_source`
+  TLS-material rule and ConfigSync protocol revision 5) now name the same
+  commit; their facts are unchanged there.
+- Refresh the Edge `main_branch_delta` records against Edge `main` at
   `b45afb94940fa48487af0dd946d8042078e820bd`, the merge of Edge PR #7388.
   `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`
   and `vocabularies/gateway-errors.json` move their delta `commit` there
