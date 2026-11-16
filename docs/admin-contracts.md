@@ -79,7 +79,7 @@ the refusal is `tls_reference_refusal` in
 [`src/admin/crud.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud.rs).
 These rules are unchanged in Edge `v0.9.20`; the current catalog pins its OpenAPI.
 
-Edge `main` at `b45afb94940fa48487af0dd946d8042078e820bd` adds two fields to
+Edge `main` at `0bf12260d69ff9ecef821b0c0e107b7d87ae8420` adds two fields to
 the TLS material above; they are not in a release yet. Edge PR
 [#7373](https://github.com/ferrum-edge/ferrum-edge/pull/7373) (issue #7277,
 owner commit
@@ -314,7 +314,7 @@ Another namespace's streams never appear. On a CP the endpoint discloses the
 namespace's DP `node_id`s, connection times and reported policies to
 namespace-authorized `viewer` tokens.
 
-Edge `main` at `b45afb94940fa48487af0dd946d8042078e820bd`, not in a release
+Edge `main` at `0bf12260d69ff9ecef821b0c0e107b7d87ae8420`, not in a release
 yet, uses ConfigSync protocol revision 5 (build identity
 `<crate version>+configsync.r5`). Revision 4 came with Edge PR
 [#7338](https://github.com/ferrum-edge/ferrum-edge/pull/7338) (owner commit
