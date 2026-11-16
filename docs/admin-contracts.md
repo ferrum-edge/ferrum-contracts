@@ -90,12 +90,16 @@ admin-managed JWKS record (`managed://jwks/<id>#jwks`), which a
 namespace-bounded operator token cannot introduce. The same PR narrows
 `POST`/`PUT /admin/tls/jwks`: `jwks_json` is admitted only with at least one
 usable signing key, at most 1 MiB and 256 keys, and no duplicate usable
-`kid`. A plugin write, `POST /batch` or `POST /restore` row whose
-`jwks_source` names a missing, wrong-kind or keyless record gets `400`; an
-API-spec `x-ferrum-plugins` entry gets `422` (Edge PR
-[#7378](https://github.com/ferrum-edge/ferrum-edge/pull/7378)).
-`DELETE /admin/tls/jwks/{id}` returns `409` while a config references the
-record. The plugin catalog's `main_branch_delta` records the config schema
+`kid`. The record checks apply to enabled configurations only. An enabled
+plugin write, `POST /batch` or `POST /restore` row whose `jwks_source`
+names a missing, wrong-kind or keyless record gets `400`. An enabled API-spec
+`x-ferrum-plugins` entry gets `422` (Edge PR
+[#7378](https://github.com/ferrum-edge/ferrum-edge/pull/7378)). A disabled
+configuration is stored without the check, so it may be staged before its
+JWKS record exists. `DELETE /admin/tls/jwks/{id}` returns `409` while an
+enabled `jwks_auth` or `oidc_relying_party` configuration, or another
+inventory reference, names the record; a disabled configuration does not
+block the deletion. The plugin catalog's `main_branch_delta` records the config schema
 changes.
 
 ## Owner sources and artifact scope
