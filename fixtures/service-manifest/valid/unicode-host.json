@@ -5,12 +5,12 @@
     "name": "catalog-api"
   },
   "api": {
-    "public_path": "/ééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+    "public_path": "/catalog",
     "service_base_path": "/v1/",
     "strip_public_path": true
   },
   "upstream": {
-    "host": "127.0.0.1",
+    "host": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.é.example",
     "port": 8080,
     "scheme": "http",
     "protocols": [

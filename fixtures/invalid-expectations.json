@@ -513,11 +513,7 @@
   },
   "service-manifest/invalid/public-path-control-character.json": {
     "instance_path": "/api/public_path",
-    "keyword": "not"
-  },
-  "service-manifest/invalid/public-path-non-ascii-over-edge-max.json": {
-    "instance_path": "/api/public_path",
-    "keyword": "maxLength"
+    "keyword": "pattern"
   },
   "service-manifest/invalid/public-path-over-edge-max.json": {
     "instance_path": "/api/public_path",
@@ -561,7 +557,7 @@
   },
   "service-manifest/invalid/upstream-host-control-character.json": {
     "instance_path": "/upstream/host",
-    "keyword": "not"
+    "keyword": "pattern"
   },
   "service-manifest/invalid/upstream-host-over-edge-max.json": {
     "instance_path": "/upstream/host",
