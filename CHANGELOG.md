@@ -34,6 +34,54 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Refresh the Edge `main_branch_delta` records against Edge `main` at
+  `0f0988e56c6c8c54038a849016605889957519a7`, the merge of Edge PR #7420.
+  `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`
+  and `vocabularies/gateway-errors.json` move their delta `commit` there
+  from `0bf12260`, and each `summary` still covers every contract-visible
+  change since v0.9.20. Plugin catalog: no registered or removed name,
+  failure policy, parity value or `PluginConfigBase` conditional changes.
+  Plugin triggers gain the `external_identity` and
+  `external_identity_authority` predicates, and `consumer` matches mapped
+  Consumers only (Edge #7417). The WAF, `openapi_validator`, `rate_limiting`
+  and `ai_rate_limiter` Consumer-name lists likewise match mapped Consumers
+  only, and limiter keys keep external principals apart. The `mcp_gateway`
+  OpenAPI operation path must stay under the listen path and outside the
+  endpoint scope (Edge #7410). The chargeback price bounds are spelled
+  `1.0e+288`, which YAML 1.1 loaders read as a number (Edge #7412); the
+  pinned v0.9.20 file still spells them `1.0e288`. The delta records the
+  new `openapi.yaml` SHA-256
+  `c6cdb07a421831ce2f0c036bc134945062028a8ffd4b5d1bd98e83b99c090a7b`.
+  Gateway headers: no name, strip set, role or direction changes. In
+  diagnostic `all` mode, `X-Ferrum-Diagnostic-Ref` now marks tokenless
+  gRPC-Web rejections, and a stamped gRPC-Web response lists it in
+  `Access-Control-Expose-Headers` (Edge #7411). `If-Match` is evaluated on
+  the four consumer credential routes, with `412` on a stale tag (Edge
+  #7412). Viewer-key tokens get no `ETag` (Edge #7413). WebSocket
+  handshakes forward the backend's handshake headers and honor
+  `preserve_host_header` (Edge #7414). Gateway errors: no token,
+  `ErrorClass` value, metric label, mapping or dispatch-failure status
+  changes. The delta adds the raw phase `grpc_post_required`, which maps to
+  no token, and records that gRPC-Web rejection references resolve with
+  status 200 (Edge #7411). A backend's 3xx-5xx answer to a WebSocket
+  upgrade is now relayed without `X-Gateway-Error`, instead of the
+  `backend_error` 502 (Edge #7414). Edge #7415 changes no source of this
+  vocabulary. `schemas/diagnostic-ref/v1.schema.json` is unaffected: status
+  200 is in range, `rejection.phase` is open, and the `DiagnosticRef*`
+  components are unchanged. `config_schema_document`, every `provenance`
+  entry and `edge_release` stay pinned to `v0.9.20`; no schema or fixture
+  changes. `docs/admin-contracts.md` moves its Edge `main` notes to the
+  same commit. They now record ConfigSync protocol revision 6 (Edge
+  #7417), the cross-namespace managed TLS delete guard and conditional
+  credential writes (Edge #7412), and the viewer-key, `/config/export`
+  fingerprint and `charges:collect` rules (Edge #7413).
+- `docs/adoption.md` records Nexus at `main`
+  `ed9e4eb8b63bcf1e8820010bd27243477ba2e631`. ferrum-nexus#731 merges
+  `SERVICE-MANIFEST-PIN` into one canonical `PIN`, and its drift test now
+  makes every check in `docs/consumer-pins.md`, tree equality included, so
+  the PIN format convergence table marks Nexus converged. The snapshot now
+  counts 228 vendored rows across five PIN files, all hash-matching
+  `contracts-edge-0.9.20`. Documentation only.
 - `schemas/service-manifest/v1.schema.json` carries Edge's upper bounds and
   control-character rules (#74), so Nexus and Foundry previews refuse a
   manifest whose generated config Edge refuses. Tightened within v1: every

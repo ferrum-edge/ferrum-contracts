@@ -79,7 +79,7 @@ the refusal is `tls_reference_refusal` in
 [`src/admin/crud.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud.rs).
 These rules are unchanged in Edge `v0.9.20`; the current catalog pins its OpenAPI.
 
-Edge `main` at `0bf12260d69ff9ecef821b0c0e107b7d87ae8420` adds two fields to
+Edge `main` at `0f0988e56c6c8c54038a849016605889957519a7` adds two fields to
 the TLS material above; they are not in a release yet. Edge PR
 [#7373](https://github.com/ferrum-edge/ferrum-edge/pull/7373) (issue #7277,
 owner commit
@@ -101,6 +101,49 @@ enabled `jwks_auth` or `oidc_relying_party` configuration, or another
 inventory reference, names the record; a disabled configuration does not
 block the deletion. The plugin catalog's `main_branch_delta` records the config schema
 changes.
+
+The same Edge `main` commit also changes these admin rules; they are not in a
+release yet either:
+
+- **Managed TLS deletion across namespaces** (Edge PR
+  [#7412](https://github.com/ferrum-edge/ferrum-edge/pull/7412), issue #7394,
+  owner commit
+  [`5f181df099adb0ba37f6d8cce1c6bb94e38c76b3`](https://github.com/ferrum-edge/ferrum-edge/commit/5f181df099adb0ba37f6d8cce1c6bb94e38c76b3)).
+  `DELETE` of a managed certificate, CA bundle, CRL, OCSP response or JWKS
+  record, or of an ACME certificate, returns `409` with the referencing
+  resources in `used_by` while any configuration names the record. On a node
+  with a configuration store (database and CP modes) the check covers every
+  namespace in that store, not only the namespaces the node serves, and
+  `used_by[].namespace` names the namespace of a reference found there.
+  Disabled plugin configurations hold no reference. An unreadable store, a
+  lapsed admission fence or a changed store topology is `503`. The delete
+  holds every listed namespace's config admission lease until the record is
+  removed, so configuration writes wait meanwhile; a first write into a
+  namespace that has no rows can still race it.
+- **Conditional credential writes** (Edge PR #7412, issue #7393). `PUT`,
+  `POST` and `DELETE /consumers/{consumer_id}/credentials/{cred_type}` and
+  `DELETE /consumers/{consumer_id}/credentials/{cred_type}/{index}` take an
+  optional `If-Match` with the Consumer's own `ETag` from
+  `GET /consumers/{id}`. Any change to the Consumer since that read returns
+  `412` and writes nothing; omitting the header keeps the write
+  unconditional. The `If-Match` entry in the gateway-headers
+  `main_branch_delta` records it.
+- **Primary-secret detail** (Edge PR
+  [#7413](https://github.com/ferrum-edge/ferrum-edge/pull/7413),
+  GHSA-crqx-mp2f-v8c8 and GHSA-jjvr-vvwv-8qmh, owner commit
+  [`45403deabb555a38306ff72dd766e180e785a18f`](https://github.com/ferrum-edge/ferrum-edge/commit/45403deabb555a38306ff72dd766e180e785a18f)).
+  A token verified by `FERRUM_ADMIN_JWT_VIEWER_SECRET` receives no row
+  `ETag`, and only a fleet-wide token verified by `FERRUM_ADMIN_JWT_SECRET`
+  sees a non-null CP/DP trust `active_generation` on `/health` and `/status`.
+  `GET /config/export` fingerprints
+  are keyed by the new `FERRUM_ADMIN_CONFIG_EXPORT_FINGERPRINT_SECRET` (at
+  least 32 characters, different from the admin, viewer and CP/DP JWT
+  secrets), never by `FERRUM_ADMIN_JWT_SECRET`; without it the key is random
+  per process, so fingerprints are not comparable across restarts or
+  replicas. Only a token whose `scope` claim grants `charges:collect` is a
+  billing collector on `GET /charges`: only its delivered responses count
+  toward the two hand-offs that let an idle row be evicted. Every other
+  read, including any viewer-key token, has no side effect.
 
 ## Owner sources and artifact scope
 
@@ -314,9 +357,9 @@ Another namespace's streams never appear. On a CP the endpoint discloses the
 namespace's DP `node_id`s, connection times and reported policies to
 namespace-authorized `viewer` tokens.
 
-Edge `main` at `0bf12260d69ff9ecef821b0c0e107b7d87ae8420`, not in a release
-yet, uses ConfigSync protocol revision 5 (build identity
-`<crate version>+configsync.r5`). Revision 4 came with Edge PR
+Edge `main` at `0f0988e56c6c8c54038a849016605889957519a7`, not in a release
+yet, uses ConfigSync protocol revision 6 (build identity
+`<crate version>+configsync.r6`). Revision 4 came with Edge PR
 [#7338](https://github.com/ferrum-edge/ferrum-edge/pull/7338) (owner commit
 [`ad7063e1cc0a688e98fe049fafccc7ee1a836b32`](https://github.com/ferrum-edge/ferrum-edge/commit/ad7063e1cc0a688e98fe049fafccc7ee1a836b32),
 a snapshot JSON change), and revision 5 with Edge PR
@@ -324,7 +367,13 @@ a snapshot JSON change), and revision 5 with Edge PR
 owner commit
 [`6289427f35b3213cc366f748d71c1349b5420694`](https://github.com/ferrum-edge/ferrum-edge/commit/6289427f35b3213cc366f748d71c1349b5420694)),
 which adds `MeshConfig.virtual_service_http_routes` and
-`MeshSlice.http_routes`. A CP and DP from different builds still refuse
+`MeshSlice.http_routes`. Revision 6 came with Edge PR
+[#7417](https://github.com/ferrum-edge/ferrum-edge/pull/7417)
+(GHSA-rxwj-x6c6-f4j5, owner commit
+[`da5e350c21995afd9badf2832da99fe5cc6fa963`](https://github.com/ferrum-edge/ferrum-edge/commit/da5e350c21995afd9badf2832da99fe5cc6fa963)):
+plugin triggers gain the `external_identity` and
+`external_identity_authority` predicates, which an earlier peer's closed
+`PluginTriggerMatch` refuses. A CP and DP from different builds still refuse
 each other at `Subscribe`, so the exact-build rule above holds. The
 attestation sources (`src/grpc/backend_egress_attestation.rs`,
 `src/admin/backend_egress_policy.rs`) and the egress OpenAPI components are
