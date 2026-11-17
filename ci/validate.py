@@ -737,6 +737,9 @@ def _yaml_scalar(lines: list[str] | None, indent: int, key: str) -> str | None:
 
 
 _YAML_KEY_RE = re.compile(r"[A-Za-z0-9_]+")
+# A mapping key written in quotes (`"required": [config]`): the reader matches
+# bare keys only, so a quoted one would read as absent. It is refused instead.
+_QUOTED_YAML_KEY_RE = re.compile(r"""^\s*(?:-\s+)?(?:"[^"]*"|'[^']*')\s*:""")
 
 
 def _yaml_key_list(lines: list[str], indent: int, key: str) -> tuple[list[str], str | None]:
@@ -794,7 +797,8 @@ def plugin_config_rules(text: str, report: Report, label: str) -> dict[str, dict
     `ref` and `config_required` count only inside the `then` of the item whose
     `if` is exactly `properties: {enabled: {not: {const: false}}}`, and an
     ungated item may only constrain `scope`. Any other `if` that tests
-    `enabled`, and any `required` spelling the reader does not know, fails.
+    `enabled`, an `else` or other key beside `then`, a quoted mapping key, and
+    any `required` spelling the reader does not know, fail.
     """
     lines = text.split("\n")
     try:
@@ -806,6 +810,13 @@ def plugin_config_rules(text: str, report: Report, label: str) -> dict[str, dict
     while end < len(lines) and not _SCHEMA_ENTRY_RE.match(lines[end]):
         end += 1
     lines = lines[start + 1 : end]
+    for index, line in enumerate(lines):
+        if _QUOTED_YAML_KEY_RE.match(line):
+            report.fail(
+                label,
+                f"PluginConfigBase line {start + 2 + index}: quoted YAML key "
+                f"{line.strip()!r} is not supported",
+            )
 
     items = []  # (first body line, end, indent of the "- if:" line)
     for index, line in enumerate(lines):
@@ -825,6 +836,21 @@ def plugin_config_rules(text: str, report: Report, label: str) -> dict[str, dict
         )
         if then_at is None:
             report.fail(label, f"PluginConfigBase line {start + 1 + first}: if without then")
+            continue
+        # `then:` is the item's only key beside `if`: an `else:` (or any other
+        # sibling) would put constraints in a branch the reader cannot place,
+        # so it is refused. The `then` subtree is then the rest of the item.
+        siblings = [
+            line.strip()
+            for i, line in enumerate(body)
+            if i != then_at and line.strip() and _indent(line) <= depth + 3
+        ]
+        if siblings:
+            report.fail(
+                label,
+                f"PluginConfigBase line {start + 1 + first}: unsupported key "
+                f"{siblings[0]!r} beside then",
+            )
             continue
         condition = _yaml_block(body[:then_at], depth + 4, "properties") or []
         consequence = body[then_at + 1 :]

@@ -567,6 +567,44 @@ class PluginConfigRuleTests(unittest.TestCase):
                     rules.get("a"), {"ref": "AConfig", "config_required": True, "scope": None}
                 )
 
+    def test_an_else_branch_is_refused(self) -> None:
+        # Moving the plugin conditionals into the gate's `else` keeps the
+        # predicate, names, $refs and requirements, but applies them only to
+        # disabled configs; the reader must refuse it, not count them.
+        gate_else = _openapi(_gated_item("a", "AConfig", required=True)).replace(
+            "          then:\n            allOf:\n",
+            "          then:\n            type: object\n          else:\n            allOf:\n",
+        )
+        item_else = _openapi(
+            _gated_item("a", "AConfig")
+            + "                else:\n                  required: [config]\n"
+        )
+        for label, text in (("gate", gate_else), ("plugin item", item_else)):
+            with self.subTest(label):
+                rules, errors = self.rules(text)
+                self.assertTrue(
+                    any("unsupported key 'else:' beside then" in e for e in errors), errors
+                )
+                self.assertNotEqual(
+                    rules.get("a"), {"ref": "AConfig", "config_required": True, "scope": None}
+                )
+
+    def test_a_quoted_mapping_key_is_refused(self) -> None:
+        for key in ('"required"', "'required'"):
+            with self.subTest(key=key):
+                text = _openapi(
+                    _gated_item(
+                        "a",
+                        "AConfig",
+                        required=True,
+                        required_lines=(f"                  {key}: [config]",),
+                    )
+                )
+                _, errors = self.rules(text)
+                self.assertEqual(len(errors), 1, errors)
+                line = f"{key}: [config]"
+                self.assertIn(f"quoted YAML key {line!r} is not supported", errors[0])
+
     def test_quoted_and_block_required_lists_are_read(self) -> None:
         spellings = {
             "double-quoted flow": ('                  required: ["config"]',),
