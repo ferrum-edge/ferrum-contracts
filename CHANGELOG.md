@@ -87,7 +87,9 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   vendored rows across the six PIN files hash-match that tag. The PIN format
   convergence table notes that the Nexus and Foundry re-pins
   (ferrum-nexus#706, ferrum-foundry#686) kept their legacy formats and
-  checks. Documentation only.
+  checks, and that Foundry has since converged to the canonical format
+  (ferrum-foundry#711, recorded at its merge `7d574c19`). Documentation
+  only.
 - Refresh the Edge `main_branch_delta` records against Edge `main` at
   `0bf12260d69ff9ecef821b0c0e107b7d87ae8420`, the merge of Edge PR #7389.
   `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`

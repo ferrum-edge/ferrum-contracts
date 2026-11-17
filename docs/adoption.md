@@ -18,7 +18,7 @@ complete; that issue closed on 2026-10-06.
 | ferrum-anvil | `a1d1ce62508cb2162ea624bc8ece8aa9f7c92945` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/a1d1ce62508cb2162ea624bc8ece8aa9f7c92945/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
 | ferrum-alloy | `1a4cb58b68ceec00e048a711684887217a3c8211` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/1a4cb58b68ceec00e048a711684887217a3c8211/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
 | ferrum-nexus | `af778d7b12ffbc6b0fb2ffd6ca503c5f2249344e` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/af778d7b12ffbc6b0fb2ffd6ca503c5f2249344e/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20`; [`SERVICE-MANIFEST-PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/af778d7b12ffbc6b0fb2ffd6ca503c5f2249344e/contracts/ferrum-contracts/SERVICE-MANIFEST-PIN): `contracts-edge-0.9.20` manifest |
-| ferrum-foundry | `a54866cf5e415b973c3d3f48e9be0908e1fb857b` | [`PIN`](https://github.com/ferrum-edge/ferrum-foundry/blob/a54866cf5e415b973c3d3f48e9be0908e1fb857b/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
+| ferrum-foundry | `7d574c19074492612aef3a92f200613792180079` | [`PIN`](https://github.com/ferrum-edge/ferrum-foundry/blob/7d574c19074492612aef3a92f200613792180079/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
 | ferrum-edge-git-forge-ops | `e1766731c428517a64040cc8af36042dc56449a1` | [`PIN`](https://github.com/ferrum-edge/ferrum-edge-git-forge-ops/blob/e1766731c428517a64040cc8af36042dc56449a1/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20`, `edge_version=v0.9.20` |
 
 Every consumer pins `contracts-edge-0.9.20`, checked at commit
@@ -411,13 +411,14 @@ consumer's own PR merges. The Nexus and Foundry re-pins to
 `contracts-edge-0.9.20` (ferrum-nexus#706, merged in #716 as
 `c3fc0373b5cdf50a09404471a6cad98dbb0896fc`; ferrum-foundry#686, merged in
 #695 as `c20bd90b1bb548749f956076ab38ee0130674269`) kept their legacy `PIN`
-formats and checks, so neither converged at that PR.
+formats and checks, so neither converged at that PR. Foundry converged
+afterwards in ferrum-foundry#711.
 
 | Consumer (`main` read) | Current `PIN` | Differences from the canonical format and checks | Status |
 |---|---|---|---|
 | ferrum-anvil (`a1d1ce62508cb2162ea624bc8ece8aa9f7c92945`) | `tag X` / `commit X` / `sha256 <hash> <path>`, `contracts-edge-0.9.20` | Checksum rows carry a `sha256 ` prefix and one space; rows are not sorted; a duplicate row silently overwrites the earlier one (`crates/anvil-diagnostics/tests/contracts_adoption.rs`). | not converged |
 | ferrum-nexus (`af778d7b12ffbc6b0fb2ffd6ca503c5f2249344e`) | `tag: X` / `commit: X` / `sha256: <hash>  <path>`, `contracts-edge-0.9.20` | Key syntax `key: value`; a second `SERVICE-MANIFEST-PIN` in the same directory. **Tree equality is not checked**: `shared/src/ferrum-contracts.test.ts` compares rows with a hard-coded list, so an unpinned vendored file passes. | not converged |
-| ferrum-foundry (`a54866cf5e415b973c3d3f48e9be0908e1fb857b`) | `tag=X` / `commit=X` / `sha256  <hash>  <path>`, `contracts-edge-0.9.20` | Key syntax `key=value`; checksum rows carry a `sha256` prefix; rows are not sorted. **A line that does not match the checksum pattern is silently ignored** by `scripts/ferrum-contracts.test.mjs`. | not converged |
+| ferrum-foundry (`7d574c19074492612aef3a92f200613792180079`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.20` | None. `scripts/ferrum-contracts.test.mjs` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory, and checks each hash. | converged in ferrum-foundry#711 (`7d574c19074492612aef3a92f200613792180079`) |
 | ferrum-alloy (`1a4cb58b68ceec00e048a711684887217a3c8211`) | JSON `{"tag", "commit", "files": {path: hash}}`, `contracts-edge-0.9.20` | JSON instead of text; paths are repository-relative (`contracts/ferrum-contracts/...`) instead of relative to the vendored directory; duplicate JSON keys collapse silently when parsed (`crates/ferrum-alloy-edge/tests/pairing.rs`). | not converged |
 | ferrum-edge-git-forge-ops (`e1766731c428517a64040cc8af36042dc56449a1`) | `tag=X` / `commit=X` / `edge_version=X` / `sha256 <path> <hash>`, `contracts-edge-0.9.20` | Key syntax `key=value`; checksum rows put the path before the hash. Its test already refuses unknown and duplicate rows; `edge_version` is the canonical optional header. | not converged |
 
