@@ -39,6 +39,25 @@
           "x-ferrum-mcp (optional)"
         ],
         "note": "Edge v0.9.9 documents the MCP namespace character and length rule and requires the MCP endpoint to sit under the proxy listen path."
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.20",
+        "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+        "path": "src/config/types.rs",
+        "symbols": [
+          "MAX_LISTEN_PATH_LENGTH",
+          "MAX_BACKEND_HOST_LENGTH",
+          "MAX_BACKEND_PATH_LENGTH",
+          "MAX_TIMEOUT_MS",
+          "MAX_HEALTH_CHECK_INTERVAL",
+          "contains_control_chars",
+          "validate_string_field",
+          "Proxy::validate_fields",
+          "Upstream::validate_fields",
+          "HealthCheckConfig::validate_fields"
+        ],
+        "note": "Upper bounds and control-character rules for the Edge fields Alloy's edge export (crates/ferrum-alloy-edge/src/export.rs) writes from the manifest, so a manifest this schema accepts is not refused by Edge on these rules (ferrum-contracts#74, ferrum-alloy#309). public_path is the proxy listen_path (500 bytes); service_base_path, without its trailing /, the proxy backend_path (2048 bytes); upstream.host the proxy backend_host, or upstream targets[].host when health is set (255 bytes); health.path the active http_path (2048 bytes); timeouts the backend_*_timeout_ms (at most 86400000); health.interval_seconds at most 3600 and health.timeout_ms at most 86400000. Edge measures string lengths in UTF-8 bytes; JSON Schema maxLength counts characters, so a value with a non-ASCII character is held to a quarter of the byte limit. Edge's contains_control_chars refuses bytes below 0x20 other than tab, LF and CR; this schema refuses every C0 control and DEL in these fields, which no host or Alloy path can carry (Alloy's valid_path refuses control characters). The bounds and src/config/types.rs rules are unchanged on Edge main at 6ad7cfe8c03fac254ab348691056d428bc2543a6."
       }
     ],
     "shared_status": "EXISTING shared v1 in the contracts-edge-0.9.11 release candidate. Root accepted the unchanged wire freeze after qualified owner/consumer review (ferrum-alloy#27); canonical tag/publication remains pending.",
@@ -98,7 +117,17 @@
         "public_path": {
           "type": "string",
           "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$",
-          "description": "Gateway listen path prefix, a literal absolute path."
+          "maxLength": 500,
+          "not": {
+            "pattern": "[\\x00-\\x1F\\x7F]"
+          },
+          "if": {
+            "pattern": "[^\\x00-\\x7F]"
+          },
+          "then": {
+            "maxLength": 125
+          },
+          "description": "Gateway listen path prefix, a literal absolute path. Exported as the Edge proxy listen_path: at most 500 UTF-8 bytes (MAX_LISTEN_PATH_LENGTH) and no control characters. maxLength counts characters, so a path with a non-ASCII character is held to 125 characters, which can never exceed 500 bytes."
         },
         "service_base_path": {
           "type": "string",
@@ -110,7 +139,18 @@
             {
               "pattern": "/$"
             }
-          ]
+          ],
+          "maxLength": 2049,
+          "not": {
+            "pattern": "[\\x00-\\x1F\\x7F]"
+          },
+          "if": {
+            "pattern": "[^\\x00-\\x7F]"
+          },
+          "then": {
+            "maxLength": 512
+          },
+          "description": "Backend path prefix ending in /. Exported, without its trailing /, as the Edge proxy backend_path: at most 2048 UTF-8 bytes (MAX_BACKEND_PATH_LENGTH), so at most 2049 with the /, and no control characters. A path with a non-ASCII character is held to 512 characters, which can never exceed 2048 bytes."
         },
         "strip_public_path": {
           "type": "boolean",
@@ -134,7 +174,17 @@
         "host": {
           "type": "string",
           "pattern": "^[^/ @]+$",
-          "description": "Bare host name or address, no scheme."
+          "maxLength": 255,
+          "not": {
+            "pattern": "[\\x00-\\x1F\\x7F]"
+          },
+          "if": {
+            "pattern": "[^\\x00-\\x7F]"
+          },
+          "then": {
+            "maxLength": 63
+          },
+          "description": "Bare host name or address, no scheme. Exported as the Edge proxy backend_host or upstream targets[].host: at most 255 UTF-8 bytes (MAX_BACKEND_HOST_LENGTH) and no control characters. A host with a non-ASCII character is held to 63 characters, which can never exceed 255 bytes."
         },
         "port": {
           "type": "integer",
@@ -210,17 +260,32 @@
       "properties": {
         "path": {
           "type": "string",
-          "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$"
+          "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$",
+          "maxLength": 2048,
+          "not": {
+            "pattern": "[\\x00-\\x1F\\x7F]"
+          },
+          "if": {
+            "pattern": "[^\\x00-\\x7F]"
+          },
+          "then": {
+            "maxLength": 512
+          },
+          "description": "Exported as the Edge upstream active health check http_path: at most 2048 UTF-8 bytes (MAX_BACKEND_PATH_LENGTH) and no control characters. A path with a non-ASCII character is held to 512 characters, which can never exceed 2048 bytes."
         },
         "interval_seconds": {
           "type": "integer",
           "minimum": 1,
-          "default": 10
+          "maximum": 3600,
+          "default": 10,
+          "description": "Exported as active.interval_seconds; Edge allows 1 to 3600 (MAX_HEALTH_CHECK_INTERVAL)."
         },
         "timeout_ms": {
           "type": "integer",
           "minimum": 1,
-          "default": 2000
+          "maximum": 86400000,
+          "default": 2000,
+          "description": "Exported as active.timeout_ms; Edge allows 1 to 86400000 (MAX_TIMEOUT_MS, 24 hours)."
         }
       }
     },
@@ -231,18 +296,23 @@
         "connect_ms": {
           "type": "integer",
           "minimum": 1,
-          "default": 2000
+          "maximum": 86400000,
+          "default": 2000,
+          "description": "Exported as backend_connect_timeout_ms; Edge allows at most 86400000 (MAX_TIMEOUT_MS, 24 hours)."
         },
         "read_ms": {
           "type": "integer",
           "minimum": 0,
+          "maximum": 86400000,
           "default": 30000,
-          "description": "0 disables the read timeout for long-lived streams."
+          "description": "0 disables the read timeout for long-lived streams. Exported as backend_read_timeout_ms; Edge allows at most 86400000 (MAX_TIMEOUT_MS, 24 hours)."
         },
         "write_ms": {
           "type": "integer",
           "minimum": 1,
-          "default": 30000
+          "maximum": 86400000,
+          "default": 30000,
+          "description": "Exported as backend_write_timeout_ms; Edge allows at most 86400000 (MAX_TIMEOUT_MS, 24 hours)."
         }
       }
     },

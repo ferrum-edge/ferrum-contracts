@@ -467,6 +467,10 @@
     "instance_path": "/agents",
     "keyword": "additionalProperties"
   },
+  "service-manifest/invalid/base-path-over-edge-max.json": {
+    "instance_path": "/api/service_base_path",
+    "keyword": "maxLength"
+  },
   "service-manifest/invalid/base-path-without-trailing-slash.json": {
     "instance_path": "/api/service_base_path",
     "keyword": "pattern"
@@ -475,13 +479,37 @@
     "instance_path": "/upstream",
     "keyword": "dependentRequired"
   },
+  "service-manifest/invalid/health-interval-over-edge-max.json": {
+    "instance_path": "/health/interval_seconds",
+    "keyword": "maximum"
+  },
   "service-manifest/invalid/health-path-dot-segment.json": {
     "instance_path": "/health/path",
     "keyword": "pattern"
   },
+  "service-manifest/invalid/health-path-over-edge-max.json": {
+    "instance_path": "/health/path",
+    "keyword": "maxLength"
+  },
+  "service-manifest/invalid/health-timeout-over-edge-max.json": {
+    "instance_path": "/health/timeout_ms",
+    "keyword": "maximum"
+  },
   "service-manifest/invalid/http3-protocol.json": {
     "instance_path": "/upstream/protocols/1",
     "keyword": "enum"
+  },
+  "service-manifest/invalid/public-path-control-character.json": {
+    "instance_path": "/api/public_path",
+    "keyword": "not"
+  },
+  "service-manifest/invalid/public-path-non-ascii-over-edge-max.json": {
+    "instance_path": "/api/public_path",
+    "keyword": "maxLength"
+  },
+  "service-manifest/invalid/public-path-over-edge-max.json": {
+    "instance_path": "/api/public_path",
+    "keyword": "maxLength"
   },
   "service-manifest/invalid/public-path-semicolon.json": {
     "instance_path": "/api/public_path",
@@ -495,6 +523,18 @@
     "instance_path": "/api/public_path",
     "keyword": "pattern"
   },
+  "service-manifest/invalid/timeout-connect-over-edge-max.json": {
+    "instance_path": "/timeouts/connect_ms",
+    "keyword": "maximum"
+  },
+  "service-manifest/invalid/timeout-read-over-edge-max.json": {
+    "instance_path": "/timeouts/read_ms",
+    "keyword": "maximum"
+  },
+  "service-manifest/invalid/timeout-write-over-edge-max.json": {
+    "instance_path": "/timeouts/write_ms",
+    "keyword": "maximum"
+  },
   "service-manifest/invalid/tls-path-with-http-scheme.json": {
     "instance_path": "/upstream/scheme",
     "keyword": "const"
@@ -506,6 +546,14 @@
   "service-manifest/invalid/unsupported-major.json": {
     "instance_path": "/schema_version",
     "keyword": "pattern"
+  },
+  "service-manifest/invalid/upstream-host-control-character.json": {
+    "instance_path": "/upstream/host",
+    "keyword": "not"
+  },
+  "service-manifest/invalid/upstream-host-over-edge-max.json": {
+    "instance_path": "/upstream/host",
+    "keyword": "maxLength"
   },
   "vocabulary-backend-egress-policy/v1/invalid/short-commit.json": {
     "instance_path": "/provenance/0/commit",
