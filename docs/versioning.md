@@ -204,8 +204,8 @@ vocabulary or a schema's `x-contract`.
 
 The Alloy-owned `[agents]` section of `service-manifest` first appeared in
 `contracts-edge-0.9.9-r2`, which is otherwise identical to
-`contracts-edge-0.9.9`, and remains in every later tag. Current consumer pins,
-including Nexus at `contracts-edge-0.9.17`, are in [adoption.md](adoption.md).
+`contracts-edge-0.9.9`, and remains in every later tag. Current consumer pins
+are in [adoption.md](adoption.md).
 
 A non-Edge contract change, such as the Alloy-owned `[agents]` addition to
 `service-manifest` in #8, is released as a revision of the latest applicable
