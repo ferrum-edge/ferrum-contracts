@@ -451,9 +451,21 @@
     "instance_path": "/spec/scope",
     "keyword": "enum"
   },
+  "gitforgeops-resource/invalid/proxy-unknown-wrapper-key.json": {
+    "instance_path": "",
+    "keyword": "additionalProperties"
+  },
+  "gitforgeops-resource/invalid/proxy-with-id.json": {
+    "instance_path": "/kind",
+    "keyword": "const"
+  },
   "gitforgeops-resource/invalid/unknown-kind.json": {
     "instance_path": "/kind",
     "keyword": "enum"
+  },
+  "gitforgeops-resource/invalid/upstream-null-id.json": {
+    "instance_path": "/kind",
+    "keyword": "const"
   },
   "service-manifest/invalid/agents-bad-namespace.json": {
     "instance_path": "/agents/namespace",

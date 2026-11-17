@@ -257,6 +257,9 @@ traffic. Both fixtures represent `all`-mode references with no gateway token.
 | `gitforgeops-resource/invalid/missing-spec.json` | `spec` is required |
 | `gitforgeops-resource/invalid/plugin-config-unknown-scope.json` | `scope` `tenant` is not `global`, `proxy` or `proxy_group` |
 | `gitforgeops-resource/invalid/consumer-missing-username.json` | `Consumer.spec.username` is required |
+| `gitforgeops-resource/invalid/proxy-with-id.json` | From `valid/quickstart-proxy.json`: add only the wrapper key `id: orders`; `id` is MeshConfig-only, and GitForgeOps' strict loader refuses `.id` on any other kind |
+| `gitforgeops-resource/invalid/upstream-null-id.json` | From `valid/quickstart-upstream.json`: add only `id: null`; the strict loader refuses the key on a non-MeshConfig kind whatever its value |
+| `gitforgeops-resource/invalid/proxy-unknown-wrapper-key.json` | From `valid/quickstart-proxy.json`: add only the wrapper key `metadata`; the envelope is closed, as GitForgeOps' strict loader refuses `.metadata` |
 | `vocabulary-gateway-errors/invalid/token-without-meaning.json` | a token without `meaning` |
 | `vocabulary-gateway-errors/invalid/class-not-snake-case.json` | an error class spelled as its Rust variant |
 | `vocabulary-gateway-errors/invalid/wrong-version.json` | `version` `2` against the v1 shape |
