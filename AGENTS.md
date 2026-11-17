@@ -32,7 +32,10 @@ completed).
 - `ci/validate.py`, `ci/requirements.txt`: validation script and its
   hash-pinned dependencies. `ci/test_validate.py`: loopback tests for the
   bounded `--fetch-openapi` download and offline tests of the schema
-  provenance check, the gateway-headers availability check and the
+  provenance check, the gateway-headers availability and unpublished Edge
+  tag checks, the vocabulary `x-contract.instance` check, the
+  `diagnostic-ref` values copied from `gateway-errors`, the
+  `PluginConfigBase` parser and catalog parity check, and the
   cross-contract fixture check. `ci/test_release_signing.py`: offline
   tests of the documented release verification using public signed data;
   no keys are generated or private keys accessed. `.github/workflows/validate.yml`
@@ -59,8 +62,8 @@ completed).
   `fixtures/invalid-expectations.json` records the instance path and keyword
   CI must see.
 - Values a schema copies from a vocabulary (the `diagnostic-ref`
-  `gateway_error` enum, the `ref` and `replica_id` patterns) must match the
-  vocabulary; CI checks it. Closed-enum policy: `docs/versioning.md`.
+  `gateway_error` and `detail.rejection_phase` enums, the `ref` and
+  `replica_id` patterns) must match the vocabulary; CI checks it. Closed-enum policy: `docs/versioning.md`.
 - Update `CHANGELOG.md` under `[Unreleased]` in the same PR.
 - Tagged content is immutable: the `[contracts-edge-*]` `CHANGELOG.md`
   sections, `docs/releases/contracts-edge-*.md`, schemas and vocabularies are
@@ -77,8 +80,10 @@ completed).
   owned by another repository, fixtures (valid pass,
   invalid fail with the expected path and keyword, formats asserted), vocabularies against their schemas plus cross-reference
   checks and the gateway-headers `availability` rule (a published Edge
-  release no later than `edge_release`), the diagnostic-finding to diagnostic-report cross-check, and the
-  plugin catalog's pointers into the pinned Edge `openapi.yaml`.
+  release no later than `edge_release`, and no unpublished Edge tag in any
+  Edge release field), the diagnostic-finding to diagnostic-report cross-check, and the
+  plugin catalog's pointers, `config_required_when_enabled` and
+  `scope_constraint` against the pinned Edge `openapi.yaml`.
 - Actions are pinned by full commit SHA with a version comment.
   `permissions: contents: read`; no secrets; `persist-credentials: false`.
 - Python packages are pinned by version and sha256 in `ci/requirements.txt`

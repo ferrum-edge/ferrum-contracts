@@ -7,6 +7,7 @@ Checks, in order:
    is BASE/<name>/v<N>.schema.json, and its `x-contract` block names the same
    <name> and <N>, a status and an owner. A schema whose owner is not this
    repository also lists its `provenance`: repo, path and full commit SHA.
+   No Edge `ref` in `x-contract` names an unpublished Edge tag.
 2. Every schema is valid against the JSON Schema 2020-12 meta-schema.
 3. Fixtures: every file under fixtures/<name>/valid/ must validate against
    schema <name>, and every file under fixtures/<name>/invalid/ must fail it
@@ -19,13 +20,17 @@ Checks, in order:
    one of each; any other file in valid/ or invalid/ fails.
    Formats are asserted (date-time needs the pinned rfc3339-validator).
 4. Vocabularies: every vocabularies/<v>.json validates against the schema its
-   `$schema` names, which must be schemas/vocabulary-<v>/v<version>.
+   `$schema` names, which must be schemas/vocabulary-<v>/v<version>, and
+   every major of schemas/vocabulary-<v> names vocabularies/<v>.json as its
+   `x-contract.instance`.
 5. Vocabulary consistency checks that JSON Schema cannot express (unique
    values, cross-references between vocabularies, required cardinality
    surfaces, a gateway-headers availability that is a published Edge
-   release no later than edge_release), and values copied from a
-   vocabulary into a schema (the diagnostic-ref gateway_error enum and
-   ref / replica_id patterns).
+   release no later than edge_release, no `edge_release`,
+   `available_since` or Edge source `ref` naming an unpublished Edge tag),
+   and values copied from a vocabulary into a schema (the diagnostic-ref
+   gateway_error enum, detail.rejection_phase enum and ref / replica_id
+   patterns).
 6. Cross-contract fixture checks (for example: every valid Anvil
    DiagnosticFinding fixture is also a valid Alloy diagnostic_report Finding).
    The valid fixtures of every major are checked, wherever the layout of
@@ -35,9 +40,12 @@ Checks, in order:
    config_schema pointer is the component that Edge's PluginConfigBase
    if/then block for that plugin_name references (and the component
    exists). --fetch-openapi downloads that file from
-   raw.githubusercontent.com at the pinned commit. The download refuses
-   redirects and stops at MAX_OPENAPI_BYTES, so an oversized response fails
-   before it is buffered whole or hashed; --openapi applies the same cap.
+   raw.githubusercontent.com at the pinned commit. Each plugin's
+   config_required_when_enabled and scope_constraint must also match what
+   PluginConfigBase requires of it; every if/then item is read on its own.
+   The download refuses redirects and stops at MAX_OPENAPI_BYTES, so an
+   oversized response fails before it is buffered whole or hashed;
+   --openapi applies the same cap.
 
 Exit status is 0 when every check passes and 1 otherwise. Only the Python
 standard library and the pinned packages in ci/requirements.txt are used.
@@ -61,7 +69,7 @@ META = "https://json-schema.org/draft/2020-12/schema"
 SCHEMA_FILE = re.compile(r"^v([1-9][0-9]*)\.schema\.json$")
 VERSION_DIR = re.compile(r"^v([1-9][0-9]*)$")
 NAME = re.compile(r"^[a-z][a-z0-9-]*$")
-# Pinned Edge openapi.yaml structure (plugin_config_refs, check_openapi).
+# Pinned Edge openapi.yaml structure (plugin_config_rules, check_openapi).
 _SCHEMA_ENTRY_RE = re.compile(r"^    [A-Za-z]")
 _PLUGIN_NAME_CONST_RE = re.compile(r"const: ([A-Za-z0-9_]+)")
 _COMPONENT_REF_RE = re.compile(r'\$ref: "#/components/schemas/([A-Za-z0-9]+)"')
@@ -74,10 +82,18 @@ _FETCH_COMMIT_RE = re.compile(r"[0-9a-f]{40}")
 _FETCH_PATH_RE = re.compile(r"[A-Za-z0-9._/-]+")
 EXPECTATIONS = "invalid-expectations.json"
 # Edge tags with no published release (docs/versioning.md). A gateway-headers
-# `availability` names the first published release, never one of these.
+# `availability` names the first published release, never one of these, and
+# no other Edge release field (EDGE_TAG_KEYS) names one either.
 UNPUBLISHED_EDGE_TAGS = frozenset(
     {"v0.9.0", "v0.9.1", "v0.9.2", "v0.9.3", "v0.9.6", "v0.9.16", "v0.9.18"}
 )
+EDGE_REPO = "ferrum-edge/ferrum-edge"
+# Keys whose tag-shaped value names an Edge release: the release a vocabulary
+# was read from, the first release that has a value, and the tag a source was
+# read at (a `ref` inside an object naming another `repo` is that repo's tag).
+# A gateway-headers `availability` is checked by check_header_availability.
+EDGE_TAG_KEYS = frozenset({"edge_release", "available_since", "ref"})
+_EDGE_TAG_RE = re.compile(r"v[0-9]+\.[0-9]+\.[0-9]+")
 # Schemas this repository owns (the vocabulary shapes) transcribe no other
 # repository; every other schema records where its content was read.
 CONTRACTS_REPO = "ferrum-edge/ferrum-contracts"
@@ -203,6 +219,7 @@ def load_schemas(root: Path, report: Report) -> dict[str, dict[int, dict]]:
                 if not contract.get("owner"):
                     report.fail(path, "x-contract.owner is required")
                 check_provenance(path, contract, report)
+                check_edge_tags(path, contract, report, "/x-contract")
             try:
                 Draft202012Validator.check_schema(schema)
             except Exception as exc:  # jsonschema.SchemaError
@@ -239,6 +256,38 @@ def check_provenance(path: Path, contract: dict, report: Report) -> None:
         commit = entry.get("commit")
         if not isinstance(commit, str) or not _PROVENANCE_COMMIT_RE.fullmatch(commit):
             report.fail(path, f"{where}.commit must be a full 40-hex commit SHA")
+
+
+def edge_tags(node, location: str = ""):
+    """(JSON pointer, tag) for every EDGE_TAG_KEYS value that names an Edge tag.
+
+    Values that are not tag-shaped (`main`, a commit) are skipped, and so is
+    the `ref` of an object whose `repo` is not Edge: that is another
+    repository's tag.
+    """
+    if isinstance(node, dict):
+        other_repo = "repo" in node and node["repo"] != EDGE_REPO
+        for key, value in node.items():
+            here = f"{location}/{key}"
+            if (
+                key in EDGE_TAG_KEYS
+                and isinstance(value, str)
+                and _EDGE_TAG_RE.fullmatch(value)
+                and not (key == "ref" and other_repo)
+            ):
+                yield here, value
+            else:
+                yield from edge_tags(value, here)
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            yield from edge_tags(value, f"{location}/{index}")
+
+
+def check_edge_tags(where: Path | str, node, report: Report, location: str = "") -> None:
+    """No Edge release field names a tag that was never published."""
+    for here, tag in edge_tags(node, location):
+        if tag in UNPUBLISHED_EDGE_TAGS:
+            report.fail(where, f"{here} names Edge {tag}, which was never published")
 
 
 def collect_formats(node) -> set[str]:
@@ -515,9 +564,13 @@ def check_vocabularies(root: Path, schemas, registry, report: Report) -> dict[st
     for schema_name, versions in schemas.items():
         if schema_name.startswith("vocabulary-"):
             name = schema_name.removeprefix("vocabulary-")
-            instance = versions[max(versions)]["x-contract"].get("instance")
-            if instance != f"vocabularies/{name}.json":
-                report.fail(f"schemas/{schema_name}", "x-contract.instance must name its file")
+            for version in sorted(versions):
+                instance = versions[version]["x-contract"].get("instance")
+                if instance != f"vocabularies/{name}.json":
+                    report.fail(
+                        f"schemas/{schema_name}/v{version}.schema.json",
+                        "x-contract.instance must name its file",
+                    )
             if not (root / "vocabularies" / f"{name}.json").is_file():
                 report.fail(f"schemas/{schema_name}", f"missing vocabularies/{name}.json")
     return vocabularies
@@ -551,6 +604,8 @@ def check_header_availability(where: str, header: dict, edge_release: str, repor
 
 
 def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) -> None:
+    for name, doc in vocabularies.items():
+        check_edge_tags(f"vocabularies/{name}.json", doc, report)
     errors = vocabularies.get("gateway-errors")
     if errors:
         where = "vocabularies/gateway-errors.json"
@@ -630,6 +685,19 @@ def check_copied_values(schemas, vocabularies: dict[str, dict], report: Report) 
         report.fail(where, "gateway_error enum must allow null")
     if sorted(e for e in enum if e is not None) != sorted(tokens):
         report.fail(where, f"gateway_error enum {enum} != gateway-errors tokens {tokens}")
+    # detail.rejection_phase carries token_for_rejection_phase(phase): the
+    # token of every vocabulary entry that a rejection phase selects.
+    phase = ref_schema.get("$defs", {}).get("Detail", {}).get("properties", {})
+    phase_enum = phase.get("rejection_phase", {}).get("enum", [])
+    phase_tokens = [t["token"] for t in errors["x_gateway_error_tokens"] if t["rejection_phases"]]
+    if None not in phase_enum:
+        report.fail(where, "detail.rejection_phase enum must allow null")
+    if sorted(e for e in phase_enum if e is not None) != sorted(phase_tokens):
+        report.fail(
+            where,
+            f"detail.rejection_phase enum {phase_enum} != gateway-errors tokens "
+            f"with rejection_phases {phase_tokens}",
+        )
     by_name = {h["name"].lower(): h for h in headers["headers"]}
     pairs = [
         ("ref", "x-ferrum-diagnostic-ref"),
@@ -644,36 +712,114 @@ def check_copied_values(schemas, vocabularies: dict[str, dict], report: Report) 
     report.ok()
 
 
-def plugin_config_refs(text: str, report: Report, label: str) -> dict[str, str]:
-    """plugin_name -> component referenced by Edge's PluginConfigBase if/then blocks."""
+def _indent(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
+def _yaml_block(lines: list[str], indent: int, key: str) -> list[str] | None:
+    """Lines nested under the first `key:` line at exactly `indent`, or None."""
+    for index, line in enumerate(lines):
+        if line == " " * indent + key + ":":
+            end = index + 1
+            while end < len(lines) and (not lines[end].strip() or _indent(lines[end]) > indent):
+                end += 1
+            return lines[index + 1 : end]
+    return None
+
+
+def _yaml_scalar(lines: list[str] | None, indent: int, key: str) -> str | None:
+    """The value of the first `key: value` line at exactly `indent`, or None."""
+    prefix = " " * indent + key + ": "
+    for line in lines or ():
+        if line.startswith(prefix):
+            return line[len(prefix) :].strip()
+    return None
+
+
+def plugin_config_rules(text: str, report: Report, label: str) -> dict[str, dict]:
+    """What Edge's PluginConfigBase if/then items say about each plugin_name.
+
+    Each `- if:` list item is read on its own, so nothing one item says leaks
+    into the next. An item whose `if` names a `plugin_name` const contributes:
+    `ref`, the component its `then` gives `config`; `config_required`, whether
+    its `then` requires `config`; and `scope`, the const its `then` gives
+    `scope`. `config` constraints apply only while the config is enabled, so
+    `ref` and `config_required` count only inside the item whose `if` tests
+    `enabled`, and an ungated item may only constrain `scope`.
+    """
     lines = text.split("\n")
     try:
         start = lines.index("    PluginConfigBase:")
     except ValueError:
         report.fail(label, "no components.schemas.PluginConfigBase")
         return {}
-    refs: dict[str, str] = {}
-    current = None
-    previous = ""
-    for line in lines[start + 1 :]:
-        if _SCHEMA_ENTRY_RE.match(line):
-            break
-        stripped = line.strip()
-        const = _PLUGIN_NAME_CONST_RE.fullmatch(stripped)
-        if const and previous == "plugin_name:":
-            current = [const.group(1), None]
-        ref = _COMPONENT_REF_RE.fullmatch(stripped)
-        if ref and current and current[1] is None:
-            current[1] = ref.group(1)
-            name = current[0]
-            if name in refs and refs[name] != current[1]:
-                report.fail(label, f"{name} references both {refs[name]} and {current[1]}")
-            refs.setdefault(name, current[1])
-        if stripped:
-            previous = stripped
-    if not refs:
+    end = start + 1
+    while end < len(lines) and not _SCHEMA_ENTRY_RE.match(lines[end]):
+        end += 1
+    lines = lines[start + 1 : end]
+
+    items = []  # (first body line, end, indent of the "- if:" line)
+    for index, line in enumerate(lines):
+        if line.strip() == "- if:":
+            depth = _indent(line)
+            stop = index + 1
+            while stop < len(lines) and (not lines[stop].strip() or _indent(lines[stop]) > depth):
+                stop += 1
+            items.append((index + 1, stop, depth))
+
+    gates = []
+    parsed = []
+    for first, stop, depth in items:
+        body = lines[first:stop]
+        then_at = next(
+            (i for i, line in enumerate(body) if line == " " * (depth + 2) + "then:"), None
+        )
+        if then_at is None:
+            report.fail(label, f"PluginConfigBase line {start + 1 + first}: if without then")
+            continue
+        condition = _yaml_block(body[:then_at], depth + 4, "properties") or []
+        consequence = body[then_at + 1 :]
+        if _yaml_block(condition, depth + 6, "enabled") is not None:
+            gates.append((first, stop))
+            continue
+        name = _yaml_scalar(_yaml_block(condition, depth + 6, "plugin_name"), depth + 8, "const")
+        if name is None:
+            continue
+        if not _PLUGIN_NAME_CONST_RE.fullmatch(f"const: {name}"):
+            report.fail(label, f"PluginConfigBase plugin_name const {name!r} is not a plugin name")
+            continue
+        required = _yaml_scalar(consequence, depth + 4, "required") or "[]"
+        required_keys = [k.strip() for k in required.strip("[]").split(",") if k.strip()]
+        props = _yaml_block(consequence, depth + 4, "properties")
+        ref_line = _yaml_scalar(_yaml_block(props or [], depth + 6, "config"), depth + 8, "$ref")
+        ref = _COMPONENT_REF_RE.fullmatch(f"$ref: {ref_line}") if ref_line else None
+        if ref_line and not ref:
+            report.fail(label, f"{name}: config $ref {ref_line} is not a component reference")
+        scope = _yaml_scalar(_yaml_block(props or [], depth + 6, "scope"), depth + 8, "const")
+        parsed.append(
+            (first, name, ref.group(1) if ref else None, "config" in required_keys, scope)
+        )
+
+    rules: dict[str, dict] = {}
+    for first, name, ref, config_required, scope in parsed:
+        rule = rules.setdefault(name, {"ref": None, "config_required": False, "scope": None})
+        gated = any(gate_first <= first < gate_stop for gate_first, gate_stop in gates)
+        if not gated and (ref or config_required):
+            report.fail(label, f"{name}: a config constraint outside the enabled gate")
+        if ref:
+            if rule["ref"] not in (None, ref):
+                report.fail(label, f"{name} references both {rule['ref']} and {ref}")
+            else:
+                rule["ref"] = ref
+        rule["config_required"] = rule["config_required"] or (gated and config_required)
+        if scope:
+            if rule["scope"] not in (None, scope):
+                report.fail(label, f"{name} constrains scope to both {rule['scope']} and {scope}")
+            else:
+                rule["scope"] = scope
+    if not rules:
         report.fail(label, "PluginConfigBase has no plugin_name if/then blocks")
-    return refs
+    return rules
 
 
 class DownloadError(OSError):
@@ -762,21 +908,37 @@ def check_openapi(
     end = _NEXT_COMPONENTS_KEY_RE.search(section)
     section = section[: end.start()] if end else section
     components = set(_SCHEMA_NAME_RE.findall(section))
-    refs = plugin_config_refs(text, report, openapi)
+    rules = plugin_config_rules(text, report, openapi)
     names = set()
     for plugin in catalog["plugins"]:
-        names.add(plugin["name"])
-        target = plugin["config_schema"]["pointer"]
+        name = plugin["name"]
+        names.add(name)
+        config_schema = plugin["config_schema"]
+        target = config_schema["pointer"]
         component = target.removeprefix("#/components/schemas/")
         if component not in components:
-            report.fail(openapi, f"{plugin['name']}: {target} does not resolve")
-        if refs.get(plugin["name"]) != component:
+            report.fail(openapi, f"{name}: {target} does not resolve")
+        rule = rules.get(name, {"ref": None, "config_required": False, "scope": None})
+        if rule["ref"] != component:
             report.fail(
                 openapi,
-                f"{plugin['name']}: PluginConfigBase references {refs.get(plugin['name'])!r}, "
-                f"catalog has {component!r}",
+                f"{name}: PluginConfigBase references {rule['ref']!r}, catalog has {component!r}",
             )
-    for name in sorted(set(refs) - names):
+        required = config_schema["config_required_when_enabled"]
+        if rule["config_required"] != required:
+            report.fail(
+                openapi,
+                f"{name}: PluginConfigBase config_required_when_enabled is "
+                f"{rule['config_required']}, catalog has {required}",
+            )
+        scope = config_schema.get("scope_constraint")
+        if rule["scope"] != scope:
+            report.fail(
+                openapi,
+                f"{name}: PluginConfigBase scope_constraint is {rule['scope']!r}, "
+                f"catalog has {scope!r}",
+            )
+    for name in sorted(set(rules) - names):
         report.fail(openapi, f"PluginConfigBase names {name!r}, which the catalog lacks")
     report.ok()
 

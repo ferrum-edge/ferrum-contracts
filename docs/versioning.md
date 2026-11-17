@@ -183,7 +183,10 @@ Contracts tag; the next published Edge release carries its changes forward
 once. Edge `v0.9.4` is the first published release: tags `v0.9.0` to `v0.9.3`
 and `v0.9.6` were never published either. A vocabulary entry's
 `availability` names a published release, and `ci/validate.py` refuses one of
-these tags or a release later than the vocabulary's `edge_release`.
+these tags or a release later than the vocabulary's `edge_release`. It also
+refuses these tags in every other Edge release field: a vocabulary's
+`edge_release`, an `available_since`, and the `ref` of an Edge source in a
+vocabulary or a schema's `x-contract`.
 
 | Edge release | Contracts tag | Reason |
 |---|---|---|
