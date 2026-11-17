@@ -475,6 +475,10 @@
     "instance_path": "/agents/enabled",
     "keyword": "type"
   },
+  "service-manifest/invalid/agents-endpoint-control-character.json": {
+    "instance_path": "/agents/endpoint_path",
+    "keyword": "pattern"
+  },
   "service-manifest/invalid/agents-unknown-key.json": {
     "instance_path": "/agents",
     "keyword": "additionalProperties"

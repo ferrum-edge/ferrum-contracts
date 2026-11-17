@@ -49,14 +49,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   limit is exact for ASCII and never stricter than Edge, and Edge still
   refuses a longer non-ASCII value that fits the characters but not the
   bytes. `upstream.host` refuses exactly the control bytes Edge refuses:
-  below 0x20, except tab, LF and CR. The four path fields refuse every C0
-  control and DEL, as Alloy's `valid_path` already does. The control rules
+  below 0x20, except tab, LF and CR. The four path fields (`api.public_path`,
+  `api.service_base_path`, `health.path` and `agents.endpoint_path`) refuse
+  every C0 control and DEL, as Alloy's `valid_path` already does. The control rules
   are anchored `pattern`s under `allOf`. Every keyword stays inside the
   Nexus and Foundry preview compilers' allowlists. A new Edge provenance
   entry cites the source. New fixtures: `valid/edge-limits.json` at every
   limit (`service_base_path` at 2048, the consumers' preview budget),
   `valid/unicode-host.json` (a 71-character, 72-byte host both Alloy and
-  Edge accept), and eleven invalid fixtures that each break one bound. Alloy
+  Edge accept), and twelve invalid fixtures that each break one bound. Alloy
   still has to enforce the length bounds (ferrum-alloy#309).
 - `schemas/gitforgeops-resource/v1.schema.json` closes the envelope to match
   GitForgeOps' strict loader (#73). `additionalProperties: false`, and a file

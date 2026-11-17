@@ -232,6 +232,7 @@ traffic. Both fixtures represent `all`-mode references with no gateway token.
 | `service-manifest/invalid/agents-unknown-key.json` | adds unknown `agents.read_only`; Alloy's agents object denies unknown fields |
 | `service-manifest/invalid/agents-bad-namespace.json` | `agents.namespace` contains a space, outside the 1-64 character `A-Za-z0-9_-` rule |
 | `service-manifest/invalid/agents-enabled-not-boolean.json` | `agents.enabled` is a string instead of a boolean |
+| `service-manifest/invalid/agents-endpoint-control-character.json` | From `valid/agents-enabled.json`: change only `agents.endpoint_path` to `/shop/mcp` followed by a tab; Alloy's `valid_path` refuses control characters, and the path control-character `pattern` rejects it |
 | `service-manifest/invalid/unknown-field.json` | unknown `upstream.backend_scheme` (the manifest uses `deny_unknown_fields`) |
 | `service-manifest/invalid/base-path-without-trailing-slash.json` | `api.service_base_path` must end in `/` |
 | `service-manifest/invalid/tls-path-with-http-scheme.json` | `server_ca_path` with `scheme = "http"` |
