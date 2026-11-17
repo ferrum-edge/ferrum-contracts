@@ -437,6 +437,10 @@ tag's commit (`contracts-edge-0.9.20` at
   `openapi.yaml`.
 - **Generated types.** Add generated TypeScript types (Nexus, Foundry, Anvil
   desktop) and a Rust crate or `include_str!` entry point.
+- **Edge `main` early warning (#76).** No consumer runs the scheduled check
+  against Edge `main` that
+  [consumer-pins.md](consumer-pins.md#checking-against-edge-main) describes.
+  Each consumer adds it in its own repository.
 
 Consumer drift checks now compare their local copies with the pinned tag; that
 follow-up is complete.

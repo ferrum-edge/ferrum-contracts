@@ -25,7 +25,8 @@ completed).
   with several majors uses `fixtures/<name>/v<N>/{valid,invalid}/` per major.
   Provenance and the reason each invalid fixture fails: `fixtures/README.md`.
 - `docs/`: `ownership.md`, `versioning.md`, `adoption.md`, `consumer-pins.md`
-  (the consumer `PIN` format), `release-process.md`, `admin-contracts.md`,
+  (the consumer `PIN` format and the consumers' Edge `main` check),
+  `release-process.md`, `admin-contracts.md`,
   `deployment-contracts.md`, `plugin-config-admission.md`,
   `release-signing.md`, the release trust policy `allowed_signers` and
   `revoked_signers`, and `releases/` (tagged release records).
