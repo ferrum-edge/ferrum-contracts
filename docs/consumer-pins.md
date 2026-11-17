@@ -5,6 +5,8 @@ A consumer vendors the contract files it uses under
 directory. The record holds the release tag, the tag's commit and one sha256 per
 file. This document defines one format for that file and the checks every
 consumer's drift test must make, so the same mistake fails in every consumer.
+It also describes the scheduled check every consumer runs against Edge `main`
+([Checking against Edge main](#checking-against-edge-main)).
 
 The format is plain text. Its checksum rows are the line shape that `sha256sum`
 and `shasum -a 256` print, so maintainers can check the hashes with stock tools
@@ -127,6 +129,63 @@ find . ! -type f ! -type d
 
 These commands are a convenience and skip the strict parse (check 1). They do
 not replace the consumer's test.
+
+## Checking against Edge main
+
+A `PIN` binds a consumer to an Edge release, so its drift test cannot see a
+breaking change that has landed only on Edge `main`. Such a change reaches the
+consumer when it re-pins to the next release, or when an operator upgrades
+Edge and the consumer's writes start failing. Each consumer therefore also
+runs a scheduled check against Edge `main`, apart from its required checks
+(ferrum-contracts#76).
+
+This repository records what Edge `main` changes in a `main_branch_delta`
+object in `vocabularies/plugin-catalog.json`,
+`vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json` on
+this repository's `main`:
+
+- `repo` and `ref` name Edge and its `main` branch.
+- `commit` is the full Edge commit the delta was read at. It is the
+  machine-readable anchor: fetch Edge sources at this commit, and compare them
+  with the release the vocabulary names (`edge_release`, and the commits in
+  `provenance` and `config_schema_document`).
+- `summary` describes every contract-visible change between that release and
+  `commit`: removed or renamed plugin config keys, changed plugin conditionals,
+  the new `openapi.yaml` sha256, and header or error changes. It is for review;
+  do not parse it.
+
+A vendored copy holds the delta as of its tag. To read the current delta, fetch
+the vocabulary from this repository's `main` at a resolved commit.
+
+The check:
+
+1. Runs on a schedule (daily) and on `workflow_dispatch`, and is never a
+   required check. It uses the consumer's own `GITHUB_TOKEN` and needs no
+   cross-repository secret: `contents: read`, plus `issues: write` only on the
+   job that files the issue.
+2. Resolves Edge `main` to a commit (`git ls-remote
+   https://github.com/ferrum-edge/ferrum-edge refs/heads/main`), fetches the
+   Edge sources the consumer depends on at that commit (usually
+   `openapi.yaml`), and runs the same payload and config checks the consumer
+   runs against its pinned release.
+3. Reads `main_branch_delta.commit` from this repository's `main`. When Edge
+   `main` is ahead of it, the delta may not cover the newest changes yet; the
+   report says so.
+4. On failure, opens or updates one issue that names the Edge commit and the
+   failing checks, and closes it once the check passes again.
+
+What each consumer checks (from ferrum-contracts#76):
+
+| Consumer | Check against Edge `main` |
+|---|---|
+| ferrum-foundry | `FERRUM_SPEC_REF=main npm run check:plugin-schemas`, and the proxy and upstream save payloads against Edge `main` `openapi.yaml` |
+| ferrum-nexus | The plugin palette and stored plugin configs against Edge `main` `openapi.yaml`, with a mock Edge that rejects unknown keys |
+| ferrum-edge-git-forge-ops | `validate` and the drift check with the Edge image built from `main` (Edge's `Main Latest Image` workflow publishes `main-<sha>` tags) |
+| ferrum-alloy | Generated Edge config through `ferrum-edge validate` from that image |
+| ferrum-anvil | Imported error and diagnostic vocabularies against this repository's `main` vocabularies and their `main_branch_delta` |
+
+A failure is an early warning, not a blocked merge: it leaves time to ship a
+compatible consumer release before Edge releases the change.
 
 ## Changing the format
 

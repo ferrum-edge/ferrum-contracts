@@ -183,7 +183,10 @@ Contracts tag; the next published Edge release carries its changes forward
 once. Edge `v0.9.4` is the first published release: tags `v0.9.0` to `v0.9.3`
 and `v0.9.6` were never published either. A vocabulary entry's
 `availability` names a published release, and `ci/validate.py` refuses one of
-these tags or a release later than the vocabulary's `edge_release`.
+these tags or a release later than the vocabulary's `edge_release`. It also
+refuses these tags in every other Edge release field: a vocabulary's
+`edge_release`, an `available_since`, and the `ref` of an Edge source in a
+vocabulary or a schema's `x-contract`.
 
 | Edge release | Contracts tag | Reason |
 |---|---|---|
@@ -201,8 +204,8 @@ these tags or a release later than the vocabulary's `edge_release`.
 
 The Alloy-owned `[agents]` section of `service-manifest` first appeared in
 `contracts-edge-0.9.9-r2`, which is otherwise identical to
-`contracts-edge-0.9.9`, and remains in every later tag. Current consumer pins,
-including Nexus at `contracts-edge-0.9.17`, are in [adoption.md](adoption.md).
+`contracts-edge-0.9.9`, and remains in every later tag. Current consumer pins
+are in [adoption.md](adoption.md).
 
 A non-Edge contract change, such as the Alloy-owned `[agents]` addition to
 `service-manifest` in #8, is released as a revision of the latest applicable

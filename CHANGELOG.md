@@ -8,6 +8,14 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Added
 
+- `docs/consumer-pins.md` "Checking against Edge main" describes the
+  scheduled, non-required check each consumer runs against Edge `main` (#76).
+  `main_branch_delta.commit` is the machine-readable anchor and `summary` is
+  for review. The check resolves Edge `main`, runs the consumer's own payload
+  and config checks against it, and opens or updates one issue on failure
+  with the consumer's own `GITHUB_TOKEN`. A table lists each consumer's check.
+  `docs/adoption.md` records the missing consumer jobs as a follow-up.
+  Documentation only.
 - `LICENSE-COMMERCIAL.md` gives this repository the commercial license the
   other Ferrum repositories ship (#65): ferrum-edge's text with the product
   name "Ferrum Contracts". The README license section points to it next to
@@ -26,6 +34,63 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- `schemas/service-manifest/v1.schema.json` carries Edge's upper bounds and
+  control-character rules (#74), so Nexus and Foundry previews refuse a
+  manifest whose generated config Edge refuses. Tightened within v1: every
+  manifest it now refuses is refused by Edge, or by Alloy's own validator
+  for the path control characters. Bounds come from Edge `v0.9.20`
+  `src/config/types.rs` (unchanged on Edge `main`), for the field Alloy's
+  export writes. `timeouts.*` and `health.timeout_ms` are at most 86400000
+  and `health.interval_seconds` at most 3600. `api.public_path`
+  (`listen_path`) is at most 500 characters, `api.service_base_path`
+  (`backend_path` once its trailing `/` is trimmed) at most 2049,
+  `health.path` (`active.http_path`) at most 2048 and `upstream.host` at
+  most 255. Edge counts UTF-8 bytes. A character limit equal to the byte
+  limit is exact for ASCII and never stricter than Edge, and Edge still
+  refuses a longer non-ASCII value that fits the characters but not the
+  bytes. `upstream.host` refuses exactly the control bytes Edge refuses:
+  below 0x20, except tab, LF and CR. The four path fields (`api.public_path`,
+  `api.service_base_path`, `health.path` and `agents.endpoint_path`) refuse
+  every C0 control and DEL, as Alloy's `valid_path` already does. The control rules
+  are anchored `pattern`s under `allOf`. Every keyword stays inside the
+  Nexus and Foundry preview compilers' allowlists. A new Edge provenance
+  entry cites the source. New fixtures: `valid/edge-limits.json` at every
+  limit (`service_base_path` at 2048, the consumers' preview budget),
+  `valid/unicode-host.json` (a 71-character, 72-byte host both Alloy and
+  Edge accept), and twelve invalid fixtures that each break one bound. Alloy
+  still has to enforce the length bounds (ferrum-alloy#309).
+- `schemas/gitforgeops-resource/v1.schema.json` closes the envelope to match
+  GitForgeOps' strict loader (#73). `additionalProperties: false`, and a file
+  that carries `id` must be kind `MeshConfig`. The provenance note no longer
+  claims that GitForgeOps ignores unknown top-level keys, and a new entry
+  cites `src/config/strict.rs` `resource_from_json_value` at GitForgeOps
+  `main` `e1766731c428517a64040cc8af36042dc56449a1`. Tightened within v1:
+  GitForgeOps already refused every file the schema now refuses. New invalid
+  fixtures: `proxy-with-id.json`, `upstream-null-id.json` and
+  `proxy-unknown-wrapper-key.json`. The GitForgeOps conformance test moves to
+  the strict loader in ferrum-edge-git-forge-ops#716.
+- `ci/validate.py` closes four gaps (#77). It refuses the unpublished Edge tags
+  (`v0.9.0` to `v0.9.3`, `v0.9.6`, `v0.9.16`, `v0.9.18`) in every Edge release
+  field, not only in a gateway-headers `availability`: each vocabulary's
+  `edge_release`, an `available_since`, and the `ref` of every Edge source
+  in a vocabulary or a schema's `x-contract`. It checks the `diagnostic-ref`
+  `detail.rejection_phase` enum against the `gateway-errors` tokens that a
+  rejection phase selects. It reads `PluginConfigBase` one `if`/`then` item
+  at a time, so a scope-only item no longer leaves its `plugin_name` current
+  for the next item's `$ref`. It also compares the catalog's
+  `config_required_when_enabled` and `scope_constraint` with that block. And
+  it checks `x-contract.instance` on every major of a vocabulary schema.
+  `ci/test_validate.py` adds negative tests for each check. Every current
+  file passes; no schema, vocabulary or fixture changes.
+- `docs/adoption.md` records each consumer's `main` on 2026-11-17 (#72).
+  Nexus (`PIN` and `SERVICE-MANIFEST-PIN`) and Foundry now pin
+  `contracts-edge-0.9.20`, like Anvil, Alloy and GitForgeOps, and all 229
+  vendored rows across the six PIN files hash-match that tag. The PIN format
+  convergence table notes that the Nexus and Foundry re-pins
+  (ferrum-nexus#706, ferrum-foundry#686) kept their legacy formats and
+  checks, and that Foundry has since converged to the canonical format
+  (ferrum-foundry#711, recorded at its merge `7d574c19`). Documentation
+  only.
 - Refresh the Edge `main_branch_delta` records against Edge `main` at
   `0bf12260d69ff9ecef821b0c0e107b7d87ae8420`, the merge of Edge PR #7389.
   `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`

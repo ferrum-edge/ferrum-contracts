@@ -1,6 +1,8 @@
 """Tests for ci/validate.py: the bounded --fetch-openapi download, the
-schema provenance check, the gateway-headers availability check and the
-cross-contract fixture check.
+schema provenance check, the gateway-headers availability check, the
+unpublished Edge tag check, the vocabulary x-contract.instance check, the
+diagnostic-ref values copied from gateway-errors, the PluginConfigBase
+parser and catalog parity check, and the cross-contract fixture check.
 
 Run with: python -I -m unittest discover -s ci -p 'test_*.py'
 Every request goes to a loopback server this test starts; nothing leaves the
@@ -11,6 +13,7 @@ temporary directory, plus one read-only pass over this repository.
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import http.server
 import importlib.util
 import io
@@ -282,6 +285,405 @@ class HeaderAvailabilityTests(unittest.TestCase):
             validate.check_vocabulary_consistency(vocabularies, report)
         self.assertEqual(report.errors, [])
         self.assertIn("gateway-headers", vocabularies)
+
+
+class EdgeTagTests(unittest.TestCase):
+    """No Edge release field names a tag that was never published."""
+
+    def check(self, vocabulary: dict) -> list[str]:
+        report = validate.Report()
+        validate.check_vocabulary_consistency({"test": vocabulary}, report)
+        return report.errors
+
+    def test_published_tags_main_and_commits_pass(self) -> None:
+        vocabulary = {
+            "edge_release": "v0.9.20",
+            "label": {"available_since": "v0.9.5"},
+            "provenance": [{"repo": validate.EDGE_REPO, "ref": "v0.9.17", "commit": "a" * 40}],
+            "main_branch_delta": {"ref": "main"},
+        }
+        self.assertEqual(self.check(vocabulary), [])
+
+    def test_an_unpublished_tag_in_any_edge_release_field_fails(self) -> None:
+        cases = {
+            "edge_release": ({"edge_release": "v0.9.16"}, "/edge_release"),
+            "available_since": (
+                {"edge_release": "v0.9.20", "label": {"available_since": "v0.9.18"}},
+                "/label/available_since",
+            ),
+            "provenance ref": (
+                {
+                    "edge_release": "v0.9.20",
+                    "provenance": [{"repo": validate.EDGE_REPO, "ref": "v0.9.6"}],
+                },
+                "/provenance/0/ref",
+            ),
+            "source ref": (
+                {"edge_release": "v0.9.20", "headers": [{"sources": [{"ref": "v0.9.3"}]}]},
+                "/headers/0/sources/0/ref",
+            ),
+        }
+        for label, (vocabulary, location) in cases.items():
+            with self.subTest(label):
+                errors = self.check(vocabulary)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertTrue(errors[0].startswith(f"vocabularies/test.json: {location} names"))
+                self.assertIn("was never published", errors[0])
+
+    def test_another_repositorys_tag_is_not_an_edge_tag(self) -> None:
+        vocabulary = {
+            "edge_release": "v0.9.20",
+            "provenance": [{"repo": "ferrum-edge/ferrum-nexus", "ref": "v0.9.16"}],
+        }
+        self.assertEqual(self.check(vocabulary), [])
+
+    def test_a_schema_x_contract_naming_an_unpublished_tag_fails(self) -> None:
+        report = validate.Report()
+        contract = {"provenance": [{"repo": validate.EDGE_REPO, "ref": "v0.9.18"}]}
+        validate.check_edge_tags("schema.json", contract, report, "/x-contract")
+        self.assertEqual(
+            report.errors,
+            [
+                "schema.json: /x-contract/provenance/0/ref names Edge v0.9.18, "
+                "which was never published"
+            ],
+        )
+
+
+class VocabularyInstanceTests(unittest.TestCase):
+    """Every retained major of a vocabulary schema names its vocabulary file."""
+
+    def run_check(self, v1_instance: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for version, instance in ((1, v1_instance), (2, "vocabularies/x.json")):
+                schema = _schema("vocabulary-x", version, {"type": "object"})
+                schema["x-contract"]["instance"] = instance
+                _write(root / "schemas" / "vocabulary-x" / f"v{version}.schema.json", schema)
+            _write(
+                root / "vocabularies" / "x.json",
+                {
+                    "$schema": f"{validate.BASE}/vocabulary-x/v2.schema.json",
+                    "vocabulary": "x",
+                    "version": 2,
+                },
+            )
+            report = validate.Report()
+            with contextlib.redirect_stdout(io.StringIO()):
+                schemas = validate.load_schemas(root, report)
+                registry = validate.build_registry(schemas)
+                validate.check_vocabularies(root, schemas, registry, report)
+            return report.errors
+
+    def test_every_major_naming_the_file_passes(self) -> None:
+        self.assertEqual(self.run_check("vocabularies/x.json"), [])
+
+    def test_an_earlier_major_naming_another_file_fails(self) -> None:
+        self.assertEqual(
+            self.run_check("vocabularies/y.json"),
+            ["schemas/vocabulary-x/v1.schema.json: x-contract.instance must name its file"],
+        )
+
+
+class CopiedValueTests(unittest.TestCase):
+    """diagnostic-ref copies the gateway-errors tokens and phase tokens exactly."""
+
+    def setUp(self) -> None:
+        def read(path: str):
+            return json.loads((ROOT / path).read_text(encoding="utf-8"))
+
+        self.schema = read("schemas/diagnostic-ref/v1.schema.json")
+        self.errors = read("vocabularies/gateway-errors.json")
+        self.headers = read("vocabularies/gateway-headers.json")
+
+    def check(self) -> list[str]:
+        report = validate.Report()
+        validate.check_copied_values(
+            {"diagnostic-ref": {1: self.schema}},
+            {"gateway-errors": self.errors, "gateway-headers": self.headers},
+            report,
+        )
+        return report.errors
+
+    def phase_enum(self) -> list:
+        return self.schema["$defs"]["Detail"]["properties"]["rejection_phase"]["enum"]
+
+    def test_the_repository_values_match(self) -> None:
+        self.assertEqual(self.check(), [])
+        self.assertIn("loop_detected", self.phase_enum())
+
+    def test_a_phase_token_missing_from_the_detail_enum_fails(self) -> None:
+        self.phase_enum().remove("config_stale")
+        errors = self.check()
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("detail.rejection_phase enum", errors[0])
+
+    def test_a_new_token_selected_by_a_phase_fails(self) -> None:
+        token = next(t for t in self.errors["x_gateway_error_tokens"] if not t["rejection_phases"])
+        token["rejection_phases"] = ["new_phase"]
+        errors = self.check()
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn(token["token"], errors[0])
+
+    def test_a_detail_enum_without_null_fails(self) -> None:
+        self.phase_enum().remove(None)
+        self.assertEqual(
+            self.check(),
+            [
+                "schemas/diagnostic-ref/v1.schema.json: "
+                "detail.rejection_phase enum must allow null"
+            ],
+        )
+
+
+def _gated_item(
+    name: str,
+    ref: str,
+    required: bool = False,
+    scope: str | None = None,
+    required_lines: tuple[str, ...] = ("                  required: [config]",),
+) -> str:
+    lines = [
+        "              - if:",
+        "                  required: [plugin_name]",
+        "                  properties:",
+        "                    plugin_name:",
+        f"                      const: {name}",
+        "                then:",
+    ]
+    if required:
+        lines += list(required_lines)
+    lines.append("                  properties:")
+    if scope:
+        lines += ["                    scope:", f"                      const: {scope}"]
+    lines += [
+        "                    config:",
+        f'                      $ref: "#/components/schemas/{ref}"',
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def _ungated_item(condition: list[str], consequence: list[str]) -> str:
+    lines = ["        - if:", "            properties:"]
+    lines += ["              " + line for line in condition]
+    lines += ["          then:"] + ["            " + line for line in consequence]
+    return "\n".join(lines) + "\n"
+
+
+def _scope_item(name: str, scope: str) -> str:
+    """An item outside the enabled gate that only constrains `scope`."""
+    return _ungated_item(
+        ["plugin_name:", f"  const: {name}"], ["properties:", "  scope:", f"    const: {scope}"]
+    )
+
+
+def _openapi(gated: str, ungated: str = "", gate: str = "const: false") -> str:
+    return (
+        "components:\n"
+        "  schemas:\n"
+        "    PluginConfigBase:\n"
+        "      type: object\n"
+        "      allOf:\n"
+        "        - if:\n"
+        "            properties:\n"
+        "              enabled:\n"
+        "                not:\n"
+        f"                  {gate}\n"
+        "          then:\n"
+        "            allOf:\n" + gated + ungated + "\n"
+        "    AConfig:\n"
+        "      type: object\n"
+        "    BConfig:\n"
+        "      type: object\n"
+    )
+
+
+class PluginConfigRuleTests(unittest.TestCase):
+    """PluginConfigBase is read one if/then item at a time, and the catalog's
+    pointer, config_required_when_enabled and scope_constraint must match it."""
+
+    def rules(self, text: str) -> tuple[dict, list[str]]:
+        report = validate.Report()
+        rules = validate.plugin_config_rules(text, report, "openapi.yaml")
+        return rules, report.errors
+
+    def test_each_item_contributes_its_ref_requirement_and_scope(self) -> None:
+        text = _openapi(
+            _gated_item("a", "AConfig", required=True, scope="global")
+            + _gated_item("b", "BConfig"),
+            _scope_item("b", "proxy"),
+        )
+        rules, errors = self.rules(text)
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            rules,
+            {
+                "a": {"ref": "AConfig", "config_required": True, "scope": "global"},
+                "b": {"ref": "BConfig", "config_required": False, "scope": "proxy"},
+            },
+        )
+
+    def test_a_scope_only_item_leaks_nothing_into_the_next_item(self) -> None:
+        # The line scanner this replaced kept `b` current after its scope-only
+        # item and charged the next item's $ref to it.
+        text = _openapi(
+            _gated_item("b", "BConfig"),
+            _scope_item("b", "proxy")
+            + _ungated_item(
+                ["scope:", "  const: proxy"],
+                ["properties:", "  config:", '    $ref: "#/components/schemas/AConfig"'],
+            ),
+        )
+        rules, errors = self.rules(text)
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            rules, {"b": {"ref": "BConfig", "config_required": False, "scope": "proxy"}}
+        )
+
+    def test_a_config_constraint_outside_the_enabled_gate_fails(self) -> None:
+        text = _openapi(
+            _gated_item("a", "AConfig"),
+            _ungated_item(["plugin_name:", "  const: a"], ["required: [config]"]),
+        )
+        _, errors = self.rules(text)
+        self.assertEqual(errors, ["openapi.yaml: a: a config constraint outside the enabled gate"])
+
+    def test_conflicting_scopes_fail(self) -> None:
+        text = _openapi(
+            _gated_item("a", "AConfig", scope="global"), _scope_item("a", "proxy")
+        )
+        _, errors = self.rules(text)
+        self.assertEqual(errors, ["openapi.yaml: a constrains scope to both global and proxy"])
+
+    def test_an_enabled_predicate_other_than_not_false_fails(self) -> None:
+        # Inverting the gate keeps every name, $ref and requirement in place;
+        # the reader must refuse it rather than count them as enabled-only.
+        for gate in ("const: true", "const: false\n                  type: boolean"):
+            with self.subTest(gate=gate):
+                text = _openapi(_gated_item("a", "AConfig", required=True), gate=gate)
+                rules, errors = self.rules(text)
+                self.assertIn("unsupported enabled predicate", errors[0])
+                self.assertNotEqual(
+                    rules.get("a"), {"ref": "AConfig", "config_required": True, "scope": None}
+                )
+
+    def test_an_else_branch_is_refused(self) -> None:
+        # Moving the plugin conditionals into the gate's `else` keeps the
+        # predicate, names, $refs and requirements, but applies them only to
+        # disabled configs; the reader must refuse it, not count them.
+        gate_else = _openapi(_gated_item("a", "AConfig", required=True)).replace(
+            "          then:\n            allOf:\n",
+            "          then:\n            type: object\n          else:\n            allOf:\n",
+        )
+        item_else = _openapi(
+            _gated_item("a", "AConfig")
+            + "                else:\n                  required: [config]\n"
+        )
+        for label, text in (("gate", gate_else), ("plugin item", item_else)):
+            with self.subTest(label):
+                rules, errors = self.rules(text)
+                self.assertTrue(
+                    any("unsupported key 'else:' beside then" in e for e in errors), errors
+                )
+                self.assertNotEqual(
+                    rules.get("a"), {"ref": "AConfig", "config_required": True, "scope": None}
+                )
+
+    def test_a_quoted_mapping_key_is_refused(self) -> None:
+        for key in ('"required"', "'required'"):
+            with self.subTest(key=key):
+                text = _openapi(
+                    _gated_item(
+                        "a",
+                        "AConfig",
+                        required=True,
+                        required_lines=(f"                  {key}: [config]",),
+                    )
+                )
+                _, errors = self.rules(text)
+                self.assertEqual(len(errors), 1, errors)
+                line = f"{key}: [config]"
+                self.assertIn(f"quoted YAML key {line!r} is not supported", errors[0])
+
+    def test_quoted_and_block_required_lists_are_read(self) -> None:
+        spellings = {
+            "double-quoted flow": ('                  required: ["config"]',),
+            "single-quoted flow": ("                  required: [plugin_name, 'config']",),
+            "nested block": ("                  required:", "                    - config"),
+            "same-indent block": ("                  required:", "                  - \"config\""),
+        }
+        for label, required_lines in spellings.items():
+            with self.subTest(label):
+                text = _openapi(
+                    _gated_item("a", "AConfig", required=True, required_lines=required_lines)
+                )
+                rules, errors = self.rules(text)
+                self.assertEqual(errors, [])
+                self.assertEqual(
+                    rules, {"a": {"ref": "AConfig", "config_required": True, "scope": None}}
+                )
+
+    def test_an_unknown_required_spelling_fails(self) -> None:
+        spellings = {
+            "scalar": ("                  required: config",),
+            "flow mapping": ("                  required: {config: true}",),
+            "block mapping": ("                  required:", "                    config: true"),
+        }
+        for label, required_lines in spellings.items():
+            with self.subTest(label):
+                text = _openapi(
+                    _gated_item("a", "AConfig", required=True, required_lines=required_lines)
+                    + _gated_item("b", "BConfig")
+                )
+                rules, errors = self.rules(text)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn("a: unsupported then required:", errors[0])
+                self.assertNotIn("a", rules)
+
+    def check_catalog(self, config_schema: dict) -> list[str]:
+        text = _openapi(_gated_item("a", "AConfig", required=True, scope="global"))
+        data = text.encode("utf-8")
+        catalog = {
+            "config_schema_document": {"sha256": hashlib.sha256(data).hexdigest()},
+            "plugins": [{"name": "a", "config_schema": config_schema}],
+        }
+        report = validate.Report()
+        validate.check_openapi("openapi.yaml", data, {"plugin-catalog": catalog}, report)
+        return report.errors
+
+    def test_a_matching_catalog_entry_passes(self) -> None:
+        entry = {
+            "document": "openapi.yaml",
+            "pointer": "#/components/schemas/AConfig",
+            "config_required_when_enabled": True,
+            "scope_constraint": "global",
+        }
+        self.assertEqual(self.check_catalog(entry), [])
+
+    def test_catalog_drift_from_plugin_config_base_fails(self) -> None:
+        base = {
+            "document": "openapi.yaml",
+            "pointer": "#/components/schemas/AConfig",
+            "config_required_when_enabled": True,
+            "scope_constraint": "global",
+        }
+        cases = {
+            "pointer": ({"pointer": "#/components/schemas/BConfig"}, "references 'AConfig'"),
+            "config required": (
+                {"config_required_when_enabled": False},
+                "config_required_when_enabled is True, catalog has False",
+            ),
+            "scope": ({"scope_constraint": "proxy"}, "scope_constraint is 'global'"),
+            "no scope": ({"scope_constraint": None}, "scope_constraint is 'global'"),
+        }
+        for label, (change, message) in cases.items():
+            with self.subTest(label):
+                entry = {**base, **change}
+                if entry["scope_constraint"] is None:
+                    del entry["scope_constraint"]
+                errors = self.check_catalog(entry)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn(message, errors[0])
 
 
 class CrossCheckTests(unittest.TestCase):

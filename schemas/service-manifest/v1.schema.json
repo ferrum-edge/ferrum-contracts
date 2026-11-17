@@ -39,6 +39,25 @@
           "x-ferrum-mcp (optional)"
         ],
         "note": "Edge v0.9.9 documents the MCP namespace character and length rule and requires the MCP endpoint to sit under the proxy listen path."
+      },
+      {
+        "repo": "ferrum-edge/ferrum-edge",
+        "ref": "v0.9.20",
+        "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+        "path": "src/config/types.rs",
+        "symbols": [
+          "MAX_LISTEN_PATH_LENGTH",
+          "MAX_BACKEND_HOST_LENGTH",
+          "MAX_BACKEND_PATH_LENGTH",
+          "MAX_TIMEOUT_MS",
+          "MAX_HEALTH_CHECK_INTERVAL",
+          "contains_control_chars",
+          "validate_string_field",
+          "Proxy::validate_fields",
+          "Upstream::validate_fields",
+          "HealthCheckConfig::validate_fields"
+        ],
+        "note": "Upper bounds and control-character rules for the Edge fields Alloy's edge export (crates/ferrum-alloy-edge/src/export.rs) writes from the manifest (ferrum-contracts#74, ferrum-alloy#309). public_path is the proxy listen_path (500 bytes); service_base_path, without its trailing /, the proxy backend_path (2048 bytes); upstream.host the proxy backend_host, or upstream targets[].host when health is set (255 bytes); health.path the active http_path (2048 bytes); timeouts the backend_*_timeout_ms (at most 86400000); health.interval_seconds at most 3600 and health.timeout_ms at most 86400000. Edge measures string lengths in UTF-8 bytes and JSON Schema maxLength counts characters, so each maxLength is the byte limit as a character count: never stricter than Edge, exact for ASCII, and Edge itself refuses a non-ASCII value that fits the characters but not the bytes. upstream.host refuses exactly what Edge's contains_control_chars refuses (bytes below 0x20 other than tab, LF and CR); Alloy's host rule accepts every control character. The four path fields (api.public_path, api.service_base_path, health.path and agents.endpoint_path) refuse every C0 control and DEL, which Alloy's valid_path already refuses (it admits only ASCII pchar bytes). The control rules are anchored lookahead patterns ([\\s\\S], so no line terminator ends the scan), and use only keywords the Nexus and Foundry preview compilers support. The bounds and src/config/types.rs rules are unchanged on Edge main at 6ad7cfe8c03fac254ab348691056d428bc2543a6."
       }
     ],
     "shared_status": "EXISTING shared v1 in the contracts-edge-0.9.11 release candidate. Root accepted the unchanged wire freeze after qualified owner/consumer review (ferrum-alloy#27); canonical tag/publication remains pending.",
@@ -98,7 +117,13 @@
         "public_path": {
           "type": "string",
           "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$",
-          "description": "Gateway listen path prefix, a literal absolute path."
+          "allOf": [
+            {
+              "pattern": "^(?![\\s\\S]*[\\x00-\\x1F\\x7F])"
+            }
+          ],
+          "maxLength": 500,
+          "description": "Gateway listen path prefix, a literal absolute path. Exported as the Edge proxy listen_path, which Edge limits to 500 UTF-8 bytes (MAX_LISTEN_PATH_LENGTH). maxLength counts characters, so it equals the byte limit only for ASCII; Edge enforces the bytes. No C0 control character or DEL, as Alloy's valid_path refuses them."
         },
         "service_base_path": {
           "type": "string",
@@ -109,8 +134,13 @@
             },
             {
               "pattern": "/$"
+            },
+            {
+              "pattern": "^(?![\\s\\S]*[\\x00-\\x1F\\x7F])"
             }
-          ]
+          ],
+          "maxLength": 2049,
+          "description": "Backend path prefix ending in /. Exported, without its trailing /, as the Edge proxy backend_path, which Edge limits to 2048 UTF-8 bytes (MAX_BACKEND_PATH_LENGTH): at most 2049 characters with the /. maxLength counts characters; Edge enforces the bytes. No C0 control character or DEL, as Alloy's valid_path refuses them."
         },
         "strip_public_path": {
           "type": "boolean",
@@ -134,7 +164,13 @@
         "host": {
           "type": "string",
           "pattern": "^[^/ @]+$",
-          "description": "Bare host name or address, no scheme."
+          "allOf": [
+            {
+              "pattern": "^(?![\\s\\S]*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F])"
+            }
+          ],
+          "maxLength": 255,
+          "description": "Bare host name or address, no scheme. Exported as the Edge proxy backend_host, or upstream targets[].host when health is set, which Edge limits to 255 UTF-8 bytes (MAX_BACKEND_HOST_LENGTH). maxLength counts characters, so it equals the byte limit only for ASCII; Edge enforces the bytes of a longer non-ASCII host. Refuses exactly the control bytes Edge's contains_control_chars refuses: below 0x20 except tab, LF and CR."
         },
         "port": {
           "type": "integer",
@@ -210,17 +246,28 @@
       "properties": {
         "path": {
           "type": "string",
-          "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$"
+          "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$",
+          "allOf": [
+            {
+              "pattern": "^(?![\\s\\S]*[\\x00-\\x1F\\x7F])"
+            }
+          ],
+          "maxLength": 2048,
+          "description": "Exported as the Edge upstream active health check http_path, which Edge limits to 2048 UTF-8 bytes (MAX_BACKEND_PATH_LENGTH). maxLength counts characters; Edge enforces the bytes. No C0 control character or DEL, as Alloy's valid_path refuses them."
         },
         "interval_seconds": {
           "type": "integer",
           "minimum": 1,
-          "default": 10
+          "maximum": 3600,
+          "default": 10,
+          "description": "Exported as active.interval_seconds; Edge allows 1 to 3600 (MAX_HEALTH_CHECK_INTERVAL)."
         },
         "timeout_ms": {
           "type": "integer",
           "minimum": 1,
-          "default": 2000
+          "maximum": 86400000,
+          "default": 2000,
+          "description": "Exported as active.timeout_ms; Edge allows 1 to 86400000 (MAX_TIMEOUT_MS, 24 hours)."
         }
       }
     },
@@ -231,18 +278,23 @@
         "connect_ms": {
           "type": "integer",
           "minimum": 1,
-          "default": 2000
+          "maximum": 86400000,
+          "default": 2000,
+          "description": "Exported as backend_connect_timeout_ms; Edge allows at most 86400000 (MAX_TIMEOUT_MS, 24 hours)."
         },
         "read_ms": {
           "type": "integer",
           "minimum": 0,
+          "maximum": 86400000,
           "default": 30000,
-          "description": "0 disables the read timeout for long-lived streams."
+          "description": "0 disables the read timeout for long-lived streams. Exported as backend_read_timeout_ms; Edge allows at most 86400000 (MAX_TIMEOUT_MS, 24 hours)."
         },
         "write_ms": {
           "type": "integer",
           "minimum": 1,
-          "default": 30000
+          "maximum": 86400000,
+          "default": 30000,
+          "description": "Exported as backend_write_timeout_ms; Edge allows at most 86400000 (MAX_TIMEOUT_MS, 24 hours)."
         }
       }
     },
@@ -302,7 +354,12 @@
         "endpoint_path": {
           "type": "string",
           "pattern": "^(?!.*//)(?!.*(?:^|/)\\.{1,2}(?:/|$))/[^{}*~ ?#;%\\\\]*$",
-          "description": "Literal absolute MCP endpoint path below api.public_path."
+          "allOf": [
+            {
+              "pattern": "^(?![\\s\\S]*[\\x00-\\x1F\\x7F])"
+            }
+          ],
+          "description": "Literal absolute MCP endpoint path below api.public_path. No C0 control character or DEL, as Alloy's valid_path refuses them."
         },
         "namespace": {
           "type": "string",

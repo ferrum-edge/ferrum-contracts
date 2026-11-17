@@ -36,6 +36,8 @@ branch of it.
 | `diagnostic-finding/valid/ferrum-token-backend-error.json` | Built from the same rule for `backend_error` (scope and owner `unknown`, confidence `likely`, as asserted by the `ferrum_rules.rs` tests). Anvil keeps no JSON finding fixtures. | `c401a320dcc5d52f707a5d5c27e333587b7a5d86` |
 | `service-manifest/valid/orders-api.json`, `plain-http.json` | ferrum-alloy `contracts/fixtures/manifests/orders-api.toml`, `plain-http.toml`, transcribed | `fa471ccb79a444aee04661880af2385596d9da45` |
 | `service-manifest/valid/agents-enabled.json` | ferrum-alloy `contracts/fixtures/openapi/orders-api.toml`, transcribed | `4cba0f4a66f85bcee3140e3b92e299275a2507fb` |
+| `service-manifest/valid/edge-limits.json` | `valid/orders-api.json` with every Edge-bounded field at Edge's limit: a 500-character `api.public_path` (`listen_path`, `MAX_LISTEN_PATH_LENGTH`), a 2048-character `api.service_base_path` (`backend_path`, `MAX_BACKEND_PATH_LENGTH`; the schema admits 2049 with the trailing `/`, but Nexus and Foundry cap every preview string at 2048 characters), a 255-character `upstream.host` (`MAX_BACKEND_HOST_LENGTH`), a 2048-character `health.path` (`active.http_path`), `health.interval_seconds` 3600 (`MAX_HEALTH_CHECK_INTERVAL`), and `health.timeout_ms` and every `timeouts` member at 86400000 (`MAX_TIMEOUT_MS`), all from ferrum-edge `src/config/types.rs` | `e4a606a00352674daaef08636e3e359e6c48ba18` (v0.9.20) |
+| `service-manifest/valid/unicode-host.json` | `valid/plain-http.json` with only `upstream.host` changed to 30 `a`s, `.`, 30 `b`s and `.é.example`: 71 characters and 72 UTF-8 bytes. Alloy's host rule and Edge's 255-byte `backend_host` check both accept it, so the schema must too (no narrower non-ASCII limit) | `e4a606a00352674daaef08636e3e359e6c48ba18` (v0.9.20) |
 | `gitforgeops-resource/valid/quickstart-*.json` | ferrum-edge-git-forge-ops `tests/fixtures/quickstart/resources/ferrum/{proxies,plugins,consumers,upstreams}/*.yaml`, transcribed | `36206d8de8929884f62c65a040f3a08d35bd5863` |
 | `gitforgeops-resource/valid/mesh-minimal.json` | ferrum-edge-git-forge-ops `tests/fixtures/mesh-minimal/ferrum/mesh/minimal.yaml`, transcribed | `36206d8de8929884f62c65a040f3a08d35bd5863` |
 | `vocabulary-*/valid/*` | Subsets of the vocabulary files in `vocabularies/` | this repository |
@@ -230,6 +232,7 @@ traffic. Both fixtures represent `all`-mode references with no gateway token.
 | `service-manifest/invalid/agents-unknown-key.json` | adds unknown `agents.read_only`; Alloy's agents object denies unknown fields |
 | `service-manifest/invalid/agents-bad-namespace.json` | `agents.namespace` contains a space, outside the 1-64 character `A-Za-z0-9_-` rule |
 | `service-manifest/invalid/agents-enabled-not-boolean.json` | `agents.enabled` is a string instead of a boolean |
+| `service-manifest/invalid/agents-endpoint-control-character.json` | From `valid/agents-enabled.json`: change only `agents.endpoint_path` to `/shop/mcp` followed by a tab; Alloy's `valid_path` refuses control characters, and the path control-character `pattern` rejects it |
 | `service-manifest/invalid/unknown-field.json` | unknown `upstream.backend_scheme` (the manifest uses `deny_unknown_fields`) |
 | `service-manifest/invalid/base-path-without-trailing-slash.json` | `api.service_base_path` must end in `/` |
 | `service-manifest/invalid/tls-path-with-http-scheme.json` | `server_ca_path` with `scheme = "http"` |
@@ -239,11 +242,25 @@ traffic. Both fixtures represent `all`-mode references with no gateway token.
 | `service-manifest/invalid/public-path-tilde.json` | From `valid/plain-http.json`: change only `api.public_path` to `/catalog/~staff`; v1 and Alloy's `valid_path` refuse `~` |
 | `service-manifest/invalid/public-path-star.json` | From `valid/plain-http.json`: change only `api.public_path` to `/catalog/*`; v1 and Alloy's `valid_path` refuse `*` |
 | `service-manifest/invalid/health-path-dot-segment.json` | From `valid/orders-api.json`: change only `health.path` to `/./readyz`; Alloy's `valid_path` refuses a `.` segment |
+| `service-manifest/invalid/timeout-connect-over-edge-max.json` | From `valid/orders-api.json`: change only `timeouts.connect_ms` to 86400001; Edge refuses a `backend_connect_timeout_ms` above `MAX_TIMEOUT_MS` (86400000) |
+| `service-manifest/invalid/timeout-read-over-edge-max.json` | From `valid/orders-api.json`: change only `timeouts.read_ms` to 86400001; Edge refuses a `backend_read_timeout_ms` above `MAX_TIMEOUT_MS` |
+| `service-manifest/invalid/timeout-write-over-edge-max.json` | From `valid/orders-api.json`: change only `timeouts.write_ms` to 86400001; Edge refuses a `backend_write_timeout_ms` above `MAX_TIMEOUT_MS` |
+| `service-manifest/invalid/health-interval-over-edge-max.json` | From `valid/orders-api.json`: change only `health.interval_seconds` to 3601; Edge refuses an `active.interval_seconds` above `MAX_HEALTH_CHECK_INTERVAL` (3600) |
+| `service-manifest/invalid/health-timeout-over-edge-max.json` | From `valid/orders-api.json`: change only `health.timeout_ms` to 86400001; Edge refuses an `active.timeout_ms` above `MAX_TIMEOUT_MS` |
+| `service-manifest/invalid/health-path-over-edge-max.json` | From `valid/orders-api.json`: change only `health.path` to `/` and 2048 `r`s (2049 characters); Edge refuses an `active.http_path` over `MAX_BACKEND_PATH_LENGTH` (2048 bytes); `maxLength` |
+| `service-manifest/invalid/upstream-host-over-edge-max.json` | From `valid/orders-api.json`: change only `upstream.host` to 252 `h`s and `.net` (256 characters); Edge refuses a `targets[].host` or `backend_host` over `MAX_BACKEND_HOST_LENGTH` (255 bytes); `maxLength` |
+| `service-manifest/invalid/upstream-host-control-character.json` | From `valid/orders-api.json`: change only `upstream.host` to `orders` BS (U+0008) `internal`; Edge's `contains_control_chars` refuses the byte in `targets[].host`; the host control-character `pattern` (Edge's exact set) rejects it |
+| `service-manifest/invalid/public-path-over-edge-max.json` | From `valid/plain-http.json`: change only `api.public_path` to `/` and 500 `c`s (501 characters); Edge refuses a `listen_path` over `MAX_LISTEN_PATH_LENGTH` (500 bytes); `maxLength` |
+| `service-manifest/invalid/public-path-control-character.json` | From `valid/plain-http.json`: change only `api.public_path` to `/catalog` ESC (U+001B); Edge refuses a `listen_path` with a control character and Alloy's `valid_path` refuses it; the path control-character `pattern` rejects it |
+| `service-manifest/invalid/base-path-over-edge-max.json` | From `valid/plain-http.json`: change only `api.service_base_path` to `/`, 2048 `v`s and `/` (2050 characters); exported without the trailing `/` it is a 2049-byte `backend_path`, over `MAX_BACKEND_PATH_LENGTH`; `maxLength` 2049 |
 | `gitforgeops-resource/invalid/unknown-kind.json` | `kind` `Service` does not exist |
 | `gitforgeops-resource/invalid/lowercase-kind.json` | `kind` is case-sensitive (`proxy`) |
 | `gitforgeops-resource/invalid/missing-spec.json` | `spec` is required |
 | `gitforgeops-resource/invalid/plugin-config-unknown-scope.json` | `scope` `tenant` is not `global`, `proxy` or `proxy_group` |
 | `gitforgeops-resource/invalid/consumer-missing-username.json` | `Consumer.spec.username` is required |
+| `gitforgeops-resource/invalid/proxy-with-id.json` | From `valid/quickstart-proxy.json`: add only the wrapper key `id: orders`; `id` is MeshConfig-only, and GitForgeOps' strict loader refuses `.id` on any other kind |
+| `gitforgeops-resource/invalid/upstream-null-id.json` | From `valid/quickstart-upstream.json`: add only `id: null`; the strict loader refuses the key on a non-MeshConfig kind whatever its value |
+| `gitforgeops-resource/invalid/proxy-unknown-wrapper-key.json` | From `valid/quickstart-proxy.json`: add only the wrapper key `metadata`; the envelope is closed, as GitForgeOps' strict loader refuses `.metadata` |
 | `vocabulary-gateway-errors/invalid/token-without-meaning.json` | a token without `meaning` |
 | `vocabulary-gateway-errors/invalid/class-not-snake-case.json` | an error class spelled as its Rust variant |
 | `vocabulary-gateway-errors/invalid/wrong-version.json` | `version` `2` against the v1 shape |
