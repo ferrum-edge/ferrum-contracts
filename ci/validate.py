@@ -736,6 +736,53 @@ def _yaml_scalar(lines: list[str] | None, indent: int, key: str) -> str | None:
     return None
 
 
+_YAML_KEY_RE = re.compile(r"[A-Za-z0-9_]+")
+
+
+def _yaml_key_list(lines: list[str], indent: int, key: str) -> tuple[list[str], str | None]:
+    """The YAML list of keys under the first `key` at exactly `indent`.
+
+    Returns (keys, error). An absent `key` is an empty list. A flow list
+    (`[a, "b", 'c']`) or a block list (`- a` lines, nested or at the same
+    indent) is read; any other spelling is an error, never an empty list, so
+    a requirement is not lost to a spelling this reader does not know.
+    """
+    prefix = " " * indent + key + ":"
+    for index, line in enumerate(lines):
+        if line != prefix and not line.startswith(prefix + " "):
+            continue
+        value = line[len(prefix) :].strip()
+        if value:
+            if not (value.startswith("[") and value.endswith("]")):
+                return [], f"{key}: {value} is not a list"
+            raw = [item.strip() for item in value[1:-1].split(",")]
+            if raw == [""]:
+                raw = []
+        else:
+            raw = []
+            for follow in lines[index + 1 :]:
+                stripped = follow.strip()
+                if not stripped:
+                    continue
+                depth = _indent(follow)
+                if depth < indent or (depth == indent and not stripped.startswith("- ")):
+                    break
+                if not stripped.startswith("- "):
+                    return [], f"{key}: unsupported block list line {stripped!r}"
+                raw.append(stripped[2:].strip())
+            if not raw:
+                return [], f"{key}: empty or unsupported list"
+        keys = []
+        for item in raw:
+            if len(item) >= 2 and item[0] == item[-1] and item[0] in "'\"":
+                item = item[1:-1]
+            if not _YAML_KEY_RE.fullmatch(item):
+                return [], f"{key}: unsupported list item {item!r}"
+            keys.append(item)
+        return keys, None
+    return [], None
+
+
 def plugin_config_rules(text: str, report: Report, label: str) -> dict[str, dict]:
     """What Edge's PluginConfigBase if/then items say about each plugin_name.
 
@@ -744,8 +791,10 @@ def plugin_config_rules(text: str, report: Report, label: str) -> dict[str, dict
     `ref`, the component its `then` gives `config`; `config_required`, whether
     its `then` requires `config`; and `scope`, the const its `then` gives
     `scope`. `config` constraints apply only while the config is enabled, so
-    `ref` and `config_required` count only inside the item whose `if` tests
-    `enabled`, and an ungated item may only constrain `scope`.
+    `ref` and `config_required` count only inside the `then` of the item whose
+    `if` is exactly `properties: {enabled: {not: {const: false}}}`, and an
+    ungated item may only constrain `scope`. Any other `if` that tests
+    `enabled`, and any `required` spelling the reader does not know, fails.
     """
     lines = text.split("\n")
     try:
@@ -780,7 +829,20 @@ def plugin_config_rules(text: str, report: Report, label: str) -> dict[str, dict
         condition = _yaml_block(body[:then_at], depth + 4, "properties") or []
         consequence = body[then_at + 1 :]
         if _yaml_block(condition, depth + 6, "enabled") is not None:
-            gates.append((first, stop))
+            gate = [
+                " " * (depth + 4) + "properties:",
+                " " * (depth + 6) + "enabled:",
+                " " * (depth + 8) + "not:",
+                " " * (depth + 10) + "const: false",
+            ]
+            if [line for line in body[:then_at] if line.strip()] != gate:
+                report.fail(
+                    label,
+                    f"PluginConfigBase line {start + 1 + first}: unsupported enabled "
+                    f"predicate; only `enabled: {{not: {{const: false}}}}` is understood",
+                )
+                continue
+            gates.append((first + then_at + 1, stop))
             continue
         name = _yaml_scalar(_yaml_block(condition, depth + 6, "plugin_name"), depth + 8, "const")
         if name is None:
@@ -788,8 +850,10 @@ def plugin_config_rules(text: str, report: Report, label: str) -> dict[str, dict
         if not _PLUGIN_NAME_CONST_RE.fullmatch(f"const: {name}"):
             report.fail(label, f"PluginConfigBase plugin_name const {name!r} is not a plugin name")
             continue
-        required = _yaml_scalar(consequence, depth + 4, "required") or "[]"
-        required_keys = [k.strip() for k in required.strip("[]").split(",") if k.strip()]
+        required_keys, error = _yaml_key_list(consequence, depth + 4, "required")
+        if error:
+            report.fail(label, f"{name}: unsupported then {error}")
+            continue
         props = _yaml_block(consequence, depth + 4, "properties")
         ref_line = _yaml_scalar(_yaml_block(props or [], depth + 6, "config"), depth + 8, "$ref")
         ref = _COMPONENT_REF_RE.fullmatch(f"$ref: {ref_line}") if ref_line else None

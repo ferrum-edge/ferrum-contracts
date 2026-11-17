@@ -436,7 +436,13 @@ class CopiedValueTests(unittest.TestCase):
         )
 
 
-def _gated_item(name: str, ref: str, required: bool = False, scope: str | None = None) -> str:
+def _gated_item(
+    name: str,
+    ref: str,
+    required: bool = False,
+    scope: str | None = None,
+    required_lines: tuple[str, ...] = ("                  required: [config]",),
+) -> str:
     lines = [
         "              - if:",
         "                  required: [plugin_name]",
@@ -446,7 +452,7 @@ def _gated_item(name: str, ref: str, required: bool = False, scope: str | None =
         "                then:",
     ]
     if required:
-        lines.append("                  required: [config]")
+        lines += list(required_lines)
     lines.append("                  properties:")
     if scope:
         lines += ["                    scope:", f"                      const: {scope}"]
@@ -471,7 +477,7 @@ def _scope_item(name: str, scope: str) -> str:
     )
 
 
-def _openapi(gated: str, ungated: str = "") -> str:
+def _openapi(gated: str, ungated: str = "", gate: str = "const: false") -> str:
     return (
         "components:\n"
         "  schemas:\n"
@@ -482,7 +488,7 @@ def _openapi(gated: str, ungated: str = "") -> str:
         "            properties:\n"
         "              enabled:\n"
         "                not:\n"
-        "                  const: false\n"
+        f"                  {gate}\n"
         "          then:\n"
         "            allOf:\n" + gated + ungated + "\n"
         "    AConfig:\n"
@@ -548,6 +554,53 @@ class PluginConfigRuleTests(unittest.TestCase):
         )
         _, errors = self.rules(text)
         self.assertEqual(errors, ["openapi.yaml: a constrains scope to both global and proxy"])
+
+    def test_an_enabled_predicate_other_than_not_false_fails(self) -> None:
+        # Inverting the gate keeps every name, $ref and requirement in place;
+        # the reader must refuse it rather than count them as enabled-only.
+        for gate in ("const: true", "const: false\n                  type: boolean"):
+            with self.subTest(gate=gate):
+                text = _openapi(_gated_item("a", "AConfig", required=True), gate=gate)
+                rules, errors = self.rules(text)
+                self.assertIn("unsupported enabled predicate", errors[0])
+                self.assertNotEqual(
+                    rules.get("a"), {"ref": "AConfig", "config_required": True, "scope": None}
+                )
+
+    def test_quoted_and_block_required_lists_are_read(self) -> None:
+        spellings = {
+            "double-quoted flow": ('                  required: ["config"]',),
+            "single-quoted flow": ("                  required: [plugin_name, 'config']",),
+            "nested block": ("                  required:", "                    - config"),
+            "same-indent block": ("                  required:", "                  - \"config\""),
+        }
+        for label, required_lines in spellings.items():
+            with self.subTest(label):
+                text = _openapi(
+                    _gated_item("a", "AConfig", required=True, required_lines=required_lines)
+                )
+                rules, errors = self.rules(text)
+                self.assertEqual(errors, [])
+                self.assertEqual(
+                    rules, {"a": {"ref": "AConfig", "config_required": True, "scope": None}}
+                )
+
+    def test_an_unknown_required_spelling_fails(self) -> None:
+        spellings = {
+            "scalar": ("                  required: config",),
+            "flow mapping": ("                  required: {config: true}",),
+            "block mapping": ("                  required:", "                    config: true"),
+        }
+        for label, required_lines in spellings.items():
+            with self.subTest(label):
+                text = _openapi(
+                    _gated_item("a", "AConfig", required=True, required_lines=required_lines)
+                    + _gated_item("b", "BConfig")
+                )
+                rules, errors = self.rules(text)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn("a: unsupported then required:", errors[0])
+                self.assertNotIn("a", rules)
 
     def check_catalog(self, config_schema: dict) -> list[str]:
         text = _openapi(_gated_item("a", "AConfig", required=True, scope="global"))
