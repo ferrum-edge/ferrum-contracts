@@ -159,7 +159,7 @@ the vocabulary from this repository's `main` at a resolved commit.
 
 The check:
 
-1. Runs on a schedule (daily) and on `workflow_dispatch`, and is never a
+1. Runs on a weekly schedule and on `workflow_dispatch`, and is never a
    required check. It uses the consumer's own `GITHUB_TOKEN` and needs no
    cross-repository secret: `contents: read`, plus `issues: write` only on the
    job that files the issue.
@@ -171,8 +171,13 @@ The check:
 3. Reads `main_branch_delta.commit` from this repository's `main`. When Edge
    `main` is ahead of it, the delta may not cover the newest changes yet; the
    report says so.
-4. On failure, opens or updates one issue that names the Edge commit and the
-   failing checks, and closes it once the check passes again.
+4. On drift, or when the check itself fails to run, opens or updates one issue
+   (found by its `<!-- edge-main-drift -->` marker) that names the Edge commit
+   and the failing checks, and closes it once the check passes again.
+
+Foundry, Nexus, GitForgeOps, Alloy and Anvil each run this check (ferrum-foundry#716,
+ferrum-nexus#733, ferrum-edge-git-forge-ops#737, ferrum-alloy#314,
+ferrum-anvil#578).
 
 What each consumer checks (from ferrum-contracts#76):
 
