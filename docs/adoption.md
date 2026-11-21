@@ -388,15 +388,20 @@ does not establish that Alloy can export a manifest.
 | Case | Alloy | Foundry preview | Nexus preview |
 |---|---|---|---|
 | `no-exporter-241` | exports | accepts | accepts |
-| `no-exporter-242` | refuses | accepts (diverges; ferrum-foundry#719) | refuses (since ferrum-nexus#746) |
+| `no-exporter-242` | refuses | refuses (since ferrum-foundry#735) | refuses (since ferrum-nexus#746) |
 | `explicit-exporter-241` (control) | exports | accepts | accepts |
 | `explicit-exporter-242` (control) | refuses | refuses | refuses |
 
-Foundry: the `no-exporter-242` divergence is the behaviour reported in
-ferrum-foundry#719. All four rows match Foundry's derived ID check in
-`server/service-manifest.ts` at `10287a1d689ff2849c8ce8c241749e3e9b001baf`,
-which adds the `-otel-tracing` suffix only when `gateway.otel_endpoint` is
-set. Foundry has not yet shown the owner outcomes.
+Foundry: up to `10287a1d689ff2849c8ce8c241749e3e9b001baf` its preview added
+the `-otel-tracing` suffix only when `gateway.otel_endpoint` was set and
+accepted `no-exporter-242` (ferrum-foundry#719). ferrum-foundry#735, merged as
+`3bc816c916ce76762d9259ab92a5e1440a1ff2b3`, bounds `-otel-tracing` for every
+manifest in `server/service-manifest.ts` (`derivedResourceIds`), and its route
+tests cover both 241/242 pairs; that commit's
+[CI run 44892880940](https://github.com/ferrum-edge/ferrum-foundry/actions/runs/44892880940)
+passed. The Foundry column matches Alloy for all four cases. Foundry derives
+its boundary inputs from its own pinned `plain-http.json` rather than reading
+this case set.
 
 Nexus: up to `c3fc0373b5cdf50a09404471a6cad98dbb0896fc` its preview also
 added the suffix only with an exporter and accepted `no-exporter-242`
@@ -409,8 +414,8 @@ passed. The Nexus column matches Alloy for all four cases. Nexus derives its
 boundary inputs from its own pinned `plain-http.json` rather than reading
 this case set.
 
-Update a consumer's row, with the commit and hosted run, once its tests
-match Alloy on these cases.
+If a consumer's behaviour on these cases changes, update its row with the
+commit and hosted run.
 
 ### GitForgeOps generated resource boundary
 
