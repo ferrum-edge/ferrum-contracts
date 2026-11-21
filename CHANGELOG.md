@@ -11,11 +11,11 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 - `docs/consumer-pins.md` "Checking against Edge main" describes the
   scheduled, non-required check each consumer runs against Edge `main` (#76).
   `main_branch_delta.commit` is the machine-readable anchor and `summary` is
-  for review. The check resolves Edge `main`, runs the consumer's own payload
-  and config checks against it, and opens or updates one issue on failure
+  for review. The check resolves Edge `main`, runs the consumer's own
+  compatibility checks against it, and opens or updates one issue on failure
   with the consumer's own `GITHUB_TOKEN`. A table lists each consumer's check.
-  `docs/adoption.md` records the missing consumer jobs as a follow-up.
-  Documentation only.
+  `docs/adoption.md` recorded the missing consumer jobs as a follow-up,
+  since marked complete (see Changed). Documentation only.
 - `LICENSE-COMMERCIAL.md` gives this repository the commercial license the
   other Ferrum repositories ship (#65): ferrum-edge's text with the product
   name "Ferrum Contracts". The README license section points to it next to
@@ -61,6 +61,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   says Alloy's host rule accepts every control character: Alloy main refuses
   every control and whitespace character (ferrum-alloy#313). New provenance
   entries cite Alloy main `db412da3` and Edge `v0.9.20` `openapi.yaml`.
+- `docs/consumer-pins.md` "Checking against Edge main" describes the five
+  shipped weekly workflows instead of the #76 design proposals (#83): its
+  table names each consumer's workflow file and what it runs against Edge
+  `main`, and step 2 says how a consumer resolves Edge `main` (the signed
+  `latest` image, or `git ls-remote` for a source-only check). Steps 3 and 4
+  say which commit the delta is compared with and that only default-branch
+  scheduled or dispatched runs file the tracking issue.
+  `docs/adoption.md` marks the Edge `main` early-warning follow-up complete,
+  so it no longer says that no consumer runs the check. Documentation only.
 - Refresh the Edge `main_branch_delta` records against Edge `main` at
   `0f0988e56c6c8c54038a849016605889957519a7`, the merge of Edge PR #7420.
   `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`
