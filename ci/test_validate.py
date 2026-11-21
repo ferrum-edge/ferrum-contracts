@@ -826,7 +826,10 @@ class QualificationTests(unittest.TestCase):
     def run_doc(self, doc) -> tuple[list[str], int]:
         _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", doc)
         report = validate.Report()
-        with contextlib.redirect_stdout(io.StringIO()):
+        bases = {("manifest", 1): "fixtures/manifest/valid/base.json"}
+        with contextlib.redirect_stdout(io.StringIO()), unittest.mock.patch.object(
+            validate, "ALLOY_DERIVED_ID_BASES", bases
+        ):
             schemas = validate.load_schemas(self.root, report)
             registry = validate.build_registry(schemas)
             before = report.checked
@@ -885,7 +888,10 @@ class QualificationTests(unittest.TestCase):
         manifest["health"] = None
         self.assertEqual(validate.alloy_derived_ids(manifest), ["svc-correlation-id", "svc-otel-tracing"])
         for bad in ([], {"service": "svc"}, {"service": {"name": "svc"}, "gateway": None},
-                    {"service": {"name": ""}}, {"service": {"name": "s"}, "gateway": {"proxy_id": 1}}):
+                    {"service": {"name": ""}}, {"service": {"name": "s"}, "gateway": {"proxy_id": 1}},
+                    {"service": {"name": "s"}, "gateway": {"proxy_id": "catalog\n"}},
+                    {"service": {"name": "s"}, "gateway": {"proxy_id": "caf\u00e9"}},
+                    {"service": {"name": "s"}, "gateway": {"proxy_id": "a" * 255}}):
             with self.subTest(bad=bad):
                 self.assertIsNone(validate.alloy_derived_ids(bad))
 
@@ -917,6 +923,18 @@ class QualificationTests(unittest.TestCase):
         invalid["instance"] = []
         self.assert_one_error([invalid], "cases are schema-valid manifests")
 
+    def test_a_proxy_id_alloy_refuses_fails(self) -> None:
+        case = self.case(241)
+        case["instance"]["gateway"]["proxy_id"] = "catalog\n"
+        case["derived_resource_ids"] = ["catalog\n-otel-tracing"]
+        self.assert_one_error([case], "valid proxy ID Alloy can derive IDs from")
+
+    def test_the_repository_base_is_the_reviewed_fixture(self) -> None:
+        self.assertEqual(
+            validate.ALLOY_DERIVED_ID_BASES,
+            {("service-manifest", 1): "fixtures/service-manifest/valid/plain-http.json"},
+        )
+
     def test_the_proxy_id_defaults_to_the_service_name(self) -> None:
         case = self.case(241)
         del case["instance"]["gateway"]["proxy_id"]
@@ -947,9 +965,9 @@ class QualificationTests(unittest.TestCase):
             ({"producer": {"repo": "o/r", "paths": ["p"], "commit": "abc"}}, "producer.commit"),
             ({"rule": "other"}, "unknown rule"),
             ({"edge_resource_id_max_length": 255}, "must be 254"),
-            ({"base": "fixtures/manifest/invalid/base.json"}, "base must name a valid fixture"),
-            ({"base": "fixtures/manifest/valid/missing.json"}, "is not a fixture file"),
-            ({"base": "fixtures/manifest/valid/../../../schemas/manifest/v1.schema.json"}, "is not a fixture file"),
+            ({"base": "fixtures/manifest/valid/other.json"}, "base must be"),
+            ({"base": "fixtures/manifest/valid/plain-http\u0000.json"}, "base must be"),
+            ({"base": None}, "base must be"),
         ):
             with self.subTest(message=message, overrides=overrides):
                 errors, checked = self.run_checks([self.case(241)], **overrides)

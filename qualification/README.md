@@ -26,10 +26,13 @@ can export.
 `schema_valid` is true. For each known `rule` it also transcribes the
 producer rule and checks the recorded outcome against it. For
 `alloy-derived-resource-id-limit`, every case is schema-valid and equals the
-set's `base` (a valid fixture Alloy exports) except for `gateway.proxy_id`,
+set's `base` (the one reviewed fixture Alloy exports for that contract major,
+fixed in `ci/validate.py`; `plain-http.json` for `service-manifest` v1) except
+for `gateway.proxy_id`,
 `gateway.correlation_id` and the optional removal of `gateway.otel_endpoint`
 and `gateway.otel_root_sampling_ratio`, so the ID limit is the only producer
-rule that can differ; `derived_resource_ids` must be exactly the
+rule that can differ. The effective proxy ID must match Alloy's `valid_id`
+grammar, and `derived_resource_ids` must be exactly the
 IDs Alloy derives (`<proxy_id>-upstream` with a health check,
 `<proxy_id>-correlation-id` unless correlation is disabled, and always
 `<proxy_id>-otel-tracing`, with the proxy ID defaulting to `service.name`),

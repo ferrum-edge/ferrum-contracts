@@ -41,9 +41,10 @@ Checks, in order:
    full commit SHA), a known `rule`, and a non-empty list of cases with
    unique ids. Each case's `instance` must pass schema <name> v<N> exactly
    when `schema_valid` is true. For the `alloy-derived-resource-id-limit`
-   rule, every case is schema-valid and equals the set's `base` valid
-   fixture except for gateway proxy_id and correlation_id (and the
+   rule, every case is schema-valid and equals the set's `base` (the one
+   reviewed exportable fixture for that contract major) except for gateway proxy_id and correlation_id (and the
    optional removal of otel_endpoint and otel_root_sampling_ratio);
+   the effective proxy ID must match Alloy's valid_id grammar,
    `derived_resource_ids` must be exactly the IDs Alloy derives from the
    instance, `edge_resource_id_max_length` must be 254, and
    `producer_exports` must be true exactly when every derived ID fits.
@@ -637,7 +638,7 @@ def check_qualification_file(
             f"edge_resource_id_max_length must be {ALLOY_RESOURCE_ID_MAX_LENGTH}, Alloy's limit",
         )
         return
-    base = load_case_base(root, doc.get("base"), name, path, report)
+    base = load_case_base(root, doc.get("base"), name, version, path, report)
     cases = doc.get("cases")
     if not isinstance(cases, list) or not cases:
         report.fail(path, "cases must be a non-empty list")
@@ -694,19 +695,25 @@ ALLOY_DERIVED_ID_VARIABLE_FIELDS = ("proxy_id", "correlation_id")
 ALLOY_DERIVED_ID_REMOVABLE_FIELDS = ("otel_endpoint", "otel_root_sampling_ratio")
 
 
-def load_case_base(root: Path, base, name: str, path: Path, report: Report):
-    """The valid fixture a case set varies; it must be a valid fixture of contract <name>."""
-    if not isinstance(base, str) or not base.startswith(f"fixtures/{name}/") or "/valid/" not in base:
-        report.fail(path, f"base must name a valid fixture under fixtures/{name}/")
+# The one base each contract major may vary for this rule: a valid fixture
+# transcribed from an Alloy manifest that Alloy exports at the cited revision
+# (ferrum-alloy contracts/fixtures/manifests/plain-http.toml).
+ALLOY_DERIVED_ID_BASES = {
+    ("service-manifest", 1): "fixtures/service-manifest/valid/plain-http.json",
+}
+# Alloy's valid_id grammar (manifest.rs), matched against the whole string.
+ALLOY_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
+
+def load_case_base(root: Path, base, name: str, version: int, path: Path, report: Report):
+    """The reviewed exportable fixture a case set varies (ALLOY_DERIVED_ID_BASES)."""
+    allowed = ALLOY_DERIVED_ID_BASES.get((name, version))
+    if allowed is None or base != allowed:
+        report.fail(path, f"base must be {allowed!r}, the reviewed exportable fixture")
         return None
-    base_path = (root / base).resolve()
-    fixtures = (root / "fixtures").resolve()
-    if fixtures not in base_path.parents or not base_path.is_file():
-        report.fail(path, f"base {base!r} is not a fixture file")
-        return None
-    doc = load_json(base_path, report)
+    doc = load_json(root / allowed, report)
     if not isinstance(doc, dict) or not isinstance(doc.get("gateway"), dict):
-        report.fail(path, f"base {base!r} has no gateway object")
+        report.fail(path, f"base {allowed!r} has no gateway object")
         return None
     return doc
 
@@ -743,7 +750,12 @@ def alloy_derived_ids(instance) -> list[str] | None:
         return None
     proxy_id = gateway.get("proxy_id", service.get("name"))
     correlation = gateway.get("correlation_id", True)
-    if not isinstance(proxy_id, str) or not proxy_id or not isinstance(correlation, bool):
+    if (
+        not isinstance(proxy_id, str)
+        or not ALLOY_ID_RE.fullmatch(proxy_id)
+        or len(proxy_id) > ALLOY_RESOURCE_ID_MAX_LENGTH
+        or not isinstance(correlation, bool)
+    ):
         return None
     ids = []
     if instance.get("health") is not None:
@@ -758,7 +770,7 @@ def check_derived_ids(where: str, case: dict, report: Report) -> bool:
     """derived_resource_ids are exactly Alloy's; producer_exports follows from the limit."""
     expected_ids = alloy_derived_ids(case.get("instance"))
     if expected_ids is None:
-        report.fail(where, "instance has no service, gateway and proxy ID Alloy can derive IDs from")
+        report.fail(where, "instance has no service, gateway and valid proxy ID Alloy can derive IDs from")
         return False
     if case.get("derived_resource_ids") != expected_ids:
         report.fail(where, f"derived_resource_ids must be Alloy's {expected_ids!r}")
@@ -1299,12 +1311,12 @@ def main() -> int:
     fixture_sets_by_name = check_fixtures(root, schemas, registry, report)
     print("cross-contract fixtures")
     check_cross(schemas, registry, fixture_sets_by_name, report)
-    print("qualification cases")
-    check_qualifications(root, schemas, registry, report)
     print("vocabularies")
     vocabularies = check_vocabularies(root, schemas, registry, report)
     check_vocabulary_consistency(vocabularies, report)
     check_copied_values(schemas, vocabularies, report)
+    print("qualification cases")
+    check_qualifications(root, schemas, registry, report)
     if args.openapi or args.fetch_openapi:
         print("plugin config schema pointers")
         if args.openapi:
