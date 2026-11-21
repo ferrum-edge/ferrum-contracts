@@ -180,8 +180,9 @@ The check:
    trails the tip of Edge `main`.
 4. On a scheduled run or a manual dispatch on the consumer's default branch,
    opens or updates one issue (found by its `<!-- edge-main-drift -->`
-   marker) on drift, or when the check itself fails to run, naming the Edge
-   commit when it was resolved and the failing checks; it closes the issue
+   marker) on drift, or when the check itself fails to run, naming the
+   failing checks and, when the setup step got far enough to report it, the
+   Edge commit; it closes the issue
    once such a run passes again. Foundry, Nexus, Alloy and Anvil also run the
    check on pull requests that change it; those runs, and dispatches from
    other branches, file no issue. Their verdict is in the run's step summary
