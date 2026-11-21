@@ -8,6 +8,25 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Added
 
+- `qualification/service-manifest/v1/derived-id-limit.json` records
+  producer-derived boundary cases for the post-default resource ID limit
+  that Alloy's `ServiceManifest::validate()` applies outside the
+  `service-manifest` v1 schema (#80). Four schema-valid manifests, built from
+  `fixtures/service-manifest/valid/plain-http.json` with no health check and
+  correlation disabled: 241- and 242-character proxy IDs, without and (as the
+  control) with `gateway.otel_endpoint`. Alloy main
+  (`db412da37564ffbe869e2b40530dbebf5afe7ac8`, unreleased) always generates
+  `<proxy_id>-otel-tracing`, so 241 exports and 242 is refused in both pairs.
+  Cases record `schema_valid` separately from `producer_exports`; they are
+  not fixtures. `qualification/README.md` defines the layout and keeps
+  released case sets immutable. `ci/validate.py` checks each case against
+  its schema and against its base fixture (only the qualified gateway fields
+  may differ), recomputes the IDs Alloy derives and checks the recorded
+  outcome against Alloy's 254-character limit, with tests in
+  `ci/test_validate.py`. `docs/adoption.md` records the Alloy,
+  Foundry and Nexus outcomes: Foundry still accepts the no-exporter 242 case
+  (ferrum-foundry#719); Nexus refuses it since ferrum-nexus#746; both refuse
+  the explicit-exporter 242 control. Released fixtures are unchanged.
 - `docs/consumer-pins.md` "Checking against Edge main" describes the
   scheduled, non-required check each consumer runs against Edge `main` (#76).
   `main_branch_delta.commit` is the machine-readable anchor and `summary` is

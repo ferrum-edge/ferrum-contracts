@@ -1,0 +1,191 @@
+{
+  "qualification": "service-manifest-derived-id-limit",
+  "contract": "service-manifest",
+  "contract_version": 1,
+  "rule": "alloy-derived-resource-id-limit",
+  "description": "Producer-derived boundary cases for the post-default resource ID limit that Alloy's ServiceManifest::validate() applies outside the service-manifest v1 schema (ferrum-contracts#80). Every case is valid against schemas/service-manifest/v1.schema.json (schema_valid); producer_exports records whether the owner's validate() and export accept it. A schema check alone does not establish that a manifest is exportable. Each derived_resource_ids entry is a resource ID Alloy's export generates from the proxy ID (Alloy's tests call these generated_ids); producer_exports is true exactly when every entry is at most edge_resource_id_max_length characters. The cases start from fixtures/service-manifest/valid/plain-http.json and change only gateway: an explicit 241- or 242-character proxy_id, correlation_id false, and, without an exporter, no otel_endpoint or otel_root_sampling_ratio. plain-http.json has no health check, so no -upstream ID is generated. A proxy ID defaulted from service.name is at most 63 characters and cannot reach this boundary.",
+  "edge_resource_id_max_length": 254,
+  "base": "fixtures/service-manifest/valid/plain-http.json",
+  "producer": {
+    "repo": "ferrum-edge/ferrum-alloy",
+    "ref": "main",
+    "commit": "db412da37564ffbe869e2b40530dbebf5afe7ac8",
+    "availability": "unreleased",
+    "paths": [
+      "crates/ferrum-alloy-edge/src/manifest.rs",
+      "crates/ferrum-alloy-edge/src/export.rs",
+      "crates/ferrum-alloy-edge/tests/export.rs"
+    ],
+    "symbols": [
+      "EDGE_RESOURCE_ID_MAX_LENGTH",
+      "ServiceManifest::validate",
+      "export::resources",
+      "OTEL_TRACING_PLUGIN_ID_SUFFIX",
+      "each_generated_id_suffix_is_checked_at_its_boundary",
+      "the_trace_plugin_bounds_a_proxy_id_without_other_derived_resources"
+    ],
+    "note": "Since ferrum-alloy#313 the export always generates the <proxy_id>-otel-tracing plugin, with or without gateway.otel_endpoint, and validate() bounds its ID by EDGE_RESOURCE_ID_MAX_LENGTH (254, Edge's MAX_ID_LENGTH in src/config/types.rs). The cases transcribe the propagation-only and otel families of each_generated_id_suffix_is_checked_at_its_boundary (241 accepted, 242 refused with an error naming -otel-tracing). Unchanged on Alloy main at 0e8a96a24c149432f0c3583732d8a3875db756ce."
+  },
+  "cases": [
+    {
+      "id": "no-exporter-241",
+      "description": "No health check, correlation disabled and no gateway.otel_endpoint. Alloy still generates the otel_tracing plugin (it removes a caller's trace context), so the 241-character proxy ID derives a 254-character plugin ID, at Edge's limit. Alloy exports it.",
+      "schema_valid": true,
+      "producer_exports": true,
+      "derived_resource_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-otel-tracing"
+      ],
+      "instance": {
+        "schema": "ferrum.service_manifest",
+        "schema_version": "1.0",
+        "service": {
+          "name": "catalog-api"
+        },
+        "api": {
+          "public_path": "/catalog",
+          "service_base_path": "/v1/",
+          "strip_public_path": true
+        },
+        "upstream": {
+          "host": "127.0.0.1",
+          "port": 8080,
+          "scheme": "http",
+          "protocols": [
+            "http1"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1000,
+          "read_ms": 0,
+          "write_ms": 15000
+        },
+        "gateway": {
+          "namespace": "retail",
+          "proxy_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "correlation_id": false
+        }
+      }
+    },
+    {
+      "id": "no-exporter-242",
+      "description": "no-exporter-241 with a 242-character proxy ID. The schema accepts it (proxy_id maxLength 254), but the derived 255-character otel_tracing plugin ID is over Edge's limit and Alloy's validate() refuses it. A consumer that bounds the derived ID only when gateway.otel_endpoint is set accepts it.",
+      "schema_valid": true,
+      "producer_exports": false,
+      "derived_resource_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-otel-tracing"
+      ],
+      "instance": {
+        "schema": "ferrum.service_manifest",
+        "schema_version": "1.0",
+        "service": {
+          "name": "catalog-api"
+        },
+        "api": {
+          "public_path": "/catalog",
+          "service_base_path": "/v1/",
+          "strip_public_path": true
+        },
+        "upstream": {
+          "host": "127.0.0.1",
+          "port": 8080,
+          "scheme": "http",
+          "protocols": [
+            "http1"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1000,
+          "read_ms": 0,
+          "write_ms": 15000
+        },
+        "gateway": {
+          "namespace": "retail",
+          "proxy_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "correlation_id": false
+        }
+      }
+    },
+    {
+      "id": "explicit-exporter-241",
+      "description": "Control: no-exporter-241 with plain-http.json's gateway.otel_endpoint and otel_root_sampling_ratio kept. Same derived ID and the same outcome as without an exporter: Alloy exports it.",
+      "schema_valid": true,
+      "producer_exports": true,
+      "derived_resource_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-otel-tracing"
+      ],
+      "instance": {
+        "schema": "ferrum.service_manifest",
+        "schema_version": "1.0",
+        "service": {
+          "name": "catalog-api"
+        },
+        "api": {
+          "public_path": "/catalog",
+          "service_base_path": "/v1/",
+          "strip_public_path": true
+        },
+        "upstream": {
+          "host": "127.0.0.1",
+          "port": 8080,
+          "scheme": "http",
+          "protocols": [
+            "http1"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1000,
+          "read_ms": 0,
+          "write_ms": 15000
+        },
+        "gateway": {
+          "namespace": "retail",
+          "proxy_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "correlation_id": false,
+          "otel_endpoint": "http://127.0.0.1:4318/v1/traces",
+          "otel_root_sampling_ratio": 0.25
+        }
+      }
+    },
+    {
+      "id": "explicit-exporter-242",
+      "description": "Control: explicit-exporter-241 with a 242-character proxy ID. Alloy refuses it, as it refuses no-exporter-242.",
+      "schema_valid": true,
+      "producer_exports": false,
+      "derived_resource_ids": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-otel-tracing"
+      ],
+      "instance": {
+        "schema": "ferrum.service_manifest",
+        "schema_version": "1.0",
+        "service": {
+          "name": "catalog-api"
+        },
+        "api": {
+          "public_path": "/catalog",
+          "service_base_path": "/v1/",
+          "strip_public_path": true
+        },
+        "upstream": {
+          "host": "127.0.0.1",
+          "port": 8080,
+          "scheme": "http",
+          "protocols": [
+            "http1"
+          ]
+        },
+        "timeouts": {
+          "connect_ms": 1000,
+          "read_ms": 0,
+          "write_ms": 15000
+        },
+        "gateway": {
+          "namespace": "retail",
+          "proxy_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "correlation_id": false,
+          "otel_endpoint": "http://127.0.0.1:4318/v1/traces",
+          "otel_root_sampling_ratio": 0.25
+        }
+      }
+    }
+  ]
+}

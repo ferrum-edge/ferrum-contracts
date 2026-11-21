@@ -24,6 +24,9 @@ completed).
 - `fixtures/<name>/{valid,invalid}/*.json`: conformance payloads; a schema
   with several majors uses `fixtures/<name>/v<N>/{valid,invalid}/` per major.
   Provenance and the reason each invalid fixture fails: `fixtures/README.md`.
+- `qualification/<name>/v<N>/*.json`: schema-valid (or invalid) payloads with
+  the producer's own outcome for rules the schema cannot express; not
+  fixtures. Layout and policy: `qualification/README.md`.
 - `docs/`: `ownership.md`, `versioning.md`, `adoption.md`, `consumer-pins.md`
   (the consumer `PIN` format and the consumers' Edge `main` check),
   `release-process.md`, `admin-contracts.md`,
@@ -82,7 +85,10 @@ completed).
   invalid fail with the expected path and keyword, formats asserted), vocabularies against their schemas plus cross-reference
   checks and the gateway-headers `availability` rule (a published Edge
   release no later than `edge_release`, and no unpublished Edge tag in any
-  Edge release field), the diagnostic-finding to diagnostic-report cross-check, and the
+  Edge release field), the diagnostic-finding to diagnostic-report cross-check,
+  qualification cases (each `instance` passes its schema exactly when
+  `schema_valid` says so, and recorded producer outcomes match the producer
+  rule CI transcribes), and the
   plugin catalog's pointers, `config_required_when_enabled` and
   `scope_constraint` against the pinned Edge `openapi.yaml`.
 - Actions are pinned by full commit SHA with a version comment.
