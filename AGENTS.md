@@ -87,7 +87,8 @@ completed).
   release no later than `edge_release`, and no unpublished Edge tag in any
   Edge release field), the diagnostic-finding to diagnostic-report cross-check,
   qualification cases (each `instance` passes its schema exactly when
-  `schema_valid` says so, and recorded producer outcomes agree with the case data), and the
+  `schema_valid` says so, and recorded producer outcomes match the producer
+  rule CI transcribes), and the
   plugin catalog's pointers, `config_required_when_enabled` and
   `scope_constraint` against the pinned Edge `openapi.yaml`.
 - Actions are pinned by full commit SHA with a version comment.

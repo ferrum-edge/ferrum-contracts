@@ -776,7 +776,7 @@ class CrossCheckTests(unittest.TestCase):
 
 
 class QualificationTests(unittest.TestCase):
-    """Qualification cases agree with the schema and with their own derived IDs."""
+    """Qualification cases agree with the schema and with Alloy's derived IDs."""
 
     def setUp(self) -> None:
         temp = tempfile.TemporaryDirectory()
@@ -793,31 +793,27 @@ class QualificationTests(unittest.TestCase):
                     "properties": {
                         "gateway": {
                             "type": "object",
-                            "properties": {"proxy_id": {"type": "string", "maxLength": 10}},
+                            "properties": {"proxy_id": {"type": "string", "maxLength": 254}},
                         }
                     },
                 },
             ),
         )
 
-    def case(self, proxy_id: str, exports: bool, schema_valid: bool = True) -> dict:
+    def case(self, length: int, exports: bool | None = None, schema_valid: bool = True) -> dict:
+        proxy_id = "a" * length
         return {
-            "id": f"id-{len(proxy_id)}",
+            "id": f"id-{length}",
             "schema_valid": schema_valid,
-            "producer_exports": exports,
-            "derived_resource_ids": [f"{proxy_id}-x"],
-            "instance": {"service": {"name": "svc"}, "gateway": {"proxy_id": proxy_id}},
+            "producer_exports": length <= 241 if exports is None else exports,
+            "derived_resource_ids": [f"{proxy_id}-otel-tracing"],
+            "instance": {
+                "service": {"name": "svc"},
+                "gateway": {"proxy_id": proxy_id, "correlation_id": False},
+            },
         }
 
-    def run_checks(self, cases, **overrides) -> tuple[list[str], int]:
-        doc = {
-            "contract": "manifest",
-            "contract_version": 1,
-            "edge_resource_id_max_length": 6,
-            "producer": {"repo": "o/r", "paths": ["src/x.rs"], "commit": "a" * 40},
-            "cases": cases,
-            **overrides,
-        }
+    def run_doc(self, doc) -> tuple[list[str], int]:
         _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", doc)
         report = validate.Report()
         with contextlib.redirect_stdout(io.StringIO()):
@@ -827,67 +823,152 @@ class QualificationTests(unittest.TestCase):
             validate.check_qualifications(self.root, schemas, registry, report)
         return report.errors, report.checked - before
 
-    def test_a_consistent_pair_passes(self) -> None:
-        errors, checked = self.run_checks([self.case("abcd", True), self.case("abcde", False)])
+    def run_checks(self, cases, **overrides) -> tuple[list[str], int]:
+        doc = {
+            "contract": "manifest",
+            "contract_version": 1,
+            "rule": validate.ALLOY_DERIVED_ID_RULE,
+            "edge_resource_id_max_length": 254,
+            "producer": {"repo": "o/r", "paths": ["src/x.rs"], "commit": "a" * 40},
+            "cases": cases,
+            **overrides,
+        }
+        return self.run_doc(doc)
+
+    def test_a_consistent_boundary_pair_passes(self) -> None:
+        errors, checked = self.run_checks([self.case(241), self.case(242)])
         self.assertEqual(errors, [])
         self.assertEqual(checked, 2)
 
     def test_a_wrong_producer_outcome_fails(self) -> None:
-        errors, _ = self.run_checks([self.case("abcde", True)])
+        errors, checked = self.run_checks([self.case(242, exports=True)])
+        self.assertEqual(checked, 0)
         self.assertEqual(len(errors), 1)
         self.assertIn("producer_exports must be false", errors[0])
 
+    def test_derived_ids_must_be_alloys(self) -> None:
+        missing = self.case(242, exports=True)
+        del missing["derived_resource_ids"]
+        wrong_suffix = self.case(242, exports=True)
+        wrong_suffix["derived_resource_ids"] = ["a" * 242 + "-x"]
+        no_correlation = self.case(241)
+        del no_correlation["instance"]["gateway"]["correlation_id"]
+        no_correlation["id"] = "default-correlation"
+        for case in (missing, wrong_suffix, no_correlation):
+            with self.subTest(case=case["id"]):
+                errors, checked = self.run_checks([case])
+                self.assertEqual(checked, 0)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn("derived_resource_ids must be Alloy's", errors[0])
+
+    def test_health_and_correlation_add_their_ids(self) -> None:
+        case = self.case(239)
+        case["instance"]["gateway"]["correlation_id"] = True
+        case["instance"]["health"] = {"path": "/readyz"}
+        case["producer_exports"] = True
+        case["derived_resource_ids"] = [
+            "a" * 239 + "-upstream",
+            "a" * 239 + "-correlation-id",
+            "a" * 239 + "-otel-tracing",
+        ]
+        errors, checked = self.run_checks([case])
+        self.assertEqual(errors, [])
+        self.assertEqual(checked, 1)
+
     def test_a_schema_valid_claim_is_checked_both_ways(self) -> None:
         errors, _ = self.run_checks(
-            [self.case("a" * 11, False), self.case("abcd", True, schema_valid=False)]
+            [self.case(255, exports=False), self.case(241, schema_valid=False)]
         )
         self.assertEqual(len(errors), 2, errors)
         self.assertIn("marked schema_valid but fails manifest v1", errors[0])
         self.assertIn("marked not schema_valid but passes manifest v1", errors[1])
 
-    def test_a_derived_id_must_extend_the_effective_proxy_id(self) -> None:
-        case = self.case("abcd", True)
-        case["derived_resource_ids"] = ["other-x"]
-        errors, _ = self.run_checks([case])
-        self.assertEqual(len(errors), 1)
-        self.assertIn("extends the effective proxy ID", errors[0])
-
     def test_the_proxy_id_defaults_to_the_service_name(self) -> None:
-        case = self.case("abcd", True)
-        del case["instance"]["gateway"]
-        case["derived_resource_ids"] = ["svc-x"]
+        case = self.case(241)
+        del case["instance"]["gateway"]["proxy_id"]
+        case["derived_resource_ids"] = ["svc-otel-tracing"]
         errors, checked = self.run_checks([case])
         self.assertEqual(errors, [])
         self.assertEqual(checked, 1)
 
     def test_malformed_instances_fail_without_crashing(self) -> None:
-        for instance, schema_valid in (([], False), ({"service": "svc"}, True)):
-            with self.subTest(instance=instance):
-                case = self.case("abcd", True, schema_valid=schema_valid)
+        for label, instance in (
+            ("array", []),
+            ("string service", {"service": "svc"}),
+            ("null gateway", {"service": {"name": "svc"}, "gateway": None}),
+            ("string gateway", {"service": {"name": "svc"}, "gateway": "g"}),
+            ("empty proxy ID", {"service": {"name": "svc"}, "gateway": {"proxy_id": ""}}),
+            ("empty service name", {"service": {"name": ""}}),
+        ):
+            with self.subTest(label):
+                case = self.case(241, schema_valid=False)
                 case["instance"] = instance
-                case["derived_resource_ids"] = ["svc-x"]
+                case["derived_resource_ids"] = ["svc-otel-tracing"]
+                if label in ("string service", "empty proxy ID", "empty service name"):
+                    case["schema_valid"] = True
                 errors, checked = self.run_checks([case])
                 self.assertEqual(checked, 0)
                 self.assertEqual(len(errors), 1, errors)
-                self.assertIn("extends the effective proxy ID", errors[0])
+                self.assertIn("Alloy can derive IDs from", errors[0])
 
-    def test_duplicate_ids_metadata_and_layout_fail(self) -> None:
-        errors, _ = self.run_checks(
-            [self.case("abcd", True), self.case("abcd", True)],
-            contract_version=2,
-            producer={"repo": "o/r", "paths": [], "commit": "abc"},
-        )
-        self.assertTrue(any("contract_version" in e for e in errors), errors)
-        self.assertTrue(any("producer.paths" in e for e in errors), errors)
-        self.assertTrue(any("producer.commit" in e for e in errors), errors)
-        self.assertTrue(any("duplicate case id" in e for e in errors), errors)
+    def test_a_case_without_instance_fails(self) -> None:
+        case = self.case(241, schema_valid=False)
+        del case["instance"]
+        errors, checked = self.run_checks([case])
+        self.assertEqual(checked, 0)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("instance is required", errors[0])
+
+    def test_duplicate_and_missing_ids_are_not_counted(self) -> None:
+        nameless = self.case(241)
+        del nameless["id"]
+        errors, checked = self.run_checks([self.case(241), self.case(241), nameless])
+        self.assertEqual(checked, 1)
+        self.assertEqual(len(errors), 2, errors)
+        self.assertIn("duplicate case id", errors[0])
+        self.assertIn("id is required", errors[1])
+
+    def test_envelope_metadata_is_checked(self) -> None:
+        for overrides, message in (
+            ({"contract_version": True}, "contract_version"),
+            ({"contract_version": 2}, "contract_version"),
+            ({"producer": {"repo": "o/r", "paths": [], "commit": "a" * 40}}, "producer.paths"),
+            ({"producer": {"repo": "o/r", "paths": ["p"], "commit": "abc"}}, "producer.commit"),
+            ({"rule": "other"}, "unknown rule"),
+            ({"edge_resource_id_max_length": 255}, "must be 254"),
+        ):
+            with self.subTest(message=message, overrides=overrides):
+                errors, _ = self.run_checks([self.case(241)], **overrides)
+                self.assertTrue(any(message in e for e in errors), errors)
+
+    def test_a_null_or_non_object_case_set_fails(self) -> None:
+        for doc in (None, []):
+            with self.subTest(doc=doc):
+                errors, checked = self.run_doc(doc)
+                self.assertEqual(checked, 0)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn("a qualification case set is a JSON object", errors[0])
+
+    def test_layout_is_checked(self) -> None:
         _write(self.root / "qualification" / "manifest" / "v2" / "cases.json", {})
         _write(self.root / "qualification" / "unknown" / "v1" / "cases.json", {})
-        errors, _ = self.run_checks([self.case("abcd", True)])
+        (self.root / "qualification" / "empty").mkdir(parents=True)
+        _write(self.root / "schemas" / "empty" / "v1.schema.json", _schema("empty", 1, {}))
+        errors, _ = self.run_checks([self.case(241)])
         self.assertTrue(any("existing major" in e for e in errors), errors)
         self.assertTrue(any("no schema named 'unknown'" in e for e in errors), errors)
+        self.assertTrue(any("empty: an empty qualification directory" in e for e in errors), errors)
 
-    def test_the_repository_cases_pass(self) -> None:
+    def test_a_missing_qualification_directory_fails(self) -> None:
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            validate.check_qualifications(self.root, schemas, registry, report)
+        self.assertEqual(len(report.errors), 1, report.errors)
+        self.assertIn("missing qualification/ directory", report.errors[0])
+
+    def test_the_repository_cases_pass_and_keep_both_boundary_pairs(self) -> None:
         report = validate.Report()
         with contextlib.redirect_stdout(io.StringIO()):
             schemas = validate.load_schemas(ROOT, report)
@@ -895,12 +976,19 @@ class QualificationTests(unittest.TestCase):
             before = report.checked
             validate.check_qualifications(ROOT, schemas, registry, report)
         self.assertEqual(report.errors, [])
-        expected = sum(
-            len(json.loads(path.read_text(encoding="utf-8"))["cases"])
-            for path in (ROOT / "qualification").glob("*/v*/*.json")
+        path = ROOT / "qualification" / "service-manifest" / "v1" / "derived-id-limit.json"
+        cases = json.loads(path.read_text(encoding="utf-8"))["cases"]
+        outcomes = {case["id"]: case["producer_exports"] for case in cases}
+        self.assertEqual(
+            outcomes,
+            {
+                "no-exporter-241": True,
+                "no-exporter-242": False,
+                "explicit-exporter-241": True,
+                "explicit-exporter-242": False,
+            },
         )
-        self.assertGreater(expected, 0)
-        self.assertEqual(report.checked - before, expected)
+        self.assertEqual(report.checked - before, len(cases))
 
 
 if __name__ == "__main__":

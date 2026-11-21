@@ -36,15 +36,16 @@ Checks, in order:
    The valid fixtures of every major are checked, wherever the layout of
    step 3 puts them; a cross-check with no valid fixture fails.
 7. Qualification cases: every qualification/<name>/v<N>/<case-set>.json
-   names contract <name> and contract_version <N> (a schema that exists),
-   the producer revision it was derived from (repo, paths and a full commit
-   SHA), and a non-empty list of cases with unique ids. Each case's
-   `instance` must pass schema <name> v<N> exactly when `schema_valid` is
-   true. A case that lists `derived_resource_ids` must derive every one of
-   them from its effective proxy ID (`gateway.proxy_id`, else
-   `service.name`), and `producer_exports` must be true exactly when every
-   derived ID fits `edge_resource_id_max_length`. These cases record
-   producer outcomes the schema cannot express; they are not fixtures.
+   names contract <name> and integer contract_version <N> (a schema that
+   exists), the producer revision it was derived from (repo, paths and a
+   full commit SHA), a known `rule`, and a non-empty list of cases with
+   unique ids. Each case's `instance` must pass schema <name> v<N> exactly
+   when `schema_valid` is true. For the `alloy-derived-resource-id-limit`
+   rule, `derived_resource_ids` must be exactly the IDs Alloy derives from
+   the instance, `edge_resource_id_max_length` must be 254, and
+   `producer_exports` must be true exactly when every derived ID fits.
+   These cases record producer outcomes the schema cannot express; they are
+   not fixtures.
 8. Optional (--openapi PATH or --fetch-openapi): the Edge openapi.yaml the
    plugin catalog pins has the recorded sha256, and every plugin's
    config_schema pointer is the component that Edge's PluginConfigBase
@@ -544,11 +545,22 @@ def check_cross(
 
 QUALIFICATION_DIR = "qualification"
 
+# Alloy's derived resource ID rule (ferrum-alloy crates/ferrum-alloy-edge at
+# db412da37564ffbe869e2b40530dbebf5afe7ac8: manifest.rs
+# EDGE_RESOURCE_ID_MAX_LENGTH and ServiceManifest::validate, export.rs
+# resources and the *_SUFFIX constants). Edge's MAX_ID_LENGTH is the same 254.
+# The export generates, in this order, `<proxy_id>-upstream` when `health` is
+# set, `<proxy_id>-correlation-id` when `gateway.correlation_id` is true (the
+# default), and `<proxy_id>-otel-tracing` always.
+ALLOY_DERIVED_ID_RULE = "alloy-derived-resource-id-limit"
+ALLOY_RESOURCE_ID_MAX_LENGTH = 254
+
 
 def check_qualifications(root: Path, schemas, registry, report: Report) -> None:
     """Check qualification/<name>/v<N>/*.json case sets (step 7 of the module docstring)."""
     qualification_root = root / QUALIFICATION_DIR
     if not qualification_root.is_dir():
+        report.fail(qualification_root, f"missing {QUALIFICATION_DIR}/ directory")
         return
     for entry in sorted(qualification_root.iterdir()):
         if not entry.is_dir():
@@ -559,7 +571,10 @@ def check_qualifications(root: Path, schemas, registry, report: Report) -> None:
         if name not in schemas:
             report.fail(entry, f"no schema named {name!r}")
             continue
-        for sub in sorted(entry.iterdir()):
+        subs = sorted(entry.iterdir())
+        if not subs:
+            report.fail(entry, "an empty qualification directory")
+        for sub in subs:
             match = VERSION_DIR.match(sub.name)
             if not (sub.is_dir() and match and int(match.group(1)) in schemas[name]):
                 report.fail(sub, f"{name} qualification cases live only in v<N>/ for an existing major")
@@ -578,13 +593,19 @@ def check_qualifications(root: Path, schemas, registry, report: Report) -> None:
 def check_qualification_file(
     path: Path, name: str, version: int, schemas, registry, report: Report
 ) -> None:
+    failures = len(report.errors)
     doc = load_json(path, report)
-    if doc is None:
-        return
     if not isinstance(doc, dict):
-        report.fail(path, "a qualification case set is a JSON object")
+        if len(report.errors) == failures:
+            report.fail(path, "a qualification case set is a JSON object")
         return
-    if doc.get("contract") != name or doc.get("contract_version") != version:
+    contract_version = doc.get("contract_version")
+    if (
+        doc.get("contract") != name
+        or not isinstance(contract_version, int)
+        or isinstance(contract_version, bool)
+        or contract_version != version
+    ):
         report.fail(path, f"contract and contract_version must be {name!r} and {version}")
     producer = doc.get("producer")
     if not isinstance(producer, dict):
@@ -600,7 +621,16 @@ def check_qualification_file(
         commit = producer.get("commit")
         if not isinstance(commit, str) or not _PROVENANCE_COMMIT_RE.fullmatch(commit):
             report.fail(path, "producer.commit must be a full 40-hex commit SHA")
-    limit = doc.get("edge_resource_id_max_length")
+    rule = doc.get("rule")
+    if rule != ALLOY_DERIVED_ID_RULE:
+        report.fail(path, f"unknown rule {rule!r}; known: {ALLOY_DERIVED_ID_RULE!r}")
+        return
+    if doc.get("edge_resource_id_max_length") != ALLOY_RESOURCE_ID_MAX_LENGTH:
+        report.fail(
+            path,
+            f"edge_resource_id_max_length must be {ALLOY_RESOURCE_ID_MAX_LENGTH}, Alloy's limit",
+        )
+        return
     cases = doc.get("cases")
     if not isinstance(cases, list) or not cases:
         report.fail(path, "cases must be a non-empty list")
@@ -615,16 +645,20 @@ def check_qualification_file(
         case_id = case.get("id")
         if not isinstance(case_id, str) or not case_id:
             report.fail(where, "id is required")
-        elif case_id in seen:
+            continue
+        if case_id in seen:
             report.fail(where, f"duplicate case id {case_id!r}")
-        else:
-            seen.add(case_id)
-            where = f"{path}: case {case_id}"
+            continue
+        seen.add(case_id)
+        where = f"{path}: case {case_id}"
         schema_valid = case.get("schema_valid")
         if not isinstance(schema_valid, bool):
             report.fail(where, "schema_valid must be a boolean")
             continue
-        instance = case.get("instance")
+        if "instance" not in case:
+            report.fail(where, "instance is required")
+            continue
+        instance = case["instance"]
         error = first_error(v, instance)
         if schema_valid and error:
             report.fail(where, f"marked schema_valid but fails {name} v{version} {error}")
@@ -632,39 +666,50 @@ def check_qualification_file(
         if not schema_valid and not error:
             report.fail(where, f"marked not schema_valid but passes {name} v{version}")
             continue
-        if "derived_resource_ids" in case and not check_derived_ids(where, case, limit, report):
+        if not check_derived_ids(where, case, report):
             continue
         report.ok()
         print(f"  ok (qualification) {path.name} {case_id}")
 
 
-def check_derived_ids(where: str, case: dict, limit, report: Report) -> bool:
-    """Derived IDs extend the effective proxy ID; producer_exports follows from the limit."""
-    if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
-        report.fail(where, "derived_resource_ids need a positive edge_resource_id_max_length")
+def alloy_derived_ids(instance) -> list[str] | None:
+    """The resource IDs Alloy derives from a manifest, or None for a shape Alloy cannot parse."""
+    if not isinstance(instance, dict):
+        return None
+    gateway = instance.get("gateway", {})
+    service = instance.get("service")
+    if not isinstance(gateway, dict) or not isinstance(service, dict):
+        return None
+    proxy_id = gateway.get("proxy_id", service.get("name"))
+    correlation = gateway.get("correlation_id", True)
+    if not isinstance(proxy_id, str) or not proxy_id or not isinstance(correlation, bool):
+        return None
+    ids = []
+    if instance.get("health") is not None:
+        ids.append(f"{proxy_id}-upstream")
+    if correlation:
+        ids.append(f"{proxy_id}-correlation-id")
+    ids.append(f"{proxy_id}-otel-tracing")
+    return ids
+
+
+def check_derived_ids(where: str, case: dict, report: Report) -> bool:
+    """derived_resource_ids are exactly Alloy's; producer_exports follows from the limit."""
+    expected_ids = alloy_derived_ids(case.get("instance"))
+    if expected_ids is None:
+        report.fail(where, "instance has no service, gateway and proxy ID Alloy can derive IDs from")
         return False
-    instance = case.get("instance")
-    gateway = instance.get("gateway", {}) if isinstance(instance, dict) else {}
-    proxy_id = gateway.get("proxy_id") if isinstance(gateway, dict) else None
-    if proxy_id is None and isinstance(instance, dict):
-        service = instance.get("service")
-        proxy_id = service.get("name") if isinstance(service, dict) else None
-    ids = case.get("derived_resource_ids")
-    if not isinstance(ids, list) or not ids or not all(isinstance(i, str) for i in ids):
-        report.fail(where, "derived_resource_ids must be a non-empty list of strings")
-        return False
-    if not isinstance(proxy_id, str) or not all(
-        i.startswith(proxy_id) and len(i) > len(proxy_id) for i in ids
-    ):
-        report.fail(where, "every derived resource ID extends the effective proxy ID")
+    if case.get("derived_resource_ids") != expected_ids:
+        report.fail(where, f"derived_resource_ids must be Alloy's {expected_ids!r}")
         return False
     exports = case.get("producer_exports")
-    expected = all(len(i) <= limit for i in ids)
+    expected = all(len(i) <= ALLOY_RESOURCE_ID_MAX_LENGTH for i in expected_ids)
     if exports is not expected:
         report.fail(
             where,
             f"producer_exports must be {str(expected).lower()}: the longest derived ID "
-            f"has {max(map(len, ids))} characters and the limit is {limit}",
+            f"has {max(map(len, expected_ids))} characters and the limit is "
+            f"{ALLOY_RESOURCE_ID_MAX_LENGTH}",
         )
         return False
     return True

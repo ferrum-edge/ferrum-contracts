@@ -11,8 +11,8 @@ can export.
 ## Layout
 
 - `qualification/<name>/v<N>/<case-set>.json` holds cases for schema
-  `<name>` major `<N>`. The file names `contract`, `contract_version`, and the
-  `producer` revision the outcomes were read from (`repo`, `ref`, full
+  `<name>` major `<N>`. The file names `contract`, `contract_version`, the
+  producer `rule` it qualifies, and the `producer` revision the outcomes were read from (`repo`, `ref`, full
   `commit`, `paths`, `symbols`, and `availability: unreleased` when the
   revision exists only on the producer's default branch).
 - Each case has an `id`, a `description`, `schema_valid`, the producer
@@ -23,10 +23,16 @@ can export.
   change under `[Unreleased]`.
 
 `ci/validate.py` checks that each `instance` passes the schema exactly when
-`schema_valid` is true, and that the recorded outcome agrees with the case's
-own data (for derived IDs: every ID extends the effective proxy ID, and
-`producer_exports` is true exactly when every derived ID fits the limit). It
-does not run the producer. The producer's own tests are named in `symbols`.
+`schema_valid` is true. For each known `rule` it also transcribes the
+producer rule and checks the recorded outcome against it. For
+`alloy-derived-resource-id-limit`, `derived_resource_ids` must be exactly the
+IDs Alloy derives (`<proxy_id>-upstream` with a health check,
+`<proxy_id>-correlation-id` unless correlation is disabled, and always
+`<proxy_id>-otel-tracing`, with the proxy ID defaulting to `service.name`),
+`edge_resource_id_max_length` must be 254, and `producer_exports` must be true
+exactly when every derived ID fits. CI does not run the producer; a new rule
+needs its own check in `ci/validate.py`. The producer's own tests are named
+in `symbols`.
 
 ## Case sets
 
