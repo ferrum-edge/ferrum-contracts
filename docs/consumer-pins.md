@@ -185,9 +185,9 @@ The check:
    once such a run passes again. Foundry, Nexus, Alloy and Anvil also run the
    check on pull requests that change it; those runs, and dispatches from
    other branches, file no issue. Their verdict is in the run's step summary
-   (Nexus also uploads logs, traces and screenshots as an artifact). Anvil
-   fails such a run on drift; the others can finish green with the drift
-   recorded only in the summary.
+   and log, with annotations where a check emits them (Nexus also uploads
+   logs, traces and screenshots as an artifact). Anvil fails such a run on
+   drift; the others can finish green while reporting the drift there.
 
 Foundry, Nexus, GitForgeOps, Alloy and Anvil each run this check (ferrum-foundry#716,
 ferrum-nexus#733, ferrum-edge-git-forge-ops#737, ferrum-alloy#314,
@@ -197,11 +197,11 @@ What each consumer's shipped workflow checks:
 
 | Consumer | Workflow | Check against Edge `main` |
 |---|---|---|
-| ferrum-foundry | `.github/workflows/edge-main-drift.yml` | `scripts/edge-main-drift.mjs` compares the guided plugin schemas, the plugin sensitivity table and the server-owned subset `traffic_policy` fields with the Edge `main` sources; then, against gateways started from the signed Edge `latest` image, the Alloy preview test, the seed and backup gateway contract, role and read-only capability parity, and the editors' save payloads |
+| ferrum-foundry | `.github/workflows/edge-main-drift.yml` | `scripts/edge-main-drift.mjs` compares the guided plugin schemas, the plugin sensitivity table and the server-owned subset `traffic_policy` fields with the Edge `main` sources; then, against gateways started from the signed Edge `latest` image, the Alloy preview and explicit HTTP resource mapping check (the preview's resources applied to the test gateway and read back), the seed and backup gateway contract, role and read-only capability parity, and the editors' save payloads |
 | ferrum-nexus | `.github/workflows/edge-main-drift.yml` | The real-stack acceptance suite (`./e2e/run.sh`: data plane, single sign-on, browser journey) that its required `acceptance` job runs against the pinned release, with `FERRUM_EDGE_IMAGE` set to the signed Edge `latest` image |
 | ferrum-edge-git-forge-ops | `.github/workflows/validator-pin-canary.yml`, job `edge-main-drift` | Resource-label compatibility, `gitforgeops validate` for every environment, and the lifecycle suite (`tests/lifecycle/run.sh`: apply, diff and traffic), all with the `ferrum-edge` binary taken from the signed Edge `latest` image |
 | ferrum-alloy | `.github/workflows/edge-main-drift.yml` | The steps of its "Generated Edge configuration validates" CI job, run on the signed Edge `latest` image: `ferrum-edge validate` on the plain-HTTP and minimal generated fixtures, trace-context stripping through the minimal fixture, and `POST /api-specs` importing the exported agent-tool document and generating the expected `mcp_gateway` endpoint, namespace and exact tool set |
-| ferrum-anvil | `.github/workflows/edge-main-drift.yml` | Against this repository's `main`: every vendored `PIN` path still exists, the imported error and diagnostic vocabularies, the `DiagnosticFinding` schema and every current `diagnostic-finding` fixture, and the `diagnostic-ref` reader with every current `diagnostic-ref` fixture (`main_branch_delta` is read for the report). Against Edge `main`'s `src/retry.rs`: the `X-Gateway-Error` tokens against Anvil's reader and its `ferrum.token.*` diagnostic keys, and the `ErrorClass` labels against the reader (`edge_main_vocabulary_matches_anvils_reader`) |
+| ferrum-anvil | `.github/workflows/edge-main-drift.yml` | Against this repository's `main`: every vendored `PIN` path still exists, the imported error and diagnostic vocabularies, the `DiagnosticFinding` schema and every current `diagnostic-finding` fixture, and the `diagnostic-ref` schema against Anvil's reader, with every current `diagnostic-ref` fixture run through both (`main_branch_delta` is read for the report). Against Edge `main`'s `src/retry.rs`: the `X-Gateway-Error` tokens against Anvil's reader and its `ferrum.token.*` diagnostic keys, and the `ErrorClass` labels against the reader (`edge_main_vocabulary_matches_anvils_reader`) |
 
 A failure is an early warning, not a blocked merge: it leaves time to ship a
 compatible consumer release before Edge releases the change.
