@@ -388,19 +388,29 @@ does not establish that Alloy can export a manifest.
 | Case | Alloy | Foundry preview | Nexus preview |
 |---|---|---|---|
 | `no-exporter-241` | exports | accepts | accepts |
-| `no-exporter-242` | refuses | accepts (diverges; ferrum-foundry#719) | accepts (diverges; ferrum-nexus#734) |
+| `no-exporter-242` | refuses | accepts (diverges; ferrum-foundry#719) | refuses (since ferrum-nexus#746) |
 | `explicit-exporter-241` (control) | exports | accepts | accepts |
 | `explicit-exporter-242` (control) | refuses | refuses | refuses |
 
-The `no-exporter` results for Foundry and Nexus are the behaviour reported in
-ferrum-foundry#719 and ferrum-nexus#734. All four rows match each preview's
-derived ID check: Foundry `server/service-manifest.ts` at
-`10287a1d689ff2849c8ce8c241749e3e9b001baf` and Nexus
-`server/src/service-manifest/service.ts` at
-`c3fc0373b5cdf50a09404471a6cad98dbb0896fc` add the `-otel-tracing` suffix
-only when `gateway.otel_endpoint` is set. Neither consumer has yet shown the
-owner outcomes. Update a consumer's row, with the commit and hosted run, once
-its tests run these cases and match Alloy.
+Foundry: the `no-exporter-242` divergence is the behaviour reported in
+ferrum-foundry#719. All four rows match Foundry's derived ID check in
+`server/service-manifest.ts` at `10287a1d689ff2849c8ce8c241749e3e9b001baf`,
+which adds the `-otel-tracing` suffix only when `gateway.otel_endpoint` is
+set. Foundry has not yet shown the owner outcomes.
+
+Nexus: up to `c3fc0373b5cdf50a09404471a6cad98dbb0896fc` its preview also
+added the suffix only with an exporter and accepted `no-exporter-242`
+(ferrum-nexus#734). ferrum-nexus#746, merged as
+`83c864b027dc16a6708ec5beb699590d6f06cac9`, bounds `-otel-tracing` for every
+manifest in `server/src/service-manifest/service.ts`, and its tests cover
+both 241/242 pairs; that commit's
+[CI run 44889811691](https://github.com/ferrum-edge/ferrum-nexus/actions/runs/44889811691)
+passed. The Nexus column matches Alloy for all four cases. Nexus derives its
+boundary inputs from its own pinned `plain-http.json` rather than reading
+this case set.
+
+Update a consumer's row, with the commit and hosted run, once its tests
+match Alloy on these cases.
 
 ### GitForgeOps generated resource boundary
 

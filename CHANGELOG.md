@@ -24,9 +24,9 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   may differ), recomputes the IDs Alloy derives and checks the recorded
   outcome against Alloy's 254-character limit, with tests in
   `ci/test_validate.py`. `docs/adoption.md` records the Alloy,
-  Foundry and Nexus outcomes: both previews accept the no-exporter 242 case
-  (ferrum-foundry#719, ferrum-nexus#734) and refuse the explicit-exporter
-  242 control. Released fixtures are unchanged.
+  Foundry and Nexus outcomes: Foundry still accepts the no-exporter 242 case
+  (ferrum-foundry#719); Nexus refuses it since ferrum-nexus#746; both refuse
+  the explicit-exporter 242 control. Released fixtures are unchanged.
 - `docs/consumer-pins.md` "Checking against Edge main" describes the
   scheduled, non-required check each consumer runs against Edge `main` (#76).
   `main_branch_delta.commit` is the machine-readable anchor and `summary` is

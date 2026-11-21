@@ -1084,13 +1084,20 @@ class QualificationTests(unittest.TestCase):
 
     def test_the_repository_cases_pass_and_keep_both_boundary_pairs(self) -> None:
         report = validate.Report()
-        with contextlib.redirect_stdout(io.StringIO()):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
             schemas = validate.load_schemas(ROOT, report)
             registry = validate.build_registry(schemas)
             validate.check_qualifications(ROOT, schemas, registry, report)
         self.assertEqual(report.errors, [])
         path = ROOT / "qualification" / "service-manifest" / "v1" / "derived-id-limit.json"
         doc = json.loads(path.read_text(encoding="utf-8"))
+        checked = {
+            line.split()[-1]
+            for line in output.getvalue().splitlines()
+            if line.startswith("  ok (qualification) derived-id-limit.json ")
+        }
+        self.assertEqual(checked, {case["id"] for case in doc["cases"]})
         base = json.loads((ROOT / doc["base"]).read_text(encoding="utf-8"))
         expected = {
             "no-exporter-241": (241, False, True),
