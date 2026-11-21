@@ -182,6 +182,9 @@ def load_json(path: Path, report: Report):
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         report.fail(path, f"not valid JSON: {exc}")
         return None
+    except RecursionError:
+        report.fail(path, "not valid JSON: nested too deeply")
+        return None
 
 
 def describe(errors) -> str:
@@ -656,6 +659,9 @@ def check_qualification_file(
         case_id = case.get("id")
         if not isinstance(case_id, str) or not case_id:
             report.fail(where, "id is required")
+            continue
+        if not case_id.isascii() or not case_id.isprintable():
+            report.fail(where, "id must be printable ASCII")
             continue
         if case_id in seen:
             report.fail(where, f"duplicate case id {case_id!r}")

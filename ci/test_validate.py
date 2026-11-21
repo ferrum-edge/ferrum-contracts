@@ -1006,6 +1006,28 @@ class QualificationTests(unittest.TestCase):
         self.assertIn("duplicate case id", errors[0])
         self.assertIn("id is required", errors[1])
 
+    def test_a_case_id_must_be_printable_ascii(self) -> None:
+        for bad in ("\ud800", "a\nb", "caf\u00e9"):
+            with self.subTest(bad=bad):
+                case = self.case(241)
+                case["id"] = bad
+                self.assert_one_error([case], "id must be printable ASCII")
+
+    def test_deeply_nested_json_is_reported(self) -> None:
+        path = self.root / "qualification" / "manifest" / "v1" / "cases.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("[" * 100000 + "]" * 100000, encoding="utf-8")
+        report = validate.Report()
+        # Whether the C decoder hits the recursion limit depends on the Python
+        # build, so force the RecursionError path deterministically.
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            with unittest.mock.patch.object(validate.json, "loads", side_effect=RecursionError):
+                validate.check_qualifications(self.root, schemas, registry, report)
+        self.assertEqual(len(report.errors), 1, report.errors)
+        self.assertIn("nested too deeply", report.errors[0])
+
     def test_an_invalid_envelope_counts_no_case(self) -> None:
         for overrides, message in (
             ({"contract_version": True}, "contract_version"),
