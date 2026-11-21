@@ -159,8 +159,9 @@ the vocabulary from this repository's `main` at a resolved commit.
 
 The check:
 
-1. Runs on a weekly schedule and on `workflow_dispatch`, and is never a
-   required check. It uses the consumer's own `GITHUB_TOKEN` and needs no
+1. Runs on a weekly schedule and on `workflow_dispatch` (GitForgeOps runs it
+   from its validator pin canary workflow when dispatched with
+   `check: edge-main`), and is never a required check. It uses the consumer's own `GITHUB_TOKEN` and needs no
    cross-repository secret: `contents: read`, plus `issues: write` only on the
    job that files the issue.
 2. Resolves Edge `main` to a commit and runs the consumer's compatibility
@@ -181,9 +182,12 @@ The check:
    opens or updates one issue (found by its `<!-- edge-main-drift -->`
    marker) on drift, or when the check itself fails to run, naming the Edge
    commit when it was resolved and the failing checks; it closes the issue
-   once such a run passes again. Runs on pull requests that change the check,
-   and dispatches from other branches, report only through their own
-   Actions status and step summary.
+   once such a run passes again. Foundry, Nexus, Alloy and Anvil also run the
+   check on pull requests that change it; those runs, and dispatches from
+   other branches, file no issue. Their verdict is in the run's step summary
+   (Nexus also uploads logs, traces and screenshots as an artifact). Anvil
+   fails such a run on drift; the others can finish green with the drift
+   recorded only in the summary.
 
 Foundry, Nexus, GitForgeOps, Alloy and Anvil each run this check (ferrum-foundry#716,
 ferrum-nexus#733, ferrum-edge-git-forge-ops#737, ferrum-alloy#314,
@@ -197,7 +201,7 @@ What each consumer's shipped workflow checks:
 | ferrum-nexus | `.github/workflows/edge-main-drift.yml` | The real-stack acceptance suite (`./e2e/run.sh`: data plane, single sign-on, browser journey) that its required `acceptance` job runs against the pinned release, with `FERRUM_EDGE_IMAGE` set to the signed Edge `latest` image |
 | ferrum-edge-git-forge-ops | `.github/workflows/validator-pin-canary.yml`, job `edge-main-drift` | Resource-label compatibility, `gitforgeops validate` for every environment, and the lifecycle suite (`tests/lifecycle/run.sh`: apply, diff and traffic), all with the `ferrum-edge` binary taken from the signed Edge `latest` image |
 | ferrum-alloy | `.github/workflows/edge-main-drift.yml` | The steps of its "Generated Edge configuration validates" CI job, run on the signed Edge `latest` image: `ferrum-edge validate` on the plain-HTTP and minimal generated fixtures, trace-context stripping through the minimal fixture, and `POST /api-specs` importing the exported agent-tool document and generating the expected `mcp_gateway` endpoint, namespace and exact tool set |
-| ferrum-anvil | `.github/workflows/edge-main-drift.yml` | Against this repository's `main`: every vendored `PIN` path still exists, the imported error and diagnostic vocabularies, the `DiagnosticFinding` schema and every current `diagnostic-finding` fixture, and the `diagnostic-ref` reader with every current `diagnostic-ref` fixture (`main_branch_delta` is read for the report). Against Edge `main`'s `src/retry.rs`: the `X-Gateway-Error` tokens, their `ferrum.token.*` wording and the `ErrorClass` labels (`edge_main_vocabulary_matches_anvils_reader`) |
+| ferrum-anvil | `.github/workflows/edge-main-drift.yml` | Against this repository's `main`: every vendored `PIN` path still exists, the imported error and diagnostic vocabularies, the `DiagnosticFinding` schema and every current `diagnostic-finding` fixture, and the `diagnostic-ref` reader with every current `diagnostic-ref` fixture (`main_branch_delta` is read for the report). Against Edge `main`'s `src/retry.rs`: the `X-Gateway-Error` tokens against Anvil's reader and its `ferrum.token.*` diagnostic keys, and the `ErrorClass` labels against the reader (`edge_main_vocabulary_matches_anvils_reader`) |
 
 A failure is an early warning, not a blocked merge: it leaves time to ship a
 compatible consumer release before Edge releases the change.

@@ -11,8 +11,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 - `docs/consumer-pins.md` "Checking against Edge main" describes the
   scheduled, non-required check each consumer runs against Edge `main` (#76).
   `main_branch_delta.commit` is the machine-readable anchor and `summary` is
-  for review. The check resolves Edge `main`, runs the consumer's own payload
-  and config checks against it, and opens or updates one issue on failure
+  for review. The check resolves Edge `main`, runs the consumer's own
+  compatibility checks against it, and opens or updates one issue on failure
   with the consumer's own `GITHUB_TOKEN`. A table lists each consumer's check.
   `docs/adoption.md` recorded the missing consumer jobs as a follow-up,
   since marked complete (see Changed). Documentation only.
