@@ -27,7 +27,8 @@ can export.
 producer rule and checks the recorded outcome against it. For
 `alloy-derived-resource-id-limit`, every case is schema-valid and equals the
 set's `base` (the one reviewed fixture Alloy exports for that contract major,
-fixed in `ci/validate.py`; `plain-http.json` for `service-manifest` v1) except
+fixed in `ci/validate.py` by path and sha256; `plain-http.json` for
+`service-manifest` v1, so a changed base fails until it is re-qualified) except
 for `gateway.proxy_id`,
 `gateway.correlation_id` and the optional removal of `gateway.otel_endpoint`
 and `gateway.otel_root_sampling_ratio`, so the ID limit is the only producer

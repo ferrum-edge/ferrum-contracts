@@ -826,7 +826,13 @@ class QualificationTests(unittest.TestCase):
     def run_doc(self, doc) -> tuple[list[str], int]:
         _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", doc)
         report = validate.Report()
-        bases = {("manifest", 1): "fixtures/manifest/valid/base.json"}
+        base_bytes = (self.root / "fixtures" / "manifest" / "valid" / "base.json").read_bytes()
+        bases = {
+            ("manifest", 1): (
+                "fixtures/manifest/valid/base.json",
+                hashlib.sha256(base_bytes).hexdigest(),
+            )
+        }
         with contextlib.redirect_stdout(io.StringIO()), unittest.mock.patch.object(
             validate, "ALLOY_DERIVED_ID_BASES", bases
         ):
@@ -931,9 +937,52 @@ class QualificationTests(unittest.TestCase):
 
     def test_the_repository_base_is_the_reviewed_fixture(self) -> None:
         self.assertEqual(
-            validate.ALLOY_DERIVED_ID_BASES,
-            {("service-manifest", 1): "fixtures/service-manifest/valid/plain-http.json"},
+            list(validate.ALLOY_DERIVED_ID_BASES),
+            [("service-manifest", 1)],
         )
+        path, _ = validate.ALLOY_DERIVED_ID_BASES[("service-manifest", 1)]
+        self.assertEqual(path, "fixtures/service-manifest/valid/plain-http.json")
+
+    def test_a_changed_base_fixture_fails(self) -> None:
+        base = self.root / "fixtures" / "manifest" / "valid" / "base.json"
+        _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", {})
+        original = base.read_bytes()
+        changed = dict(self.BASE, gateway=dict(self.BASE["gateway"], otel_endpoint="http://otel.internal"))
+        doc = {
+            "contract": "manifest",
+            "contract_version": 1,
+            "rule": validate.ALLOY_DERIVED_ID_RULE,
+            "edge_resource_id_max_length": 254,
+            "base": "fixtures/manifest/valid/base.json",
+            "producer": {"repo": "o/r", "paths": ["src/x.rs"], "commit": "a" * 40},
+            "cases": [self.case(241)],
+        }
+        _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", doc)
+        bases = {
+            ("manifest", 1): ("fixtures/manifest/valid/base.json", hashlib.sha256(original).hexdigest())
+        }
+        _write(base, changed)
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()), unittest.mock.patch.object(
+            validate, "ALLOY_DERIVED_ID_BASES", bases
+        ):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            before = report.checked
+            validate.check_qualifications(self.root, schemas, registry, report)
+        self.assertEqual(report.checked - before, 0)
+        self.assertEqual(len(report.errors), 1, report.errors)
+        self.assertIn("changed since it was reviewed", report.errors[0])
+
+    def test_a_numeric_type_change_is_a_variation(self) -> None:
+        self.assertFalse(validate.same_json({"port": 8080}, {"port": 8080.0}))
+        self.assertFalse(validate.same_json([1], [True]))
+        self.assertTrue(validate.same_json({"a": [1, {"b": "c"}]}, {"a": [1, {"b": "c"}]}))
+        case = self.case(241)
+        case["instance"]["gateway"]["namespace"] = "ns"
+        case["instance"]["service"] = {"name": "svc"}
+        case["instance"]["extra"] = 1
+        self.assert_one_error([case], "may differ from base only in gateway")
 
     def test_the_proxy_id_defaults_to_the_service_name(self) -> None:
         case = self.case(241)
@@ -985,6 +1034,7 @@ class QualificationTests(unittest.TestCase):
     def test_layout_is_checked(self) -> None:
         _write(self.root / "qualification" / "manifest" / "v2" / "cases.json", {})
         _write(self.root / "qualification" / "unknown" / "v1" / "cases.json", {})
+        _write(self.root / "qualification" / "manifest" / "v1\n" / "cases.json", {})
         (self.root / "qualification" / "empty").mkdir(parents=True)
         _write(self.root / "schemas" / "empty" / "v1.schema.json", _schema("empty", 1, {}))
         errors, _ = self.run_checks([self.case(241)])

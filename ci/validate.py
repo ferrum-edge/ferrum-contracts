@@ -582,7 +582,7 @@ def check_qualifications(root: Path, schemas, registry, report: Report) -> None:
         if not subs:
             report.fail(entry, "an empty qualification directory")
         for sub in subs:
-            match = VERSION_DIR.match(sub.name)
+            match = VERSION_DIR.fullmatch(sub.name)
             if not (sub.is_dir() and match and int(match.group(1)) in schemas[name]):
                 report.fail(sub, f"{name} qualification cases live only in v<N>/ for an existing major")
                 continue
@@ -699,7 +699,10 @@ ALLOY_DERIVED_ID_REMOVABLE_FIELDS = ("otel_endpoint", "otel_root_sampling_ratio"
 # transcribed from an Alloy manifest that Alloy exports at the cited revision
 # (ferrum-alloy contracts/fixtures/manifests/plain-http.toml).
 ALLOY_DERIVED_ID_BASES = {
-    ("service-manifest", 1): "fixtures/service-manifest/valid/plain-http.json",
+    ("service-manifest", 1): (
+        "fixtures/service-manifest/valid/plain-http.json",
+        "406524f908fe1d9bac6f73031cfad3fd4a646cf065872eeeb2b60857e1a98cdd",
+    ),
 }
 # Alloy's valid_id grammar (manifest.rs), matched against the whole string.
 ALLOY_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
@@ -707,15 +710,38 @@ ALLOY_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
 def load_case_base(root: Path, base, name: str, version: int, path: Path, report: Report):
     """The reviewed exportable fixture a case set varies (ALLOY_DERIVED_ID_BASES)."""
-    allowed = ALLOY_DERIVED_ID_BASES.get((name, version))
+    allowed, digest = ALLOY_DERIVED_ID_BASES.get((name, version), (None, None))
     if allowed is None or base != allowed:
         report.fail(path, f"base must be {allowed!r}, the reviewed exportable fixture")
+        return None
+    try:
+        data = (root / allowed).read_bytes()
+    except OSError as exc:
+        report.fail(path, f"base {allowed!r} cannot be read: {exc}")
+        return None
+    if hashlib.sha256(data).hexdigest() != digest:
+        report.fail(
+            path,
+            f"base {allowed!r} changed since it was reviewed against the producer; "
+            "re-qualify it and update ALLOY_DERIVED_ID_BASES",
+        )
         return None
     doc = load_json(root / allowed, report)
     if not isinstance(doc, dict) or not isinstance(doc.get("gateway"), dict):
         report.fail(path, f"base {allowed!r} has no gateway object")
         return None
     return doc
+
+
+def same_json(a, b) -> bool:
+    """JSON equality that keeps types apart (1, 1.0 and true are all different)."""
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(same_json(a[k], b[k]) for k in a)
+    if isinstance(a, list):
+        return len(a) == len(b) and all(same_json(x, y) for x, y in zip(a, b))
+    return a == b
 
 
 def check_case_variation(where: str, instance, base: dict, report: Report) -> bool:
@@ -725,7 +751,7 @@ def check_case_variation(where: str, instance, base: dict, report: Report) -> bo
         return False
     rest = {k: v for k, v in instance.items() if k != "gateway"}
     base_rest = {k: v for k, v in base.items() if k != "gateway"}
-    if rest != base_rest:
+    if not same_json(rest, base_rest):
         report.fail(where, "instance may differ from base only in gateway")
         return False
     gateway, base_gateway = instance["gateway"], base["gateway"]
@@ -734,7 +760,9 @@ def check_case_variation(where: str, instance, base: dict, report: Report) -> bo
             continue
         if key in ALLOY_DERIVED_ID_REMOVABLE_FIELDS and key not in gateway:
             continue
-        if gateway.get(key, ...) != base_gateway.get(key, ...):
+        if (key in gateway) != (key in base_gateway) or (
+            key in gateway and not same_json(gateway[key], base_gateway[key])
+        ):
             report.fail(where, f"gateway.{key} may not differ from base")
             return False
     return True
