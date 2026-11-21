@@ -34,6 +34,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- `docs/consumer-pins.md` "Checking against Edge main" describes the five
+  shipped weekly workflows instead of the #76 design proposals (#83): its
+  table names each consumer's workflow file and what it runs against Edge
+  `main`, and step 2 says how a consumer resolves Edge `main` (the signed
+  `latest` image, or `git ls-remote` for a source-only check).
+  `docs/adoption.md` marks the Edge `main` early-warning follow-up complete,
+  so it no longer says that no consumer runs the check. Documentation only.
 - Refresh the Edge `main_branch_delta` records against Edge `main` at
   `0f0988e56c6c8c54038a849016605889957519a7`, the merge of Edge PR #7420.
   `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`
