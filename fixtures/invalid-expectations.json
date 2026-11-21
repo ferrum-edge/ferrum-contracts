@@ -515,6 +515,10 @@
     "instance_path": "/upstream/protocols/1",
     "keyword": "enum"
   },
+  "service-manifest/invalid/otel-endpoint-cleartext-non-loopback.json": {
+    "instance_path": "/gateway/otel_endpoint",
+    "keyword": "pattern"
+  },
   "service-manifest/invalid/public-path-control-character.json": {
     "instance_path": "/api/public_path",
     "keyword": "pattern"
