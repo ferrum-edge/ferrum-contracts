@@ -20,7 +20,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   Cases record `schema_valid` separately from `producer_exports`; they are
   not fixtures. `qualification/README.md` defines the layout and keeps
   released case sets immutable. `ci/validate.py` checks each case against
-  its schema, recomputes the IDs Alloy derives and checks the recorded
+  its schema and against its base fixture (only the qualified gateway fields
+  may differ), recomputes the IDs Alloy derives and checks the recorded
   outcome against Alloy's 254-character limit, with tests in
   `ci/test_validate.py`. `docs/adoption.md` records the Alloy,
   Foundry and Nexus outcomes: both previews accept the no-exporter 242 case

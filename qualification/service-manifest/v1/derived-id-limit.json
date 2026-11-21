@@ -5,6 +5,7 @@
   "rule": "alloy-derived-resource-id-limit",
   "description": "Producer-derived boundary cases for the post-default resource ID limit that Alloy's ServiceManifest::validate() applies outside the service-manifest v1 schema (ferrum-contracts#80). Every case is valid against schemas/service-manifest/v1.schema.json (schema_valid); producer_exports records whether the owner's validate() and export accept it. A schema check alone does not establish that a manifest is exportable. Each derived_resource_ids entry is a resource ID Alloy's export generates from the proxy ID (Alloy's tests call these generated_ids); producer_exports is true exactly when every entry is at most edge_resource_id_max_length characters. The cases start from fixtures/service-manifest/valid/plain-http.json and change only gateway: an explicit 241- or 242-character proxy_id, correlation_id false, and, without an exporter, no otel_endpoint or otel_root_sampling_ratio. plain-http.json has no health check, so no -upstream ID is generated. A proxy ID defaulted from service.name is at most 63 characters and cannot reach this boundary.",
   "edge_resource_id_max_length": 254,
+  "base": "fixtures/service-manifest/valid/plain-http.json",
   "producer": {
     "repo": "ferrum-edge/ferrum-alloy",
     "ref": "main",

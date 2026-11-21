@@ -25,7 +25,11 @@ can export.
 `ci/validate.py` checks that each `instance` passes the schema exactly when
 `schema_valid` is true. For each known `rule` it also transcribes the
 producer rule and checks the recorded outcome against it. For
-`alloy-derived-resource-id-limit`, `derived_resource_ids` must be exactly the
+`alloy-derived-resource-id-limit`, every case is schema-valid and equals the
+set's `base` (a valid fixture Alloy exports) except for `gateway.proxy_id`,
+`gateway.correlation_id` and the optional removal of `gateway.otel_endpoint`
+and `gateway.otel_root_sampling_ratio`, so the ID limit is the only producer
+rule that can differ; `derived_resource_ids` must be exactly the
 IDs Alloy derives (`<proxy_id>-upstream` with a health check,
 `<proxy_id>-correlation-id` unless correlation is disabled, and always
 `<proxy_id>-otel-tracing`, with the proxy ID defaulting to `service.name`),

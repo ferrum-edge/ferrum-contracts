@@ -41,8 +41,11 @@ Checks, in order:
    full commit SHA), a known `rule`, and a non-empty list of cases with
    unique ids. Each case's `instance` must pass schema <name> v<N> exactly
    when `schema_valid` is true. For the `alloy-derived-resource-id-limit`
-   rule, `derived_resource_ids` must be exactly the IDs Alloy derives from
-   the instance, `edge_resource_id_max_length` must be 254, and
+   rule, every case is schema-valid and equals the set's `base` valid
+   fixture except for gateway proxy_id and correlation_id (and the
+   optional removal of otel_endpoint and otel_root_sampling_ratio);
+   `derived_resource_ids` must be exactly the IDs Alloy derives from the
+   instance, `edge_resource_id_max_length` must be 254, and
    `producer_exports` must be true exactly when every derived ID fits.
    These cases record producer outcomes the schema cannot express; they are
    not fixtures.
@@ -562,7 +565,10 @@ def check_qualifications(root: Path, schemas, registry, report: Report) -> None:
     if not qualification_root.is_dir():
         report.fail(qualification_root, f"missing {QUALIFICATION_DIR}/ directory")
         return
-    for entry in sorted(qualification_root.iterdir()):
+    entries = sorted(qualification_root.iterdir())
+    if not any(entry.is_dir() for entry in entries):
+        report.fail(qualification_root, "no qualification case sets")
+    for entry in entries:
         if not entry.is_dir():
             if entry.name != "README.md":
                 report.fail(entry, f"unexpected file under {QUALIFICATION_DIR}/")
@@ -587,11 +593,11 @@ def check_qualifications(root: Path, schemas, registry, report: Report) -> None:
                 if path.suffix != ".json" or not path.is_file():
                     report.fail(path, "qualification directories hold only <case-set>.json files")
                     continue
-                check_qualification_file(path, name, version, schemas, registry, report)
+                check_qualification_file(root, path, name, version, schemas, registry, report)
 
 
 def check_qualification_file(
-    path: Path, name: str, version: int, schemas, registry, report: Report
+    root: Path, path: Path, name: str, version: int, schemas, registry, report: Report
 ) -> None:
     failures = len(report.errors)
     doc = load_json(path, report)
@@ -631,9 +637,13 @@ def check_qualification_file(
             f"edge_resource_id_max_length must be {ALLOY_RESOURCE_ID_MAX_LENGTH}, Alloy's limit",
         )
         return
+    base = load_case_base(root, doc.get("base"), name, path, report)
     cases = doc.get("cases")
     if not isinstance(cases, list) or not cases:
         report.fail(path, "cases must be a non-empty list")
+    if len(report.errors) != failures:
+        # A case set whose envelope is wrong certifies nothing; its cases
+        # are not counted.
         return
     v = validator(schemas[name][version], registry)
     seen: set[str] = set()
@@ -666,10 +676,61 @@ def check_qualification_file(
         if not schema_valid and not error:
             report.fail(where, f"marked not schema_valid but passes {name} v{version}")
             continue
+        if not schema_valid:
+            report.fail(where, f"{ALLOY_DERIVED_ID_RULE} cases are schema-valid manifests")
+            continue
+        if not check_case_variation(where, instance, base, report):
+            continue
         if not check_derived_ids(where, case, report):
             continue
         report.ok()
         print(f"  ok (qualification) {path.name} {case_id}")
+
+
+# Gateway fields an alloy-derived-resource-id-limit case may change from its
+# base fixture. The base is a valid fixture Alloy exports, so with every
+# other field equal the only remaining producer refusal is the ID limit.
+ALLOY_DERIVED_ID_VARIABLE_FIELDS = ("proxy_id", "correlation_id")
+ALLOY_DERIVED_ID_REMOVABLE_FIELDS = ("otel_endpoint", "otel_root_sampling_ratio")
+
+
+def load_case_base(root: Path, base, name: str, path: Path, report: Report):
+    """The valid fixture a case set varies; it must be a valid fixture of contract <name>."""
+    if not isinstance(base, str) or not base.startswith(f"fixtures/{name}/") or "/valid/" not in base:
+        report.fail(path, f"base must name a valid fixture under fixtures/{name}/")
+        return None
+    base_path = (root / base).resolve()
+    fixtures = (root / "fixtures").resolve()
+    if fixtures not in base_path.parents or not base_path.is_file():
+        report.fail(path, f"base {base!r} is not a fixture file")
+        return None
+    doc = load_json(base_path, report)
+    if not isinstance(doc, dict) or not isinstance(doc.get("gateway"), dict):
+        report.fail(path, f"base {base!r} has no gateway object")
+        return None
+    return doc
+
+
+def check_case_variation(where: str, instance, base: dict, report: Report) -> bool:
+    """A case equals its base except for the gateway fields the rule varies."""
+    if not isinstance(instance, dict) or not isinstance(instance.get("gateway"), dict):
+        report.fail(where, "instance must be an object with a gateway object")
+        return False
+    rest = {k: v for k, v in instance.items() if k != "gateway"}
+    base_rest = {k: v for k, v in base.items() if k != "gateway"}
+    if rest != base_rest:
+        report.fail(where, "instance may differ from base only in gateway")
+        return False
+    gateway, base_gateway = instance["gateway"], base["gateway"]
+    for key in set(gateway) | set(base_gateway):
+        if key in ALLOY_DERIVED_ID_VARIABLE_FIELDS:
+            continue
+        if key in ALLOY_DERIVED_ID_REMOVABLE_FIELDS and key not in gateway:
+            continue
+        if gateway.get(key, ...) != base_gateway.get(key, ...):
+            report.fail(where, f"gateway.{key} may not differ from base")
+            return False
+    return True
 
 
 def alloy_derived_ids(instance) -> list[str] | None:
