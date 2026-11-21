@@ -35,7 +35,17 @@ Checks, in order:
    DiagnosticFinding fixture is also a valid Alloy diagnostic_report Finding).
    The valid fixtures of every major are checked, wherever the layout of
    step 3 puts them; a cross-check with no valid fixture fails.
-7. Optional (--openapi PATH or --fetch-openapi): the Edge openapi.yaml the
+7. Qualification cases: every qualification/<name>/v<N>/<case-set>.json
+   names contract <name> and contract_version <N> (a schema that exists),
+   the producer revision it was derived from (repo, paths and a full commit
+   SHA), and a non-empty list of cases with unique ids. Each case's
+   `instance` must pass schema <name> v<N> exactly when `schema_valid` is
+   true. A case that lists `derived_resource_ids` must derive every one of
+   them from its effective proxy ID (`gateway.proxy_id`, else
+   `service.name`), and `producer_exports` must be true exactly when every
+   derived ID fits `edge_resource_id_max_length`. These cases record
+   producer outcomes the schema cannot express; they are not fixtures.
+8. Optional (--openapi PATH or --fetch-openapi): the Edge openapi.yaml the
    plugin catalog pins has the recorded sha256, and every plugin's
    config_schema pointer is the component that Edge's PluginConfigBase
    if/then block for that plugin_name references (and the component
@@ -530,6 +540,133 @@ def check_cross(
                 report.fail(path, f"valid {fixture_set} fixture fails {target}{fragment} {error}")
             else:
                 report.ok()
+
+
+QUALIFICATION_DIR = "qualification"
+
+
+def check_qualifications(root: Path, schemas, registry, report: Report) -> None:
+    """Check qualification/<name>/v<N>/*.json case sets (step 7 of the module docstring)."""
+    qualification_root = root / QUALIFICATION_DIR
+    if not qualification_root.is_dir():
+        return
+    for entry in sorted(qualification_root.iterdir()):
+        if not entry.is_dir():
+            if entry.name != "README.md":
+                report.fail(entry, f"unexpected file under {QUALIFICATION_DIR}/")
+            continue
+        name = entry.name
+        if name not in schemas:
+            report.fail(entry, f"no schema named {name!r}")
+            continue
+        for sub in sorted(entry.iterdir()):
+            match = VERSION_DIR.match(sub.name)
+            if not (sub.is_dir() and match and int(match.group(1)) in schemas[name]):
+                report.fail(sub, f"{name} qualification cases live only in v<N>/ for an existing major")
+                continue
+            version = int(match.group(1))
+            paths = sorted(sub.iterdir())
+            if not paths:
+                report.fail(sub, "an empty qualification directory")
+            for path in paths:
+                if path.suffix != ".json" or not path.is_file():
+                    report.fail(path, "qualification directories hold only <case-set>.json files")
+                    continue
+                check_qualification_file(path, name, version, schemas, registry, report)
+
+
+def check_qualification_file(
+    path: Path, name: str, version: int, schemas, registry, report: Report
+) -> None:
+    doc = load_json(path, report)
+    if doc is None:
+        return
+    if not isinstance(doc, dict):
+        report.fail(path, "a qualification case set is a JSON object")
+        return
+    if doc.get("contract") != name or doc.get("contract_version") != version:
+        report.fail(path, f"contract and contract_version must be {name!r} and {version}")
+    producer = doc.get("producer")
+    if not isinstance(producer, dict):
+        report.fail(path, "producer is required")
+    else:
+        if not isinstance(producer.get("repo"), str) or not producer["repo"]:
+            report.fail(path, "producer.repo is required")
+        paths = producer.get("paths")
+        if not isinstance(paths, list) or not paths or not all(
+            isinstance(p, str) and p for p in paths
+        ):
+            report.fail(path, "producer.paths must be a non-empty list of paths")
+        commit = producer.get("commit")
+        if not isinstance(commit, str) or not _PROVENANCE_COMMIT_RE.fullmatch(commit):
+            report.fail(path, "producer.commit must be a full 40-hex commit SHA")
+    limit = doc.get("edge_resource_id_max_length")
+    cases = doc.get("cases")
+    if not isinstance(cases, list) or not cases:
+        report.fail(path, "cases must be a non-empty list")
+        return
+    v = validator(schemas[name][version], registry)
+    seen: set[str] = set()
+    for index, case in enumerate(cases):
+        where = f"{path}: cases[{index}]"
+        if not isinstance(case, dict):
+            report.fail(where, "a case is an object")
+            continue
+        case_id = case.get("id")
+        if not isinstance(case_id, str) or not case_id:
+            report.fail(where, "id is required")
+        elif case_id in seen:
+            report.fail(where, f"duplicate case id {case_id!r}")
+        else:
+            seen.add(case_id)
+            where = f"{path}: case {case_id}"
+        schema_valid = case.get("schema_valid")
+        if not isinstance(schema_valid, bool):
+            report.fail(where, "schema_valid must be a boolean")
+            continue
+        instance = case.get("instance")
+        error = first_error(v, instance)
+        if schema_valid and error:
+            report.fail(where, f"marked schema_valid but fails {name} v{version} {error}")
+            continue
+        if not schema_valid and not error:
+            report.fail(where, f"marked not schema_valid but passes {name} v{version}")
+            continue
+        if "derived_resource_ids" in case and not check_derived_ids(where, case, limit, report):
+            continue
+        report.ok()
+        print(f"  ok (qualification) {path.name} {case_id}")
+
+
+def check_derived_ids(where: str, case: dict, limit, report: Report) -> bool:
+    """Derived IDs extend the effective proxy ID; producer_exports follows from the limit."""
+    if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
+        report.fail(where, "derived_resource_ids need a positive edge_resource_id_max_length")
+        return False
+    instance = case.get("instance")
+    gateway = instance.get("gateway", {}) if isinstance(instance, dict) else {}
+    proxy_id = gateway.get("proxy_id") if isinstance(gateway, dict) else None
+    if proxy_id is None and isinstance(instance, dict):
+        proxy_id = (instance.get("service") or {}).get("name")
+    ids = case.get("derived_resource_ids")
+    if not isinstance(ids, list) or not ids or not all(isinstance(i, str) for i in ids):
+        report.fail(where, "derived_resource_ids must be a non-empty list of strings")
+        return False
+    if not isinstance(proxy_id, str) or not all(
+        i.startswith(proxy_id) and len(i) > len(proxy_id) for i in ids
+    ):
+        report.fail(where, "every derived resource ID extends the effective proxy ID")
+        return False
+    exports = case.get("producer_exports")
+    expected = all(len(i) <= limit for i in ids)
+    if exports is not expected:
+        report.fail(
+            where,
+            f"producer_exports must be {str(expected).lower()}: the longest derived ID "
+            f"has {max(map(len, ids))} characters and the limit is {limit}",
+        )
+        return False
+    return True
 
 
 def check_vocabularies(root: Path, schemas, registry, report: Report) -> dict[str, dict]:
@@ -1055,6 +1192,8 @@ def main() -> int:
     fixture_sets_by_name = check_fixtures(root, schemas, registry, report)
     print("cross-contract fixtures")
     check_cross(schemas, registry, fixture_sets_by_name, report)
+    print("qualification cases")
+    check_qualifications(root, schemas, registry, report)
     print("vocabularies")
     vocabularies = check_vocabularies(root, schemas, registry, report)
     check_vocabulary_consistency(vocabularies, report)

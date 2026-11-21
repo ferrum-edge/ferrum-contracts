@@ -26,6 +26,7 @@ complete; the issue is closed and remains as project history.
 | [`vocabularies/`](vocabularies) | Edge-owned vocabularies: `ErrorClass` and `X-Gateway-Error` tokens, gateway-owned headers, `provisioned-by` values, and the plugin catalog index |
 | [`schemas/`](schemas) | JSON Schemas (2020-12), one directory per contract, one file per major version |
 | [`fixtures/`](fixtures) | Payloads producers must emit and consumers must accept (`valid/`) or reject (`invalid/`); one `v<N>/` directory per major when a schema has several |
+| [`qualification/`](qualification) | Producer outcomes for payloads the schema accepts but the producer may refuse (rules applied after defaults); not fixtures |
 | [`docs/ownership.md`](docs/ownership.md) | Who owns each contract and how changes land |
 | [`docs/versioning.md`](docs/versioning.md) | Schema versions and `contracts-edge-X.Y.Z` tags |
 | [`docs/adoption.md`](docs/adoption.md) | Consumer pins, qualification evidence and remaining contract gaps |

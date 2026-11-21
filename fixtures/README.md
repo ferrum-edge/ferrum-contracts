@@ -15,6 +15,11 @@ exist. Where an owner keeps its fixtures in another format (TOML, YAML), the
 JSON here is a field-for-field transcription with comments removed. Invalid
 fixtures are a valid fixture with one change, listed below.
 
+A valid fixture passes the schema; it does not prove the producer accepts
+every payload the schema accepts. Producer rules applied after defaults (for
+example Alloy's derived resource ID limit) are recorded as qualification
+cases in [`qualification/`](../qualification), not as fixtures.
+
 `valid/` and `invalid/` hold only `*.json` fixtures; CI fails on any other
 file. Every invalid fixture has an entry in
 [`invalid-expectations.json`](invalid-expectations.json) with the JSON

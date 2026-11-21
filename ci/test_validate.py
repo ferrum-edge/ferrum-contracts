@@ -2,7 +2,8 @@
 schema provenance check, the gateway-headers availability check, the
 unpublished Edge tag check, the vocabulary x-contract.instance check, the
 diagnostic-ref values copied from gateway-errors, the PluginConfigBase
-parser and catalog parity check, and the cross-contract fixture check.
+parser and catalog parity check, the cross-contract fixture check, and the
+qualification case check.
 
 Run with: python -I -m unittest discover -s ci -p 'test_*.py'
 Every request goes to a loopback server this test starts; nothing leaves the
@@ -769,6 +770,123 @@ class CrossCheckTests(unittest.TestCase):
         expected = sum(
             len(list((ROOT / "fixtures" / fixture_set).glob("**/valid/*.json")))
             for fixture_set, _, _ in validate.CROSS_CHECKS
+        )
+        self.assertGreater(expected, 0)
+        self.assertEqual(report.checked - before, expected)
+
+
+class QualificationTests(unittest.TestCase):
+    """Qualification cases agree with the schema and with their own derived IDs."""
+
+    def setUp(self) -> None:
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name)
+        _write(
+            self.root / "schemas" / "manifest" / "v1.schema.json",
+            _schema(
+                "manifest",
+                1,
+                {
+                    "type": "object",
+                    "required": ["service"],
+                    "properties": {
+                        "gateway": {
+                            "type": "object",
+                            "properties": {"proxy_id": {"type": "string", "maxLength": 10}},
+                        }
+                    },
+                },
+            ),
+        )
+
+    def case(self, proxy_id: str, exports: bool, schema_valid: bool = True) -> dict:
+        return {
+            "id": f"id-{len(proxy_id)}",
+            "schema_valid": schema_valid,
+            "producer_exports": exports,
+            "derived_resource_ids": [f"{proxy_id}-x"],
+            "instance": {"service": {"name": "svc"}, "gateway": {"proxy_id": proxy_id}},
+        }
+
+    def run_checks(self, cases, **overrides) -> tuple[list[str], int]:
+        doc = {
+            "contract": "manifest",
+            "contract_version": 1,
+            "edge_resource_id_max_length": 6,
+            "producer": {"repo": "o/r", "paths": ["src/x.rs"], "commit": "a" * 40},
+            "cases": cases,
+            **overrides,
+        }
+        _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", doc)
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            before = report.checked
+            validate.check_qualifications(self.root, schemas, registry, report)
+        return report.errors, report.checked - before
+
+    def test_a_consistent_pair_passes(self) -> None:
+        errors, checked = self.run_checks([self.case("abcd", True), self.case("abcde", False)])
+        self.assertEqual(errors, [])
+        self.assertEqual(checked, 2)
+
+    def test_a_wrong_producer_outcome_fails(self) -> None:
+        errors, _ = self.run_checks([self.case("abcde", True)])
+        self.assertEqual(len(errors), 1)
+        self.assertIn("producer_exports must be false", errors[0])
+
+    def test_a_schema_valid_claim_is_checked_both_ways(self) -> None:
+        errors, _ = self.run_checks(
+            [self.case("a" * 11, False), self.case("abcd", True, schema_valid=False)]
+        )
+        self.assertEqual(len(errors), 2, errors)
+        self.assertIn("marked schema_valid but fails manifest v1", errors[0])
+        self.assertIn("marked not schema_valid but passes manifest v1", errors[1])
+
+    def test_a_derived_id_must_extend_the_effective_proxy_id(self) -> None:
+        case = self.case("abcd", True)
+        case["derived_resource_ids"] = ["other-x"]
+        errors, _ = self.run_checks([case])
+        self.assertEqual(len(errors), 1)
+        self.assertIn("extends the effective proxy ID", errors[0])
+
+    def test_the_proxy_id_defaults_to_the_service_name(self) -> None:
+        case = self.case("abcd", True)
+        del case["instance"]["gateway"]
+        case["derived_resource_ids"] = ["svc-x"]
+        errors, checked = self.run_checks([case])
+        self.assertEqual(errors, [])
+        self.assertEqual(checked, 1)
+
+    def test_duplicate_ids_metadata_and_layout_fail(self) -> None:
+        errors, _ = self.run_checks(
+            [self.case("abcd", True), self.case("abcd", True)],
+            contract_version=2,
+            producer={"repo": "o/r", "paths": [], "commit": "abc"},
+        )
+        self.assertTrue(any("contract_version" in e for e in errors), errors)
+        self.assertTrue(any("producer.paths" in e for e in errors), errors)
+        self.assertTrue(any("producer.commit" in e for e in errors), errors)
+        self.assertTrue(any("duplicate case id" in e for e in errors), errors)
+        _write(self.root / "qualification" / "manifest" / "v2" / "cases.json", {})
+        _write(self.root / "qualification" / "unknown" / "v1" / "cases.json", {})
+        errors, _ = self.run_checks([self.case("abcd", True)])
+        self.assertTrue(any("existing major" in e for e in errors), errors)
+        self.assertTrue(any("no schema named 'unknown'" in e for e in errors), errors)
+
+    def test_the_repository_cases_pass(self) -> None:
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(ROOT, report)
+            registry = validate.build_registry(schemas)
+            before = report.checked
+            validate.check_qualifications(ROOT, schemas, registry, report)
+        self.assertEqual(report.errors, [])
+        expected = sum(
+            len(json.loads(path.read_text(encoding="utf-8"))["cases"])
+            for path in (ROOT / "qualification").glob("*/v*/*.json")
         )
         self.assertGreater(expected, 0)
         self.assertEqual(report.checked - before, expected)

@@ -374,6 +374,34 @@ diagnostic import or trace storage. Agents metadata is informational and cannot
 install or select tools. Neither preview freezes the TOML producer or promises
 production deployment semantics for every manifest field.
 
+### Service manifest derived ID qualification
+
+[`qualification/service-manifest/v1/derived-id-limit.json`](../qualification/service-manifest/v1/derived-id-limit.json)
+records four schema-valid manifests and Alloy's outcome for each, read from
+producer `db412da37564ffbe869e2b40530dbebf5afe7ac8` (Alloy main, unreleased;
+unchanged at `0e8a96a24c149432f0c3583732d8a3875db756ce`). Alloy always
+generates the `<proxy_id>-otel-tracing` plugin, so with no health check and
+correlation disabled a 241-character proxy ID exports and a 242-character one
+does not, with or without `gateway.otel_endpoint` (#80). Passing the schema
+does not establish that Alloy can export a manifest.
+
+| Case | Alloy | Foundry preview | Nexus preview |
+|---|---|---|---|
+| `no-exporter-241` | exports | accepts | accepts |
+| `no-exporter-242` | refuses | accepts (diverges; ferrum-foundry#719) | accepts (diverges; ferrum-nexus#734) |
+| `explicit-exporter-241` (control) | exports | accepts | accepts |
+| `explicit-exporter-242` (control) | refuses | refuses | refuses |
+
+The `no-exporter` results for Foundry and Nexus are the behaviour reported in
+ferrum-foundry#719 and ferrum-nexus#734. All four rows match each preview's
+derived ID check: Foundry `server/service-manifest.ts` at
+`10287a1d689ff2849c8ce8c241749e3e9b001baf` and Nexus
+`server/src/service-manifest/service.ts` at
+`c3fc0373b5cdf50a09404471a6cad98dbb0896fc` add the `-otel-tracing` suffix
+only when `gateway.otel_endpoint` is set. Neither consumer has yet shown the
+owner outcomes. Update a consumer's row, with the commit and hosted run, once
+its tests run these cases and match Alloy.
+
 ### GitForgeOps generated resource boundary
 
 [GitForgeOps' consumer qualification](https://github.com/ferrum-edge/ferrum-edge-git-forge-ops/blob/76d76c796cafbaea9556e992381b6e2518ae4f69/docs/alloy-consumer.md)
