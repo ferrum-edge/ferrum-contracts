@@ -34,6 +34,28 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- `schemas/service-manifest/v1.schema.json` aligns `gateway.otel_endpoint`
+  with Edge and Alloy (#82). Alloy's export writes the endpoint into Edge's
+  `otel_tracing` config without `allow_plaintext`, and Edge v0.9.19 and later
+  (unchanged on Edge `main`) drop a cleartext exporter to a host that is not
+  a loopback IP literal, so the schema now admits `https://` to any host and
+  `http://` only to `127.d.d.d` or `[::1]` with an optional numeric port,
+  following Edge's published `OtelTracingConfig` pattern. It also refuses
+  whitespace anywhere, and keeps v1's refusal of `@` before the first `/`.
+  A path, `?query` and `#fragment` stay allowed, as Edge allows them.
+  Tightened within v1: every endpoint it now refuses is one Edge drops or
+  refuses. `valid/orders-api.json` and `valid/edge-limits.json`, and the ten
+  invalid fixtures derived from `orders-api.json`, use
+  `https://otel-collector:4318/v1/traces`, transcribed from Alloy's own
+  `orders-api.toml` (ferrum-alloy `d6e43716`); the new
+  `invalid/otel-endpoint-cleartext-non-loopback.json` keeps the old
+  `http://otel-collector` value. `api.service_base_path` keeps its
+  Edge-derived bound of 2049 characters (a 2048-byte `backend_path` plus the
+  trailing `/`), now stated as the v1 bound; Alloy main, Foundry and Nexus
+  refusing more than 2048 stays inside v1. The Edge provenance note no longer
+  says Alloy's host rule accepts every control character: Alloy main refuses
+  every control and whitespace character (ferrum-alloy#313). New provenance
+  entries cite Alloy main `db412da3` and Edge `v0.9.20` `openapi.yaml`.
 - Refresh the Edge `main_branch_delta` records against Edge `main` at
   `0f0988e56c6c8c54038a849016605889957519a7`, the merge of Edge PR #7420.
   `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`
@@ -106,7 +128,7 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   limit (`service_base_path` at 2048, the consumers' preview budget),
   `valid/unicode-host.json` (a 71-character, 72-byte host both Alloy and
   Edge accept), and twelve invalid fixtures that each break one bound. Alloy
-  still has to enforce the length bounds (ferrum-alloy#309).
+  main enforces the length bounds since ferrum-alloy#313 (see #82 below).
 - `schemas/gitforgeops-resource/v1.schema.json` closes the envelope to match
   GitForgeOps' strict loader (#73). `additionalProperties: false`, and a file
   that carries `id` must be kind `MeshConfig`. The provenance note no longer
