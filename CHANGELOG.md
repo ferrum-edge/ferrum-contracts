@@ -43,11 +43,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   spelling from its published `OtelTracingConfig` schema; `https://` is
   unchanged. Nothing else about the endpoint changes: a path, `?query` and
   `#fragment` stay allowed, as Edge allows them, and `@` before the first
-  `/` stays refused. Every endpoint the schema now refuses yields a config
-  in which Edge omits `otel_tracing`; Alloy main still admits a few
-  non-canonical loopback spellings (ferrum-alloy#319). The descriptions name
-  the URL errors only Edge's parser catches (empty host, bad port, malformed
-  IPv4 literal). `valid/orders-api.json` and `valid/edge-limits.json`, and
+  `/` stays refused. Every endpoint the schema now refuses would fail Edge's
+  admission if written to `otel_tracing` without `allow_plaintext`. Alloy
+  main already refuses cleartext to a hostname; the few non-canonical
+  loopback spellings it still admits reach Edge through its export, where
+  Edge omits `otel_tracing` (ferrum-alloy#319). The descriptions name the
+  checks only Edge makes at runtime: URL parse errors (empty host, bad port,
+  malformed IPv4 literal) and its separate refusal of parsed userinfo. `valid/orders-api.json` and `valid/edge-limits.json`, and
   the ten invalid fixtures derived from `orders-api.json`, use
   `https://otel-collector:4318/v1/traces`, transcribed from Alloy's own
   `orders-api.toml` (ferrum-alloy `d6e43716`); the new
