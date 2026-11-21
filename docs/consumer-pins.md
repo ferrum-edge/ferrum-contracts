@@ -182,9 +182,8 @@ The check:
    opens or updates one issue (found by its `<!-- edge-main-drift -->`
    marker) on drift, or when the check itself fails to run, with the check
    report when one was produced and otherwise a link to the run; it closes
-   the issue
-   once such a run passes again. Foundry, Nexus, Alloy and Anvil also run the
-   check on pull requests that change it; those runs, and dispatches from
+   the issue once such a run passes again. Foundry, Nexus, Alloy and Anvil
+   also run the check on pull requests that change it; those runs, and dispatches from
    other branches, file no issue. Their verdict is in the run's step summary
    and log, with annotations where a check emits them (Nexus also uploads
    logs, traces and screenshots as an artifact). Anvil fails such a run on
