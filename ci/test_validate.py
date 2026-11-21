@@ -860,6 +860,17 @@ class QualificationTests(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertEqual(checked, 1)
 
+    def test_malformed_instances_fail_without_crashing(self) -> None:
+        for instance, schema_valid in (([], False), ({"service": "svc"}, True)):
+            with self.subTest(instance=instance):
+                case = self.case("abcd", True, schema_valid=schema_valid)
+                case["instance"] = instance
+                case["derived_resource_ids"] = ["svc-x"]
+                errors, checked = self.run_checks([case])
+                self.assertEqual(checked, 0)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn("extends the effective proxy ID", errors[0])
+
     def test_duplicate_ids_metadata_and_layout_fail(self) -> None:
         errors, _ = self.run_checks(
             [self.case("abcd", True), self.case("abcd", True)],

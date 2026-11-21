@@ -647,7 +647,8 @@ def check_derived_ids(where: str, case: dict, limit, report: Report) -> bool:
     gateway = instance.get("gateway", {}) if isinstance(instance, dict) else {}
     proxy_id = gateway.get("proxy_id") if isinstance(gateway, dict) else None
     if proxy_id is None and isinstance(instance, dict):
-        proxy_id = (instance.get("service") or {}).get("name")
+        service = instance.get("service")
+        proxy_id = service.get("name") if isinstance(service, dict) else None
     ids = case.get("derived_resource_ids")
     if not isinstance(ids, list) or not ids or not all(isinstance(i, str) for i in ids):
         report.fail(where, "derived_resource_ids must be a non-empty list of strings")
