@@ -14,8 +14,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   for review. The check resolves Edge `main`, runs the consumer's own payload
   and config checks against it, and opens or updates one issue on failure
   with the consumer's own `GITHUB_TOKEN`. A table lists each consumer's check.
-  `docs/adoption.md` records the missing consumer jobs as a follow-up.
-  Documentation only.
+  `docs/adoption.md` recorded the missing consumer jobs as a follow-up,
+  since marked complete (see Changed). Documentation only.
 - `LICENSE-COMMERCIAL.md` gives this repository the commercial license the
   other Ferrum repositories ship (#65): ferrum-edge's text with the product
   name "Ferrum Contracts". The README license section points to it next to
@@ -38,7 +38,9 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   shipped weekly workflows instead of the #76 design proposals (#83): its
   table names each consumer's workflow file and what it runs against Edge
   `main`, and step 2 says how a consumer resolves Edge `main` (the signed
-  `latest` image, or `git ls-remote` for a source-only check).
+  `latest` image, or `git ls-remote` for a source-only check). Steps 3 and 4
+  say which commit the delta is compared with and that only default-branch
+  scheduled or dispatched runs file the tracking issue.
   `docs/adoption.md` marks the Edge `main` early-warning follow-up complete,
   so it no longer says that no consumer runs the check. Documentation only.
 - Refresh the Edge `main_branch_delta` records against Edge `main` at

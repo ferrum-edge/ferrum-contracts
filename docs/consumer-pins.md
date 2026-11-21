@@ -163,21 +163,27 @@ The check:
    required check. It uses the consumer's own `GITHUB_TOKEN` and needs no
    cross-repository secret: `contents: read`, plus `issues: write` only on the
    job that files the issue.
-2. Resolves Edge `main` to a commit and runs the same payload and config
-   checks the consumer runs against its pinned release. A consumer that needs
-   a running gateway or the `ferrum-edge` binary uses the `latest` image that
-   Edge's `Main Latest Image` workflow publishes: it verifies the image's
-   keyless Cosign signature from that workflow, reads the commit from the
+2. Resolves Edge `main` to a commit and runs the consumer's compatibility
+   checks (the table below) at that commit. A consumer that needs a running
+   gateway or the `ferrum-edge` binary uses the `latest` image that Edge's
+   `Main Latest Image` workflow publishes: it verifies the image's keyless
+   Cosign signature from that workflow, reads the commit from the
    `org.opencontainers.image.revision` label, and requires that commit to be
    on Edge `main`'s history. A consumer that reads only Edge sources resolves
    `refs/heads/main` with `git ls-remote` and fetches those files at that
    commit.
-3. Reads `main_branch_delta.commit` from this repository's `main`. When Edge
-   `main` is ahead of it, the delta may not cover the newest changes yet; the
-   report says so.
-4. On drift, or when the check itself fails to run, opens or updates one issue
-   (found by its `<!-- edge-main-drift -->` marker) that names the Edge commit
-   and the failing checks, and closes it once the check passes again.
+3. Reads `main_branch_delta.commit` from this repository's `main` and
+   compares it with the Edge commit under test. When that commit is ahead of
+   the delta, the delta may not cover the newest changes yet; the report says
+   so. An image-based report also says how many commits the image's revision
+   trails the tip of Edge `main`.
+4. On a scheduled run or a manual dispatch on the consumer's default branch,
+   opens or updates one issue (found by its `<!-- edge-main-drift -->`
+   marker) on drift, or when the check itself fails to run, naming the Edge
+   commit when it was resolved and the failing checks; it closes the issue
+   once such a run passes again. Runs on pull requests that change the check,
+   and dispatches from other branches, report only through their own
+   Actions status and step summary.
 
 Foundry, Nexus, GitForgeOps, Alloy and Anvil each run this check (ferrum-foundry#716,
 ferrum-nexus#733, ferrum-edge-git-forge-ops#737, ferrum-alloy#314,
@@ -188,10 +194,10 @@ What each consumer's shipped workflow checks:
 | Consumer | Workflow | Check against Edge `main` |
 |---|---|---|
 | ferrum-foundry | `.github/workflows/edge-main-drift.yml` | `scripts/edge-main-drift.mjs` compares the guided plugin schemas, the plugin sensitivity table and the server-owned subset `traffic_policy` fields with the Edge `main` sources; then, against gateways started from the signed Edge `latest` image, the Alloy preview test, the seed and backup gateway contract, role and read-only capability parity, and the editors' save payloads |
-| ferrum-nexus | `.github/workflows/edge-main-drift.yml` | The real-stack acceptance suite (`./e2e/run.sh`: data plane, single sign-on, browser journey) with `FERRUM_EDGE_IMAGE` set to the signed Edge `latest` image |
+| ferrum-nexus | `.github/workflows/edge-main-drift.yml` | The real-stack acceptance suite (`./e2e/run.sh`: data plane, single sign-on, browser journey) that its required `acceptance` job runs against the pinned release, with `FERRUM_EDGE_IMAGE` set to the signed Edge `latest` image |
 | ferrum-edge-git-forge-ops | `.github/workflows/validator-pin-canary.yml`, job `edge-main-drift` | Resource-label compatibility, `gitforgeops validate` for every environment, and the lifecycle suite (`tests/lifecycle/run.sh`: apply, diff and traffic), all with the `ferrum-edge` binary taken from the signed Edge `latest` image |
-| ferrum-alloy | `.github/workflows/edge-main-drift.yml` | The steps of its "Generated Edge configuration validates" CI job, run on the signed Edge `latest` image: `ferrum-edge validate` on the plain-HTTP and minimal generated fixtures, trace-context stripping through the minimal fixture, and `POST /api-specs` accepting the exported agent-tool document |
-| ferrum-anvil | `.github/workflows/edge-main-drift.yml` | Imported error and diagnostic vocabularies and the `diagnostic-ref` reader against this repository's `main` (and its `main_branch_delta`), and the retry vocabulary against Edge `main`'s `src/retry.rs` (`edge_main_vocabulary_matches_anvils_reader`) |
+| ferrum-alloy | `.github/workflows/edge-main-drift.yml` | The steps of its "Generated Edge configuration validates" CI job, run on the signed Edge `latest` image: `ferrum-edge validate` on the plain-HTTP and minimal generated fixtures, trace-context stripping through the minimal fixture, and `POST /api-specs` importing the exported agent-tool document and generating the expected `mcp_gateway` endpoint, namespace and exact tool set |
+| ferrum-anvil | `.github/workflows/edge-main-drift.yml` | Against this repository's `main`: every vendored `PIN` path still exists, the imported error and diagnostic vocabularies, the `DiagnosticFinding` schema and every current `diagnostic-finding` fixture, and the `diagnostic-ref` reader with every current `diagnostic-ref` fixture (`main_branch_delta` is read for the report). Against Edge `main`'s `src/retry.rs`: the `X-Gateway-Error` tokens, their `ferrum.token.*` wording and the `ErrorClass` labels (`edge_main_vocabulary_matches_anvils_reader`) |
 
 A failure is an early warning, not a blocked merge: it leaves time to ship a
 compatible consumer release before Edge releases the change.
