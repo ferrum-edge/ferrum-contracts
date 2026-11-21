@@ -35,7 +35,22 @@ Checks, in order:
    DiagnosticFinding fixture is also a valid Alloy diagnostic_report Finding).
    The valid fixtures of every major are checked, wherever the layout of
    step 3 puts them; a cross-check with no valid fixture fails.
-7. Optional (--openapi PATH or --fetch-openapi): the Edge openapi.yaml the
+7. Qualification cases: every qualification/<name>/v<N>/<case-set>.json
+   names contract <name> and integer contract_version <N> (a schema that
+   exists), the producer revision it was derived from (repo, paths and a
+   full commit SHA), a known `rule`, and a non-empty list of cases with
+   unique ids. Each case's `instance` must pass schema <name> v<N> exactly
+   when `schema_valid` is true. For the `alloy-derived-resource-id-limit`
+   rule, every case is schema-valid and equals the set's `base` (the one
+   reviewed exportable fixture for that contract major) except for gateway proxy_id and correlation_id (and the
+   optional removal of otel_endpoint and otel_root_sampling_ratio);
+   the effective proxy ID must match Alloy's valid_id grammar,
+   `derived_resource_ids` must be exactly the IDs Alloy derives from the
+   instance, `edge_resource_id_max_length` must be 254, and
+   `producer_exports` must be true exactly when every derived ID fits.
+   These cases record producer outcomes the schema cannot express; they are
+   not fixtures.
+8. Optional (--openapi PATH or --fetch-openapi): the Edge openapi.yaml the
    plugin catalog pins has the recorded sha256, and every plugin's
    config_schema pointer is the component that Edge's PluginConfigBase
    if/then block for that plugin_name references (and the component
@@ -166,6 +181,9 @@ def load_json(path: Path, report: Report):
         return json.loads(text, object_pairs_hook=no_duplicates)
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         report.fail(path, f"not valid JSON: {exc}")
+        return None
+    except RecursionError:
+        report.fail(path, "not valid JSON: nested too deeply")
         return None
 
 
@@ -530,6 +548,278 @@ def check_cross(
                 report.fail(path, f"valid {fixture_set} fixture fails {target}{fragment} {error}")
             else:
                 report.ok()
+
+
+QUALIFICATION_DIR = "qualification"
+
+# Alloy's derived resource ID rule (ferrum-alloy crates/ferrum-alloy-edge at
+# db412da37564ffbe869e2b40530dbebf5afe7ac8: manifest.rs
+# EDGE_RESOURCE_ID_MAX_LENGTH and ServiceManifest::validate, export.rs
+# resources and the *_SUFFIX constants). Edge's MAX_ID_LENGTH is the same 254.
+# The export generates, in this order, `<proxy_id>-upstream` when `health` is
+# set, `<proxy_id>-correlation-id` when `gateway.correlation_id` is true (the
+# default), and `<proxy_id>-otel-tracing` always.
+ALLOY_DERIVED_ID_RULE = "alloy-derived-resource-id-limit"
+ALLOY_RESOURCE_ID_MAX_LENGTH = 254
+
+
+def check_qualifications(root: Path, schemas, registry, report: Report) -> None:
+    """Check qualification/<name>/v<N>/*.json case sets (step 7 of the module docstring)."""
+    qualification_root = root / QUALIFICATION_DIR
+    if not qualification_root.is_dir():
+        report.fail(qualification_root, f"missing {QUALIFICATION_DIR}/ directory")
+        return
+    entries = sorted(qualification_root.iterdir())
+    if not any(entry.is_dir() for entry in entries):
+        report.fail(qualification_root, "no qualification case sets")
+    for entry in entries:
+        if not entry.is_dir():
+            if entry.name != "README.md":
+                report.fail(entry, f"unexpected file under {QUALIFICATION_DIR}/")
+            continue
+        name = entry.name
+        if name not in schemas:
+            report.fail(entry, f"no schema named {name!r}")
+            continue
+        subs = sorted(entry.iterdir())
+        if not subs:
+            report.fail(entry, "an empty qualification directory")
+        for sub in subs:
+            match = VERSION_DIR.fullmatch(sub.name)
+            if not (sub.is_dir() and match and int(match.group(1)) in schemas[name]):
+                report.fail(sub, f"{name} qualification cases live only in v<N>/ for an existing major")
+                continue
+            version = int(match.group(1))
+            paths = sorted(sub.iterdir())
+            if not paths:
+                report.fail(sub, "an empty qualification directory")
+            for path in paths:
+                if path.suffix != ".json" or not path.is_file():
+                    report.fail(path, "qualification directories hold only <case-set>.json files")
+                    continue
+                check_qualification_file(root, path, name, version, schemas, registry, report)
+
+
+def check_qualification_file(
+    root: Path, path: Path, name: str, version: int, schemas, registry, report: Report
+) -> None:
+    failures = len(report.errors)
+    doc = load_json(path, report)
+    if not isinstance(doc, dict):
+        if len(report.errors) == failures:
+            report.fail(path, "a qualification case set is a JSON object")
+        return
+    contract_version = doc.get("contract_version")
+    if (
+        doc.get("contract") != name
+        or not isinstance(contract_version, int)
+        or isinstance(contract_version, bool)
+        or contract_version != version
+    ):
+        report.fail(path, f"contract and contract_version must be {name!r} and {version}")
+    producer = doc.get("producer")
+    if not isinstance(producer, dict):
+        report.fail(path, "producer is required")
+    else:
+        if not isinstance(producer.get("repo"), str) or not producer["repo"]:
+            report.fail(path, "producer.repo is required")
+        paths = producer.get("paths")
+        if not isinstance(paths, list) or not paths or not all(
+            isinstance(p, str) and p for p in paths
+        ):
+            report.fail(path, "producer.paths must be a non-empty list of paths")
+        commit = producer.get("commit")
+        if not isinstance(commit, str) or not _PROVENANCE_COMMIT_RE.fullmatch(commit):
+            report.fail(path, "producer.commit must be a full 40-hex commit SHA")
+    rule = doc.get("rule")
+    if rule != ALLOY_DERIVED_ID_RULE:
+        report.fail(path, f"unknown rule {rule!r}; known: {ALLOY_DERIVED_ID_RULE!r}")
+        return
+    if doc.get("edge_resource_id_max_length") != ALLOY_RESOURCE_ID_MAX_LENGTH:
+        report.fail(
+            path,
+            f"edge_resource_id_max_length must be {ALLOY_RESOURCE_ID_MAX_LENGTH}, Alloy's limit",
+        )
+        return
+    base = load_case_base(root, doc.get("base"), name, version, path, report)
+    cases = doc.get("cases")
+    if not isinstance(cases, list) or not cases:
+        report.fail(path, "cases must be a non-empty list")
+    if len(report.errors) != failures:
+        # A case set whose envelope is wrong certifies nothing; its cases
+        # are not counted.
+        return
+    v = validator(schemas[name][version], registry)
+    seen: set[str] = set()
+    for index, case in enumerate(cases):
+        where = f"{path}: cases[{index}]"
+        if not isinstance(case, dict):
+            report.fail(where, "a case is an object")
+            continue
+        case_id = case.get("id")
+        if not isinstance(case_id, str) or not case_id:
+            report.fail(where, "id is required")
+            continue
+        if not case_id.isascii() or not case_id.isprintable():
+            report.fail(where, "id must be printable ASCII")
+            continue
+        if case_id in seen:
+            report.fail(where, f"duplicate case id {case_id!r}")
+            continue
+        seen.add(case_id)
+        where = f"{path}: case {case_id}"
+        schema_valid = case.get("schema_valid")
+        if not isinstance(schema_valid, bool):
+            report.fail(where, "schema_valid must be a boolean")
+            continue
+        if "instance" not in case:
+            report.fail(where, "instance is required")
+            continue
+        instance = case["instance"]
+        error = first_error(v, instance)
+        if schema_valid and error:
+            report.fail(where, f"marked schema_valid but fails {name} v{version} {error}")
+            continue
+        if not schema_valid and not error:
+            report.fail(where, f"marked not schema_valid but passes {name} v{version}")
+            continue
+        if not schema_valid:
+            report.fail(where, f"{ALLOY_DERIVED_ID_RULE} cases are schema-valid manifests")
+            continue
+        if not check_case_variation(where, instance, base, report):
+            continue
+        if not check_derived_ids(where, case, report):
+            continue
+        report.ok()
+        print(f"  ok (qualification) {path.name} {case_id}")
+
+
+# Gateway fields an alloy-derived-resource-id-limit case may change from its
+# base fixture. The base is a valid fixture Alloy exports, so with every
+# other field equal the only remaining producer refusal is the ID limit.
+ALLOY_DERIVED_ID_VARIABLE_FIELDS = ("proxy_id", "correlation_id")
+ALLOY_DERIVED_ID_REMOVABLE_FIELDS = ("otel_endpoint", "otel_root_sampling_ratio")
+
+
+# The one base each contract major may vary for this rule: a valid fixture
+# transcribed from an Alloy manifest that Alloy exports at the cited revision
+# (ferrum-alloy contracts/fixtures/manifests/plain-http.toml).
+ALLOY_DERIVED_ID_BASES = {
+    ("service-manifest", 1): (
+        "fixtures/service-manifest/valid/plain-http.json",
+        "406524f908fe1d9bac6f73031cfad3fd4a646cf065872eeeb2b60857e1a98cdd",
+    ),
+}
+# Alloy's valid_id grammar (manifest.rs), matched against the whole string.
+ALLOY_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
+
+def load_case_base(root: Path, base, name: str, version: int, path: Path, report: Report):
+    """The reviewed exportable fixture a case set varies (ALLOY_DERIVED_ID_BASES)."""
+    allowed, digest = ALLOY_DERIVED_ID_BASES.get((name, version), (None, None))
+    if allowed is None or base != allowed:
+        report.fail(path, f"base must be {allowed!r}, the reviewed exportable fixture")
+        return None
+    try:
+        data = (root / allowed).read_bytes()
+    except OSError as exc:
+        report.fail(path, f"base {allowed!r} cannot be read: {exc}")
+        return None
+    if hashlib.sha256(data).hexdigest() != digest:
+        report.fail(
+            path,
+            f"base {allowed!r} changed since it was reviewed against the producer; "
+            "re-qualify it and update ALLOY_DERIVED_ID_BASES",
+        )
+        return None
+    doc = load_json(root / allowed, report)
+    if not isinstance(doc, dict) or not isinstance(doc.get("gateway"), dict):
+        report.fail(path, f"base {allowed!r} has no gateway object")
+        return None
+    return doc
+
+
+def same_json(a, b) -> bool:
+    """JSON equality that keeps types apart (1, 1.0 and true are all different)."""
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(same_json(a[k], b[k]) for k in a)
+    if isinstance(a, list):
+        return len(a) == len(b) and all(same_json(x, y) for x, y in zip(a, b))
+    return a == b
+
+
+def check_case_variation(where: str, instance, base: dict, report: Report) -> bool:
+    """A case equals its base except for the gateway fields the rule varies."""
+    if not isinstance(instance, dict) or not isinstance(instance.get("gateway"), dict):
+        report.fail(where, "instance must be an object with a gateway object")
+        return False
+    rest = {k: v for k, v in instance.items() if k != "gateway"}
+    base_rest = {k: v for k, v in base.items() if k != "gateway"}
+    if not same_json(rest, base_rest):
+        report.fail(where, "instance may differ from base only in gateway")
+        return False
+    gateway, base_gateway = instance["gateway"], base["gateway"]
+    for key in set(gateway) | set(base_gateway):
+        if key in ALLOY_DERIVED_ID_VARIABLE_FIELDS:
+            continue
+        if key in ALLOY_DERIVED_ID_REMOVABLE_FIELDS and key not in gateway:
+            continue
+        if (key in gateway) != (key in base_gateway) or (
+            key in gateway and not same_json(gateway[key], base_gateway[key])
+        ):
+            report.fail(where, f"gateway.{key} may not differ from base")
+            return False
+    return True
+
+
+def alloy_derived_ids(instance) -> list[str] | None:
+    """The resource IDs Alloy derives from a manifest, or None for a shape Alloy cannot parse."""
+    if not isinstance(instance, dict):
+        return None
+    gateway = instance.get("gateway", {})
+    service = instance.get("service")
+    if not isinstance(gateway, dict) or not isinstance(service, dict):
+        return None
+    proxy_id = gateway.get("proxy_id", service.get("name"))
+    correlation = gateway.get("correlation_id", True)
+    if (
+        not isinstance(proxy_id, str)
+        or not ALLOY_ID_RE.fullmatch(proxy_id)
+        or len(proxy_id) > ALLOY_RESOURCE_ID_MAX_LENGTH
+        or not isinstance(correlation, bool)
+    ):
+        return None
+    ids = []
+    if instance.get("health") is not None:
+        ids.append(f"{proxy_id}-upstream")
+    if correlation:
+        ids.append(f"{proxy_id}-correlation-id")
+    ids.append(f"{proxy_id}-otel-tracing")
+    return ids
+
+
+def check_derived_ids(where: str, case: dict, report: Report) -> bool:
+    """derived_resource_ids are exactly Alloy's; producer_exports follows from the limit."""
+    expected_ids = alloy_derived_ids(case.get("instance"))
+    if expected_ids is None:
+        report.fail(where, "instance has no service, gateway and valid proxy ID Alloy can derive IDs from")
+        return False
+    if case.get("derived_resource_ids") != expected_ids:
+        report.fail(where, f"derived_resource_ids must be Alloy's {expected_ids!r}")
+        return False
+    exports = case.get("producer_exports")
+    expected = all(len(i) <= ALLOY_RESOURCE_ID_MAX_LENGTH for i in expected_ids)
+    if exports is not expected:
+        report.fail(
+            where,
+            f"producer_exports must be {str(expected).lower()}: the longest derived ID "
+            f"has {max(map(len, expected_ids))} characters and the limit is "
+            f"{ALLOY_RESOURCE_ID_MAX_LENGTH}",
+        )
+        return False
+    return True
 
 
 def check_vocabularies(root: Path, schemas, registry, report: Report) -> dict[str, dict]:
@@ -1059,6 +1349,8 @@ def main() -> int:
     vocabularies = check_vocabularies(root, schemas, registry, report)
     check_vocabulary_consistency(vocabularies, report)
     check_copied_values(schemas, vocabularies, report)
+    print("qualification cases")
+    check_qualifications(root, schemas, registry, report)
     if args.openapi or args.fetch_openapi:
         print("plugin config schema pointers")
         if args.openapi:

@@ -374,6 +374,49 @@ diagnostic import or trace storage. Agents metadata is informational and cannot
 install or select tools. Neither preview freezes the TOML producer or promises
 production deployment semantics for every manifest field.
 
+### Service manifest derived ID qualification
+
+[`qualification/service-manifest/v1/derived-id-limit.json`](../qualification/service-manifest/v1/derived-id-limit.json)
+records four schema-valid manifests and Alloy's outcome for each, read from
+producer `db412da37564ffbe869e2b40530dbebf5afe7ac8` (Alloy main, unreleased;
+unchanged at `0e8a96a24c149432f0c3583732d8a3875db756ce`). Alloy always
+generates the `<proxy_id>-otel-tracing` plugin, so with no health check and
+correlation disabled a 241-character proxy ID exports and a 242-character one
+does not, with or without `gateway.otel_endpoint` (#80). Passing the schema
+does not establish that Alloy can export a manifest.
+
+| Case | Alloy | Foundry preview | Nexus preview |
+|---|---|---|---|
+| `no-exporter-241` | exports | accepts | accepts |
+| `no-exporter-242` | refuses | refuses (since ferrum-foundry#735) | refuses (since ferrum-nexus#746) |
+| `explicit-exporter-241` (control) | exports | accepts | accepts |
+| `explicit-exporter-242` (control) | refuses | refuses | refuses |
+
+Foundry: up to `10287a1d689ff2849c8ce8c241749e3e9b001baf` its preview added
+the `-otel-tracing` suffix only when `gateway.otel_endpoint` was set and
+accepted `no-exporter-242` (ferrum-foundry#719). ferrum-foundry#735, merged as
+`3bc816c916ce76762d9259ab92a5e1440a1ff2b3`, bounds `-otel-tracing` for every
+manifest in `server/service-manifest.ts` (`derivedResourceIds`), and its route
+tests cover both 241/242 pairs; that commit's
+[CI run 44892880940](https://github.com/ferrum-edge/ferrum-foundry/actions/runs/44892880940)
+passed. The Foundry column matches Alloy for all four cases. Foundry derives
+its boundary inputs from its own pinned `plain-http.json` rather than reading
+this case set.
+
+Nexus: up to `c3fc0373b5cdf50a09404471a6cad98dbb0896fc` its preview also
+added the suffix only with an exporter and accepted `no-exporter-242`
+(ferrum-nexus#734). ferrum-nexus#746, merged as
+`83c864b027dc16a6708ec5beb699590d6f06cac9`, bounds `-otel-tracing` for every
+manifest in `server/src/service-manifest/service.ts`, and its tests cover
+both 241/242 pairs; that commit's
+[CI run 44889811691](https://github.com/ferrum-edge/ferrum-nexus/actions/runs/44889811691)
+passed. The Nexus column matches Alloy for all four cases. Nexus derives its
+boundary inputs from its own pinned `plain-http.json` rather than reading
+this case set.
+
+If a consumer's behaviour on these cases changes, update its row with the
+commit and hosted run.
+
 ### GitForgeOps generated resource boundary
 
 [GitForgeOps' consumer qualification](https://github.com/ferrum-edge/ferrum-edge-git-forge-ops/blob/76d76c796cafbaea9556e992381b6e2518ae4f69/docs/alloy-consumer.md)

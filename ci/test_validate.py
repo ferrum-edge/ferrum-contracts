@@ -2,7 +2,8 @@
 schema provenance check, the gateway-headers availability check, the
 unpublished Edge tag check, the vocabulary x-contract.instance check, the
 diagnostic-ref values copied from gateway-errors, the PluginConfigBase
-parser and catalog parity check, and the cross-contract fixture check.
+parser and catalog parity check, the cross-contract fixture check, and the
+qualification case check.
 
 Run with: python -I -m unittest discover -s ci -p 'test_*.py'
 Every request goes to a loopback server this test starts; nothing leaves the
@@ -772,6 +773,353 @@ class CrossCheckTests(unittest.TestCase):
         )
         self.assertGreater(expected, 0)
         self.assertEqual(report.checked - before, expected)
+
+
+class QualificationTests(unittest.TestCase):
+    """Qualification cases agree with the schema, their base fixture and Alloy's derived IDs."""
+
+    BASE = {
+        "service": {"name": "svc"},
+        "gateway": {
+            "namespace": "ns",
+            "correlation_id": True,
+            "otel_endpoint": "http://127.0.0.1:4318/v1/traces",
+        },
+    }
+
+    def setUp(self) -> None:
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name)
+        _write(
+            self.root / "schemas" / "manifest" / "v1.schema.json",
+            _schema(
+                "manifest",
+                1,
+                {
+                    "type": "object",
+                    "required": ["service"],
+                    "properties": {
+                        "gateway": {
+                            "type": "object",
+                            "properties": {"proxy_id": {"type": "string", "maxLength": 254}},
+                        }
+                    },
+                },
+            ),
+        )
+        _write(self.root / "fixtures" / "manifest" / "valid" / "base.json", self.BASE)
+
+    def case(self, length: int, exports: bool | None = None, schema_valid: bool = True) -> dict:
+        proxy_id = "a" * length
+        return {
+            "id": f"id-{length}",
+            "schema_valid": schema_valid,
+            "producer_exports": length <= 241 if exports is None else exports,
+            "derived_resource_ids": [f"{proxy_id}-otel-tracing"],
+            "instance": {
+                "service": {"name": "svc"},
+                "gateway": {"namespace": "ns", "proxy_id": proxy_id, "correlation_id": False},
+            },
+        }
+
+    def run_doc(self, doc) -> tuple[list[str], int]:
+        _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", doc)
+        report = validate.Report()
+        base_bytes = (self.root / "fixtures" / "manifest" / "valid" / "base.json").read_bytes()
+        bases = {
+            ("manifest", 1): (
+                "fixtures/manifest/valid/base.json",
+                hashlib.sha256(base_bytes).hexdigest(),
+            )
+        }
+        with contextlib.redirect_stdout(io.StringIO()), unittest.mock.patch.object(
+            validate, "ALLOY_DERIVED_ID_BASES", bases
+        ):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            before = report.checked
+            validate.check_qualifications(self.root, schemas, registry, report)
+        return report.errors, report.checked - before
+
+    def run_checks(self, cases, **overrides) -> tuple[list[str], int]:
+        doc = {
+            "contract": "manifest",
+            "contract_version": 1,
+            "rule": validate.ALLOY_DERIVED_ID_RULE,
+            "edge_resource_id_max_length": 254,
+            "base": "fixtures/manifest/valid/base.json",
+            "producer": {"repo": "o/r", "paths": ["src/x.rs"], "commit": "a" * 40},
+            "cases": cases,
+            **overrides,
+        }
+        return self.run_doc(doc)
+
+    def assert_one_error(self, cases, message: str, **overrides) -> None:
+        errors, checked = self.run_checks(cases, **overrides)
+        self.assertEqual(checked, 0)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn(message, errors[0])
+
+    def test_a_consistent_boundary_pair_passes(self) -> None:
+        errors, checked = self.run_checks([self.case(241), self.case(242)])
+        self.assertEqual(errors, [])
+        self.assertEqual(checked, 2)
+
+    def test_a_wrong_producer_outcome_fails(self) -> None:
+        self.assert_one_error([self.case(242, exports=True)], "producer_exports must be false")
+
+    def test_derived_ids_must_be_alloys(self) -> None:
+        missing = self.case(242, exports=True)
+        del missing["derived_resource_ids"]
+        wrong_suffix = self.case(242, exports=True)
+        wrong_suffix["derived_resource_ids"] = ["a" * 242 + "-x"]
+        default_correlation = self.case(241)
+        del default_correlation["instance"]["gateway"]["correlation_id"]
+        for case in (missing, wrong_suffix, default_correlation):
+            with self.subTest(case=case):
+                self.assert_one_error([case], "derived_resource_ids must be Alloy's")
+
+    def test_alloy_derived_ids_follow_health_and_correlation(self) -> None:
+        manifest = {
+            "service": {"name": "svc"},
+            "health": {"path": "/readyz"},
+            "gateway": {"proxy_id": "p"},
+        }
+        self.assertEqual(
+            validate.alloy_derived_ids(manifest),
+            ["p-upstream", "p-correlation-id", "p-otel-tracing"],
+        )
+        manifest["gateway"] = {}
+        manifest["health"] = None
+        self.assertEqual(validate.alloy_derived_ids(manifest), ["svc-correlation-id", "svc-otel-tracing"])
+        for bad in ([], {"service": "svc"}, {"service": {"name": "svc"}, "gateway": None},
+                    {"service": {"name": ""}}, {"service": {"name": "s"}, "gateway": {"proxy_id": 1}},
+                    {"service": {"name": "s"}, "gateway": {"proxy_id": "catalog\n"}},
+                    {"service": {"name": "s"}, "gateway": {"proxy_id": "caf\u00e9"}},
+                    {"service": {"name": "s"}, "gateway": {"proxy_id": "a" * 255}}):
+            with self.subTest(bad=bad):
+                self.assertIsNone(validate.alloy_derived_ids(bad))
+
+    def test_a_case_may_vary_only_the_qualified_gateway_fields(self) -> None:
+        auth = self.case(241)
+        auth["instance"]["auth"] = {"mode": "gateway"}
+        self.assert_one_error([auth], "may differ from base only in gateway")
+        namespace = self.case(241)
+        namespace["instance"]["gateway"]["namespace"] = "other"
+        self.assert_one_error([namespace], "gateway.namespace may not differ from base")
+        endpoint = self.case(241)
+        endpoint["instance"]["gateway"]["otel_endpoint"] = "https://elsewhere"
+        self.assert_one_error([endpoint], "gateway.otel_endpoint may not differ from base")
+        kept = self.case(241)
+        kept["instance"]["gateway"]["otel_endpoint"] = self.BASE["gateway"]["otel_endpoint"]
+        errors, checked = self.run_checks([kept])
+        self.assertEqual(errors, [])
+        self.assertEqual(checked, 1)
+
+    def test_cases_must_be_schema_valid(self) -> None:
+        errors, checked = self.run_checks(
+            [self.case(255, exports=False), self.case(241, schema_valid=False)]
+        )
+        self.assertEqual(checked, 0)
+        self.assertEqual(len(errors), 2, errors)
+        self.assertIn("marked schema_valid but fails manifest v1", errors[0])
+        self.assertIn("marked not schema_valid but passes manifest v1", errors[1])
+        invalid = self.case(241, schema_valid=False)
+        invalid["instance"] = []
+        self.assert_one_error([invalid], "cases are schema-valid manifests")
+
+    def test_a_proxy_id_alloy_refuses_fails(self) -> None:
+        case = self.case(241)
+        case["instance"]["gateway"]["proxy_id"] = "catalog\n"
+        case["derived_resource_ids"] = ["catalog\n-otel-tracing"]
+        self.assert_one_error([case], "valid proxy ID Alloy can derive IDs from")
+
+    def test_the_repository_base_is_the_reviewed_fixture(self) -> None:
+        self.assertEqual(
+            list(validate.ALLOY_DERIVED_ID_BASES),
+            [("service-manifest", 1)],
+        )
+        path, _ = validate.ALLOY_DERIVED_ID_BASES[("service-manifest", 1)]
+        self.assertEqual(path, "fixtures/service-manifest/valid/plain-http.json")
+
+    def test_a_changed_base_fixture_fails(self) -> None:
+        base = self.root / "fixtures" / "manifest" / "valid" / "base.json"
+        _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", {})
+        original = base.read_bytes()
+        changed = dict(self.BASE, gateway=dict(self.BASE["gateway"], otel_endpoint="http://otel.internal"))
+        doc = {
+            "contract": "manifest",
+            "contract_version": 1,
+            "rule": validate.ALLOY_DERIVED_ID_RULE,
+            "edge_resource_id_max_length": 254,
+            "base": "fixtures/manifest/valid/base.json",
+            "producer": {"repo": "o/r", "paths": ["src/x.rs"], "commit": "a" * 40},
+            "cases": [self.case(241)],
+        }
+        _write(self.root / "qualification" / "manifest" / "v1" / "cases.json", doc)
+        bases = {
+            ("manifest", 1): ("fixtures/manifest/valid/base.json", hashlib.sha256(original).hexdigest())
+        }
+        _write(base, changed)
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()), unittest.mock.patch.object(
+            validate, "ALLOY_DERIVED_ID_BASES", bases
+        ):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            before = report.checked
+            validate.check_qualifications(self.root, schemas, registry, report)
+        self.assertEqual(report.checked - before, 0)
+        self.assertEqual(len(report.errors), 1, report.errors)
+        self.assertIn("changed since it was reviewed", report.errors[0])
+
+    def test_a_numeric_type_change_is_a_variation(self) -> None:
+        self.assertFalse(validate.same_json({"port": 8080}, {"port": 8080.0}))
+        self.assertFalse(validate.same_json([1], [True]))
+        self.assertTrue(validate.same_json({"a": [1, {"b": "c"}]}, {"a": [1, {"b": "c"}]}))
+        case = self.case(241)
+        case["instance"]["gateway"]["namespace"] = "ns"
+        case["instance"]["service"] = {"name": "svc"}
+        case["instance"]["extra"] = 1
+        self.assert_one_error([case], "may differ from base only in gateway")
+
+    def test_the_proxy_id_defaults_to_the_service_name(self) -> None:
+        case = self.case(241)
+        del case["instance"]["gateway"]["proxy_id"]
+        case["derived_resource_ids"] = ["svc-otel-tracing"]
+        errors, checked = self.run_checks([case])
+        self.assertEqual(errors, [])
+        self.assertEqual(checked, 1)
+
+    def test_a_case_without_instance_fails(self) -> None:
+        case = self.case(241, schema_valid=False)
+        del case["instance"]
+        self.assert_one_error([case], "instance is required")
+
+    def test_duplicate_and_missing_ids_are_not_counted(self) -> None:
+        nameless = self.case(241)
+        del nameless["id"]
+        errors, checked = self.run_checks([self.case(241), self.case(241), nameless])
+        self.assertEqual(checked, 1)
+        self.assertEqual(len(errors), 2, errors)
+        self.assertIn("duplicate case id", errors[0])
+        self.assertIn("id is required", errors[1])
+
+    def test_a_case_id_must_be_printable_ascii(self) -> None:
+        for bad in ("\ud800", "a\nb", "caf\u00e9"):
+            with self.subTest(bad=bad):
+                case = self.case(241)
+                case["id"] = bad
+                self.assert_one_error([case], "id must be printable ASCII")
+
+    def test_deeply_nested_json_is_reported(self) -> None:
+        path = self.root / "qualification" / "manifest" / "v1" / "cases.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("[" * 100000 + "]" * 100000, encoding="utf-8")
+        report = validate.Report()
+        # Whether the C decoder hits the recursion limit depends on the Python
+        # build, so force the RecursionError path deterministically.
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            with unittest.mock.patch.object(validate.json, "loads", side_effect=RecursionError):
+                validate.check_qualifications(self.root, schemas, registry, report)
+        self.assertEqual(len(report.errors), 1, report.errors)
+        self.assertIn("nested too deeply", report.errors[0])
+
+    def test_an_invalid_envelope_counts_no_case(self) -> None:
+        for overrides, message in (
+            ({"contract_version": True}, "contract_version"),
+            ({"contract_version": 2}, "contract_version"),
+            ({"producer": {"repo": "o/r", "paths": [], "commit": "a" * 40}}, "producer.paths"),
+            ({"producer": {"repo": "o/r", "paths": ["p"], "commit": "abc"}}, "producer.commit"),
+            ({"rule": "other"}, "unknown rule"),
+            ({"edge_resource_id_max_length": 255}, "must be 254"),
+            ({"base": "fixtures/manifest/valid/other.json"}, "base must be"),
+            ({"base": "fixtures/manifest/valid/plain-http\u0000.json"}, "base must be"),
+            ({"base": None}, "base must be"),
+        ):
+            with self.subTest(message=message, overrides=overrides):
+                errors, checked = self.run_checks([self.case(241)], **overrides)
+                self.assertEqual(checked, 0)
+                self.assertTrue(any(message in e for e in errors), errors)
+
+    def test_a_null_or_non_object_case_set_fails(self) -> None:
+        for doc in (None, []):
+            with self.subTest(doc=doc):
+                errors, checked = self.run_doc(doc)
+                self.assertEqual(checked, 0)
+                self.assertEqual(len(errors), 1, errors)
+                self.assertIn("a qualification case set is a JSON object", errors[0])
+
+    def test_layout_is_checked(self) -> None:
+        _write(self.root / "qualification" / "manifest" / "v2" / "cases.json", {})
+        _write(self.root / "qualification" / "unknown" / "v1" / "cases.json", {})
+        _write(self.root / "qualification" / "manifest" / "v1\n" / "cases.json", {})
+        (self.root / "qualification" / "empty").mkdir(parents=True)
+        _write(self.root / "schemas" / "empty" / "v1.schema.json", _schema("empty", 1, {}))
+        errors, _ = self.run_checks([self.case(241)])
+        self.assertTrue(any("existing major" in e for e in errors), errors)
+        self.assertTrue(any("no schema named 'unknown'" in e for e in errors), errors)
+        self.assertTrue(any("empty: an empty qualification directory" in e for e in errors), errors)
+
+    def check_root_only(self) -> list[str]:
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(self.root, report)
+            registry = validate.build_registry(schemas)
+            validate.check_qualifications(self.root, schemas, registry, report)
+        return report.errors
+
+    def test_a_missing_or_readme_only_qualification_directory_fails(self) -> None:
+        errors = self.check_root_only()
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("missing qualification/ directory", errors[0])
+        (self.root / "qualification").mkdir()
+        (self.root / "qualification" / "README.md").write_text("x\n", encoding="utf-8")
+        errors = self.check_root_only()
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("no qualification case sets", errors[0])
+
+    def test_the_repository_cases_pass_and_keep_both_boundary_pairs(self) -> None:
+        report = validate.Report()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            schemas = validate.load_schemas(ROOT, report)
+            registry = validate.build_registry(schemas)
+            validate.check_qualifications(ROOT, schemas, registry, report)
+        self.assertEqual(report.errors, [])
+        path = ROOT / "qualification" / "service-manifest" / "v1" / "derived-id-limit.json"
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        checked = {
+            line.split()[-1]
+            for line in output.getvalue().splitlines()
+            if line.startswith("  ok (qualification) derived-id-limit.json ")
+        }
+        self.assertEqual(checked, {case["id"] for case in doc["cases"]})
+        base = json.loads((ROOT / doc["base"]).read_text(encoding="utf-8"))
+        expected = {
+            "no-exporter-241": (241, False, True),
+            "no-exporter-242": (242, False, False),
+            "explicit-exporter-241": (241, True, True),
+            "explicit-exporter-242": (242, True, False),
+        }
+        cases = {case["id"]: case for case in doc["cases"]}
+        self.assertEqual(set(cases), set(expected))
+        for case_id, (length, exporter, exports) in expected.items():
+            with self.subTest(case_id):
+                case = cases[case_id]
+                gateway = case["instance"]["gateway"]
+                self.assertEqual(len(gateway["proxy_id"]), length)
+                self.assertIs(gateway["correlation_id"], False)
+                self.assertNotIn("health", case["instance"])
+                for key in ("otel_endpoint", "otel_root_sampling_ratio"):
+                    if exporter:
+                        self.assertEqual(gateway[key], base["gateway"][key])
+                    else:
+                        self.assertNotIn(key, gateway)
+                self.assertIs(case["producer_exports"], exports)
 
 
 if __name__ == "__main__":
