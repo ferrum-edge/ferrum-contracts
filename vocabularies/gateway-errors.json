@@ -346,5 +346,11 @@
       ],
       "meaning": "The received X-Ferrum-Hops count reached FERRUM_MAX_PROXY_HOPS; the gateway refuses before routing and contacts no backend. Only the refusing hop writes this token; an outer gateway relaying 508 uses backend_error. HTTP 508 is never retried, regardless of retryable_status_codes. Native gRPC returns trailers-only FAILED_PRECONDITION with no HTTP 5xx token; malformed hop fields return 400 or native gRPC INVALID_ARGUMENT with no token. The metrics label is reserved: this fence currently emits no transaction summary/error-class metric row."
     }
-  ]
+  ],
+  "main_branch_delta": {
+    "repo": "ferrum-edge/ferrum-edge",
+    "ref": "main",
+    "commit": "d9c241a8c9832aea5ba570ce9b2752de02f3316e",
+    "summary": "No contract-visible changes beyond v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3) at Edge main d9c241a8c9832aea5ba570ce9b2752de02f3316e (through Edge PRs #7471, #7473, #7475 and #7476). No ErrorClass value, X-Gateway-Error token, reserved HTTP metric label, class-to-token mapping, rejection-phase mapping or dispatch-failure status changes. src/retry.rs, src/diagnostic_ref.rs, openapi.yaml, docs/error_classification.md and docs/size_limits.md are byte-identical to v0.9.21; src/proxy/mod.rs changes only internal HTTP/1.1 hot-path streaming helpers (Edge #7471) with http_backend_failure_status_and_body identical to v0.9.21."
+  }
 }
