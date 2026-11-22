@@ -6,6 +6,26 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Changed
+
+- Restore `main_branch_delta` in `vocabularies/plugin-catalog.json`,
+  `vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json`
+  anchored at Ferrum Edge `main`
+  `d9c241a8c9832aea5ba570ce9b2752de02f3316e` (through Edge PRs #7471, #7473,
+  #7475 and #7476), recording that Edge `main` carries no contract-visible
+  changes beyond published `v0.9.21`
+  (`f9915358c8032214f4034a17c28cdf72d14006c3`). PR #88 removed every
+  `main_branch_delta` block for the `contracts-edge-0.9.21` tag, which left
+  the consumers' scheduled Edge-main drift workflows without a
+  `.main_branch_delta.commit` anchor on `main`. `edge_release`, `provenance`
+  and `config_schema_document` stay pinned to `v0.9.21`; no schema or fixture
+  changes.
+- Qualify the bare "unchanged" claims in
+  `docs/releases/contracts-edge-0.9.21.md` and the `[contracts-edge-0.9.21]`
+  section of `CHANGELOG.md` with the compared baseline (`contracts-edge-0.9.20`,
+  Edge `v0.9.20`, or `main` prior to #88) and file paths. The tagged
+  `contracts-edge-0.9.21` commit (`92d8da5`) is unaffected.
+
 ## [contracts-edge-0.9.21] - 2026-11-22
 
 Contracts for published Ferrum Edge `v0.9.21`
@@ -80,14 +100,18 @@ and the Alloy derived-ID qualification cases.
   `13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee`. Keep
   `diagnostic-ref` v1 byte for byte under the existing consumer freeze: the
   five `DiagnosticRef*` OpenAPI components, nine `gateway_error` tokens and
-  five token-mapped `detail.rejection_phase` tokens are unchanged from
-  `v0.9.20`. Earlier majors and historical fixtures retain their pins.
+  five token-mapped `detail.rejection_phase` tokens are unchanged versus
+  `contracts-edge-0.9.20` (`schemas/diagnostic-ref/v1.schema.json`,
+  `vocabularies/gateway-errors.json`) and Edge `v0.9.20` (`openapi.yaml`).
+  Earlier majors and historical fixtures retain their pins.
 - Re-transcribe `vocabularies/plugin-catalog.json` from `v0.9.21` and remove
   its `main_branch_delta` (Edge `main` at `b233be97` carries no
   contract-visible changes beyond `v0.9.21`): the 82 registered names, two
   removed names, response-body producer and WebSocket framing membership, and
   every `PluginConfigBase` pointer, config-required and scope conditional are
-  unchanged. Five log sinks (`http_logging`, `udp_logging`, `statsd_logging`,
+  unchanged versus `contracts-edge-0.9.20` (`vocabularies/plugin-catalog.json`)
+  and Edge `v0.9.20` (`src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`,
+  `openapi.yaml`). Five log sinks (`http_logging`, `udp_logging`, `statsd_logging`,
   `loki_logging`, `ws_frame_logging`) move from `optional_fail_open` to
   `keep_last_known_good` (Edge #7369); `http_logging`, `tcp_logging`,
   `kafka_logging`, `loki_logging` and `udp_logging` add `on_ws_disconnect`
@@ -104,7 +128,9 @@ and the Alloy derived-ID qualification cases.
 - Refresh `vocabularies/gateway-errors.json` from `v0.9.21` and remove its
   `main_branch_delta`: the nine `X-Gateway-Error` tokens, 19 `ErrorClass`
   values, 25 reserved HTTP metric labels, class-to-token mapping and
-  dispatch-failure statuses are unchanged. Drop the removed `circuit_breaker`
+  dispatch-failure statuses are unchanged versus `contracts-edge-0.9.20`
+  (`vocabularies/gateway-errors.json`) and Edge `v0.9.20` (`src/retry.rs`,
+  `src/proxy/mod.rs`). Drop the removed `circuit_breaker`
   rejection-phase alias from `circuit_breaker_open` (Edge #7158), and promote
   the phase-gated post-connect classification (#7213), new `StreamSetupKind`
   variants (#7185), eight new raw `diagnostic_ref` phases (#7156, #7157,
@@ -128,8 +154,10 @@ and the Alloy derived-ID qualification cases.
   `POST /restore` `api_specs` section retirement, and ConfigSync protocol
   revision 6), and update `README.md`, `docs/versioning.md`,
   `docs/ownership.md`, `docs/adoption.md` and `docs/deployment-contracts.md`
-  for `contracts-edge-0.9.21`, keeping recorded consumer pins and other
-  owners' availability unchanged.
+  for `contracts-edge-0.9.21`, keeping recorded consumer pins
+  (`docs/adoption.md`, as read on 2026-11-17) and other owners' availability
+  (`docs/ownership.md`, `docs/adoption.md`) unchanged versus `main` prior to
+  #88 (`eb504e8`).
 - `schemas/service-manifest/v1.schema.json` aligns `gateway.otel_endpoint`
   with Edge's cleartext rule (#82). Alloy's export writes the endpoint into
   Edge's `otel_tracing` config without `allow_plaintext`, and Edge v0.9.19

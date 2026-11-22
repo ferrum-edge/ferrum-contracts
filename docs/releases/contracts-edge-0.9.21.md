@@ -56,7 +56,9 @@ closure; `qualification/service-manifest/v1/derived-id-limit.json`).
 - **Plugin catalog.** Re-transcribed from the tag. The 82 registered names, two
   removed names, response-body producer and WebSocket framing membership, and
   every `PluginConfigBase` pointer, config-required and scope conditional are
-  unchanged. Five log-sink registration failure policies move from
+  unchanged versus `contracts-edge-0.9.20` (`vocabularies/plugin-catalog.json`)
+  and Edge `v0.9.20` (`src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`,
+  `openapi.yaml`). Five log-sink registration failure policies move from
   `optional_fail_open` to `keep_last_known_good` (Edge #7369): `http_logging`,
   `udp_logging`, `statsd_logging`, `loki_logging` and `ws_frame_logging`, so
   all nine log sinks are `keep_last_known_good`. In
@@ -69,7 +71,9 @@ closure; `qualification/service-manifest/v1/derived-id-limit.json`).
   is promoted into released metadata and removed.
 - **Gateway errors.** The 19 `ErrorClass` values, nine header tokens, 25
   reserved HTTP metric labels, class-to-token mapping and
-  `http_backend_failure_status_and_body` statuses remain the same.
+  `http_backend_failure_status_and_body` statuses remain the same as in
+  `contracts-edge-0.9.20` (`vocabularies/gateway-errors.json`) and Edge
+  `v0.9.20` (`src/retry.rs`, `src/proxy/mod.rs`).
   `token_for_rejection_phase` drops the `circuit_breaker` alias (Edge #7158):
   HTTP/3 now logs `circuit_breaker_open`, so `circuit_breaker_open`'s
   `rejection_phases` is `["circuit_breaker_open"]`. Post-connect
@@ -112,7 +116,8 @@ closure; `qualification/service-manifest/v1/derived-id-limit.json`).
   `FERRUM_ADMIN_JWT_VIEWER_SECRET` (Edge #7413). The previous
   `main_branch_delta` is promoted into released entries and removed.
 - **Attribution and egress.** `provisioned-by` names, bounds and open-set
-  behavior are unchanged; `src/admin/provisioning.rs` and
+  behavior are unchanged versus `contracts-edge-0.9.20`
+  (`vocabularies/provisioned-by.json`); `src/admin/provisioning.rs` and
   `components.parameters.ProvisionedBy` are byte-identical to `v0.9.20`.
   Backend egress remains response `schema_version: 2` with classifier
   `ferrum-private-reserved-v1`, the same scopes, modes, evaluation order,
@@ -127,12 +132,19 @@ closure; `qualification/service-manifest/v1/derived-id-limit.json`).
   components, `src/admin/conditional_snapshots.rs`, `src/admin/preconditions.rs`
   and `src/admin/deployment_mutations.rs` are byte-identical to `v0.9.20`.
   `src/admin/backup.rs` retires `api_specs.section_version: "1"` and empty
-  `resource_hash` in restore bodies (Edge #7218). All wire shapes remain
-  unchanged.
+  `resource_hash` in restore bodies (Edge #7218). All five schemas' wire shapes
+  remain unchanged versus `contracts-edge-0.9.20`
+  (`schemas/admin-conditional-snapshot/v1.schema.json`,
+  `schemas/backend-egress-policy/v2.schema.json`,
+  `schemas/admin-deployment-snapshot/v2.schema.json`,
+  `schemas/admin-deployment-mutation-acknowledgement/v1.schema.json` and
+  `schemas/vocabulary-backend-egress-policy/v2.schema.json`).
 - **Diagnostic-ref freeze.** The five `DiagnosticRef*` OpenAPI components are
   byte-identical to `v0.9.20`, and the nine `gateway_error` tokens and five
-  token-mapped `detail.rejection_phase` tokens are unchanged (`status` already
-  admits `200` and `detail.rejection.phase` is open). Following
+  token-mapped `detail.rejection_phase` tokens are unchanged versus
+  `contracts-edge-0.9.20` (`schemas/diagnostic-ref/v1.schema.json`,
+  `vocabularies/gateway-errors.json`; `status` already admits `200` and
+  `detail.rejection.phase` is open). Following
   `docs/release-process.md`, canonical v1 is preserved byte for byte, including
   its historical provenance. Its SHA-256 is
   `11508c19f571b57be7e755b5f17409ebc73cd270debd015d1a4ea49a37950520`.

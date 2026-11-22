@@ -1243,5 +1243,11 @@
         }
       ]
     }
-  ]
+  ],
+  "main_branch_delta": {
+    "repo": "ferrum-edge/ferrum-edge",
+    "ref": "main",
+    "commit": "d9c241a8c9832aea5ba570ce9b2752de02f3316e",
+    "summary": "No contract-visible changes beyond v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3) at Edge main d9c241a8c9832aea5ba570ce9b2752de02f3316e (through Edge PRs #7471, #7473, #7475 and #7476). No header name, prefix, role, direction, value set, availability or not_headers entry changes. openapi.yaml, src/admin/, docs/admin_api.md, docs/api_specs.md, docs/admin_backup_restore.md, docs/deployment_mutations.md, docs/error_classification.md, docs/plugin_execution_order.md, docs/plugins.md and docs/mesh.md are byte-identical to v0.9.21; src/proxy/headers.rs and src/proxy/mod.rs add only internal HTTP/1.1 streaming-passthrough helpers (Edge #7471) with 1:1 wire parity."
+  }
 }
