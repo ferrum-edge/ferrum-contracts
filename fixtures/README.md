@@ -102,6 +102,18 @@ on refusals remain optional; consumers must require expected success identity
 and HTTP status in addition to the three required body fields. All pre-existing
 fixtures retain their original bytes and provenance.
 
+## Edge v0.9.21 refresh fixtures
+
+The four new fixtures below transcribe vocabulary metadata and diagnostic
+emission fields from `ferrum-edge/ferrum-edge` tag `v0.9.21`, full commit
+`f9915358c8032214f4034a17c28cdf72d14006c3`. Historical fixture bytes retain
+their original source identity.
+
+| Fixture | Source and transcription |
+|---|---|
+| `vocabulary-plugin-catalog/valid/edge-0.9.21-metadata.json` | Current vocabulary metadata and the `http_logging`, `ws_frame_logging`, `request_transformer`, `response_transformer` and `compression` entries, copied. Failure policy is from `src/plugins/mod.rs` `BUILTIN_PLUGIN_REGISTRATIONS`; priority/phases/protocols/rationale are from `src/plugins/builtin_parity.rs`; config references are from `openapi.yaml` `PluginConfigBase`, all at the full owner commit above. |
+| `diagnostic-ref/valid/grpc-post-required.json` | Transcription of the tagged `openapi.yaml` `GET /diagnostics/v1/refs/{ref}` `plugin_rejection` example, with `protocol: http1`, `status: 200`, null `detail.backend_target`, and gateway `detail.rejection.phase: grpc_post_required`. `src/proxy/mod.rs` emits `GRPC_POST_REQUIRED_PHASE` through `log_pre_backend_rejected_request` with the client wire status (`200` for gRPC-Web and native gRPC Trailers-Only), omitting the backend target; `src/http3/server.rs` emits the same phase on HTTP/3. `src/diagnostic_ref.rs` `DiagnosticRejection::new` supplies `source: gateway` and marks gRPC-Web trailer-frame rejections so `all`-mode references resolve with status `200`; `src/retry.rs` `token_for_rejection_phase` leaves `detail.rejection_phase` null. Reference, namespace, proxy, timestamps and duration bucket are illustrative values retained from the tagged OpenAPI example, not captured traffic. |
+
 ## Edge v0.9.19 refresh fixtures
 
 The eight new fixtures below transcribe vocabulary metadata and diagnostic
@@ -128,6 +140,8 @@ traffic. Both fixtures represent `all`-mode references with no gateway token.
 
 | Fixture | Why it must fail |
 |---|---|
+| `diagnostic-ref/invalid/grpc-post-required-as-detail-phase.json` | From `valid/grpc-post-required.json`: change only `/detail/rejection_phase` from null to `grpc_post_required`; the raw label has no token mapping, so the closed `enum` rejects it with top-level `oneOf`. |
+| `vocabulary-plugin-catalog/invalid/edge-0.9.21-unknown-failure-policy.json` | From `valid/edge-0.9.21-metadata.json`: change only `/plugins/0/failure_policy` from `keep_last_known_good` to `fail_open`; `enum` rejects the unknown policy. |
 | `diagnostic-ref/invalid/query-trigger-admission-as-detail-phase.json` | From `valid/query-trigger-admission.json`: change only `/detail/rejection_phase` from null to `query_trigger_admission`; the raw label has no token mapping, so the closed `enum` rejects it with top-level `oneOf`. |
 | `diagnostic-ref/invalid/gateway-closed-h3-upload-as-detail-phase.json` | From `valid/gateway-closed-h3-upload.json`: change only `/detail/rejection_phase` from null to `gateway_closed_h3_upload`; the raw label has no token mapping, so the closed `enum` rejects it with top-level `oneOf`. |
 | `vocabulary-gateway-headers/invalid/mesh-identity-availability-without-v.json` | From `valid/mesh-identity-assertions.json`: change only `/headers/0/availability` from `v0.9.19` to `0.9.19`; `pattern` requires an Edge tag. |
