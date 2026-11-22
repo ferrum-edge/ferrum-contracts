@@ -141,6 +141,21 @@ Both schemas repin their provenance to the release tag; earlier majors and
 fixtures remain intact. Original deployment-token authority, complete original
 evidence and explicit cleanup acknowledgements remain required.
 
+## Edge v0.9.21: unchanged deployment envelopes
+
+Published Edge `v0.9.21` at `f9915358c8032214f4034a17c28cdf72d14006c3` retains
+snapshot v2 and acknowledgement v1 unchanged. `src/admin/deployment_mutations.rs`,
+`docs/deployment_mutations.md` and the deployment OpenAPI components are
+byte-identical to `v0.9.20`; `src/config/deployment_mutation.rs` drops only a
+`#[allow(dead_code)]` attribute, and `db_backend.rs`, `db_loader.rs`,
+`mongo_store.rs` and `types.rs` changes do not alter snapshot evidence or
+acknowledgements. Both schemas repin their provenance to the release tag;
+earlier majors and fixtures remain intact. Original deployment-token authority,
+complete original evidence and explicit cleanup acknowledgements remain
+required. `POST /api-specs` and `DELETE /api-specs/{id}` explicitly refuse
+`If-Match` with `400` before lookup (Edge #7459); only
+`PUT /api-specs/{id}?conditional=true` evaluates a `deployment-v1` token.
+
 ## Immutable owner sources and schema scope
 
 All paths below belong to `ferrum-edge/ferrum-edge` at the full commit above:

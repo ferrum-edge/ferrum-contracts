@@ -8,14 +8,88 @@ rules and runtime refusals, not new envelope fields, vocabulary values or
 schema majors. Namespace-scoped material-reference rules are in
 [admin-contracts.md](admin-contracts.md#admin-authorization-and-write-rules).
 
-`contracts-edge-0.9.20` pins Edge `v0.9.20` `openapi.yaml`
-(`8fa7232d96e1094578dee03cfa1966a4fdd9df77b8e027a9625f56ce6bfd355e`), which
-ships every change below. The `v0.9.19` rules below are unchanged in it; only
-the configuration components named under
-[Closed nested plugin configs](#closed-nested-plugin-configs) differ from the
-`v0.9.19` document. Further plugin changes are in the pinned OpenAPI and the
+`contracts-edge-0.9.21` pins Edge `v0.9.21` `openapi.yaml`
+(`13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee`), which
+ships every change below. The `v0.9.20` and `v0.9.19` rules below remain in
+force, except where `v0.9.21` removes deprecated keys (`IpRestrictionConfig.mode`)
+or tightens bounds. Further plugin changes are in the pinned OpenAPI and the
 owner's
-[upgrade guide](https://github.com/ferrum-edge/ferrum-edge/blob/e4a606a00352674daaef08636e3e359e6c48ba18/docs/upgrade_guide.md).
+[upgrade guide](https://github.com/ferrum-edge/ferrum-edge/blob/f9915358c8032214f4034a17c28cdf72d14006c3/docs/upgrade_guide.md).
+
+## Edge v0.9.21 admission and config changes
+
+Source: Edge `v0.9.21` (`f9915358c8032214f4034a17c28cdf72d14006c3`), including
+Edge PRs #7080, #7081, #7086, #7245, #7340, #7369, #7373, #7378, #7384, #7389,
+#7410, #7412, #7417, #7464, #7465, #7466, #7467, #7468 and #7469. Every
+`config_schema.pointer`, config-required and scope conditional in
+`PluginConfigBase` is unchanged.
+
+- **Removed keys and aliases** (rejected as unknown keys by closed configs):
+  `HmacAuthConfig` removes `ferrum-hmac-v1` and `allow_unsafe_replayable_v1`
+  (`replay_scope` is required for every profile); `IpRestrictionConfig` removes
+  `mode`; `JwksAuthConfig` removes `providers[].audience` (use `audiences`);
+  `McpGatewayConfig` removes `discovery.hide_denied_items`, the
+  `allow_immediately` and `expose` enum aliases, and the `startup` alias;
+  `ResponseCachingConfig` removes `cache_key_include_query` and
+  `cache_key_include_consumer`; `TcpConnectionThrottleConfig` removes
+  `cleanup_interval_seconds`; `WorkloadMetricsConfig` removes
+  `disable_span_reporting`, `disableSpanReporting` and `accessTokenEnv`;
+  `AiSemanticFirewallConfig` removes `log_raw_text`.
+- **Log-sink failure policies** (Edge #7369): `http_logging`, `udp_logging`,
+  `statsd_logging`, `loki_logging` and `ws_frame_logging` move from
+  `optional_fail_open` to `keep_last_known_good`, so every log sink rejects an
+  invalid enabled candidate while keeping the prior generation serving.
+- **Managed JWKS references** (Edge #7373, #7378): `JwksAuthConfig` and
+  `OidcRelyingPartyConfig` gain `providers[].jwks_source` (`^managed://`) as a
+  distinct provider `oneOf` branch. Enabled configs require a present, usable
+  record (`400` on plugin/batch/restore, `422` on API-spec import); disabled
+  configs may stage before the record exists. Registered as TLS material
+  ([admin-contracts.md](admin-contracts.md#admin-authorization-and-write-rules)).
+- **Loopback IP-literal cleartext and transport rules** (Edge #7080, #7340):
+  gateway-dialed cleartext URLs in `JwksAuthConfig`, `Oauth2IntrospectionConfig`,
+  `OidcRelyingPartyConfig` and `AiTranscriptAuditConfig` admit `http://` only
+  for loopback IP literals (`127.0.0.0/8` or `[::1]`), not `localhost`; under
+  `client_auth.method: none`, OIDC and OAuth2 introspection require a loopback
+  IP-literal endpoint regardless of scheme. `RequestMirrorConfig` gains
+  `allow_plaintext` (default `false`), without which cleartext mirrors are
+  admitted only to a loopback IP literal. `ApiChargebackSinkConfig`
+  `clickhouse.tls` refuses `verify_hostname: false` without `ca_file` or
+  `insecure_skip_verify: true`.
+- **NodeWaypoint routing and weighted splits** (Edge #7384, #7389):
+  `MeshRouteDispatchConfig` gains `weighted_splits` (up to 64 closed entries,
+  1–32 legs with `upstream_id`, `weight`, optional `originate_tls`); `rules`
+  may be empty when `weighted_splits` is non-empty, and enabled configs check
+  every split and leg `upstream_id`. `MeshAuthzConfig` gains read-only,
+  mesh-populated `node_waypoint_route_branches` (with `weighted_split` and
+  `own_is_weighted_split` flags). `MeshAuthzConfig` and `WorkloadMetricsConfig`
+  share `MeshTrustedHboneAssertors`, and SPIFFE trust domains follow SPIFFE-ID
+  section 2.1 (`^[a-z0-9._-]+$`, max 255).
+- **Triggers, external-identity authority and mapped-Consumer isolation** (Edge
+  #7417, #7465, #7466): `PluginTriggerMatch` adds `external_identity` and
+  `external_identity_authority` (`^[0-9A-Fa-f]{64}$`), and `consumer` matches
+  mapped Consumers only. Consumer-name lists in `waf`, `openapi_validator`,
+  `rate_limiting` and `ai_rate_limiter` match mapped Consumers only; limiter
+  and chargeback keys separate mapped Consumers from realm-qualified external
+  principals (`external:<mechanism>:<authority>:<identity>`).
+  `AccessControlConfig` external-identity allow/deny entries gain optional
+  `authority` (`^[0-9A-Fa-f]{64}$`) to bind the verifying authority.
+- **Additional bounds and hardening**: `AiResponseGuardConfig` caps
+  `grpc.max_messages` at `1024` and `grpc.max_message_bytes` at `67108864`
+  (Edge #7081); `OidcRelyingPartyConfig` emits canonical post-login redirects
+  and rejects ASCII control characters, backslashes or whitespace-only values
+  in `post_login_default_path` (Edge #7467), rejects non-string
+  `private_key_jwt_alg`/`private_key_jwt_kid` (Edge #7086) and refuses
+  `${NAME}` in `client_secret` (with `Oauth2IntrospectionConfig`);
+  `ApiChargebackConfig` and `ApiChargebackSinkConfig` spell price bounds
+  `1.0e+288` for YAML 1.1 compatibility (Edge #7412); `McpGatewayOpenApiOperation`
+  paths must stay under the proxy listen path and outside `endpoint.path`
+  (Edge #7410); `A2aGatewayConfig` fails JSON-RPC classification closed while
+  `discovery.rewrite_agent_card_urls` is on (Edge #7468); `request_transformer`
+  and `response_transformer` refuse duplicate-member JSON and strip a leading
+  UTF-8 BOM in body rules (Edge #7469); `AccessLogFilterExpression` adds
+  `latency_above_ms` (Edge #7245); `OpenapiValidatorConfig.error_truncate_chars`
+  defaults to `256`; and Redis-backed plugins drop static OpenAPI key-prefix
+  defaults and classify `redis_url` in sensitivity schemas (Edge #7460).
 
 ## Closed nested plugin configs
 
