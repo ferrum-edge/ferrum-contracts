@@ -2,13 +2,13 @@
   "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-gateway-errors/v1.schema.json",
   "vocabulary": "gateway-errors",
   "version": 1,
-  "edge_release": "v0.9.20",
+  "edge_release": "v0.9.21",
   "description": "Ferrum Edge's closed error vocabularies: the granular ErrorClass (access-log error_class, ferrum_requests_total{error_class}, stream disconnect metrics) and the nine coarse client-facing X-Gateway-Error tokens. The header token is a stable contract and must not change spelling.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.20",
-      "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
       "path": "src/retry.rs",
       "symbols": [
         "ErrorClass",
@@ -31,8 +31,8 @@
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.20",
-      "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
       "path": "docs/error_classification.md",
       "sections": [
         "Canonical taxonomy (ErrorClass)",
@@ -43,12 +43,12 @@
         "HTTP/1.1 parse-layer 400 contract",
         "Client-abort terminal"
       ],
-      "note": "v0.9.17 adds loop_detected for the pre-routing proxy_hop_limit HTTP 508 fence; proxy_hops_invalid and route_protocol_admission map to no token. The closed header vocabulary has nine tokens, the reserved HTTP metrics vocabulary 25 labels, and ErrorClass 19 values. The hop fence emits status counters and bounded warnings, not a transaction summary or loop_detected metric row. Timeout descriptions clarify existing behavior: the backend handoff is marked immediately before send(), including connection setup, rather than after remote acceptance. Re-read at v0.9.19: the same nine tokens, 19 ErrorClass values and 25 reserved HTTP metric labels remain; no token-mapped phase is added. Transcribed connection_failure statuses widen from 502 to 502/504/503: connect timeouts answer 504 (Edge #6770), and pooled-transport DestinationRule maxConnections refusals answer 503 (Edge #6771), retaining their pre-wire class and token. The TLS meaning also includes typed setup errors without an underlying rustls source. Re-read at v0.9.20: the same nine tokens, 19 ErrorClass values, 25 reserved HTTP metric labels, class-to-token mapping and transcribed dispatch-failure statuses remain; src/retry.rs and http_backend_failure_status_and_body are unchanged from v0.9.19. The HTTP/1.1 parse-layer 400 contract now says duplicate Host and combined Content-Length + Transfer-Encoding that reach the handler keep their JSON 400 for ordinary HTTP requests and WebSocket handshakes, while native gRPC and gRPC-Web receive the handler's framed INVALID_ARGUMENT refusal (Edge #6965, issue #6943). A gRPC backend failure, a CANCEL reset included, that the gateway observes at or after the client RPC deadline is settled as that deadline (DEADLINE_EXCEEDED, health-neutral) instead of being charged to the backend; one observed before the deadline keeps its class (Edge #6973 and #6979, issues #6022 and #6976). The connection_timeout transaction-summary example now records 504, matching the status that shipped in v0.9.19."
+      "note": "v0.9.17 adds loop_detected for the pre-routing proxy_hop_limit HTTP 508 fence; proxy_hops_invalid and route_protocol_admission map to no token. The closed header vocabulary has nine tokens, the reserved HTTP metrics vocabulary 25 labels, and ErrorClass 19 values. The hop fence emits status counters and bounded warnings, not a transaction summary or loop_detected metric row. Timeout descriptions clarify existing behavior: the backend handoff is marked immediately before send(), including connection setup, rather than after remote acceptance. Re-read at v0.9.19: the same nine tokens, 19 ErrorClass values and 25 reserved HTTP metric labels remain; no token-mapped phase is added. Transcribed connection_failure statuses widen from 502 to 502/504/503: connect timeouts answer 504 (Edge #6770), and pooled-transport DestinationRule maxConnections refusals answer 503 (Edge #6771), retaining their pre-wire class and token. The TLS meaning also includes typed setup errors without an underlying rustls source. Re-read at v0.9.20: the same nine tokens, 19 ErrorClass values, 25 reserved HTTP metric labels, class-to-token mapping and transcribed dispatch-failure statuses remain; src/retry.rs and http_backend_failure_status_and_body are unchanged from v0.9.19. The HTTP/1.1 parse-layer 400 contract now says duplicate Host and combined Content-Length + Transfer-Encoding that reach the handler keep their JSON 400 for ordinary HTTP requests and WebSocket handshakes, while native gRPC and gRPC-Web receive the handler's framed INVALID_ARGUMENT refusal (Edge #6965, issue #6943). A gRPC backend failure, a CANCEL reset included, that the gateway observes at or after the client RPC deadline is settled as that deadline (DEADLINE_EXCEEDED, health-neutral) instead of being charged to the backend; one observed before the deadline keeps its class (Edge #6973 and #6979, issues #6022 and #6976). The connection_timeout transaction-summary example now records 504, matching the status that shipped in v0.9.19. Re-read at v0.9.21: the same nine tokens, 19 ErrorClass values, 25 reserved HTTP metric labels, class-to-token mapping and transcribed dispatch-failure statuses remain; http_backend_failure_status_and_body and docs/size_limits.md are unchanged from v0.9.20. token_for_rejection_phase no longer maps the raw phase circuit_breaker (Edge #7158), so circuit_breaker_open is selected by the circuit_breaker_open phase only, and HTTP/3 logs its open-breaker 503 under that phase as HTTP/1.1 and HTTP/2 already did. The boxed-error substring fallback is phase-gated like the typed walk (Edge #7213): after the connect phase timeout text is read_write_timeout, refused and TLS text connection_reset, and port-exhaustion text is not claimed; a live WebSocket session's ECONNREFUSED and a response body's EADDRNOTAVAIL are connection_reset. StreamSetupKind::L4RouteRefused is classified like SniAdmissionRefused (dispatch_policy_rejected), and StreamSetupKind::BackendFirstBytesForward takes the post-wire class of its io error, request_error when untyped (Edge #7185). src/diagnostic_ref.rs adds raw phases that map to no token: invalid_backend_path, websocket_upgrade_unavailable and mesh_transport_dispatch_required (Edge #7156, #7157), request_body_refused_before_authenticate, request_body_refused_before_authorize, request_body_refused_before_before_proxy and request_body_refused_before_dispatch (Edge #7163), and grpc_post_required (Edge #7411); it drops circuit_breaker. With FERRUM_DIAGNOSTIC_REFS=all a recorded gRPC-Web rejection gets a reference that resolves with status 200 (Edge #7411). On HTTP/1.1 and HTTP/2 a gRPC-Web client gets the route-protocol admission 403, the circuit-breaker-open 503 and the remaining native-gRPC branch refusals in gRPC-Web framing; the breaker refusal keeps X-Gateway-Error: circuit_breaker_open (Edge #7155). A backend's own 3xx-5xx answer to a WebSocket upgrade is relayed with its status and no X-Gateway-Error or error_class; v0.9.20 answered it with the gateway 502 and backend_error (Edge #7414, GHSA-7x2j-3389-2h35)."
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.20",
-      "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
       "path": "docs/size_limits.md",
       "sections": [
         "gRPC and gRPC-Web framing of pre-routing refusals"
@@ -57,8 +57,8 @@
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.20",
-      "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
       "path": "src/proxy/mod.rs",
       "symbols": [
         "http_backend_failure_status_and_body"
@@ -93,7 +93,7 @@
       "request_reached_wire": false,
       "log_kind": "connect_timeout",
       "x_gateway_error": "connection_failure",
-      "meaning": "TCP connect did not complete before the configured timeout. Pre-wire HTTP connect timeouts answer 504 with connection_failure (Edge #6770 at v0.9.19), preserving connect-retry and target-rotation behavior. An established QUIC connection timing out while waiting on the backend also answers 504, but the dispatch records connection_error=false, so backend_timeout and status/method retry rules apply."
+      "meaning": "TCP connect did not complete before the configured timeout. Pre-wire HTTP connect timeouts answer 504 with connection_failure (Edge #6770 at v0.9.19), preserving connect-retry and target-rotation behavior. An established QUIC connection timing out while waiting on the backend also answers 504, but the dispatch records connection_error=false, so backend_timeout and status/method retry rules apply. From v0.9.21 the boxed-error substring fallback is phase-gated (Edge #7213): timeout text after the connect phase is read_write_timeout, so this pre-wire class is not issued after the connect phase."
     },
     {
       "value": "connection_refused",
@@ -101,7 +101,7 @@
       "request_reached_wire": false,
       "log_kind": "connect_failure",
       "x_gateway_error": "connection_failure",
-      "meaning": "TCP connect refused (port not listening, firewall RST), including connect-phase RSTs. A TLS handshake failure after TCP connect is not this class. One carrying a typed rustls error is tls_error when the gateway independently knew it was still setting up, and otherwise connection_reset (issue #4536); a backend mTLS rejection that reqwest surfaces only as a canceled request is connection_pool_error (issue #4406)."
+      "meaning": "TCP connect refused (port not listening, firewall RST), including connect-phase RSTs. A TLS handshake failure after TCP connect is not this class. One carrying a typed rustls error is tls_error when the gateway independently knew it was still setting up, and otherwise connection_reset (issue #4536); a backend mTLS rejection that reqwest surfaces only as a canceled request is connection_pool_error (issue #4406). From v0.9.21 the boxed-error substring fallback is phase-gated (Edge #7213): refused text after the connect phase is connection_reset, and on a live WebSocket session ECONNREFUSED is connection_reset; only the WebSocket dial keeps it as this class."
     },
     {
       "value": "connection_reset",
@@ -109,7 +109,7 @@
       "request_reached_wire": true,
       "log_kind": "connection_reset",
       "x_gateway_error": "backend_error",
-      "meaning": "RST received after the connection was established and, for TLS, after the handshake completed. Also the verdict for an ambiguous post-connect failure with no independent setup-phase evidence (issue #4536)."
+      "meaning": "RST received after the connection was established and, for TLS, after the handshake completed. Also the verdict for an ambiguous post-connect failure with no independent setup-phase evidence (issue #4536). From v0.9.21 (Edge #7213) this also covers refused and TLS text after the connect phase, ECONNREFUSED on a live WebSocket session and EADDRNOTAVAIL on a response body."
     },
     {
       "value": "connection_closed",
@@ -133,7 +133,7 @@
       "request_reached_wire": false,
       "log_kind": "tls_error",
       "x_gateway_error": "connection_failure",
-      "meaning": "TLS or DTLS handshake failed with independently established setup-phase evidence: a caller observing a typed rustls error while it knows it is dialing or handshaking, or a typed setup error such as StreamSetupKind::BackendDtlsHandshake even without an underlying source. Without setup-phase evidence a typed rustls error is connection_reset. A missing close_notify is teardown, not this class."
+      "meaning": "TLS or DTLS handshake failed with independently established setup-phase evidence: a caller observing a typed rustls error while it knows it is dialing or handshaking, or a typed setup error such as StreamSetupKind::BackendDtlsHandshake even without an underlying source. Without setup-phase evidence a typed rustls error is connection_reset. A missing close_notify is teardown, not this class. From v0.9.21 the boxed-error substring fallback is phase-gated (Edge #7213): TLS text after the connect phase is connection_reset."
     },
     {
       "value": "read_write_timeout",
@@ -141,7 +141,7 @@
       "request_reached_wire": true,
       "log_kind": "read_timeout",
       "x_gateway_error": "backend_timeout",
-      "meaning": "A backend read or write exceeded its per-direction timeout. From v0.9.14 this includes a timeout that reqwest reports while the buffered collector reads a larger or limited response body (504; earlier releases labelled such reqwest-reported read errors response_body_too_large). The collector's own idle backend_read_timeout_ms timeout was already read_write_timeout."
+      "meaning": "A backend read or write exceeded its per-direction timeout. From v0.9.14 this includes a timeout that reqwest reports while the buffered collector reads a larger or limited response body (504; earlier releases labelled such reqwest-reported read errors response_body_too_large). The collector's own idle backend_read_timeout_ms timeout was already read_write_timeout. From v0.9.21 (Edge #7213) timeout text after the connect phase is this class, not connection_timeout."
     },
     {
       "value": "client_disconnect",
@@ -198,7 +198,7 @@
       "request_reached_wire": false,
       "log_kind": "port_exhaustion",
       "x_gateway_error": "connection_failure",
-      "meaning": "EADDRNOTAVAIL: all ephemeral ports are in use."
+      "meaning": "EADDRNOTAVAIL: all ephemeral ports are in use. From v0.9.21 this is issued only for a dial (Edge #7213): port-exhaustion text after the connect phase is not claimed, a live WebSocket session's EADDRNOTAVAIL is not this class, and EADDRNOTAVAIL on a response body is connection_reset."
     },
     {
       "value": "graceful_remote_close",
@@ -214,7 +214,7 @@
       "request_reached_wire": true,
       "log_kind": "dispatch_policy_rejected",
       "x_gateway_error": "backend_error",
-      "meaning": "Terminal gateway policy decision: pre-dial egress or SNI policy, opaque-TLS SNI admission refusal, admission overflow, final request-body hook rejection, or response-transformer output above the response ceiling. Non-retryable and neutral to backend health.",
+      "meaning": "Terminal gateway policy decision: pre-dial egress or SNI policy, opaque-TLS SNI admission refusal, admission overflow, final request-body hook rejection, or response-transformer output above the response ceiling. Non-retryable and neutral to backend health. From v0.9.21 also an L4 stream_match refusal on an __l4_{port} listener (StreamSetupKind::L4RouteRefused, Edge #7185), with the gateway_policy cause like the SNI admission refusal.",
       "x_gateway_error_overrides": [
         {
           "token": "overload",
@@ -248,7 +248,7 @@
       "request_reached_wire": true,
       "log_kind": "request_error",
       "x_gateway_error": "backend_error",
-      "meaning": "Catch-all for unclassified gateway-side rejections and unknown failure modes."
+      "meaning": "Catch-all for unclassified gateway-side rejections and unknown failure modes. From v0.9.21 (Edge #7414) a backend's own 3xx-5xx answer to a WebSocket upgrade is relayed with no error_class instead of being this class with the gateway 502; a 1xx or 2xx answer other than 101, an invalid Sec-WebSocket-Accept and a malformed response keep that 502. A backend that accepted a TLS-terminating TCP dial and then failed the inspected-prefix write (StreamSetupKind::BackendFirstBytesForward, Edge #7185) is this class only when its io error is untyped."
     }
   ],
   "x_gateway_error_tokens": [
@@ -279,7 +279,7 @@
       ],
       "metric_label_without_error_class": true,
       "rejection_phases": [],
-      "meaning": "The backend returned a 5xx, or a post-wire 5xx had no more specific token. Also the metric label for an unclassified backend 5xx. Never used for a response that did not reach a backend."
+      "meaning": "The backend returned a 5xx, or a post-wire 5xx had no more specific token. Also the metric label for an unclassified backend 5xx. Never used for a response that did not reach a backend. From v0.9.21 a backend's own 3xx-5xx answer to a WebSocket upgrade is relayed without this token (Edge #7414); v0.9.20 replied with the gateway 502 and this token."
     },
     {
       "token": "circuit_breaker_open",
@@ -288,10 +288,9 @@
       ],
       "metric_label_without_error_class": true,
       "rejection_phases": [
-        "circuit_breaker_open",
-        "circuit_breaker"
+        "circuit_breaker_open"
       ],
-      "meaning": "The circuit breaker for the backend was open; the request never reached a backend."
+      "meaning": "The circuit breaker for the backend was open; the request never reached a backend. From v0.9.21 the raw phase circuit_breaker no longer selects this token (Edge #7158), and a gRPC-Web client on HTTP/1.1 or HTTP/2 receives the refusal in gRPC-Web framing (HTTP 200) with this token (Edge #7155)."
     },
     {
       "token": "overload",
@@ -351,7 +350,7 @@
   "main_branch_delta": {
     "repo": "ferrum-edge/ferrum-edge",
     "ref": "main",
-    "commit": "0f0988e56c6c8c54038a849016605889957519a7",
-    "summary": "Edge main at this commit (the merge of Edge PR #7420, after the fixes for the 2026-11-16 audit), compared with v0.9.20; none of it is in a release yet. The nine X-Gateway-Error tokens, the 19 ErrorClass values, the 25 reserved HTTP metric labels, the class-to-token mapping (x_gateway_error_token_for_class, request_reached_wire) and the transcribed dispatch-failure statuses (http_backend_failure_status_and_body in src/proxy/mod.rs) are unchanged. The gRPC and gRPC-Web pre-routing refusal framing in docs/size_limits.md is unchanged. Removed rejection-phase alias (Edge #7158, ab1a1fd7f): token_for_rejection_phase no longer maps the raw phase circuit_breaker to circuit_breaker_open, and src/diagnostic_ref.rs drops circuit_breaker from its phase set. HTTP/3 now logs its open-breaker 503 as circuit_breaker_open, as HTTP/1.1 and HTTP/2 already did, so on main the circuit_breaker_open token's rejection_phases is circuit_breaker_open only; v0.9.20 also lists circuit_breaker. Post-connect classification (Edge #7213, 22e52321e): the boxed-error substring fallback is phase-gated like the typed walk. After the connect phase, timeout text is read_write_timeout (not connection_timeout), refused text and TLS text are connection_reset (not connection_refused or tls_error), and port-exhaustion text is not claimed; DNS text and the gateway-side dispatch refusals keep their class in either phase. The tungstenite Io arm keeps ECONNREFUSED as connection_refused and EADDRNOTAVAIL as port_exhaustion only for the WebSocket dial; on a live session ECONNREFUSED is connection_reset. classify_body_error charges EADDRNOTAVAIL on a response body as connection_reset instead of port_exhaustion. UDP session receive and send failures are classified from the typed io::Error. No value or token changes; only which class a post-connect stringly typed error receives, so the pre-wire classes (connection_timeout, connection_refused, tls_error, port_exhaustion) are no longer issued after the connect phase. New stream setup kinds (Edge #7185, f3ecee98a): StreamSetupKind::L4RouteRefused (an L4 stream_match refusal on an __l4_{port} listener) is classified exactly like SniAdmissionRefused: dispatch_policy_rejected, gateway_policy cause, unknown direction, neutral to breaker and passive health. StreamSetupKind::BackendFirstBytesForward (a backend that accepted the dial and then failed the inspected-prefix write on a TLS-terminating TCP listener) is backend-side and post-wire: its class comes from the retained io error classified as post-wire (a reset is connection_reset, never connection_refused), and request_error when the io error is not typed. The native-H3 upload size refusal is typed as H3ClientRequestFault::BodyTooLarge (Edge #7187, 25ef41ed0) instead of being matched on error text; it keeps the 413 (gRPC RESOURCE_EXHAUSTED) answer. New raw rejection phases in src/diagnostic_ref.rs, none of which maps to a token: invalid_backend_path and websocket_upgrade_unavailable (gateway 500s) and mesh_transport_dispatch_required (the native-H3 502) now write a transaction log (Edge #7156 and #7157, 21cbc2875), and request_body_refused_before_authenticate, request_body_refused_before_authorize, request_body_refused_before_before_proxy and request_body_refused_before_dispatch record the buffered request-body size (413), read-timeout (408) and capacity (503) refusals of the HTTP/1.1 and HTTP/2 collectors (Edge #7163, e87bcf458). The DiagnosticRef* components in openapi.yaml are unchanged, so schemas/diagnostic-ref/v1.schema.json is unaffected; rejection.phase is an open label there. gRPC-Web framing (Edge #7155, 4a60814ab and f9c407b22): on HTTP/1.1 and HTTP/2 a gRPC-Web client now gets the route-protocol admission 403, the circuit-breaker-open 503 and the remaining native-gRPC branch refusals (egress denials, RESOURCE_EXHAUSTED size refusals, mesh peer-authentication transport mismatch, terminal request-body read refusals) in gRPC-Web framing (HTTP 200, status in the body trailer frame) instead of a native application/grpc Trailers-Only head. The breaker refusal keeps X-Gateway-Error: circuit_breaker_open on that reply. docs/error_classification.md also records, without changing any value: the H3 pool's H3AttemptHandoff (NotDialed, PreWire, OnWire) decides connection_error, so a route deadline spent before dispatch is neither on the wire nor a connection failure (Edge #7023); a TCP relay end is read once as a typed RelayEndReason, and idle-window and half-close-cap endings settle the raw TCP circuit breaker as a success, as HBONE does (Edge #7084); and src/retry.rs now states that a backend 5xx with neither a class nor a gateway phase carries the backend_error metric label, as this vocabulary already records. Edge #7389 changes only src/proxy/mod.rs among this vocabulary's sources (the mesh_route_dispatch upstream-reference validator and the route-override target collection also read weighted_splits entries and legs), with no token, class, metric label or phase mapping change. A NodeWaypoint dispatch branch that its own destination policy refuses (Edge #7384) gets the same 403 rejection that policy produces for the route's own destination, with no new rejection phase. Leg-by-leg weighted splits (Edge #7389, issue #7387) reuse that refusal: a selected leg its own policy denies, and a request whose split was never resolved to a leg (the existing route_branch_unauthorized policy label), get the same 403 policy refusal, again with no new rejection phase. Between the previous record (0bf12260d69ff9ecef821b0c0e107b7d87ae8420) and this commit src/retry.rs, docs/size_limits.md and http_backend_failure_status_and_body are unchanged, so no token, ErrorClass value, metric label, class-to-token mapping or transcribed dispatch-failure status changes; src/diagnostic_ref.rs, src/proxy/mod.rs and docs/error_classification.md change. New raw rejection phase (Edge #7411, 7422ba222, issue #7407): grpc_post_required (GRPC_POST_REQUIRED_PHASE, added to the compiled-in gateway phase set) records the refusal of a native gRPC or gRPC-Web request whose method is not POST, made before any plugin. v0.9.20 wrote no transaction log for it; it is now logged once on HTTP/1.1, HTTP/2 and HTTP/3 with the status the wire carries (200 for native gRPC Trailers-Only and gRPC-Web). token_for_rejection_phase does not map it, so it has no token and is not a diagnostic-ref detail.rejection_phase value. gRPC-Web rejection references (Edge #7411): with FERRUM_DIAGNOSTIC_REFS=all a recorded gRPC-Web rejection (an HTTP 200 head whose non-zero grpc-status is only in the body trailer frame) now gets a reference that resolves with status 200, the status the client saw; v0.9.20 left a tokenless one unreferenced. The pre-plugin allowed_methods and route protocol admission refusals now record in the diagnostic slot the head the client gets (200 for native gRPC Trailers-Only and gRPC-Web) while their transaction log keeps the admission status (405 or 403), and HTTP/3 records them and its gRPC non-POST refusal before their heads are sent. schemas/diagnostic-ref/v1.schema.json already admits status 200 (100 to 599) and an open rejection.phase, and the DiagnosticRef* components in openapi.yaml are unchanged, so it is unaffected. WebSocket backend refusals (Edge #7414, e986e4c44, GHSA-7x2j-3389-2h35): a backend that answers the gateway's WebSocket upgrade with its own 3xx-5xx (direct TCP/TLS, admitted Unix socket, inner HBONE handshake, or a Sidecar mesh-mTLS Extended CONNECT) is relayed with its status, its headers under the backend-response strip and its body when it arrived complete with the head (at most 64 KiB), with no X-Gateway-Error and no error_class, on HTTP/1.1, HTTP/2 and HTTP/3. The circuit breaker, backend admission, metrics and the transaction log see the backend's status exactly as the HTTP path records it, so a 4xx is never a backend failure. v0.9.20 classified such an answer request_error and replied with the gateway 502 Backend WebSocket connection failed carrying X-Gateway-Error: backend_error. A 1xx or 2xx answer other than 101, an invalid Sec-WebSocket-Accept and a malformed response keep that 502. docs/error_classification.md states both changes. Edge #7415 (9597d6f98, mesh fail-closed markers for rejected Istio security resources) changes none of this vocabulary's sources; a request such a marker denies gets the refusal the published marker already produces (a deny-all or allow-nothing authorization policy, STRICT peer authentication, or a REGISTRY_ONLY Sidecar), with no new token, class or phase."
+    "commit": "b233be97f0ae2c694d4ecff37b365099bd729055",
+    "summary": "Edge main at this commit (the merge of Edge PR #7473, after Edge PR #7471), compared with v0.9.21; none of it is in a release yet. src/retry.rs, src/diagnostic_ref.rs, docs/error_classification.md and docs/size_limits.md are byte-identical to v0.9.21, and http_backend_failure_status_and_body in src/proxy/mod.rs is unchanged, so the nine X-Gateway-Error tokens, the 19 ErrorClass values, the 25 reserved HTTP metric labels, the class-to-token and phase-to-token mappings, the raw rejection phases and the transcribed dispatch-failure statuses are unchanged. Edge #7471 (63b6115264) restructures the HTTP/1.1 proxy response path in src/proxy/mod.rs; its header-map fast path writes the same X-Gateway-Error token and X-Gateway-Upstream-Status value as the existing path."
   }
 }

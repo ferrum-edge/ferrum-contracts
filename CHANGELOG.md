@@ -6,8 +6,30 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+## [contracts-edge-0.9.21] - 2026-11-22
+
+Contracts for published Ferrum Edge `v0.9.21`
+(`f9915358c8032214f4034a17c28cdf72d14006c3`). See the
+[release record](docs/releases/contracts-edge-0.9.21.md). The tag is an
+SSH-signed annotated tag under [docs/release-signing.md](docs/release-signing.md).
+Every Edge-owned schema accepts the same payloads as in
+`contracts-edge-0.9.20`; `service-manifest` v1 and `gitforgeops-resource` v1
+are tightened within their majors (see Changed).
+
 ### Added
 
+- `diagnostic-ref` fixtures `valid/grpc-post-required.json` and
+  `invalid/grpc-post-required-as-detail-phase.json` for the raw rejection
+  phase `grpc_post_required` that Edge `v0.9.21` adds (Edge #7411): a gRPC-Web
+  `GET` refused before any plugin, recorded with the HTTP `200` the client
+  saw and no token. `diagnostic-ref` v1 keeps its bytes.
+- Final release record with source paths, OpenAPI hash, vocabulary changes,
+  unchanged wire contracts and consumer adoption requirements.
+- `docs/plugin-config-admission.md` section for the plugin configuration
+  changes that ship in Edge `v0.9.21`: removed keys and values, the managed
+  JWKS source, weighted mesh splits, cleartext-target rules, the
+  external-identity trigger predicates, `access_control` authority binding,
+  duplicate-member body screening and the `oidc_relying_party` redirect rules.
 - `qualification/service-manifest/v1/derived-id-limit.json` records
   producer-derived boundary cases for the post-default resource ID limit
   that Alloy's `ServiceManifest::validate()` applies outside the
@@ -15,7 +37,7 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `fixtures/service-manifest/valid/plain-http.json` with no health check and
   correlation disabled: 241- and 242-character proxy IDs, without and (as the
   control) with `gateway.otel_endpoint`. Alloy main
-  (`db412da37564ffbe869e2b40530dbebf5afe7ac8`, unreleased) always generates
+  (`db412da37564ffbe869e2b40530dbebf5afe7ac8`) always generates
   `<proxy_id>-otel-tracing`, so 241 exports and 242 is refused in both pairs.
   Cases record `schema_valid` separately from `producer_exports`; they are
   not fixtures. `qualification/README.md` defines the layout and keeps
@@ -53,6 +75,63 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Refresh all five Edge vocabularies and the backup, egress and deployment
+  schema provenance from Edge `v0.9.21`. Pin `openapi.yaml` to SHA-256
+  `13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee`. The
+  facts the `main_branch_delta` records described since #60 ship in
+  `v0.9.21` and move into released values and provenance; each delta now
+  records Edge `main` at `b233be97f0ae2c694d4ecff37b365099bd729055` (the merge
+  of Edge PR #7473) against `v0.9.21`, with no contract-visible change.
+- Re-transcribe the plugin catalog from `v0.9.21`: the 82 registered names,
+  two removed names, classifications, priorities, protocols, response-body
+  producers, WebSocket framing plugins and every `PluginConfigBase` pointer,
+  config-required and scope conditional are unchanged. `http_logging`,
+  `udp_logging`, `statsd_logging`, `loki_logging` and `ws_frame_logging` move
+  from `optional_fail_open` to `keep_last_known_good` (Edge #7369), so every
+  log sink is `keep_last_known_good`. `http_logging`, `tcp_logging`,
+  `kafka_logging`, `loki_logging` and `udp_logging` add `on_ws_disconnect`;
+  `request_transformer` adds `on_final_request_body_with_context` and
+  `response_transformer` `finalize_client_visible_response_body` (Edge
+  #7469); the `compression` rationale names zstd.
+- `vocabularies/gateway-errors.json`: the nine tokens, 19 `ErrorClass` values,
+  25 metric labels, class-to-token mapping and dispatch-failure statuses are
+  unchanged. `circuit_breaker_open` drops the removed raw phase
+  `circuit_breaker` from its `rejection_phases` (Edge #7158). The
+  `connection_timeout`, `connection_refused`, `tls_error`, `port_exhaustion`,
+  `connection_reset` and `read_write_timeout` meanings record the phase-gated
+  substring fallback (Edge #7213); `dispatch_policy_rejected` adds the L4
+  route refusal (Edge #7185); `request_error` and `backend_error` record that
+  a backend's own `3xx`-`5xx` answer to a WebSocket upgrade is relayed with no
+  class or token (Edge #7414). The `docs/error_classification.md` provenance
+  note lists the new raw phases and the gRPC-Web reference and framing
+  changes. `diagnostic-ref` v1 is unaffected: its `detail.rejection_phase`
+  enum is unchanged, `status` admits 200 and `rejection.phase` is open.
+- `vocabularies/gateway-headers.json`: no header name, prefix, role,
+  direction, value set or availability changes. The `src/proxy/headers.rs`
+  provenance note records the shared WebSocket handshake strip set (Edge
+  #7048), the backend handshake response headers and `preserve_host_header`
+  on WebSocket backends (Edge #7414) and route-owned plugin assertions (Edge
+  #7064). `X-Ferrum-Original-Content-Encoding`, `X-Gateway-Error`,
+  `X-Ferrum-Diagnostic-Ref` (gRPC-Web stamping, Edge #7411), `ETag` (no tag
+  for viewer-key tokens, Edge #7413), `If-Match` (conditional credential
+  writes, Edge #7412; refused on `POST /api-specs` and
+  `DELETE /api-specs/{id}`, Edge #7459), `x-ferrum-peer-spiffe-id` and the
+  four mesh check-request assertions (per-destination checks, Edge #7384 and
+  #7389) record their `v0.9.21` behavior.
+- Re-read the conditional backup v1, backend egress v2, deployment snapshot
+  v2 and mutation acknowledgement v1 schemas and the egress vocabulary schema
+  v2 at `v0.9.21`: their OpenAPI components and cited sources are unchanged
+  (`components.headers.ResourceETag` adds only the viewer-key rule), so each
+  records an unchanged wire shape and repins its provenance.
+  `diagnostic-ref` v1 stays byte for byte; its OpenAPI components are
+  unchanged.
+- Update the README, versioning mapping, adoption, ownership, admin,
+  deployment and plugin-admission docs for `contracts-edge-0.9.21`.
+  `docs/admin-contracts.md` moves its Edge `main` notes (managed JWKS
+  material, the cross-namespace managed TLS delete guard, conditional
+  credential writes, primary-secret detail and ConfigSync protocol revision
+  6) to released `v0.9.21` facts. Recorded consumer pins and other owners'
+  availability are unchanged.
 - `schemas/service-manifest/v1.schema.json` aligns `gateway.otel_endpoint`
   with Edge's cleartext rule (#82). Alloy's export writes the endpoint into
   Edge's `otel_tracing` config without `allow_plaintext`, and Edge v0.9.19
@@ -229,7 +308,7 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `http_logging`, `udp_logging`, `statsd_logging`, `loki_logging` and
   `ws_frame_logging` move from `optional_fail_open` to
   `keep_last_known_good`, so an invalid enabled config for any log sink
-  rejects the candidate and the previous generation keeps serving.
+  rejects the new configuration and the previous generation keeps serving.
   `http_logging`, `tcp_logging`,
   `kafka_logging`, `loki_logging` and `udp_logging` add `on_ws_disconnect`
   to their active phases. Config changes: `jwks_auth` and
@@ -249,8 +328,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   #7384). Gateway errors: no token, `ErrorClass` value, metric label,
   mapping or phase changes. `config_schema_document`, every `provenance`
   entry and `edge_release` stay pinned to `v0.9.20`; no schema or fixture
-  changes. `docs/admin-contracts.md` records, as unreleased Edge `main`
-  facts, the `jwks_source` TLS-material rule and the stricter
+  changes. `docs/admin-contracts.md` records, as Edge `main` facts at that
+  commit, the `jwks_source` TLS-material rule and the stricter
   `/admin/tls/jwks` admission (Edge #7373, #7378), and ConfigSync protocol
   revision 5 (Edge #7371; revision 4 came with Edge #7338).
 - The Alloy provenance note on `schemas/service-manifest/v1.schema.json` now
@@ -290,7 +369,7 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   stay pinned to `v0.9.20`. No schema or fixture changes;
   `schemas/diagnostic-ref/v1.schema.json` is unchanged because Edge's
   `DiagnosticRef*` components are unchanged.
-- Record the unreleased Edge plugin config bounds (Edge PR #7081, squash
+- Record the Edge `main` plugin config bounds (Edge PR #7081, squash
   `0eced6cd412b6bd6c7c74867ab8fb37e5217d9c6`) as a `main_branch_delta` in
   `vocabularies/plugin-catalog.json`. On Edge `main`, `openapi.yaml` caps
   `AiResponseGuardConfig` `grpc.max_messages` at 1024 and
@@ -315,7 +394,7 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   rules. No plugin name, pointer, phase, protocol or
   failure policy changes. `config_schema_document` and `edge_release` stay
   pinned to `v0.9.20`, and no schema or fixture changes.
-- Record the unreleased Edge WebSocket backend handshake strip set (Edge PR
+- Record the Edge `main` WebSocket backend handshake strip set (Edge PR
   #7048, squash `ca06d94041d06d70b77785da057c697648d154a4`) as a
   `main_branch_delta` in `vocabularies/gateway-headers.json`. On Edge `main`,
   `src/proxy/headers.rs` adds `WEBSOCKET_HANDSHAKE_STRIP_HEADER_NAMES` and

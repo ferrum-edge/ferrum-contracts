@@ -387,6 +387,11 @@
     "instance_path": "/gateway_error",
     "keyword": "enum"
   },
+  "diagnostic-ref/invalid/grpc-post-required-as-detail-phase.json": {
+    "instance_path": "/detail/rejection_phase",
+    "keyword": "enum",
+    "top_keyword": "oneOf"
+  },
   "diagnostic-ref/invalid/malformed-ref.json": {
     "instance_path": "/ref",
     "keyword": "pattern"

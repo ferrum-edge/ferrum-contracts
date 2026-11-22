@@ -12,9 +12,9 @@ complete; that issue is closed. The later Alloy consumer work tracked by
 [ferrum-alloy#27](https://github.com/ferrum-edge/ferrum-alloy/issues/27) is
 complete; that issue closed on 2026-10-06.
 
-| Repository | Commit read (consumers: `main` on 2026-11-17; Edge: `v0.9.20` tag) | Pinned tag on `main` |
+| Repository | Commit read (consumers: `main` on 2026-11-17; Edge: `v0.9.21` tag) | Pinned tag on `main` |
 |---|---|---|
-| ferrum-edge | `e4a606a00352674daaef08636e3e359e6c48ba18` | producer: released `v0.9.20` source; maps to `contracts-edge-0.9.20`; `v0.9.19` (`510ce7121c3d9754110d330a30a3bd9b7a7b278e`) maps to `contracts-edge-0.9.19` at `d96b0292a0f87647f7552f25e0e5ce1b4ae30f8b`; `v0.9.18` was tagged but never published (no matching Contracts release); `v0.9.17` maps to `contracts-edge-0.9.17`; `v0.9.15` maps to `contracts-edge-0.9.15` at `6fb64c5dc2e014204c17609fc717d976f3b4589e`; `v0.9.14` (`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`) maps to `contracts-edge-0.9.14` at `ddbdd845733b7046c4393ac951011dafb774db33`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
+| ferrum-edge | `f9915358c8032214f4034a17c28cdf72d14006c3` | producer: released `v0.9.21` source; maps to `contracts-edge-0.9.21`; `v0.9.20` (`e4a606a00352674daaef08636e3e359e6c48ba18`) maps to `contracts-edge-0.9.20` at `39da322083044c2e92617209e62983c92387f0ad`; `v0.9.19` (`510ce7121c3d9754110d330a30a3bd9b7a7b278e`) maps to `contracts-edge-0.9.19` at `d96b0292a0f87647f7552f25e0e5ce1b4ae30f8b`; `v0.9.18` was tagged but never published (no matching Contracts release); `v0.9.17` maps to `contracts-edge-0.9.17`; `v0.9.15` maps to `contracts-edge-0.9.15` at `6fb64c5dc2e014204c17609fc717d976f3b4589e`; `v0.9.14` (`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`) maps to `contracts-edge-0.9.14` at `ddbdd845733b7046c4393ac951011dafb774db33`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
 | ferrum-anvil | `a1d1ce62508cb2162ea624bc8ece8aa9f7c92945` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/a1d1ce62508cb2162ea624bc8ece8aa9f7c92945/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
 | ferrum-alloy | `1a4cb58b68ceec00e048a711684887217a3c8211` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/1a4cb58b68ceec00e048a711684887217a3c8211/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
 | ferrum-nexus | `ed9e4eb8b63bcf1e8820010bd27243477ba2e631` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/ed9e4eb8b63bcf1e8820010bd27243477ba2e631/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20`, the service-manifest set included |
@@ -40,8 +40,10 @@ hosted signature/SLSA/SBOM/ABI facts are recorded in the
 [Edge v0.9.11 release](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.11),
 not in these contracts docs.
 
-The current release mapping is [`contracts-edge-0.9.20`](releases/contracts-edge-0.9.20.md),
-for published Edge `v0.9.20` at `e4a606a00352674daaef08636e3e359e6c48ba18`.
+The current release mapping is [`contracts-edge-0.9.21`](releases/contracts-edge-0.9.21.md),
+for published Edge `v0.9.21` at `f9915358c8032214f4034a17c28cdf72d14006c3`.
+Historical [`contracts-edge-0.9.20`](releases/contracts-edge-0.9.20.md) maps to
+Edge `v0.9.20` at `e4a606a00352674daaef08636e3e359e6c48ba18`.
 Historical [`contracts-edge-0.9.19`](releases/contracts-edge-0.9.19.md) maps to
 Edge `v0.9.19` at `510ce7121c3d9754110d330a30a3bd9b7a7b278e`.
 Historical [`contracts-edge-0.9.17`](releases/contracts-edge-0.9.17.md) maps to
@@ -63,6 +65,35 @@ Historical 0.9.11 remains at `390edbd5b2485af0988e02f7827fde778d76ae0a`, and
 historical r2 remains at `591c73a3f965fdab440c3a76b2707accdf491ba5`.
 
 ## Published admin and shared v1 adoption boundary
+
+### contracts-edge-0.9.21 removed plugin keys, log sinks and gRPC-Web references
+
+Consumers targeting Edge `v0.9.21` must stop generating the plugin config keys
+and values that release removes (the `hmac_auth` `ferrum-hmac-v1` profile,
+`ip_restriction` `mode`, the `jwks_auth` `audience` alias, the `mcp_gateway`
+and `workload_metrics` aliases, the `response_caching` key toggles,
+`tcp_connection_throttle` `cleanup_interval_seconds` and
+`ai_semantic_firewall` `privacy.log_raw_text`). A gateway-dialed cleartext
+auth endpoint must name a loopback IP literal, not `localhost`, and a
+cleartext `request_mirror` target that is not a loopback IP literal needs
+`allow_plaintext: true`. Consumer-name lists and the trigger `consumer`
+predicate match mapped Consumers only; an external principal needs the new
+`external_identity` and `external_identity_authority` predicates, which a
+ConfigSync revision 5 or earlier peer refuses. See
+[plugin-config-admission.md](plugin-config-admission.md#edge-v0921-plugin-configuration-changes).
+Every plugin `config_schema.pointer` and `PluginConfigBase` conditional is
+unchanged. The catalog records `keep_last_known_good` for every log sink, so
+an invalid enabled log-sink config now blocks a reload instead of being
+skipped, and new lifecycle phases for five log sinks and both transformers.
+
+With `FERRUM_DIAGNOSTIC_REFS=all`, a gRPC-Web rejection can now carry
+`X-Ferrum-Diagnostic-Ref` without an `X-Gateway-Error` token, and its
+reference resolves with `status: 200`. A backend's own `3xx`-`5xx` answer to a
+WebSocket upgrade reaches the client with no `X-Gateway-Error`. The
+consumer credential routes accept `If-Match`, and viewer-key tokens get no row
+`ETag`. Edge-owned schemas accept the same payloads as in
+`contracts-edge-0.9.20`, and `diagnostic-ref` v1 keeps its bytes. Each
+consumer still needs its own pin/copy/checksum change and qualification.
 
 ### contracts-edge-0.9.20 closed plugin configs and gRPC refusal framing
 

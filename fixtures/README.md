@@ -124,11 +124,28 @@ timestamps, duration bucket and the H3 fixture's configured backend origin are
 illustrative values retained from the tagged OpenAPI example, not captured
 traffic. Both fixtures represent `all`-mode references with no gateway token.
 
+## Edge v0.9.21 refresh fixtures
+
+The two new fixtures below transcribe diagnostic emission fields from
+`ferrum-edge/ferrum-edge` tag `v0.9.21`, full commit
+`f9915358c8032214f4034a17c28cdf72d14006c3`. Historical fixture bytes retain
+their original source identity.
+
+| Fixture | Source and transcription |
+|---|---|
+| `diagnostic-ref/valid/grpc-post-required.json` | `valid/query-trigger-admission.json` with only `ref`, `created_at`, `expires_at`, `status` (`200`) and `detail.rejection.phase` (`grpc_post_required`) changed. `src/proxy/mod.rs` refuses a native gRPC or gRPC-Web request whose method is not `POST` before any plugin and logs it through `log_pre_backend_rejected_request` with `GRPC_POST_REQUIRED_PHASE` and the status the wire carries (`reject_wire_status`: `200` for native gRPC Trailers-Only and gRPC-Web), so `detail.backend_target` and `error_class` are null and nothing is dispatched. `src/diagnostic_ref.rs` lists the phase among the gateway rejection phases (`source: gateway`); `src/retry.rs` `token_for_rejection_phase` maps it to no token, so `gateway_error` and `detail.rejection_phase` are null. `docs/error_classification.md` ("Gateway diagnostic references") says that with `FERRUM_DIAGNOSTIC_REFS=all` a recorded gRPC-Web rejection is stamped and its reference resolves with `status: 200` (Edge #7411, issue #7407). The fixture is a gRPC-Web `GET` on HTTP/1.1. |
+
+The invalid fixture changes exactly one field; its instance path and keyword
+are in `invalid-expectations.json`. The owner has no JSON example for this raw
+phase. Reference, namespace, proxy and duration bucket are illustrative values
+retained from the earlier fixture, not captured traffic.
+
 ## Invalid fixtures
 
 | Fixture | Why it must fail |
 |---|---|
 | `diagnostic-ref/invalid/query-trigger-admission-as-detail-phase.json` | From `valid/query-trigger-admission.json`: change only `/detail/rejection_phase` from null to `query_trigger_admission`; the raw label has no token mapping, so the closed `enum` rejects it with top-level `oneOf`. |
+| `diagnostic-ref/invalid/grpc-post-required-as-detail-phase.json` | From `valid/grpc-post-required.json`: change only `/detail/rejection_phase` from null to `grpc_post_required`; the raw label has no token mapping, so the closed `enum` rejects it with top-level `oneOf`. |
 | `diagnostic-ref/invalid/gateway-closed-h3-upload-as-detail-phase.json` | From `valid/gateway-closed-h3-upload.json`: change only `/detail/rejection_phase` from null to `gateway_closed_h3_upload`; the raw label has no token mapping, so the closed `enum` rejects it with top-level `oneOf`. |
 | `vocabulary-gateway-headers/invalid/mesh-identity-availability-without-v.json` | From `valid/mesh-identity-assertions.json`: change only `/headers/0/availability` from `v0.9.19` to `0.9.19`; `pattern` requires an Edge tag. |
 | `vocabulary-plugin-catalog/invalid/edge-0.9.19-unknown-failure-policy.json` | From `valid/edge-0.9.19-metadata.json`: change only `/plugins/0/failure_policy` from `keep_last_known_good` to `fail_open`; `enum` rejects the unknown policy. |

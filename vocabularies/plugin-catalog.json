@@ -2,13 +2,13 @@
   "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-plugin-catalog/v1.schema.json",
   "vocabulary": "plugin-catalog",
   "version": 1,
-  "edge_release": "v0.9.20",
-  "description": "Index of every built-in Ferrum Edge plugin at v0.9.20: name, registration failure policy, documented priority, phases and protocol surface, and a pointer to the plugin's config schema in Edge's published openapi.yaml. Build-time custom plugins are not listed.",
+  "edge_release": "v0.9.21",
+  "description": "Index of every built-in Ferrum Edge plugin at v0.9.21: name, registration failure policy, documented priority, phases and protocol surface, and a pointer to the plugin's config schema in Edge's published openapi.yaml. Build-time custom plugins are not listed.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.20",
-      "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
       "path": "src/plugins/mod.rs",
       "symbols": [
         "BUILTIN_PLUGIN_REGISTRATIONS",
@@ -23,8 +23,8 @@
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.20",
-      "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
       "path": "src/plugins/builtin_parity.rs",
       "symbols": [
         "BUILTIN_PLUGIN_PARITY_META",
@@ -43,8 +43,8 @@
     },
     {
       "repo": "ferrum-edge/ferrum-edge",
-      "ref": "v0.9.20",
-      "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
       "path": "openapi.yaml",
       "symbols": [
         "components.schemas.PluginConfigBase"
@@ -52,15 +52,15 @@
       "fields": [
         "config_schema"
       ],
-      "note": "v0.9.19 retains the 82 registered types, removed names and PluginConfigBase pointers. Configuration components include the production-launch plugin hardening, multi-location key_auth, SPIFFE forwarding, external-identity access rules, telemetry redaction, resource bounds and plugin association preconditions documented in the owner upgrade guide. Registration failure policy and parity metadata are transcribed from the same tag; referenced config schemas are not copied here. v0.9.20 retains the 82 registered types, removed names, registration failure policies, parity metadata and every PluginConfigBase pointer, config-required and scope conditional; src/plugins/builtin_parity.rs and the PluginConfigBase block are byte-identical to v0.9.19. Referenced configuration components close nested objects (Edge #6967 and #6972, issue #6616): MeshAuthzPolicyScope variants and target_refs attachments reject unknown members, and each attachment requires name, plus namespace on service and gateway kinds and no namespace on gateway_class; MeshAuthzConfig node_waypoint_route_upstreams entries and targets are closed; WorkloadMetricsConfig metrics, tag_overrides entries and their operation, direction_emit and tracing provider envelopes and config are closed, with operation members exclusive to their type and set_expr requiring exactly one of cel and expression. Built-in plugins now declare the always-dispatched lifecycle hooks they implement (Edge #6975, issue #6615); the catalog's active_phases already agree with every declaration and gain no field."
+      "note": "v0.9.19 retains the 82 registered types, removed names and PluginConfigBase pointers. Configuration components include the production-launch plugin hardening, multi-location key_auth, SPIFFE forwarding, external-identity access rules, telemetry redaction, resource bounds and plugin association preconditions documented in the owner upgrade guide. Registration failure policy and parity metadata are transcribed from the same tag; referenced config schemas are not copied here. v0.9.20 retains the 82 registered types, removed names, registration failure policies, parity metadata and every PluginConfigBase pointer, config-required and scope conditional; src/plugins/builtin_parity.rs and the PluginConfigBase block are byte-identical to v0.9.19. Referenced configuration components close nested objects (Edge #6967 and #6972, issue #6616): MeshAuthzPolicyScope variants and target_refs attachments reject unknown members, and each attachment requires name, plus namespace on service and gateway kinds and no namespace on gateway_class; MeshAuthzConfig node_waypoint_route_upstreams entries and targets are closed; WorkloadMetricsConfig metrics, tag_overrides entries and their operation, direction_emit and tracing provider envelopes and config are closed, with operation members exclusive to their type and set_expr requiring exactly one of cel and expression. Built-in plugins now declare the always-dispatched lifecycle hooks they implement (Edge #6975, issue #6615); the catalog's active_phases already agree with every declaration and gain no field. v0.9.21 retains the 82 registered types and the two removed names. Five registration failure policies change (Edge #7369, issue #7144): http_logging, udp_logging, statsd_logging, loki_logging and ws_frame_logging move from optional_fail_open to keep_last_known_good, so every log sink is keep_last_known_good and an invalid enabled log-sink config rejects the candidate while the previous generation keeps serving. src/plugins/builtin_parity.rs adds on_ws_disconnect to the active_phases of http_logging, tcp_logging, kafka_logging, loki_logging and udp_logging (Edge #7369), on_final_request_body_with_context to request_transformer and finalize_client_visible_response_body to response_transformer (Edge #7469, GHSA-pq95-952r-2x32), and names zstd in the compression protocol_rationale; classification, priorities, protocols, response-body producers and WebSocket framing plugins are unchanged. The PluginConfigBase block changes only descriptions, so every config_schema pointer, config-required and scope conditional is unchanged. Referenced configuration components remove deprecated keys and add the managed JWKS source, weighted mesh splits, the external-identity trigger predicates and the other rules listed in docs/plugin-config-admission.md. The v0.9.21 file spells the fourteen chargeback price bounds maximum: 1.0e+288 (Edge #7412), so a YAML 1.1 loader reads them as numbers; v0.9.20 spelled them 1.0e288."
     }
   ],
   "config_schema_document": {
     "repo": "ferrum-edge/ferrum-edge",
-    "ref": "v0.9.20",
-    "commit": "e4a606a00352674daaef08636e3e359e6c48ba18",
+    "ref": "v0.9.21",
+    "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
     "path": "openapi.yaml",
-    "sha256": "8fa7232d96e1094578dee03cfa1966a4fdd9df77b8e027a9625f56ce6bfd355e",
+    "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
     "openapi": "3.1.0",
     "note": "Each config_schema.pointer is a JSON Pointer into this exact file. The schemas are OpenAPI 3.1 (JSON Schema 2020-12 dialect) and may $ref other components in the same document. They apply to `config` only when the plugin config is enabled. They are referenced, not copied, in this release; see docs/adoption.md (follow-ups)."
   },
@@ -124,10 +124,11 @@
       "name": "http_logging",
       "classification": "public",
       "priority": 9100,
-      "failure_policy": "optional_fail_open",
+      "failure_policy": "keep_last_known_good",
       "active_phases": [
         "log",
-        "on_stream_disconnect"
+        "on_stream_disconnect",
+        "on_ws_disconnect"
       ],
       "protocols": [
         "http",
@@ -151,7 +152,8 @@
       "failure_policy": "keep_last_known_good",
       "active_phases": [
         "log",
-        "on_stream_disconnect"
+        "on_stream_disconnect",
+        "on_ws_disconnect"
       ],
       "protocols": [
         "http",
@@ -175,7 +177,8 @@
       "failure_policy": "keep_last_known_good",
       "active_phases": [
         "log",
-        "on_stream_disconnect"
+        "on_stream_disconnect",
+        "on_ws_disconnect"
       ],
       "protocols": [
         "http",
@@ -558,7 +561,7 @@
       "protocols": [
         "http"
       ],
-      "protocol_rationale": "HTTP response compression and request decompression (gzip, brotli)",
+      "protocol_rationale": "HTTP response compression and request decompression (gzip, brotli, zstd)",
       "response_body_producer": true,
       "config_schema": {
         "document": "openapi.yaml",
@@ -752,7 +755,8 @@
       "failure_policy": "keep_last_known_good",
       "active_phases": [
         "before_proxy",
-        "transform_request_body_with_context"
+        "transform_request_body_with_context",
+        "on_final_request_body_with_context"
       ],
       "protocols": [
         "http",
@@ -774,7 +778,8 @@
       "failure_policy": "keep_last_known_good",
       "active_phases": [
         "after_proxy",
-        "transform_response_body"
+        "transform_response_body",
+        "finalize_client_visible_response_body"
       ],
       "protocols": [
         "http",
@@ -1568,7 +1573,7 @@
       "name": "ws_frame_logging",
       "classification": "public",
       "priority": 9050,
-      "failure_policy": "optional_fail_open",
+      "failure_policy": "keep_last_known_good",
       "active_phases": [
         "on_ws_policy_close",
         "prepare_ws_frame_delivery",
@@ -1630,10 +1635,11 @@
       "name": "udp_logging",
       "classification": "public",
       "priority": 9160,
-      "failure_policy": "optional_fail_open",
+      "failure_policy": "keep_last_known_good",
       "active_phases": [
         "log",
-        "on_stream_disconnect"
+        "on_stream_disconnect",
+        "on_ws_disconnect"
       ],
       "protocols": [
         "http",
@@ -1654,7 +1660,7 @@
       "name": "statsd_logging",
       "classification": "public",
       "priority": 9075,
-      "failure_policy": "optional_fail_open",
+      "failure_policy": "keep_last_known_good",
       "active_phases": [
         "log",
         "on_stream_disconnect",
@@ -1679,10 +1685,11 @@
       "name": "loki_logging",
       "classification": "public",
       "priority": 9155,
-      "failure_policy": "optional_fail_open",
+      "failure_policy": "keep_last_known_good",
       "active_phases": [
         "log",
-        "on_stream_disconnect"
+        "on_stream_disconnect",
+        "on_ws_disconnect"
       ],
       "protocols": [
         "http",
@@ -1992,7 +1999,7 @@
   "main_branch_delta": {
     "repo": "ferrum-edge/ferrum-edge",
     "ref": "main",
-    "commit": "0f0988e56c6c8c54038a849016605889957519a7",
-    "summary": "Edge main at this commit (the merge of Edge PR #7420, after the fixes for the 2026-11-16 audit), compared with v0.9.20; none of it is in a release yet. BUILTIN_PLUGIN_REGISTRATIONS and REMOVED_PLUGIN_REGISTRATIONS in src/plugins/mod.rs keep the 82 registered names and the two removed names. Five registration failure policies change (Edge #7369, 8115f1664, issue #7144): http_logging, udp_logging, statsd_logging, loki_logging and ws_frame_logging move from optional_fail_open to keep_last_known_good, so every log sink (stdout_logging, http_logging, tcp_logging, udp_logging, kafka_logging, loki_logging, statsd_logging, ws_logging, ws_frame_logging) is keep_last_known_good: an invalid enabled log-sink config fails file-mode load and ferrum-edge validate, is never quarantined in database mode, and a reload or data-plane update that carries it is rejected while the previous generation keeps serving. Every other failure policy is unchanged. REMOVED_PLUGIN_REGISTRATIONS gains only a doc comment (Edge #7370, d9d7636be, issue #7113) naming this catalog's removed_plugins as the contract the list backs. Edge #7389 (0bf12260d, issue #7387) adds to src/plugins/mod.rs only two doc-hidden Plugin trait methods (mesh_route_weighted_splits and mesh_route_weighted_splits_for_request, both defaulting to None); no registration, removed name or failure policy changes. Neither src/plugins/mod.rs nor src/plugins/builtin_parity.rs changes after 0bf12260d69ff9ecef821b0c0e107b7d87ae8420. In src/plugins/builtin_parity.rs the compression protocol_rationale reads \"HTTP response compression and request decompression (gzip, brotli, zstd)\" (v0.9.20: \"(gzip, brotli)\"; Edge ef76969e2), and the active_phases of http_logging, tcp_logging, kafka_logging, loki_logging and udp_logging gain on_ws_disconnect (Edge #7369): those sinks now emit the shared WebSocket session-end transaction record stdout_logging already wrote (a second record per upgraded session, with the session's error_class, latency_total_ms as the session duration and metadata websocket.timestamp_disconnected). Classification, priority, protocols, response-body producers and WebSocket framing plugins are unchanged. The PluginConfigBase conditional is unchanged, so every config_schema pointer, config-required and scope conditional still resolves and holds; its trigger description adds that non-admin reads, audit diffs and the configuration export withhold every header, query and cookie value operand, and its config description (Edge #7369) says log sinks are KeepLastKnownGood while OptionalFailOpen covers metrics, tracing and alerting instrumentation. openapi.yaml at this commit has SHA-256 c6cdb07a421831ce2f0c036bc134945062028a8ffd4b5d1bd98e83b99c090a7b and info.version 0.9.20 (v0.9.20 has 0.2.0; info.version now tracks the crate version); config_schema_document stays pinned to the v0.9.20 file. Plugin configuration components a config_schema pointer reaches that change on main. Removed keys, which the closed configs now reject as unknown keys (Edge f8071ec0e drops the removed-key migration diagnostics, so compression's disable_on_etag is also a plain unknown key): HmacAuthConfig loses the ferrum-hmac-v1 signing profile and allow_unsafe_replayable_v1 (signing_profile is ferrum-hmac-v2 or rfc9421, and replay_scope is required for every profile); IpRestrictionConfig loses the deprecated, decision-neutral mode; JwksAuthConfig loses the providers[].audience alias (use audiences); McpGatewayConfig loses discovery.hide_denied_items (policy.hide_denied_tools is the only hide-denied knob), the allow_immediately and expose values of discovery.on_new_tool and discovery.on_schema_change, and the startup alias of sessions.initialize_upstreams and servers[].initialize_strategy; ResponseCachingConfig loses cache_key_include_query and cache_key_include_consumer (the query and the caller partition are always bound); TcpConnectionThrottleConfig loses cleanup_interval_seconds (a counter entry is removed inline when its permit release takes it to zero, with no background sweep); WorkloadMetricsConfig loses the disable_span_reporting and disableSpanReporting aliases of span_reporting_disabled and the lightstep accessTokenEnv alias of access_token_env; AiSemanticFirewallConfig loses the reserved log_raw_text key. Narrowed or new rules: JwksAuthConfig gains providers[].jwks_source (Edge #7373, 374297514, and #7378, 5fe9474a1; issue #7277), a reference to an admin-managed JWKS record stored through /admin/tls/jwks (string, pattern ^managed://; managed://jwks/<id>#jwks, also managed://jwks/<id>, managed://<id>#jwks and the #jwks-json and #jwks_json fragment aliases). It is a fourth key source: the provider oneOf gains a required [jwks_source] branch, so exactly one of jwks_uri, discovery_url, jwks or jwks_source is configured, and jwks_max_stale_seconds applies to it (it bounds how long the last-read keys survive an unreadable store). OidcRelyingPartyConfig gains providers[].jwks_source and a third provider oneOf branch, required [authorization_endpoint, token_endpoint, jwks_source], which admits jwks_uri and discovery_url only as null; the discovery_url and jwks_uri branches admit jwks_source only as null. Runtime-only rules, stated in the descriptions: constructing an enabled config refuses another scheme, a fragment or collection that selects other material, ? options and an invalid record id. The record presence and usability checks apply to enabled configs only: an enabled plugin write, POST /batch or POST /restore row that references a record that is missing, of another kind or without a usable signing key is refused with 400, and POST/PUT /api-specs refuses such an enabled x-ferrum-plugins entry with 422 (Edge #7378); file mode refuses to start when an enabled config's record is missing and database mode warns. A disabled config is stored without these checks, so it may be staged before its JWKS record exists. The field is registered TLS material, so a namespace-bounded operator token cannot introduce one. DELETE /admin/tls/jwks/{id} returns 409 while an enabled jwks_auth or oidc_relying_party config or another inventory reference names the record; a disabled config does not block the deletion. A present record with a usable key is fresh; a deleted, wrong-kind, oversized, malformed or keyless record withdraws every key and its consumers refuse tokens, like an expired remote set. MeshAuthzConfig gains node_waypoint_route_branches (Edge #7384, b210d99e7, issue #7383): readOnly and populated by mesh mode (the owner docs list it among the six injection-only keys that operators do not author), an array of closed entries with required namespace, proxy_id and destinations, where destinations holds 1 to 64 closed candidates, the route's own destination first, each naming exactly one of upstream_id or backend_host plus backend_port (1-65535). On a NodeWaypoint VirtualService route whose mesh_route_dispatch rules can select another destination, mesh_authz judges every candidate against its own destination policy before dispatch, and the destination a request finally reaches is admitted only on its own verdict. Edge #7389 (0bf12260d, issue #7387) lists a weighted split the route dispatches leg by leg through its legs, never as a candidate of its own, and each node_waypoint_route_branches entry gains two optional booleans, both default false and populated by mesh mode: weighted_split (the route reaches some candidates only through weighted-split leg selection, so verdicts are recorded even when no AuthorizationPolicy is loaded and a split no leg was selected for is refused) and own_is_weighted_split (the route's own destination, the first entry, is a weighted split that is never judged or admitted; each selected leg's own verdict decides). The entries stay closed and the 64-destination bound is unchanged. MeshRouteDispatchConfig gains weighted_splits (Edge #7389, 0bf12260d, issue #7387): an array of at most 64 closed entries, each with a required upstream_id (non-empty string) and required legs (1 to 32 closed entries, each with a required non-empty upstream_id, a required integer weight from 1 to 4294967295, and an optional originate_tls boolean, default false). rules drops its property-level minItems and the schema's required [rules] becomes an anyOf, so a config needs a non-empty rules array or a non-empty weighted_splits array and an instance may resolve weighted splits only. Runtime rules, stated in the descriptions and not schema keywords: a split upstream_id is unique per instance, and a leg's upstream_id is distinct within its split and is never itself a weighted split. When the destination the dispatch group finally selects is one of the listed upstream_ids (a matched rule's destination.upstream_id, or the route's own upstream_id when no rule overrides it), a dispatch finalizer the plugin cache installs after the last mesh_route_dispatch instance picks one leg by an exact, interleaved weighted cycle and publishes it as the route override, so the leg's own upstream, DestinationRule projection and authorization apply; an instance whose execution trigger skipped the request resolves none of its splits, and a request is never dispatched through the split upstream itself. A selected leg with originate_tls true is dialed over https with its upstream's backend TLS settings; any other leg keeps the route's own scheme. Every split upstream_id and leg upstream_id is an upstream reference exactly like a rule's destination.upstream_id, and like those references the checks apply to enabled configs only: admin writes and config loads refuse an enabled mesh_route_dispatch config that names a missing or foreign-namespace one, and an upstream a split or leg of an enabled config names cannot be deleted or removed by an API-spec replacement. A disabled config is stored and loaded without these checks, so it may be staged before its upstreams exist, and it does not protect the upstreams it names from deletion or API-spec removal. NodeWaypoint mesh slice preparation writes the table for a VirtualService split that names a DestinationRule-governed Service or external host, and a carried route that already carries weighted_splits refuses the slice. RequestMirrorConfig gains allow_plaintext (boolean or null, default false; Edge #7340, 4ce14551f, issue #6659): a cleartext mirror (mirror_protocol http, the default) to a mirror_host that is not a loopback IP literal (127.0.0.0/8 or ::1) is refused at construction unless allow_plaintext is true; the rule is in the descriptions, not a schema keyword. ApiChargebackSinkConfig clickhouse.tls gains an if/then rule (Edge #7340, fee791677): verify_hostname false requires a string ca_file or insecure_skip_verify true, and the constructor refuses the combination. AccessLogFilterExpression (stdout_logging filter.expression) adds the strict latency_above_ms op beside min_latency_ms, so a mesh Telemetry response.duration > N compiles to a strict bound (Edge #7245). MeshAuthzConfig and WorkloadMetricsConfig trusted_hbone_assertors both reference the new shared MeshTrustedHboneAssertors component (Unicode-whitespace trimming, asserts entries must be spiffe:// IDs, an assertor carrying :// must be a spiffe:// ID, and a null asserts or scope counts as absent). MeshAuthzConfig trust_domain_aliases and MeshAuthzPrincipalMatch trust_domain follow SPIFFE-ID section 2.1 (maxLength 255, pattern ^[a-z0-9._-]+$; v0.9.20 had 240 bytes and refused a leading or trailing . - or _). AiStreamRouterConfig admits a non-null anthropic_version only for anthropic providers. ApiChargebackConfig, ApiChargebackRenderSchema, ApiChargebackSinkConfig and ApiChargebackSinkLogSchema forbid transforms on the billing projections. WorkloadMetricsConfig custom tag names may not collide with a gateway-published metadata key or a built-in plugin's metadata namespace. OidcRelyingPartyConfig rejects a non-string private_key_jwt_alg or private_key_jwt_kid (Edge #7086) and always trusts the redirect_uri's own origin for post-login redirects. Oauth2IntrospectionConfig and OidcRelyingPartyConfig refuse a client_secret containing a ${NAME} placeholder at admission. OpenapiValidatorConfig error_truncate_chars defaults to 256 (v0.9.20: 1024; the effective cap was already min(value, 256)). AiRateLimiterConfig, GraphqlConfig, GrpcMethodRouterConfig, RateLimitingConfig, UdpRateLimitingConfig, WsRateLimitingConfig and RequestDeduplicationConfig no longer advertise a static OpenAPI default for their Redis key prefix; the runtime still derives it from FERRUM_NAMESPACE. Description-only changes: HttpLoggingConfig, UdpLoggingConfig, StatsdLoggingConfig and WsFrameLoggingConfig now state the KeepLastKnownGood registration, and HttpLoggingConfig and UdpLoggingConfig the session-end record (Edge #7369); GrpcWebConfig (grpc-status-details-bin is always exposed), LoadTestingConfig (serving nodes screen the 127.0.0.1 dial target with the backend egress policy, Edge #7063), AiSemanticCacheConfig (a gateway-generated correlation_id and the staged x-ratelimit-* values stay out of the key), AiTranscriptAuditConfig (the legacy ai_cache_* telemetry names are no longer listed) and CompressionConfig. Edge #7081 (0eced6cd412b6bd6c7c74867ab8fb37e5217d9c6): AiResponseGuardConfig grpc.max_messages gains maximum 1024 and grpc.max_message_bytes gains maximum 67108864 (64 MiB, equal to the max_scan_bytes ceiling), both immutable deployment maximums, so the schema refuses larger values. The AiTranscriptAuditConfig grpc description says enrollment uses the backend path the proxy binds, reduced to its trailing /Service/Method, and that the plugin-writable grpc_full_method metadata never outranks it. Edge #7080 (bc2d60fde7c29987d252e369be1f1cc311471df5) narrows plain http on URLs the gateway itself dials from localhost or a loopback address to a loopback IP literal (127.0.0.0/8 or [::1]); the name localhost no longer qualifies there. JwksAuthConfig: the providers[].jwks_uri and discovery_url patterns no longer admit http://localhost, and the loader applies the same rule; a jwks_uri learned from discovery must keep the discovery_url origin, so it inherits the rule. Oauth2IntrospectionConfig: a credentialed client_auth.method admits an http introspection_endpoint, or with none configured an http discovery_url, only for a loopback IP-literal host; client_auth.method none admits the configured introspection_endpoint, or with none configured the discovery_url, only when its host is a loopback IP literal, whatever its scheme; a discovered introspection_endpoint may use http only for a loopback IP-literal host and must keep the discovery_url host, scheme and effective port. OidcRelyingPartyConfig: configured URLs the gateway dials (discovery_url, token_endpoint, userinfo_endpoint, jwks_uri) admit http only for a loopback IP literal, while configured browser-followed URLs (authorization_endpoint, end_session_endpoint, redirect_uri, post_logout_redirect_uri) and the issuer keep the localhost development case. Every endpoint selected from discovery may use https on any origin, or http only for a loopback IP literal on the http discovery_url's own origin; one that fails these checks makes discovery refuse the document. client_auth.method none is admitted only for a token endpoint whose host is a loopback IP literal: the configured token_endpoint, or with none configured the discovery_url, is checked at load, and a discovered token_endpoint that breaks the rule makes discovery refuse the document. A discovered revocation_endpoint that fails the general checks refuses the document; under none, one that passes them but is not a loopback IP literal is dropped with a warning, and logout then skips refresh-token revocation. AiTranscriptAuditConfig sink: an http endpoint_url still requires allow_insecure_loopback: true and must then be a loopback IP literal; the loader decides cleartext from the parsed URL scheme. Of the Edge PRs merged after 0bf12260d69ff9ecef821b0c0e107b7d87ae8420, #7410, #7412 and #7417 change components this catalog reaches and #7413 does not. PluginTriggerMatch, the leaf of the PluginTrigger that PluginConfigBase trigger references (Edge #7417, da5e350c2, GHSA-rxwj-x6c6-f4j5), gains two leaf predicates. external_identity (a PluginTriggerIdentityMatch) names an unmapped external identity (a jwks_auth, oidc_relying_party, oauth2_introspection, ldap_auth or soap_ws_security principal), present only when no gateway Consumer is mapped. external_identity_authority (array, 1 to 64 items, each a string matching ^[0-9A-Fa-f]{64}$) names the verifying authority: the opaque realm digest committed with the identity at the authentication boundary, the value opa exposes as input.consumer.realm.authority. The list is an OR, comparison is case-insensitive, and a principal without a committed authority never matches; combined with external_identity under all it keeps an equal subject from another provider out of an exemption. Both are post-authentication only, with the stream limitation and the refusals (authentication plugins, stream-only plugins) of consumer. The consumer predicate now matches the mapped Consumer username only (v0.9.20 fell back to the external authenticated identity), so an unmapped external identity that spells a Consumer's username no longer matches it, and a trigger written as not: {consumer: [...]} no longer skips for such a principal. PluginTriggerMatch stays closed, so a config that uses either new predicate is refused by v0.9.20 and by an Edge build on ConfigSync protocol revision 5 or earlier; Edge moves ConfigSync to revision 6 for it (docs/admin-contracts.md). Consumer-name lists match mapped Consumers only (Edge #7417, GHSA-rxwj-x6c6-f4j5), stated in descriptions with no keyword change: WafPluginConfig global_exemptions.consumers, WafRule conditions.consumers, WafExemptions consumers, OpenapiValidatorConfig bypass.consumers, RateLimitingRuleConfig consumers (scope: consumers) and AiRateLimiterConfig consumer_limits; an unmapped external identity never matches, even one that spells a listed username. Per-caller limiter keys keep a mapped Consumer (consumer:<username>) and an unmapped external principal (external:<mechanism>:<authority>:<identity>) apart in rate_limiting, ws_rate_limiting (the WsRateLimitingConfig scope consumer description says so), tcp_connection_throttle, graphql, grpc_method_router and ai_rate_limiter, so two realms that issue one subject no longer share a bucket. a2a_gateway, ai_semantic_firewall, ai_prompt_shield and ai_rate_limiter treat a JSON body with duplicate members as uninspectable (Edge #7417, GHSA-49cr-v28q-9hgp); that is runtime behavior with no config component change. McpGatewayOpenApiOperation path (Edge #7410, 0545183b3, GHSA-26x8-8jq5-f73p and issue #7406): the description adds that the operation's public path must sit under the matched proxy's listen path on a segment boundary whether or not strip_listen_path is set (a call outside it is refused with JSON-RPC -32603 and nothing is dispatched, and on an exact = or regex ~ route every bridged call is refused), and that it must not be able to fall inside endpoint.path's reserved subtree (ASCII case-insensitive like the runtime claim; a {name} segment matches any endpoint segment and repeats of one name must match the same text): the plugin constructor rejects such an operation, and a substituted path inside the scope is refused with JSON-RPC -32602 before dispatch. These are runtime rules, not schema keywords. ApiChargebackConfig and ApiChargebackSinkConfig (Edge #7412, 5f181df09, issue #7408) spell their fourteen price bounds maximum: 1.0e+288 instead of 1.0e288. The value is the same for a YAML 1.2 Core Schema loader, but a YAML 1.1 resolver (libyaml, Psych, PyYAML) reads the unsigned spelling as the string \"1.0e288\", which makes those maximum keywords strings. The v0.9.20 file this catalog pins still has the unsigned spelling in the same fourteen places, so a consumer that loads it with a YAML 1.1 resolver must read those bounds as 1e288. Not catalog facts: ws_frame_logging frame records and the ws_rate_limiting and WAF WebSocket warnings now spell direction client_to_backend and backend_to_client (Edge #7144), a log-record change outside every config component; the configuration already used that spelling. Edge 5a43ce2e0 (#7340) spells the WebSocket relay size-policy warning directions the same way. Mesh translation of an Istio VirtualService http[].mirror over cleartext to a host that is not a loopback IP literal omits the mirror and reports it as a deferred field (Edge #7340, ae29c6413); it never sets allow_plaintext. Edge #7413 (45403deab, GHSA-jjvr-vvwv-8qmh) makes only a token whose scope claim grants charges:collect a billing collector on GET /charges, so only its delivered responses count toward the two-hand-off rule that lets an idle api_chargeback row past stale_entry_ttl_seconds be evicted; that is the /charges path, outside every config component. Edge #7410 also makes POST/PUT /api-specs reject an x-ferrum-mcp document with any operation path, bridged or not, that can fall inside the MCP endpoint scope under any effective server base, or whose operations times server bases exceed 65,536 paths or 16 MiB of path text, and merges an embedded x-ferrum-plugins mcp_gateway endpoint key by key, rejecting an endpoint.path other than the generated one with 400; that is the /api-specs path, outside every config component. The other openapi.yaml components that change after v0.9.20 (AcmeOrderRequest, AcmeRenewRequest, ApiSpecBackupItem, ApiSpecParseError, ApiSpecSummary, ApiSpecValidationError, ApiSpecsBackupSection, AuditEvent, BackendTlsConfig, ChargebackSinkInstanceStatus, ConfigExportResponse, ConnectedMeshNode, CpDpTrustReloadSnapshot, DatabaseMtlsDnsAdmissionFence, DpConfigFreshnessSnapshot, HealthResponse, JwksTrustHealthSnapshot, KafkaSinkFailure, KafkaSinkSnapshot, LogSinkRecordLossSnapshot, ManagedTlsJwksRequest, McpToolCatalog, MeshTrafficPolicyTls, OverloadSnapshot, Proxy, RetryConfig, RuntimeLogsSnapshot, RuntimeReplayAuthoritySnapshot, Upstream, UpstreamPortOverride; among them Proxy loses pool_max_requests_per_connection and, from Edge #7370, its allowed_ws_origins description says file-mode loads refuse * and non-origin entries; ManagedTlsJwksRequest (Edge #7373) admits jwks_json only with at least one usable signing key, at most 1 MiB and 256 keys and no duplicate usable kid; JwksTrustHealthSnapshot counts active managed JWKS stores; after 0bf12260 ConfigExportResponse names FERRUM_ADMIN_CONFIG_EXPORT_FINGERPRINT_SECRET as the fingerprint key and CpDpTrustReloadSnapshot withholds active_generation from viewer-key and namespace-bounded tokens) and, after 0bf12260, components.headers.ResourceETag and components.parameters.IfMatch are outside every component a plugin config_schema pointer reaches."
+    "commit": "b233be97f0ae2c694d4ecff37b365099bd729055",
+    "summary": "Edge main at this commit (the merge of Edge PR #7473, after Edge PR #7471), compared with v0.9.21; none of it is in a release yet. openapi.yaml is byte-identical to v0.9.21 (SHA-256 13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee), so every configuration component, the PluginConfigBase conditional and every config_schema pointer, config-required and scope conditional are unchanged. src/plugins/builtin_parity.rs is byte-identical, and BUILTIN_PLUGIN_REGISTRATIONS and REMOVED_PLUGIN_REGISTRATIONS in src/plugins/mod.rs are unchanged: the same 82 registered names, two removed names and failure policies, and the same classification, priorities, active phases, protocols, response-body producers and WebSocket framing plugins. Edge #7471 (63b6115264, HTTP/1.1 proxy and key_auth streaming hot paths) changes src/plugins/mod.rs only internally: lazily initialized request-context state, request-header passthrough helpers and plugin capability flags. No built-in plugin's registration, parity metadata or configuration changes."
   }
 }

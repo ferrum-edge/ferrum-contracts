@@ -8,14 +8,170 @@ rules and runtime refusals, not new envelope fields, vocabulary values or
 schema majors. Namespace-scoped material-reference rules are in
 [admin-contracts.md](admin-contracts.md#admin-authorization-and-write-rules).
 
-`contracts-edge-0.9.20` pins Edge `v0.9.20` `openapi.yaml`
-(`8fa7232d96e1094578dee03cfa1966a4fdd9df77b8e027a9625f56ce6bfd355e`), which
-ships every change below. The `v0.9.19` rules below are unchanged in it; only
-the configuration components named under
-[Closed nested plugin configs](#closed-nested-plugin-configs) differ from the
-`v0.9.19` document. Further plugin changes are in the pinned OpenAPI and the
+`contracts-edge-0.9.21` pins Edge `v0.9.21` `openapi.yaml`
+(`13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee`), which
+ships every change below. Earlier sections record the release that introduced
+each rule; they still hold in `v0.9.21` except where
+[Edge v0.9.21 plugin configuration changes](#edge-v0921-plugin-configuration-changes)
+says otherwise. Further plugin changes are in the pinned OpenAPI and the
 owner's
-[upgrade guide](https://github.com/ferrum-edge/ferrum-edge/blob/e4a606a00352674daaef08636e3e359e6c48ba18/docs/upgrade_guide.md).
+[upgrade guide](https://github.com/ferrum-edge/ferrum-edge/blob/f9915358c8032214f4034a17c28cdf72d14006c3/docs/upgrade_guide.md#upgrading-to-0921).
+
+## Edge v0.9.21 plugin configuration changes
+
+Source: Edge `v0.9.21` at `f9915358c8032214f4034a17c28cdf72d14006c3`
+(`openapi.yaml`, `src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`,
+`docs/upgrade_guide.md` "Upgrading to 0.9.21"). Edge `v0.9.20` accepts every
+removed key below and refuses every new field.
+
+Every built-in plugin keeps its name, `config_schema.pointer` and
+`PluginConfigBase` conditional; `PluginConfigBase` changes only its
+descriptions. The plugin catalog records these registration and parity
+changes:
+
+- Every log sink (`stdout_logging`, `http_logging`, `tcp_logging`,
+  `udp_logging`, `kafka_logging`, `loki_logging`, `statsd_logging`,
+  `ws_logging`, `ws_frame_logging`) is `keep_last_known_good` (Edge PR
+  [#7369](https://github.com/ferrum-edge/ferrum-edge/pull/7369), issue
+  #7144). `http_logging`, `udp_logging`, `statsd_logging`, `loki_logging`
+  and `ws_frame_logging` were `optional_fail_open` in `v0.9.20`. An invalid
+  enabled log-sink config now fails file-mode load and `ferrum-edge
+  validate`, is never quarantined in database mode, and a reload or data-plane
+  update that carries it is rejected while the previous generation keeps
+  serving.
+- `http_logging`, `tcp_logging`, `kafka_logging`, `loki_logging` and
+  `udp_logging` add `on_ws_disconnect`: they write the WebSocket session-end
+  record `stdout_logging` already wrote. `request_transformer` adds
+  `on_final_request_body_with_context` and `response_transformer`
+  `finalize_client_visible_response_body`; see the duplicate-member rule
+  below.
+
+### Removed keys and values
+
+Each of these is now an unknown key or value, refused at admission and when
+stored configuration loads (Edge PR
+[#7338](https://github.com/ferrum-edge/ferrum-edge/pull/7338), merge
+[`ff6eb0cb5305911d761f461a9630565fa0d42d92`](https://github.com/ferrum-edge/ferrum-edge/commit/ff6eb0cb5305911d761f461a9630565fa0d42d92)).
+A product must stop generating them before targeting `v0.9.21`:
+
+- `hmac_auth`: `signing_profile: ferrum-hmac-v1` and
+  `allow_unsafe_replayable_v1`. `signing_profile` is `ferrum-hmac-v2` or
+  `rfc9421`, and `replay_scope` is required for every profile.
+- `ip_restriction`: `mode`, which never changed an admission decision.
+- `jwks_auth`: `providers[].audience`; list the value in `audiences`.
+- `mcp_gateway`: `discovery.hide_denied_items` (`policy.hide_denied_tools` is
+  the only hide-denied setting); the `allow_immediately` and `expose` values of
+  `discovery.on_new_tool` and `discovery.on_schema_change`; and the `startup`
+  value of `sessions.initialize_upstreams` and `servers[].initialize_strategy`.
+- `response_caching`: `cache_key_include_query` and
+  `cache_key_include_consumer`. The query and the caller partition are always
+  part of the key.
+- `tcp_connection_throttle`: `cleanup_interval_seconds`.
+- `workload_metrics`: `disable_span_reporting` and `disableSpanReporting` (use
+  `span_reporting_disabled`) and the Lightstep `accessTokenEnv` (use
+  `access_token_env`).
+- `ai_semantic_firewall`: `privacy.log_raw_text`.
+- `compression`: `disable_on_etag` is refused as a plain unknown key; the
+  removed-key migration diagnostic is gone.
+
+### New fields and narrowed rules
+
+- **Managed JWKS source** (Edge PRs
+  [#7373](https://github.com/ferrum-edge/ferrum-edge/pull/7373) and
+  [#7378](https://github.com/ferrum-edge/ferrum-edge/pull/7378), issue
+  #7277). `jwks_auth` and `oidc_relying_party` `providers[].jwks_source` is a
+  `managed://` reference to a JWKS record stored through `/admin/tls/jwks`
+  (`managed://jwks/<id>#jwks`). In `jwks_auth` it is a fourth key source: the
+  provider `oneOf` gains a branch, so exactly one of `jwks_uri`,
+  `discovery_url`, `jwks` or `jwks_source` is set. In `oidc_relying_party` a
+  third branch requires `authorization_endpoint`, `token_endpoint` and
+  `jwks_source`. The field is registered TLS material; its record checks and
+  delete guard are in
+  [admin-contracts.md](admin-contracts.md#admin-authorization-and-write-rules).
+- **Weighted mesh splits** (Edge PR
+  [#7389](https://github.com/ferrum-edge/ferrum-edge/pull/7389), issue
+  #7387). `mesh_route_dispatch` gains `weighted_splits`: at most 64 closed
+  entries, each a split `upstream_id` with 1 to 32 closed legs (`upstream_id`,
+  integer `weight` from 1 to 4294967295, optional `originate_tls`). A config
+  needs a non-empty `rules` or a non-empty `weighted_splits`. Split and leg
+  `upstream_id`s are upstream references like a rule's
+  `destination.upstream_id`, checked for enabled configs only. `mesh_authz`
+  gains the read-only `node_waypoint_route_branches` (Edge PR
+  [#7384](https://github.com/ferrum-edge/ferrum-edge/pull/7384)), which mesh
+  mode populates and operators do not author.
+- **Cleartext targets.** `request_mirror` gains `allow_plaintext` (default
+  `false`): a cleartext mirror to a host that is not a loopback IP literal is
+  refused without it (Edge PR #7340, issue #6659). URLs the gateway itself
+  dials in `jwks_auth`, `oauth2_introspection`, `oidc_relying_party` and the
+  `ai_transcript_audit` sink admit `http` only for a loopback IP literal
+  (`127.0.0.0/8` or `[::1]`), no longer for the name `localhost` (Edge PR
+  [#7080](https://github.com/ferrum-edge/ferrum-edge/pull/7080)). Under
+  `client_auth.method: none`, OIDC and OAuth2 introspection admit only a
+  loopback IP-literal token or introspection endpoint. `api_chargeback_sink`
+  refuses `clickhouse.tls.verify_hostname: false` without `ca_file` or
+  `insecure_skip_verify: true`.
+- **Trigger predicates and Consumer lists** (Edge PR
+  [#7417](https://github.com/ferrum-edge/ferrum-edge/pull/7417),
+  GHSA-rxwj-x6c6-f4j5). Plugin triggers gain `external_identity` and
+  `external_identity_authority` (1 to 64 strings of 64 hex digits, the
+  verifying authority digest). The `consumer` predicate, WAF
+  `global_exemptions.consumers` and rule `conditions.consumers`,
+  `openapi_validator` `bypass.consumers`, `rate_limiting` `scope: consumers`
+  rules and `ai_rate_limiter` `consumer_limits` match mapped Consumers only;
+  an unmapped external identity never matches, even one that spells a listed
+  username. Per-caller limiter keys keep external principals apart from
+  Consumers and from other realms. A config that uses either new predicate is
+  refused by `v0.9.20` and by any peer on ConfigSync revision 5 or earlier.
+- **`access_control` authority binding** (Edge PR
+  [#7465](https://github.com/ferrum-edge/ferrum-edge/pull/7465),
+  GHSA-r378-r7j8-2qm3). Allowed and disallowed external-identity entries gain
+  an optional `authority` (64 hex digits). An allow entry with it matches only
+  an identity committed with that digest; a deny entry with it also matches an
+  identity with no committed digest unless its `mechanism` is a known
+  mismatch.
+- **Body screening.** `request_transformer` and `response_transformer`
+  instances with JSON body rules refuse a body with duplicate object member
+  names (`400` for a request, `502` for a backend response) and skip one
+  leading UTF-8 byte order mark in a request body (Edge PR
+  [#7469](https://github.com/ferrum-edge/ferrum-edge/pull/7469),
+  GHSA-pq95-952r-2x32). `a2a_gateway`, `ai_rate_limiter`, `ai_prompt_shield`
+  and `ai_semantic_firewall` screen JSON request bodies for duplicate members
+  (Edge PR #7417, GHSA-49cr-v28q-9hgp). With
+  `discovery.rewrite_agent_card_urls` on for the `jsonrpc` binding,
+  `a2a_gateway` refuses a `POST` to `endpoint.path` that it cannot classify as
+  JSON-RPC (Edge PR
+  [#7468](https://github.com/ferrum-edge/ferrum-edge/pull/7468),
+  GHSA-q25c-76f4-fp7h).
+- **`oidc_relying_party` redirects** (Edge PR
+  [#7467](https://github.com/ferrum-edge/ferrum-edge/pull/7467),
+  GHSA-6rwj-gc4r-3jm9). `post_login_default_path` refuses ASCII control
+  characters, a backslash and a whitespace-only value. Accepted post-login
+  targets are emitted in normalized URL form, and one carrying a control
+  character or backslash is refused. A non-string `private_key_jwt_alg` or
+  `private_key_jwt_kid` is refused.
+- **Other refusals.** A `client_secret` containing a `${NAME}` placeholder is
+  refused at admission in `oauth2_introspection` and `oidc_relying_party`.
+  `ai_stream_router` admits a non-null `anthropic_version` only for
+  `anthropic` providers. `workload_metrics` custom tag names may not reuse a
+  gateway-published metadata key or a built-in plugin's metadata namespace.
+  The `mcp_gateway` OpenAPI operation path must sit under the proxy's listen
+  path and outside `endpoint.path`'s reserved subtree (Edge PR
+  [#7410](https://github.com/ferrum-edge/ferrum-edge/pull/7410)).
+  `ai_response_guard` `grpc.max_messages` is at most 1024 and
+  `grpc.max_message_bytes` at most 67108864 (Edge PR
+  [#7081](https://github.com/ferrum-edge/ferrum-edge/pull/7081)).
+  `api_chargeback` and `api_chargeback_sink` forbid transforms on billing
+  projections.
+- **Schema spelling and defaults.** `mesh_authz` `trust_domain_aliases` and
+  principal `trust_domain` follow SPIFFE-ID section 2.1 (at most 255
+  characters, `^[a-z0-9._-]+$`). `mesh_authz` and `workload_metrics`
+  `trusted_hbone_assertors` share the `MeshTrustedHboneAssertors` component.
+  `stdout_logging` `filter.expression` adds the strict `latency_above_ms`
+  operation. `openapi_validator` `error_truncate_chars` defaults to 256, the
+  value already enforced. The Redis-backed limiters no longer advertise a
+  static key-prefix default; the runtime still derives it from
+  `FERRUM_NAMESPACE`. The fourteen chargeback price bounds are spelled
+  `1.0e+288` (Edge PR #7412), so a YAML 1.1 loader reads them as numbers.
 
 ## Closed nested plugin configs
 

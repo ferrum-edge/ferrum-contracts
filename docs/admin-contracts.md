@@ -18,6 +18,7 @@ configuration admission changes reached through the plugin catalog's pinned
 | [0.9.17](releases/contracts-edge-0.9.17.md) | `v0.9.17`, `669c574c1d1e88e84dccb26a8159939e6694644d` | Wire shapes unchanged; [bounded-token authorization](#admin-authorization-and-write-rules) |
 | [0.9.19](releases/contracts-edge-0.9.19.md) | `v0.9.19`, `510ce7121c3d9754110d330a30a3bd9b7a7b278e` | Wire shapes unchanged; [material-reference default-deny](#admin-authorization-and-write-rules) and the plugin-config [`expected_proxy_ids`](#authoritative-verification-and-replacement) precondition |
 | [0.9.20](releases/contracts-edge-0.9.20.md) | `v0.9.20`, `e4a606a00352674daaef08636e3e359e6c48ba18` | Wire shapes and admin rules unchanged: `src/admin/` and the backup, egress and deployment OpenAPI components are byte-identical to `v0.9.19`; [closed nested plugin configs](plugin-config-admission.md#closed-nested-plugin-configs) |
+| [0.9.21](releases/contracts-edge-0.9.21.md) | `v0.9.21`, `f9915358c8032214f4034a17c28cdf72d14006c3` | Wire shapes unchanged; managed JWKS material, cross-namespace managed TLS delete guard, conditional credential writes and primary-secret detail ([write rules](#admin-authorization-and-write-rules)); ConfigSync protocol revision 6 |
 
 ## Admin authorization and write rules
 
@@ -77,10 +78,10 @@ classified set in
 [`src/admin/crud/scoped_references.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud/scoped_references.rs);
 the refusal is `tls_reference_refusal` in
 [`src/admin/crud.rs`](https://github.com/ferrum-edge/ferrum-edge/blob/d5417cd723120995666a7a14c6a4bc9022ba86a9/src/admin/crud.rs).
-These rules are unchanged in Edge `v0.9.20`; the current catalog pins its OpenAPI.
+These rules are unchanged in Edge `v0.9.20` and `v0.9.21`; the current catalog
+pins the `v0.9.21` OpenAPI.
 
-Edge `main` at `0f0988e56c6c8c54038a849016605889957519a7` adds two fields to
-the TLS material above; they are not in a release yet. Edge PR
+Edge `v0.9.21` adds two fields to the TLS material above. Edge PR
 [#7373](https://github.com/ferrum-edge/ferrum-edge/pull/7373) (issue #7277,
 owner commit
 [`374297514e3b9e7ec6dc7782fe16c7e8eabddd6f`](https://github.com/ferrum-edge/ferrum-edge/commit/374297514e3b9e7ec6dc7782fe16c7e8eabddd6f))
@@ -99,11 +100,10 @@ configuration is stored without the check, so it may be staged before its
 JWKS record exists. `DELETE /admin/tls/jwks/{id}` returns `409` while an
 enabled `jwks_auth` or `oidc_relying_party` configuration, or another
 inventory reference, names the record; a disabled configuration does not
-block the deletion. The plugin catalog's `main_branch_delta` records the config schema
-changes.
+block the deletion. [plugin-config-admission.md](plugin-config-admission.md#edge-v0921-plugin-configuration-changes)
+records the config schema changes.
 
-The same Edge `main` commit also changes these admin rules; they are not in a
-release yet either:
+Edge `v0.9.21` also changes these admin rules:
 
 - **Managed TLS deletion across namespaces** (Edge PR
   [#7412](https://github.com/ferrum-edge/ferrum-edge/pull/7412), issue #7394,
@@ -126,8 +126,9 @@ release yet either:
   optional `If-Match` with the Consumer's own `ETag` from
   `GET /consumers/{id}`. Any change to the Consumer since that read returns
   `412` and writes nothing; omitting the header keeps the write
-  unconditional. The `If-Match` entry in the gateway-headers
-  `main_branch_delta` records it.
+  unconditional. The gateway-headers `If-Match` entry records it, together
+  with the `400` that `POST /api-specs` and `DELETE /api-specs/{id}` return
+  for any `If-Match` (Edge PR #7459).
 - **Primary-secret detail** (Edge PR
   [#7413](https://github.com/ferrum-edge/ferrum-edge/pull/7413),
   GHSA-crqx-mp2f-v8c8 and GHSA-jjvr-vvwv-8qmh, owner commit
@@ -348,8 +349,8 @@ check that the counts add up or that `weakest_policy` is the combination of
 the listed policies; consumers that rely on them must recompute.
 
 The reports come from JWT-authenticated data planes running the CP's exact
-build (ConfigSync protocol revision 3 from Edge `v0.9.14` through `v0.9.20`;
-see below for Edge `main`), but each is the data plane's own
+build (ConfigSync protocol revision 3 from Edge `v0.9.14` through `v0.9.20`,
+revision 6 in `v0.9.21`; see below), but each is the data plane's own
 description, not a cryptographic attestation of its host. The set is a
 point-in-time view: a data plane partitioned from the CP keeps serving its
 cached config without being listed, and one using another CP is never seen.
@@ -357,8 +358,7 @@ Another namespace's streams never appear. On a CP the endpoint discloses the
 namespace's DP `node_id`s, connection times and reported policies to
 namespace-authorized `viewer` tokens.
 
-Edge `main` at `0f0988e56c6c8c54038a849016605889957519a7`, not in a release
-yet, uses ConfigSync protocol revision 6 (build identity
+Edge `v0.9.21` uses ConfigSync protocol revision 6 (build identity
 `<crate version>+configsync.r6`). Revision 4 came with Edge PR
 [#7338](https://github.com/ferrum-edge/ferrum-edge/pull/7338) (owner commit
 [`ad7063e1cc0a688e98fe049fafccc7ee1a836b32`](https://github.com/ferrum-edge/ferrum-edge/commit/ad7063e1cc0a688e98fe049fafccc7ee1a836b32),
