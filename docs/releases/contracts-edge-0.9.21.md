@@ -29,8 +29,10 @@ When the sources were read, Edge `main` was at
 16 commits after the tag. The plugin catalog, gateway-headers and
 gateway-errors vocabularies record it as their `main_branch_delta`: of their
 sources only `src/proxy/headers.rs`, `src/proxy/mod.rs` and
-`src/plugins/mod.rs` change there (Edge PR #7471, HTTP/1.1 hot paths), and no
-header, error, plugin registration or configuration value changes.
+`src/plugins/mod.rs` change there (Edge PR #7471, HTTP/1.1 hot paths), plus
+`docs/upgrade_guide.md` outside its cited sections (Edge PR #7473, publication
+wording), and no header, error, plugin registration or configuration value
+changes.
 
 The tagged `openapi.yaml` has SHA-256
 `13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee`.
@@ -66,8 +68,8 @@ Edge-owned schema accepts the same payloads as in `contracts-edge-0.9.20`.
 - **Gateway errors.** The 19 `ErrorClass` values, nine header tokens, 25
   reserved HTTP metric labels, class-to-token mapping and transcribed
   dispatch-failure statuses remain the same, and
-  `http_backend_failure_status_and_body` and `docs/size_limits.md` are
-  unchanged. `token_for_rejection_phase` no longer maps the raw phase
+  `http_backend_failure_status_and_body` and the cited `docs/size_limits.md`
+  section are unchanged. `token_for_rejection_phase` no longer maps the raw phase
   `circuit_breaker` (Edge #7158), so `circuit_breaker_open` lists only its own
   phase. Class meanings record the phase-gated substring fallback (Edge
   #7213), the L4 route refusal (Edge #7185) and the relayed WebSocket upgrade
@@ -102,13 +104,22 @@ Edge-owned schema accepts the same payloads as in `contracts-edge-0.9.20`.
   snapshot v2, mutation acknowledgement v1 and the egress vocabulary schema v2
   are re-read at the tag and repin their source metadata.
   `src/admin/conditional_snapshots.rs`, `preconditions.rs` and
-  `deployment_mutations.rs`, `docs/admin_backup_restore.md`,
-  `docs/deployment_mutations.md` and the cited symbols in `backup.rs`,
+  `deployment_mutations.rs`, `docs/deployment_mutations.md`, the cited
+  "Conditional snapshots and restore" section of `docs/admin_backup_restore.md`
+  and the cited symbols in `backup.rs`,
   `src/config/deployment_mutation.rs`, `db_backend.rs`, `db_loader.rs`,
   `mongo_store.rs` and `types.rs` are unchanged. `deployment_mutation.rs`
   drops the removed `pool_max_requests_per_connection` proxy column from its
   replaceable columns; the snapshot schema does not enumerate row columns.
-  Their wire rules remain unchanged.
+  Their wire rules remain unchanged. Restore preflight is stricter (issue
+  #7218): `POST /restore`, a confirmed conditional restore included, refuses
+  with `400` an `api_specs` section whose `section_version` is not `"2"` and an
+  API-spec row with an empty `resource_hash` (`src/admin/backup.rs`
+  `validate_restore_api_specs_section_with_total_limit`,
+  `docs/admin_backup_restore.md` "Response Format", `ApiSpecsBackupSection`
+  and `ApiSpecBackupItem`). A backup that omits the `api_specs` section keeps
+  its documented behavior. The conditional metadata and namespace token are
+  unchanged.
 - **Diagnostic-ref freeze.** The diagnostic OpenAPI components are unchanged
   from `v0.9.20`. The new raw phases are open `rejection.phase` labels, and a
   gRPC-Web reference's `status: 200` is in range, so, following

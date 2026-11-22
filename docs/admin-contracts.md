@@ -120,6 +120,13 @@ Edge `v0.9.21` also changes these admin rules:
   holds every listed namespace's config admission lease until the record is
   removed, so configuration writes wait meanwhile; a first write into a
   namespace that has no rows can still race it.
+- **Stricter API-spec restore sections** (issue #7218). `POST /restore`,
+  conditional or not, refuses with `400` before any write an `api_specs`
+  section whose `section_version` is not `"2"` and an API-spec row whose
+  `resource_hash` is empty; `resource_hash` is exactly 64 lowercase hex
+  characters. A backup that omits the `api_specs` section keeps its
+  documented behavior, and the conditional metadata and namespace token are
+  unchanged.
 - **Conditional credential writes** (Edge PR #7412, issue #7393). `PUT`,
   `POST` and `DELETE /consumers/{consumer_id}/credentials/{cred_type}` and
   `DELETE /consumers/{consumer_id}/credentials/{cred_type}/{index}` take an

@@ -22,7 +22,7 @@ owner's
 Source: Edge `v0.9.21` at `f9915358c8032214f4034a17c28cdf72d14006c3`
 (`openapi.yaml`, `src/plugins/mod.rs`, `src/plugins/builtin_parity.rs`,
 `docs/upgrade_guide.md` "Upgrading to 0.9.21"). Edge `v0.9.20` accepts every
-removed key below and refuses every new field.
+removed key listed below and refuses every new field.
 
 Every built-in plugin keeps its name, `config_schema.pointer` and
 `PluginConfigBase` conditional; `PluginConfigBase` changes only its
@@ -71,8 +71,9 @@ A product must stop generating them before targeting `v0.9.21`:
   `span_reporting_disabled`) and the Lightstep `accessTokenEnv` (use
   `access_token_env`).
 - `ai_semantic_firewall`: `privacy.log_raw_text`.
-- `compression`: `disable_on_etag` is refused as a plain unknown key; the
-  removed-key migration diagnostic is gone.
+
+`compression` `disable_on_etag`, which `v0.9.20` already refused with a
+removed-key diagnostic, is now refused as a plain unknown key.
 
 ### New fields and narrowed rules
 

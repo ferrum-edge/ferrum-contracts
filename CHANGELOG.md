@@ -122,7 +122,11 @@ are tightened within their majors (see Changed).
   v2 and mutation acknowledgement v1 schemas and the egress vocabulary schema
   v2 at `v0.9.21`: their OpenAPI components and cited sources are unchanged
   (`components.headers.ResourceETag` adds only the viewer-key rule), so each
-  records an unchanged wire shape and repins its provenance.
+  records an unchanged wire shape and repins its provenance. Restore
+  preflight now refuses an `api_specs` section whose `section_version` is not
+  `"2"` and an empty API-spec `resource_hash` with `400`, a confirmed
+  conditional restore included (issue #7218); `docs/admin-contracts.md`
+  records it.
   `diagnostic-ref` v1 stays byte for byte; its OpenAPI components are
   unchanged.
 - Update the README, versioning mapping, adoption, ownership, admin,
