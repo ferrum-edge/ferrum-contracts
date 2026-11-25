@@ -24,8 +24,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   remapping/timing and conditional-PUT merged-document `409` checks, API-spec
   `x-ferrum-plugins` / `RawValue` / external-`$ref` admission refusals, restore
   `x-ferrum-proxy.plugins` validation / `unknown_clear_outcome` / `data_integrity`
-  `500` mapping, and `HEAD` parity on `/health`, `/live` and `/status`), with
-  zero changes to plugin registrations, plugin config schemas reachable from
+  `500` mapping, `POST /admin/tls/rotate/all` `accepted_surfaces` on SVID reload
+  failure, and `HEAD` parity on `/health`, `/live` and `/status`), with zero changes to plugin registrations, plugin config schemas reachable from
   `PluginConfigBase`, header names/roles, or error tokens/classes.
   `edge_release`, `provenance` and `config_schema_document` in the three
   vocabulary files remain pinned to published `v0.9.21`; all schema and fixture

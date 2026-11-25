@@ -162,19 +162,24 @@ published `v0.9.21`; the versioned schemas in this repository —
 keep unchanged wire shapes):
 
 - **MongoDB `api_specs` BSON limits and restore validation**. Edge `v0.9.21`
-  already preflight-checked incoming `api_specs` documents against MongoDB's
-  ~15 MiB BSON limit before opening the transaction on `POST /api-specs`,
-  `PUT /api-specs/{id}` (`413` on unconditional writes, `409` on conditional
-  `PUT /api-specs/{id}?conditional=true`), and conditional
-  `POST /restore?confirm=true` (where `v0.9.21` ran the check after taking
-  local generation pins/leases and mapped the failure to the generic `503`).
-  Edge `main` moves the conditional `POST /restore?confirm=true` (with
-  `If-Match`) preflight check ahead of local generation pins and mTLS admission
-  leases and maps the typed size error to `413`, and adds an in-transaction
-  check on conditional `PUT /api-specs/{id}?conditional=true` after merging
-  retained unknown BSON fields, returning `409` (`durable: "not_committed"`,
-  `live: "unconfirmed"`, `recovery_cleanup_authorized: false`) if the merged
-  document exceeds the limit even when the incoming spec passed preflight (see
+  already checked `api_specs` documents against MongoDB's ~15 MiB BSON limit
+  only after `bson::to_vec` succeeded: documents over ~15 MiB that serialized
+  within BSON's 16 MiB ceiling returned `413` on unconditional `POST`/`PUT /api-specs`,
+  `409` on conditional `PUT /api-specs/{id}?conditional=true`, and `503` on
+  conditional `POST /restore?confirm=true` (where the check ran after local
+  generation pins and leases), whereas documents whose binary fields exceeded
+  BSON's 16 MiB serialization ceiling failed serialization first (`500` on
+  unconditional `POST`/`PUT`, `503` `durable: "not_committed"` on conditional
+  `PUT`, and `503` on conditional `POST /restore`). Edge `main` adds a raw-blob
+  size pre-check and classifies BSON serialization size failures so all
+  oversized cases reach `413` or `409`; moves the conditional
+  `POST /restore?confirm=true` (with `If-Match`) preflight check ahead of local
+  generation pins and mTLS admission leases and maps the typed size error to
+  `413`; and adds an in-transaction check on conditional
+  `PUT /api-specs/{id}?conditional=true` after merging retained unknown BSON
+  fields, returning `409` (`durable: "not_committed"`, `live: "unconfirmed"`,
+  `recovery_cleanup_authorized: false`) if the merged document exceeds the limit
+  even when the incoming spec passed preflight (see
   [deployment-contracts.md](deployment-contracts.md#explicit-acknowledgement-and-retained-recovery-state)).
   `POST /restore` also validates `x-ferrum-proxy.plugins` association
   declarations on `api_specs` items with the same fail-closed parser
@@ -207,9 +212,11 @@ keep unchanged wire shapes):
   (`400 InvalidJson`, where `v0.9.21` used `serde_json::from_slice` without a
   parsed-node ceiling), enforces a 120-container document nesting depth ceiling
   (`400 InvalidJson`/`InvalidYaml`), enforces aggregate normalized (128 MiB)
-  and compressed (64 MiB) snapshot caps (`422 SchemaTooLarge`), and refuses
-  repeated, malformed or disallowed response `Content-Type` headers with
-  `422 SchemaReference`.
+  and compressed (64 MiB) snapshot caps (`422 SchemaTooLarge`), and extends
+  `v0.9.21`'s disallowed-media-type allowlist with duplicate `Content-Type`
+  header rejection and full media-type syntax validation (including parameters),
+  returning `422 SchemaReference` for disallowed, malformed or repeated
+  `Content-Type` headers.
 - **API-spec conditional `GET` caching, content negotiation and read
   backpressure**. `GET /api-specs/{id}` and `GET /api-specs/by-proxy/{proxy_id}`
   read every `Accept` and `If-None-Match` header field line (`v0.9.21` read only
@@ -220,19 +227,26 @@ keep unchanged wire shapes):
   `"<content_hash>-<target>-from-<stored>-v1"` when converted across formats).
   Exact `If-None-Match` matches (and `*` for a verbatim format within the
   decompression cap) short-circuit to `304` from metadata without consuming
-  codec slots or per-connection buffered response budget; cross-format
-  `If-None-Match: *` defers `304` until bounded conversion validation succeeds
-  and can still return `500` on conversion failure/oversize. Both ordinary reads
-  and cross-format `If-None-Match: *` return `503` with `Retry-After: 1` when
-  the per-connection buffered response budget is saturated.
-- **`If-Match` refusal precedence and Admin OpenAPI alignment**. Known mutating
-  routes enforce the required admin role (returning `403`) before refusing an
-  unsupported `If-Match` header or unsupported deployment mode — for example, a
-  `viewer` sending `If-Match` on `POST /backend-capabilities/refresh` now
-  receives `403` where `v0.9.21`'s shared header refusal returned `400`, while
-  an authorized caller on an unsupported route still receives `400`. `/health`,
-  `/live` and `/status` expose `HEAD` parity in `openapi.yaml`,
-  `GET /consumers/{id}/verification` documents its existing
+  codec slots or per-connection buffered response budget; a stored spec already
+  known to exceed the decompression cap returns `500` before the connection
+  budget is checked. Cross-format `If-None-Match: *` defers `304` until bounded
+  conversion validation succeeds, and once conversion begins a malformed spec
+  or oversized output returns `500` even if the connection budget runs out.
+  When the per-connection buffered response budget is the blocking condition
+  (before decode/conversion or during pre-decode reservation growth), ordinary
+  reads and cross-format `If-None-Match: *` return `503` with `Retry-After: 1`.
+- **`If-Match` refusal precedence, TLS rotation reporting and Admin OpenAPI
+  alignment**. Known mutating routes enforce the required admin role (returning
+  `403`) before refusing an unsupported `If-Match` header or unsupported
+  deployment mode — for example, a `viewer` sending `If-Match` on
+  `POST /backend-capabilities/refresh` now receives `403` where `v0.9.21`'s
+  shared header refusal returned `400`, while an authorized caller on an
+  unsupported route still receives `400`. When `POST /admin/tls/rotate/all`
+  queues independent material-set watcher reloads and gateway SVID reload then
+  fails, Edge `main` includes those already-queued surfaces in
+  `accepted_surfaces` on the error response body (where `v0.9.21` returned the
+  SVID error alone). `/health`, `/live` and `/status` expose `HEAD` parity in
+  `openapi.yaml`, `GET /consumers/{id}/verification` documents its existing
   `Cache-Control: no-store` response header, and `DeploymentSnapshot` explicitly
   types `api_specs[].id` and `api_specs[].proxy_id` as `string`.
 
