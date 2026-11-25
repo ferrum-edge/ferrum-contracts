@@ -11,20 +11,24 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 - Sync `main_branch_delta` in `vocabularies/plugin-catalog.json`,
   `vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json`
   to Ferrum Edge `main`
-  `e837270d4b6c1c9756b80400d2a8e2e14b176ce4` (through Edge PR #7491) and add
-  an unreleased Edge `main` admin-behavior note to `docs/admin-contracts.md`.
-  Edge #7491 updates `openapi.yaml` (SHA-256
+  `e837270d4b6c1c9756b80400d2a8e2e14b176ce4` (through Edge PR #7491), add an
+  unreleased Edge `main` admin-behavior note to `docs/admin-contracts.md`, and
+  record the unreleased MongoDB merged-document `409` outcome in
+  `docs/deployment-contracts.md`. Edge #7491 updates `openapi.yaml` (SHA-256
   `cc6f0a7ee6cff646e50f6a12a13211a781fb5574dcdf116a0b394355b5fbf532`, still
   `info.version: 0.9.21`), `src/admin/` and admin docs for Admin API / OpenAPI
-  alignment (including representation-specific `GET /api-specs/*` `ETag` /
-  `If-None-Match` and `503` `Retry-After: 1` read-backpressure rules, MongoDB
-  ~15 MiB `api_specs` BSON preflight `413`/`409` refusals, restore `x-ferrum-proxy.plugins`
-  and rollback-outcome updates, and `HEAD` parity on `/health`, `/live` and
-  `/status`), with zero changes to plugin registrations, plugin config schemas
-  reachable from `PluginConfigBase`, header names/roles, error tokens/classes,
-  or any Edge-owned JSON Schema wire shape. `edge_release`, `provenance` and
-  `config_schema_document` stay pinned to published `v0.9.21`; no schema or
-  fixture changes.
+  alignment (multi-header `Accept`/`If-None-Match` parsing, `application/*`
+  precedence over `*/*`, representation-specific `GET /api-specs/*` `ETag` /
+  `If-None-Match` and `503` `Retry-After: 1` read-backpressure rules, role-before-`If-Match`
+  `403` refusal precedence, conditional-restore MongoDB ~15 MiB BSON `413` and
+  conditional-PUT merged-document `409` checks, API-spec `x-ferrum-plugins` /
+  `RawValue` / external-`$ref` admission refusals, restore `x-ferrum-proxy.plugins`
+  validation / `unknown_clear_outcome` / `data_integrity` `500` mapping, and
+  `HEAD` parity on `/health`, `/live` and `/status`), with zero changes to
+  plugin registrations, plugin config schemas reachable from `PluginConfigBase`,
+  header names/roles, or error tokens/classes. `edge_release`, `provenance`,
+  `config_schema_document` and all versioned schema and fixture files in this
+  repository remain pinned to published `v0.9.21` and unchanged.
 - Restore `main_branch_delta` in `vocabularies/plugin-catalog.json`,
   `vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json`
   anchored at Ferrum Edge `main`

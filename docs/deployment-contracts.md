@@ -297,6 +297,7 @@ operation prepares a whole-namespace restore or performs late compensation.
 | Store, lease or admission failure before the mutation transaction (v0.9.14; earlier releases reported `unknown`) | 503 | `not_started` | `unconfirmed` | `false` |
 | Lease loss or statement/admission/validation failure inside the rolled-back mutation transaction (v0.9.14; earlier releases reported `unknown`) | 503 | `not_committed` | `unconfirmed` | `false` |
 | Stale evidence or dependency/ownership refusal | 412/409 | `not_committed` | `unconfirmed` | `false` |
+| MongoDB `api_specs` replacement over ~15 MiB BSON limit (`v0.9.21` incoming preflight; unreleased Edge `main` `e837270d` also checks the merged document after preserving retained unknown fields) | 409 | `not_committed` | `unconfirmed` | `false` |
 | Namespace over the snapshot bound inside the mutation transaction (v0.9.13) | 507 | `not_committed` | `unconfirmed` | `false` |
 | Namespace over the snapshot bound before the transaction (v0.9.13) | 507 | `not_started` | `unconfirmed` | `false` |
 | Initial mode/evidence/admission failure | 400/503 | `not_started` | `unconfirmed` | `false` |
