@@ -163,15 +163,18 @@ keep unchanged wire shapes):
 
 - **MongoDB `api_specs` BSON limits and restore validation**. Edge `v0.9.21`
   already preflight-checked incoming `api_specs` documents against MongoDB's
-  ~15 MiB BSON limit on `POST /api-specs` and `PUT /api-specs/{id}` (`413` on
-  unconditional writes and `409` on conditional `PUT /api-specs/{id}?conditional=true`).
-  Edge `main` adds a MongoDB ~15 MiB BSON preflight check to conditional
-  `POST /restore?confirm=true` (with `If-Match`), returning `413` before the
-  transaction opens, and adds an in-transaction check on conditional
-  `PUT /api-specs/{id}?conditional=true` after merging retained unknown BSON
-  fields, returning `409` (`durable: "not_committed"`, `live: "unconfirmed"`,
-  `recovery_cleanup_authorized: false`) if the merged document exceeds the limit
-  even when the incoming spec passed preflight (see
+  ~15 MiB BSON limit before opening the transaction on `POST /api-specs`,
+  `PUT /api-specs/{id}` (`413` on unconditional writes, `409` on conditional
+  `PUT /api-specs/{id}?conditional=true`), and conditional
+  `POST /restore?confirm=true` (where `v0.9.21` ran the check after taking
+  local generation pins/leases and mapped the failure to the generic `503`).
+  Edge `main` moves the conditional `POST /restore?confirm=true` (with
+  `If-Match`) preflight check ahead of local generation pins and mTLS admission
+  leases and maps the typed size error to `413`, and adds an in-transaction
+  check on conditional `PUT /api-specs/{id}?conditional=true` after merging
+  retained unknown BSON fields, returning `409` (`durable: "not_committed"`,
+  `live: "unconfirmed"`, `recovery_cleanup_authorized: false`) if the merged
+  document exceeds the limit even when the incoming spec passed preflight (see
   [deployment-contracts.md](deployment-contracts.md#explicit-acknowledgement-and-retained-recovery-state)).
   `POST /restore` also validates `x-ferrum-proxy.plugins` association
   declarations on `api_specs` items with the same fail-closed parser
@@ -180,23 +183,33 @@ keep unchanged wire shapes):
   `?confirm=true&confirm=false`), and classifies corrupt/undecodable stored
   `api_specs` rows during pre-clear snapshot capture as `500` with
   `failure_class: "data_integrity"` before any deletion. For unconditional
-  restore clear failures after an intervening namespace lease, Edge `v0.9.21`
-  already emitted `rollback: "not_needed_after_intervening_write"` (definitive
-  atomic clear abort — nothing deleted, no manual recovery required) and
-  `rollback: "skipped_after_intervening_write"` (interrupted import rollback);
-  Edge `main` adds `rollback: "unknown_clear_outcome"` for an ambiguous clear
-  and uses `rollback: "skipped_after_intervening_write"` for a potentially
-  partial non-atomic clear (both retain the namespace admission guard and
-  require manual recovery).
+  restore failures, Edge `v0.9.21` emitted `503`
+  `rollback: "not_needed_after_intervening_write"` for every failed clear
+  followed by an intervening namespace lease — including ambiguous and
+  potentially partial clears that retained the namespace admission guard and
+  required manual recovery — and `503`
+  `rollback: "skipped_after_intervening_write"` for an interrupted import
+  rollback after an intervening lease. Edge `main` reserves `503`
+  `rollback: "not_needed_after_intervening_write"` strictly for definitive
+  atomic clear aborts (nothing deleted, no manual recovery required); emits
+  `503` `rollback: "unknown_clear_outcome"` both when another writer acquired
+  the lease and when admission cannot be reacquired after an ambiguous clear
+  (guard retained, manual recovery required); and emits `503`
+  `rollback: "skipped_after_intervening_write"` when a potentially partial
+  non-atomic clear loses the lease to an intervening writer (guard retained,
+  manual recovery required).
 - **API-spec admission refusals**. `POST /api-specs` and `PUT /api-specs/{id}`
   reject non-object (positional) `x-ferrum-plugins` entries and the reserved
   `$serde_json::private::RawValue` key at any nesting depth in declared
-  `x-ferrum-plugins` entries or generated/merged `x-ferrum-validate` /
-  `x-ferrum-mcp` plugin configs with `400 MalformedExtension`. External-`$ref`
-  admission also enforces a 120-container document nesting depth ceiling (`400`
-  `InvalidJson`/`InvalidYaml`), aggregate normalized (128 MiB) and compressed
-  (64 MiB) snapshot caps (`422 SchemaTooLarge`), and at most one response
-  `Content-Type` header (repeated `Content-Type` headers are refused).
+  `x-ferrum-plugins` `config` subtrees or generated/merged `x-ferrum-validate`
+  / `x-ferrum-mcp` plugin configs with `400 MalformedExtension`. External-`$ref`
+  admission also applies the 500,000-node ceiling to external JSON documents
+  (`400 InvalidJson`, where `v0.9.21` used `serde_json::from_slice` without a
+  parsed-node ceiling), enforces a 120-container document nesting depth ceiling
+  (`400 InvalidJson`/`InvalidYaml`), enforces aggregate normalized (128 MiB)
+  and compressed (64 MiB) snapshot caps (`422 SchemaTooLarge`), and refuses
+  repeated, malformed or disallowed response `Content-Type` headers with
+  `422 SchemaReference`.
 - **API-spec conditional `GET` caching, content negotiation and read
   backpressure**. `GET /api-specs/{id}` and `GET /api-specs/by-proxy/{proxy_id}`
   read every `Accept` and `If-None-Match` header field line (`v0.9.21` read only
@@ -215,10 +228,10 @@ keep unchanged wire shapes):
 - **`If-Match` refusal precedence and Admin OpenAPI alignment**. Known mutating
   routes enforce the required admin role (returning `403`) before refusing an
   unsupported `If-Match` header or unsupported deployment mode — for example, a
-  `viewer` sending `If-Match` on `DELETE /api-specs/{id}` now receives `403`
-  where `v0.9.21`'s generic header gate returned `400`, while an authorized
-  caller on an unsupported route still receives `400`. `/health`, `/live` and
-  `/status` expose `HEAD` parity in `openapi.yaml`,
+  `viewer` sending `If-Match` on `POST /backend-capabilities/refresh` now
+  receives `403` where `v0.9.21`'s shared header refusal returned `400`, while
+  an authorized caller on an unsupported route still receives `400`. `/health`,
+  `/live` and `/status` expose `HEAD` parity in `openapi.yaml`,
   `GET /consumers/{id}/verification` documents its existing
   `Cache-Control: no-store` response header, and `DeploymentSnapshot` explicitly
   types `api_specs[].id` and `api_specs[].proxy_id` as `string`.

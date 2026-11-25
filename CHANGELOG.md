@@ -20,15 +20,16 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   alignment (multi-header `Accept`/`If-None-Match` parsing, `application/*`
   precedence over `*/*`, representation-specific `GET /api-specs/*` `ETag` /
   `If-None-Match` and `503` `Retry-After: 1` read-backpressure rules, role-before-`If-Match`
-  `403` refusal precedence, conditional-restore MongoDB ~15 MiB BSON `413` and
-  conditional-PUT merged-document `409` checks, API-spec `x-ferrum-plugins` /
-  `RawValue` / external-`$ref` admission refusals, restore `x-ferrum-proxy.plugins`
-  validation / `unknown_clear_outcome` / `data_integrity` `500` mapping, and
-  `HEAD` parity on `/health`, `/live` and `/status`), with zero changes to
-  plugin registrations, plugin config schemas reachable from `PluginConfigBase`,
-  header names/roles, or error tokens/classes. `edge_release`, `provenance`,
-  `config_schema_document` and all versioned schema and fixture files in this
-  repository remain pinned to published `v0.9.21` and unchanged.
+  `403` refusal precedence, conditional-restore MongoDB ~15 MiB BSON `413`
+  remapping/timing and conditional-PUT merged-document `409` checks, API-spec
+  `x-ferrum-plugins` / `RawValue` / external-`$ref` admission refusals, restore
+  `x-ferrum-proxy.plugins` validation / `unknown_clear_outcome` / `data_integrity`
+  `500` mapping, and `HEAD` parity on `/health`, `/live` and `/status`), with
+  zero changes to plugin registrations, plugin config schemas reachable from
+  `PluginConfigBase`, header names/roles, or error tokens/classes.
+  `edge_release`, `provenance` and `config_schema_document` in the three
+  vocabulary files remain pinned to published `v0.9.21`; all schema and fixture
+  files in this repository are unchanged.
 - Restore `main_branch_delta` in `vocabularies/plugin-catalog.json`,
   `vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json`
   anchored at Ferrum Edge `main`
