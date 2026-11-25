@@ -155,8 +155,8 @@ From Edge `v0.9.21`, these admin rules also apply:
 
 **Unreleased on Edge `main`** (checked at
 [`e837270d4b6c1c9756b80400d2a8e2e14b176ce4`](https://github.com/ferrum-edge/ferrum-edge/commit/e837270d4b6c1c9756b80400d2a8e2e14b176ce4),
-Edge PR [#7491](https://github.com/ferrum-edge/ferrum-edge/pull/7491); not in
-published `v0.9.21`; the versioned schemas in this repository —
+through Edge PR [#7491](https://github.com/ferrum-edge/ferrum-edge/pull/7491);
+not in published `v0.9.21`; the versioned schemas in this repository —
 `admin-conditional-snapshot` v1, `admin-deployment-snapshot` v2,
 `admin-deployment-mutation-acknowledgement` v1 and `backend-egress-policy` v2 —
 keep unchanged wire shapes):
@@ -209,10 +209,11 @@ keep unchanged wire shapes):
   atomic clear aborts (nothing deleted, no manual recovery required); emits
   `503` `rollback: "unknown_clear_outcome"` both when another writer acquired
   the lease and when admission cannot be reacquired after an ambiguous clear
-  (guard retained, manual recovery required); and emits `503`
-  `rollback: "skipped_after_intervening_write"` when a potentially partial
-  non-atomic clear loses the lease to an intervening writer (guard retained,
-  manual recovery required).
+  (guard retained, manual recovery required); and also emits `503`
+  `rollback: "skipped_after_intervening_write"` (in addition to the existing
+  interrupted-import-rollback case) when a potentially partial non-atomic clear
+  loses the lease to an intervening writer (guard retained, manual recovery
+  required).
 - **API-spec admission refusals**. `POST /api-specs` and `PUT /api-specs/{id}`
   reject non-object (positional) `x-ferrum-plugins` entries and the reserved
   `$serde_json::private::RawValue` key at any nesting depth in declared
@@ -230,13 +231,16 @@ keep unchanged wire shapes):
 - **API-spec conditional `GET` caching, content negotiation and read
   backpressure**. `GET /api-specs/{id}` and `GET /api-specs/by-proxy/{proxy_id}`
   read every `Accept` and `If-None-Match` header field line (`v0.9.21` read only
-  the first), give `application/*` precedence over `*/*` in `Accept` negotiation
-  (so `Accept: application/*;q=0, */*;q=1` now returns `406` where `v0.9.21`
-  served the stored representation), and emit representation-specific quoted
-  `ETag` values (`"<content_hash>-json"` / `"<content_hash>-yaml"` verbatim, or
-  `"<content_hash>-<target>-from-<stored>-v1"` when converted across formats).
-  Exact `If-None-Match` matches are evaluated before the recorded-size check
-  and short-circuit to `304` from metadata without consuming codec slots or
+  the first) and give `application/*` precedence over `*/*` in `Accept`
+  negotiation (so `Accept: application/*;q=0, */*;q=1` now returns `406` where
+  `v0.9.21` served the stored representation). Verbatim representation `ETag`
+  values (`"<content_hash>-json"` / `"<content_hash>-yaml"`) are unchanged from
+  `v0.9.21`, whereas format-converted responses change from
+  `"<content_hash>-<target>"` to `"<content_hash>-<target>-from-<stored>-v1"`
+  (so cached `ETag`s for converted representations stop matching after upgrade
+  and their `If-None-Match` revalidations no longer return `304`). Exact
+  `If-None-Match` matches are evaluated before the recorded-size check and
+  short-circuit to `304` from metadata without consuming codec slots or
   per-connection buffered response budget (even if the row's recorded
   `uncompressed_size` exceeds the decompression cap); otherwise (for `*`,
   non-matching tags or ordinary reads), a stored spec already known to exceed
@@ -251,9 +255,12 @@ keep unchanged wire shapes):
   budget during gzip decoding or format conversion — ordinary reads and
   cross-format `If-None-Match: *` return `503` with `Retry-After: 1`.
 - **`If-Match` refusal precedence, TLS rotation reporting and Admin OpenAPI
-  alignment**. Known mutating routes enforce the required admin role (returning
-  `403`) before refusing an unsupported `If-Match` header or unsupported
-  deployment mode — for example, a `viewer` sending `If-Match` on
+  alignment**. Where `v0.9.21` already checked the required role first on
+  body-consuming mutating routes, Edge `main` extends role-before-refusal to
+  bodyless mutating routes (as well as `POST /api-specs`,
+  `POST /backend-capabilities/refresh` and `POST /mesh/config-revision/reset`),
+  returning `403` before refusing an unsupported `If-Match` header or
+  unsupported deployment mode — for example, a `viewer` sending `If-Match` on
   `POST /backend-capabilities/refresh` now receives `403` where `v0.9.21`'s
   shared header refusal returned `400`, while an authorized caller on an
   unsupported route still receives `400`. When `POST /admin/tls/rotate/all`
@@ -264,6 +271,14 @@ keep unchanged wire shapes):
   `openapi.yaml`, `GET /consumers/{id}/verification` documents its existing
   `Cache-Control: no-store` response header, and `DeploymentSnapshot` explicitly
   types `api_specs[].id` and `api_specs[].proxy_id` as `string`.
+- **Database outage mapping and port-scoped `listen_path` conflicts** (Edge PRs
+  [#7484](https://github.com/ferrum-edge/ferrum-edge/pull/7484) and
+  [#7485](https://github.com/ferrum-edge/ferrum-edge/pull/7485)). Transient
+  database errors on `/api-specs` (such as pool timeout/closed or connection
+  refused) return `503` (`{"error":"Database temporarily unavailable"}`)
+  instead of `500`, and `listen_path` uniqueness is scoped by `listen_port`
+  (affecting `409` route-conflict checks on proxies, API specs and batch
+  writes).
 
 ## Owner sources and artifact scope
 

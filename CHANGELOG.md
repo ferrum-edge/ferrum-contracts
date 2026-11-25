@@ -18,16 +18,20 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `cc6f0a7ee6cff646e50f6a12a13211a781fb5574dcdf116a0b394355b5fbf532`, still
   `info.version: 0.9.21`), `src/admin/` and admin docs for Admin API / OpenAPI
   alignment (multi-header `Accept`/`If-None-Match` parsing, `application/*`
-  precedence over `*/*`, representation-specific `GET /api-specs/*` `ETag` /
-  `If-None-Match` and `503` `Retry-After: 1` read-backpressure rules, role-before-`If-Match`
-  `403` refusal precedence, conditional-restore MongoDB ~15 MiB BSON `413`
-  remapping/timing and conditional-PUT merged-document `409` checks, API-spec
-  `x-ferrum-plugins` / `RawValue` / external-`$ref` admission refusals, restore
+  precedence over `*/*`, format-converted `GET /api-specs/*` `ETag` change from
+  `"<content_hash>-<target>"` to `"<content_hash>-<target>-from-<stored>-v1"`
+  with verbatim tags unchanged, `If-None-Match` and `503` `Retry-After: 1`
+  read-backpressure rules, expanded role-before-`If-Match` `403` refusal
+  precedence, conditional-restore MongoDB ~15 MiB BSON `413` remapping/timing
+  and conditional-PUT merged-document `409` checks, API-spec `x-ferrum-plugins`
+  / `RawValue` / external-`$ref` admission refusals, restore
   `x-ferrum-proxy.plugins` validation / `unknown_clear_outcome` /
   unconditional-restore `data_integrity` `500` mapping,
-  `POST /admin/tls/rotate/all` `accepted_surfaces` on SVID reload
-  failure, and `HEAD` parity on `/health`, `/live` and `/status`), with zero changes to plugin registrations, plugin config schemas reachable from
-  `PluginConfigBase`, header names/roles, or error tokens/classes.
+  `POST /admin/tls/rotate/all` `accepted_surfaces` on SVID reload failure,
+  `HEAD` parity on `/health`, `/live` and `/status`, plus Edge #7484 transient
+  `/api-specs` DB `503` mapping and Edge #7485 port-scoped `listen_path`
+  uniqueness), with zero changes to plugin registrations, plugin config schemas
+  reachable from `PluginConfigBase`, header names/roles, or error tokens/classes.
   `edge_release`, `provenance` and `config_schema_document` in the three
   vocabulary files remain pinned to published `v0.9.21`; all schema and fixture
   files in this repository are unchanged.
