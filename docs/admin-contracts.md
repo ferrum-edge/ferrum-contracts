@@ -256,8 +256,9 @@ keep unchanged wire shapes):
   cross-format `If-None-Match: *` return `503` with `Retry-After: 1`.
 - **`If-Match` refusal precedence, TLS rotation reporting and Admin OpenAPI
   alignment**. Where `v0.9.21` already checked the required role first on
-  body-consuming mutating routes, Edge `main` extends role-before-refusal to
-  bodyless mutating routes (as well as `POST /api-specs`,
+  body-consuming mutating routes (and on `/api-specs` routes via their own
+  dispatch arms), Edge `main` extends role-before-refusal to bodyless mutating
+  routes that reach the shared refusal (such as
   `POST /backend-capabilities/refresh` and `POST /mesh/config-revision/reset`),
   returning `403` before refusing an unsupported `If-Match` header or
   unsupported deployment mode — for example, a `viewer` sending `If-Match` on
