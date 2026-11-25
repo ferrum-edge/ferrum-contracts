@@ -301,6 +301,7 @@ operation prepares a whole-namespace restore or performs late compensation.
 | Namespace over the snapshot bound inside the mutation transaction (v0.9.13) | 507 | `not_committed` | `unconfirmed` | `false` |
 | Namespace over the snapshot bound before the transaction (v0.9.13) | 507 | `not_started` | `unconfirmed` | `false` |
 | Initial mode/evidence/admission failure | 400/503 | `not_started` | `unconfirmed` | `false` |
+| Existing stored spec decompression or `x-ferrum-proxy.plugins` parse failure on `PUT /api-specs/{id}?conditional=true` (unreleased Edge `main` `e837270d`; `v0.9.21` logged and proceeded with empty associations) | 500 | *(generic error body; no acknowledgement — retain journal)* | *(absent)* | *(absent)* |
 
 Only a complete HTTP 200 acknowledgement with expected `profile=deployment-v1`
 and target `id`, `durable=committed`, `live=applied` and explicit

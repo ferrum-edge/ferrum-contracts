@@ -13,8 +13,8 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   to Ferrum Edge `main`
   `e837270d4b6c1c9756b80400d2a8e2e14b176ce4` (through Edge PR #7491), add an
   unreleased Edge `main` admin-behavior note to `docs/admin-contracts.md`, and
-  record the unreleased MongoDB merged-document `409` outcome in
-  `docs/deployment-contracts.md`. Edge #7491 updates `openapi.yaml` (SHA-256
+  record the unreleased MongoDB merged-document `409` and unreadable stored-spec
+  `500` outcomes in `docs/deployment-contracts.md`. Edge #7491 updates `openapi.yaml` (SHA-256
   `cc6f0a7ee6cff646e50f6a12a13211a781fb5574dcdf116a0b394355b5fbf532`, still
   `info.version: 0.9.21`), `src/admin/` and admin docs for Admin API / OpenAPI
   alignment (multi-header `Accept`/`If-None-Match` parsing, `application/*`

@@ -183,8 +183,15 @@ keep unchanged wire shapes):
   [deployment-contracts.md](deployment-contracts.md#explicit-acknowledgement-and-retained-recovery-state)).
   `POST /restore` also validates `x-ferrum-proxy.plugins` association
   declarations on `api_specs` items with the same fail-closed parser
-  `PUT /api-specs/{id}` uses, marks `ApiSpecBackupItem.resource_hash` required
-  in `openapi.yaml`, fails closed on conflicting repeated query flags (such as
+  `PUT /api-specs/{id}` uses (and both ordinary and conditional
+  `PUT /api-specs/{id}` now abort before writing with `500` — returning a
+  generic `500` error body without a `deployment-v1` acknowledgement on the
+  conditional path — if decompressing the existing stored spec or parsing its
+  `x-ferrum-proxy.plugins` declaration fails, where `v0.9.21` logged the error
+  and continued with an empty association set; see
+  [deployment-contracts.md](deployment-contracts.md#explicit-acknowledgement-and-retained-recovery-state)),
+  marks `ApiSpecBackupItem.resource_hash` required in `openapi.yaml`, fails
+  closed on conflicting repeated query flags (such as
   `?confirm=true&confirm=false`), and classifies corrupt/undecodable stored
   `api_specs` rows during pre-clear snapshot capture as `500` with
   `failure_class: "data_integrity"` before any deletion. For unconditional
@@ -225,16 +232,21 @@ keep unchanged wire shapes):
   served the stored representation), and emit representation-specific quoted
   `ETag` values (`"<content_hash>-json"` / `"<content_hash>-yaml"` verbatim, or
   `"<content_hash>-<target>-from-<stored>-v1"` when converted across formats).
-  Exact `If-None-Match` matches (and `*` for a verbatim format within the
-  decompression cap) short-circuit to `304` from metadata without consuming
-  codec slots or per-connection buffered response budget; a stored spec already
-  known to exceed the decompression cap returns `500` before the connection
-  budget is checked. Cross-format `If-None-Match: *` defers `304` until bounded
-  conversion validation succeeds, and once conversion begins a malformed spec
-  or oversized output returns `500` even if the connection budget runs out.
-  When the per-connection buffered response budget is the blocking condition
-  (before decode/conversion or during pre-decode reservation growth), ordinary
-  reads and cross-format `If-None-Match: *` return `503` with `Retry-After: 1`.
+  Exact `If-None-Match` matches are evaluated before the recorded-size check
+  and short-circuit to `304` from metadata without consuming codec slots or
+  per-connection buffered response budget (even if the row's recorded
+  `uncompressed_size` exceeds the decompression cap); otherwise (for `*`,
+  non-matching tags or ordinary reads), a stored spec already known to exceed
+  the decompression cap returns `500` before the connection budget is checked,
+  while verbatim `If-None-Match: *` within the decompression cap short-circuits
+  to `304` from metadata. Cross-format `If-None-Match: *` defers `304` until
+  bounded conversion validation succeeds, and once decode or conversion begins
+  a malformed spec or output exceeding the decompression cap returns `500` even
+  if the connection budget runs out. When the per-connection buffered response
+  budget is the blocking condition — during preflight, pre-decode reservation
+  growth, or when valid content within the decompression cap exhausts the
+  budget during gzip decoding or format conversion — ordinary reads and
+  cross-format `If-None-Match: *` return `503` with `Retry-After: 1`.
 - **`If-Match` refusal precedence, TLS rotation reporting and Admin OpenAPI
   alignment**. Known mutating routes enforce the required admin role (returning
   `403`) before refusing an unsupported `If-Match` header or unsupported
