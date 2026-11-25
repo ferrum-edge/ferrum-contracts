@@ -350,7 +350,7 @@
   "main_branch_delta": {
     "repo": "ferrum-edge/ferrum-edge",
     "ref": "main",
-    "commit": "d9c241a8c9832aea5ba570ce9b2752de02f3316e",
-    "summary": "No contract-visible changes beyond v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3) at Edge main d9c241a8c9832aea5ba570ce9b2752de02f3316e (through Edge PRs #7471, #7473, #7475 and #7476). No ErrorClass value, X-Gateway-Error token, reserved HTTP metric label, class-to-token mapping, rejection-phase mapping or dispatch-failure status changes. src/retry.rs, src/diagnostic_ref.rs, openapi.yaml, docs/error_classification.md and docs/size_limits.md are byte-identical to v0.9.21; src/proxy/mod.rs changes only internal HTTP/1.1 hot-path streaming helpers (Edge #7471) with http_backend_failure_status_and_body identical to v0.9.21."
+    "commit": "e837270d4b6c1c9756b80400d2a8e2e14b176ce4",
+    "summary": "No contract-visible changes beyond v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3) at Edge main e837270d4b6c1c9756b80400d2a8e2e14b176ce4 (through Edge PR #7491). No ErrorClass value, X-Gateway-Error token, reserved HTTP metric label, class-to-token mapping, rejection-phase mapping or dispatch-failure status changes. src/retry.rs, src/diagnostic_ref.rs, docs/error_classification.md and docs/size_limits.md are byte-identical to v0.9.21; src/proxy/mod.rs changes only internal HTTP/1.1 streaming, plugin-dispatch, URL-bump and reload helpers (Edge #7471, #7474, #7479 and #7487) with http_backend_failure_status_and_body identical to v0.9.21; openapi.yaml changes in Edge #7491 are Admin API alignments outside DiagnosticRef* and proxy error classification."
   }
 }

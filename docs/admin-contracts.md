@@ -153,6 +153,44 @@ From Edge `v0.9.21`, these admin rules also apply:
   an `incomplete` restore rollback retains the namespace admission guard until
   manual recovery.
 
+**Unreleased on Edge `main`** (checked at
+[`e837270d4b6c1c9756b80400d2a8e2e14b176ce4`](https://github.com/ferrum-edge/ferrum-edge/commit/e837270d4b6c1c9756b80400d2a8e2e14b176ce4),
+Edge PR [#7491](https://github.com/ferrum-edge/ferrum-edge/pull/7491); not in
+published `v0.9.21`; the schemas `admin-conditional-snapshot` v1,
+`admin-deployment-snapshot` v2, `admin-deployment-mutation-acknowledgement` v1
+and `backend-egress-policy` v2 keep unchanged wire shapes):
+
+- **MongoDB `api_specs` BSON preflight limits and restore validation**.
+  Conditional `POST /restore?confirm=true` (with `If-Match`) and unconditional
+  `PUT /api-specs/{id}` return `413` on MongoDB when a serialized `api_specs`
+  document (including any persisted external-reference snapshot) exceeds the
+  ~15 MiB BSON preflight limit; conditional `PUT /api-specs/{id}?conditional=true`
+  refuses the same MongoDB preflight limit with `409` (`durable: "not_committed"`,
+  `live: "unconfirmed"`, `recovery_cleanup_authorized: false`). `POST /restore`
+  also validates `x-ferrum-proxy.plugins` association declarations on `api_specs`
+  items with the same fail-closed parser `PUT /api-specs/{id}` uses, marks
+  `ApiSpecBackupItem.resource_hash` required in `openapi.yaml`, fails closed on
+  conflicting repeated query flags (such as `?confirm=true&confirm=false`), and
+  documents three additional unconditional-restore `503` rollback outcomes
+  (`not_needed_after_intervening_write`, `skipped_after_intervening_write`,
+  `unknown_clear_outcome`).
+- **API-spec conditional `GET` caching and read backpressure**.
+  `GET /api-specs/{id}` and `GET /api-specs/by-proxy/{proxy_id}` emit
+  representation-specific quoted `ETag` values (`"<content_hash>-json"` /
+  `"<content_hash>-yaml"` verbatim, or
+  `"<content_hash>-<target>-from-<stored>-v1"` when converted across formats).
+  Exact `If-None-Match` matches (and `*` for a verbatim format within the
+  decompression cap) short-circuit to `304` from metadata without consuming
+  codec slots or per-connection buffered response budget; cross-format
+  `If-None-Match: *` defers `304` until bounded conversion validation succeeds
+  and can still return `500` on conversion failure/oversize or `503` with
+  `Retry-After: 1` when the per-connection buffered response budget is
+  saturated.
+- **Admin OpenAPI alignment**. `/health`, `/live` and `/status` expose `HEAD`
+  parity in `openapi.yaml`, `GET /consumers/{id}/verification` documents its
+  existing `Cache-Control: no-store` response header, and `DeploymentSnapshot`
+  explicitly types `api_specs[].id` and `api_specs[].proxy_id` as `string`.
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
