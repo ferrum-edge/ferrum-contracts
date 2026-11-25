@@ -193,8 +193,11 @@ keep unchanged wire shapes):
   marks `ApiSpecBackupItem.resource_hash` required in `openapi.yaml`, fails
   closed on conflicting repeated query flags (such as
   `?confirm=true&confirm=false`), and classifies corrupt/undecodable stored
-  `api_specs` rows during pre-clear snapshot capture as `500` with
-  `failure_class: "data_integrity"` before any deletion. For unconditional
+  `api_specs` rows detected while capturing the unconditional restore's
+  pre-clear rollback snapshot as `500` with `failure_class: "data_integrity"`
+  before any deletion (whereas a corrupt stored `api_specs` row or persisted
+  external-reference snapshot on the conditional backup/restore snapshot load
+  returns `503` before any deletion). For unconditional
   restore failures, Edge `v0.9.21` emitted `503`
   `rollback: "not_needed_after_intervening_write"` for every failed clear
   followed by an intervening namespace lease — including ambiguous and
