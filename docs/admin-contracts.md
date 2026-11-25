@@ -153,6 +153,134 @@ From Edge `v0.9.21`, these admin rules also apply:
   an `incomplete` restore rollback retains the namespace admission guard until
   manual recovery.
 
+**Unreleased on Edge `main`** (checked at
+[`e837270d4b6c1c9756b80400d2a8e2e14b176ce4`](https://github.com/ferrum-edge/ferrum-edge/commit/e837270d4b6c1c9756b80400d2a8e2e14b176ce4),
+through Edge PR [#7491](https://github.com/ferrum-edge/ferrum-edge/pull/7491);
+not in published `v0.9.21`; the versioned schemas in this repository —
+`admin-conditional-snapshot` v1, `admin-deployment-snapshot` v2,
+`admin-deployment-mutation-acknowledgement` v1 and `backend-egress-policy` v2 —
+keep unchanged wire shapes):
+
+- **MongoDB `api_specs` BSON limits and restore validation**. Edge `v0.9.21`
+  already checked `api_specs` documents against MongoDB's ~15 MiB BSON limit
+  only after `bson::to_vec` succeeded: documents over ~15 MiB that serialized
+  within BSON's 16 MiB ceiling returned `413` on unconditional `POST`/`PUT /api-specs`,
+  `409` on conditional `PUT /api-specs/{id}?conditional=true`, and `503` on
+  conditional `POST /restore?confirm=true` (where the check ran after local
+  generation pins and leases), whereas documents whose binary fields exceeded
+  BSON's 16 MiB serialization ceiling failed serialization first (`500` on
+  unconditional `POST`/`PUT`, `503` `durable: "not_committed"` on conditional
+  `PUT`, and `503` on conditional `POST /restore`). Edge `main` adds a raw-blob
+  size pre-check and classifies BSON serialization size failures so all
+  oversized cases reach `413` or `409`; moves the conditional
+  `POST /restore?confirm=true` (with `If-Match`) preflight check ahead of local
+  generation pins and mTLS admission leases and maps the typed size error to
+  `413`; and adds an in-transaction check on conditional
+  `PUT /api-specs/{id}?conditional=true` after merging retained unknown BSON
+  fields, returning `409` (`durable: "not_committed"`, `live: "unconfirmed"`,
+  `recovery_cleanup_authorized: false`) if the merged document exceeds the limit
+  even when the incoming spec passed preflight (see
+  [deployment-contracts.md](deployment-contracts.md#explicit-acknowledgement-and-retained-recovery-state)).
+  `POST /restore` also validates `x-ferrum-proxy.plugins` association
+  declarations on `api_specs` items with the same fail-closed parser
+  `PUT /api-specs/{id}` uses (and both ordinary and conditional
+  `PUT /api-specs/{id}` now abort before writing with `500` — returning a
+  generic `500` error body without a `deployment-v1` acknowledgement on the
+  conditional path — if decompressing the existing stored spec or parsing its
+  `x-ferrum-proxy.plugins` declaration fails, where `v0.9.21` logged the error
+  and continued with an empty association set; see
+  [deployment-contracts.md](deployment-contracts.md#explicit-acknowledgement-and-retained-recovery-state)),
+  marks `ApiSpecBackupItem.resource_hash` required in `openapi.yaml`, fails
+  closed on conflicting repeated query flags (such as
+  `?confirm=true&confirm=false`), and classifies corrupt/undecodable stored
+  `api_specs` rows detected while capturing the unconditional restore's
+  pre-clear rollback snapshot as `500` with `failure_class: "data_integrity"`
+  before any deletion (whereas a corrupt stored `api_specs` row or persisted
+  external-reference snapshot on the conditional backup/restore snapshot load
+  returns `503` before any deletion). For unconditional
+  restore failures, Edge `v0.9.21` emitted `503`
+  `rollback: "not_needed_after_intervening_write"` for every failed clear
+  followed by an intervening namespace lease — including ambiguous and
+  potentially partial clears that retained the namespace admission guard and
+  required manual recovery — and `503`
+  `rollback: "skipped_after_intervening_write"` for an interrupted import
+  rollback after an intervening lease. Edge `main` reserves `503`
+  `rollback: "not_needed_after_intervening_write"` strictly for definitive
+  atomic clear aborts (nothing deleted, no manual recovery required); emits
+  `503` `rollback: "unknown_clear_outcome"` both when another writer acquired
+  the lease and when admission cannot be reacquired after an ambiguous clear
+  (guard retained, manual recovery required); and also emits `503`
+  `rollback: "skipped_after_intervening_write"` (in addition to the existing
+  interrupted-import-rollback case) when a potentially partial non-atomic clear
+  loses the lease to an intervening writer (guard retained, manual recovery
+  required).
+- **API-spec admission refusals**. `POST /api-specs` and `PUT /api-specs/{id}`
+  reject non-object (positional) `x-ferrum-plugins` entries and the reserved
+  `$serde_json::private::RawValue` key at any nesting depth in declared
+  `x-ferrum-plugins` `config` subtrees or generated/merged `x-ferrum-validate`
+  / `x-ferrum-mcp` plugin configs with `400 MalformedExtension`. External-`$ref`
+  admission also applies the 500,000-node ceiling to external JSON documents
+  (`400 InvalidJson`, where `v0.9.21` used `serde_json::from_slice` without a
+  parsed-node ceiling), enforces a 120-container document nesting depth ceiling
+  (`400 InvalidJson`/`InvalidYaml`), enforces aggregate normalized (128 MiB)
+  and compressed (64 MiB) snapshot caps (`422 SchemaTooLarge`), and extends
+  `v0.9.21`'s disallowed-media-type allowlist with duplicate `Content-Type`
+  header rejection and full media-type syntax validation (including parameters),
+  returning `422 SchemaReference` for disallowed, malformed or repeated
+  `Content-Type` headers.
+- **API-spec conditional `GET` caching, content negotiation and read
+  backpressure**. `GET /api-specs/{id}` and `GET /api-specs/by-proxy/{proxy_id}`
+  read every `Accept` and `If-None-Match` header field line (`v0.9.21` read only
+  the first) and give `application/*` precedence over `*/*` in `Accept`
+  negotiation (so `Accept: application/*;q=0, */*;q=1` now returns `406` where
+  `v0.9.21` served the stored representation). Verbatim representation `ETag`
+  values (`"<content_hash>-json"` / `"<content_hash>-yaml"`) are unchanged from
+  `v0.9.21`, whereas format-converted responses change from
+  `"<content_hash>-<target>"` to `"<content_hash>-<target>-from-<stored>-v1"`
+  (so cached `ETag`s for converted representations stop matching after upgrade
+  and their `If-None-Match` revalidations no longer return `304`). Exact
+  `If-None-Match` matches are evaluated before the recorded-size check and
+  short-circuit to `304` from metadata without consuming codec slots or
+  per-connection buffered response budget (even if the row's recorded
+  `uncompressed_size` exceeds the decompression cap); otherwise (for `*`,
+  non-matching tags or ordinary reads), a stored spec already known to exceed
+  the decompression cap returns `500` before the connection budget is checked,
+  while verbatim `If-None-Match: *` within the decompression cap short-circuits
+  to `304` from metadata. Cross-format `If-None-Match: *` defers `304` until
+  bounded conversion validation succeeds, and once decode or conversion begins
+  a malformed spec or output exceeding the decompression cap returns `500` even
+  if the connection budget runs out. When the per-connection buffered response
+  budget is the blocking condition — during preflight, pre-decode reservation
+  growth, or when valid content within the decompression cap exhausts the
+  budget during gzip decoding or format conversion — ordinary reads and
+  cross-format `If-None-Match: *` return `503` with `Retry-After: 1`.
+- **`If-Match` refusal precedence, TLS rotation reporting and Admin OpenAPI
+  alignment**. Where `v0.9.21` already checked the required role first on
+  body-consuming mutating routes (and on `/api-specs` routes via their own
+  dispatch arms), Edge `main` extends role-before-refusal to bodyless mutating
+  routes that reach the shared refusal (such as
+  `POST /backend-capabilities/refresh` and `POST /mesh/config-revision/reset`),
+  returning `403` before refusing an unsupported `If-Match` header or
+  unsupported deployment mode — for example, a `viewer` sending `If-Match` on
+  `POST /backend-capabilities/refresh` now receives `403` where `v0.9.21`'s
+  shared header refusal returned `400`, while an authorized caller on an
+  unsupported route still receives `400`. When `POST /admin/tls/rotate/all`
+  queues independent material-set watcher reloads and gateway SVID reload then
+  fails, Edge `main` includes those already-queued surfaces in
+  `accepted_surfaces` on the error response body (where `v0.9.21` returned the
+  SVID error alone). `/health`, `/live` and `/status` expose `HEAD` parity in
+  `openapi.yaml`, `GET /consumers/{id}/verification` documents its existing
+  `Cache-Control: no-store` response header, and `DeploymentSnapshot` explicitly
+  types `api_specs[].id` and `api_specs[].proxy_id` as `string`.
+- **Database outage mapping and port-scoped `listen_path` conflicts** (Edge PRs
+  [#7484](https://github.com/ferrum-edge/ferrum-edge/pull/7484) and
+  [#7485](https://github.com/ferrum-edge/ferrum-edge/pull/7485)). Transient
+  database errors on `/api-specs` (such as pool timeout/closed or connection
+  refused) return `503` (`{"error":"Database temporarily unavailable"}`)
+  instead of `500`, and `listen_path` uniqueness is scoped by `listen_port`
+  (affecting `409` route-conflict checks on proxies, API specs and batch
+  writes).
+
 ## Owner sources and artifact scope
 
 The owner is `ferrum-edge/ferrum-edge`. Read the following paths at the full
