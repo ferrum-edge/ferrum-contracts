@@ -660,6 +660,14 @@
     "instance_path": "/websocket_framing_plugins/0",
     "keyword": "enum"
   },
+  "vocabulary-plugin-config-sensitivity/invalid/empty-rule-path.json": {
+    "instance_path": "/plugins/3/rules/0/path",
+    "keyword": "minItems"
+  },
+  "vocabulary-plugin-config-sensitivity/invalid/unknown-sensitivity.json": {
+    "instance_path": "/plugins/0/rules/0/sensitivity",
+    "keyword": "enum"
+  },
   "vocabulary-provisioned-by/invalid/untrimmed-value.json": {
     "instance_path": "/values/0/value",
     "keyword": "pattern"
@@ -667,5 +675,13 @@
   "vocabulary-provisioned-by/invalid/wrong-label-key.json": {
     "instance_path": "/label/key",
     "keyword": "const"
+  },
+  "vocabulary-reserved-header-names/invalid/missing-also-refused.json": {
+    "instance_path": "/sets/0",
+    "keyword": "required"
+  },
+  "vocabulary-reserved-header-names/invalid/uppercase-name.json": {
+    "instance_path": "/sets/0/names/2",
+    "keyword": "pattern"
   }
 }

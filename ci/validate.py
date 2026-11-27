@@ -25,7 +25,10 @@ Checks, in order:
    `x-contract.instance`.
 5. Vocabulary consistency checks that JSON Schema cannot express (unique
    values, cross-references between vocabularies, required cardinality
-   surfaces, a gateway-headers availability that is a published Edge
+   surfaces, plugin-config-sensitivity entries for exactly the catalog's
+   plugins with listed classes and no repeated rule path, reserved-header-names
+   sets named <plugin>.<field> for a catalog plugin, a gateway-headers
+   availability that is a published Edge
    release no later than edge_release, no `edge_release`,
    `available_since` or Edge source `ref` naming an unpublished Edge tag,
    and a `main_branch_delta` on Edge `main` in plugin-catalog,
@@ -964,6 +967,60 @@ def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) 
         removed = [p["name"] for p in catalog["removed_plugins"]]
         unique(report, where, names + removed, "plugin name")
         report.ok()
+    check_plugin_config_sensitivity(vocabularies, report)
+    check_reserved_header_names(vocabularies, report)
+
+
+def check_plugin_config_sensitivity(vocabularies: dict[str, dict], report: Report) -> None:
+    """plugin-config-sensitivity covers exactly the catalog's built-ins.
+
+    Edge requires a sensitivity entry for every built-in (an empty rule list
+    is an explicit decision), so the plugin set must equal the plugin
+    catalog's. Every rule names a listed sensitivity class, each class is
+    listed once, and no plugin repeats a rule path.
+    """
+    doc = vocabularies.get("plugin-config-sensitivity")
+    if not doc:
+        return
+    where = "vocabularies/plugin-config-sensitivity.json"
+    names = [p["name"] for p in doc["plugins"]]
+    unique(report, where, names, "plugin name")
+    classes = [c["value"] for c in doc["sensitivities"]]
+    unique(report, where, classes, "sensitivity")
+    catalog = vocabularies.get("plugin-catalog")
+    if catalog:
+        built_in = {p["name"] for p in catalog["plugins"]}
+        for name in sorted(built_in - set(names)):
+            report.fail(where, f"catalog plugin {name!r} has no sensitivity entry")
+        for name in sorted(set(names) - built_in):
+            report.fail(where, f"{name!r} is not a plugin in vocabularies/plugin-catalog.json")
+    for plugin in doc["plugins"]:
+        paths = set()
+        for rule in plugin["rules"]:
+            if rule["sensitivity"] not in classes:
+                report.fail(where, f"{plugin['name']} uses unlisted sensitivity {rule['sensitivity']!r}")
+            key = tuple(rule["path"])
+            if key in paths:
+                report.fail(where, f"{plugin['name']} repeats rule path {'.'.join(key)!r}")
+            paths.add(key)
+    report.ok()
+
+
+def check_reserved_header_names(vocabularies: dict[str, dict], report: Report) -> None:
+    """Each reserved-header-names set is named <plugin>.<field> for a catalog plugin."""
+    doc = vocabularies.get("reserved-header-names")
+    if not doc:
+        return
+    where = "vocabularies/reserved-header-names.json"
+    unique(report, where, [s["name"] for s in doc["sets"]], "set")
+    catalog = vocabularies.get("plugin-catalog")
+    built_in = {p["name"] for p in catalog["plugins"]} if catalog else None
+    for entry in doc["sets"]:
+        if entry["name"] != f"{entry['plugin']}.{entry['field']}":
+            report.fail(where, f"set {entry['name']!r} must be named {entry['plugin']}.{entry['field']}")
+        if built_in is not None and entry["plugin"] not in built_in:
+            report.fail(where, f"set {entry['name']!r} names unknown plugin {entry['plugin']!r}")
+    report.ok()
 
 
 def check_main_branch_delta(vocabularies: dict[str, dict], report: Report) -> None:

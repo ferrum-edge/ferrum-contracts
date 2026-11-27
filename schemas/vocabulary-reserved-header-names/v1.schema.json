@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-reserved-header-names/v1.schema.json",
+  "title": "Reserved header names v1",
+  "description": "Shape of vocabularies/reserved-header-names.json: closed header-name sets that Ferrum Edge refuses for an operator-configured header field.",
+  "x-contract": {
+    "name": "vocabulary-reserved-header-names",
+    "version": 1,
+    "status": "implemented",
+    "owner": "ferrum-edge/ferrum-contracts",
+    "instance": "vocabularies/reserved-header-names.json"
+  },
+  "type": "object",
+  "required": [
+    "$schema",
+    "vocabulary",
+    "version",
+    "edge_release",
+    "description",
+    "provenance",
+    "sets"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-reserved-header-names/v1.schema.json"
+    },
+    "vocabulary": {
+      "type": "string",
+      "const": "reserved-header-names"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "edge_release": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Edge release tag the vocabulary was read from."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Provenance"
+      }
+    },
+    "sets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "plugin",
+          "field",
+          "symbol",
+          "matching",
+          "names",
+          "also_refused"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z_][a-z0-9_]*\\.[a-z_][a-z0-9_.]*$",
+            "description": "<plugin>.<config field>."
+          },
+          "plugin": {
+            "type": "string",
+            "pattern": "^[a-z_][a-z0-9_]*$"
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "symbol": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The Edge constant the names are transcribed from."
+          },
+          "matching": {
+            "type": "string",
+            "minLength": 1
+          },
+          "names": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]+$",
+              "description": "An HTTP field name in lowercase."
+            }
+          },
+          "also_refused": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Names the same Edge check refuses outside this closed set, and where they are recorded."
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Provenance": {
+      "type": "object",
+      "required": [
+        "repo",
+        "commit",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^ferrum-edge/[A-Za-z0-9._-]+$"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tag or branch the commit was read from."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

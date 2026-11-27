@@ -22,6 +22,13 @@ When Ferrum Edge publishes `vX.Y.Z`:
      ("Consumer Identity Headers"), `docs/admin_api.md`, `openapi.yaml`.
    - `vocabularies/provisioned-by.json`: `src/admin/provisioning.rs`,
      `docs/admin_api.md`.
+   - `vocabularies/plugin-config-sensitivity.json`:
+     `src/admin/plugin_config_projection.rs` (`FieldSensitivity`,
+     `PLUGIN_SENSITIVITY_SCHEMAS` with every shared rule set expanded,
+     `KAFKA_SAFE_PRODUCER_PROPERTIES`). CI requires an entry for every
+     catalog plugin.
+   - `vocabularies/reserved-header-names.json`: `src/plugins/correlation_id.rs`
+     (`RESERVED_HEADER_NAMES`, `is_reserved_header_name`).
    - `vocabularies/plugin-catalog.json`: `src/plugins/mod.rs`
      (`BUILTIN_PLUGIN_REGISTRATIONS`, `REMOVED_PLUGIN_REGISTRATIONS`),
      `src/plugins/builtin_parity.rs`, and the per-plugin `if`/`then` blocks

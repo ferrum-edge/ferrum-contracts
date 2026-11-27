@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-plugin-config-sensitivity/v1.schema.json",
+  "title": "Plugin config sensitivity v1",
+  "description": "Shape of vocabularies/plugin-config-sensitivity.json: Ferrum Edge's per-plugin credential-bearing config paths and how each is projected, and the librdkafka producer properties that stay visible.",
+  "x-contract": {
+    "name": "vocabulary-plugin-config-sensitivity",
+    "version": 1,
+    "status": "implemented",
+    "owner": "ferrum-edge/ferrum-contracts",
+    "instance": "vocabularies/plugin-config-sensitivity.json"
+  },
+  "type": "object",
+  "required": [
+    "$schema",
+    "vocabulary",
+    "version",
+    "edge_release",
+    "description",
+    "provenance",
+    "path_matching",
+    "sensitivities",
+    "plugins",
+    "kafka_safe_producer_properties"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-plugin-config-sensitivity/v1.schema.json"
+    },
+    "vocabulary": {
+      "type": "string",
+      "const": "plugin-config-sensitivity"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "edge_release": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Edge release tag the vocabulary was read from."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Provenance"
+      }
+    },
+    "path_matching": {
+      "type": "string",
+      "minLength": 1,
+      "description": "How Edge compares a rule path with a config key."
+    },
+    "sensitivities": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Every projection class Edge defines, with its meaning. A reader that meets a class it does not know must withhold the whole value.",
+      "items": {
+        "type": "object",
+        "required": [
+          "value",
+          "meaning"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/$defs/Sensitivity"
+          },
+          "meaning": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "plugins": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per built-in plugin, in Edge's order. An empty rules list is an explicit decision that the plugin has no schema-declared credential path.",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "rules"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z_][a-z0-9_]*$",
+            "maxLength": 255
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Rule"
+            }
+          }
+        }
+      }
+    },
+    "kafka_safe_producer_properties": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "librdkafka producer_config properties that carry no credential material and stay visible; every other property is redacted.",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9.]*[a-z0-9]$"
+      }
+    }
+  },
+  "$defs": {
+    "Provenance": {
+      "type": "object",
+      "required": [
+        "repo",
+        "commit",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^ferrum-edge/[A-Za-z0-9._-]+$"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tag or branch the commit was read from."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "Sensitivity": {
+      "enum": [
+        "Secret",
+        "EndpointUrl",
+        "RedisUrl",
+        "KafkaProducerProperties",
+        "PrivateKeySource",
+        "CertificateSource",
+        "EndpointPath"
+      ]
+    },
+    "Rule": {
+      "type": "object",
+      "required": [
+        "path",
+        "sensitivity"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^(\\*|[A-Za-z0-9_.-]+)$"
+          }
+        },
+        "sensitivity": {
+          "$ref": "#/$defs/Sensitivity"
+        }
+      }
+    }
+  }
+}

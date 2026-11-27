@@ -8,6 +8,24 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Added
 
+- `vocabularies/plugin-config-sensitivity.json` (shape
+  `schemas/vocabulary-plugin-config-sensitivity/v1.schema.json`): Ferrum
+  Edge's per-plugin credential-bearing config paths and their projection
+  class (`PLUGIN_SENSITIVITY_SCHEMAS`, 82 built-ins, 125 rules, shared rule
+  sets expanded) and the visible librdkafka producer properties
+  (`KAFKA_SAFE_PRODUCER_PROPERTIES`, 32), transcribed from Edge `v0.9.21`
+  `src/admin/plugin_config_projection.rs`. Foundry and GitForgeOps read these
+  tables. CI requires an entry for exactly the catalog's plugins, listed
+  classes and no repeated rule path.
+- `vocabularies/reserved-header-names.json` (shape
+  `schemas/vocabulary-reserved-header-names/v1.schema.json`): the 45
+  header names Edge refuses as a `correlation_id` `header_name`
+  (`RESERVED_HEADER_NAMES`, Edge `v0.9.21` `src/plugins/correlation_id.rs`),
+  which Nexus reads. CI requires each set to be named `<plugin>.<field>` for a
+  catalog plugin.
+- Valid and invalid fixtures for both vocabularies, with
+  `ci/test_validate.py` coverage.
+
 - Agent dispatch skills under `.agents/skills/` with Claude entrypoints under
   `.claude/skills/` (`astra-agents`, `sol-agents`, `opus-agents`,
   `muse-agents`, `qwen-agents`, `deepseek-flash-agents`,
@@ -46,6 +64,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   and fixtures; `ci/test_validate.py` covers the two-major case.
 
 ### Changed
+
+- `docs/adoption.md` decides the three candidate contracts: plugin config
+  sensitivity and the correlation ID reserved header names become contracts
+  (each has a reader in another repository), and Alloy's
+  `gateway-diagnostic-ref` report fixture does not (no other repository reads
+  it). `docs/ownership.md`, `docs/release-process.md` (owner sources) and
+  `README.md` follow.
 
 - Sync `main_branch_delta` in `vocabularies/plugin-catalog.json`,
   `vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json`

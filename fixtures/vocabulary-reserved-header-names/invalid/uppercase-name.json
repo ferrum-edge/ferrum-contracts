@@ -1,0 +1,77 @@
+{
+  "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-reserved-header-names/v1.schema.json",
+  "vocabulary": "reserved-header-names",
+  "version": 1,
+  "edge_release": "v0.9.21",
+  "description": "Closed header-name sets that Ferrum Edge refuses for an operator-configured header field, so a product that writes the configuration can refuse the same names before the write reaches Edge.",
+  "provenance": [
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/plugins/correlation_id.rs",
+      "symbols": [
+        "RESERVED_HEADER_NAMES",
+        "is_reserved_header_name"
+      ],
+      "note": "Transcribed verbatim (45 lowercase names, in source order)."
+    }
+  ],
+  "sets": [
+    {
+      "name": "correlation_id.header_name",
+      "plugin": "correlation_id",
+      "field": "header_name",
+      "symbol": "RESERVED_HEADER_NAMES",
+      "matching": "The configured name is compared in ASCII lowercase against the exact names.",
+      "names": [
+        "api-key",
+        "authentication-info",
+        "Authorization",
+        "connection",
+        "content-encoding",
+        "content-length",
+        "cookie",
+        "early-data",
+        "expect",
+        "forwarded",
+        "grpc-message",
+        "grpc-status",
+        "grpc-status-details-bin",
+        "host",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authentication-info",
+        "proxy-authorization",
+        "proxy-connection",
+        "sec-websocket-accept",
+        "sec-websocket-extensions",
+        "sec-websocket-key",
+        "sec-websocket-protocol",
+        "sec-websocket-version",
+        "set-cookie",
+        "te",
+        "traceparent",
+        "tracestate",
+        "trailer",
+        "transfer-encoding",
+        "upgrade",
+        "via",
+        "www-authenticate",
+        "x-api-key",
+        "x-auth-token",
+        "x-csrf-token",
+        "x-ferrum-original-content-encoding",
+        "x-forwarded-authorization",
+        "x-forwarded-for",
+        "x-forwarded-host",
+        "x-forwarded-proto",
+        "x-goog-api-key",
+        "x-grpc-web-mode",
+        "x-real-ip",
+        "x-xsrf-token"
+      ],
+      "also_refused": "Edge's is_reserved_header_name also refuses every backend-visible gateway assertion header (the x-consumer-* namespace, X-Authenticated-Identity and X-Geo-Country, each with _ equivalent to -) and the X-Ferrum-Hops loop-guard count. Those names are gateway-owned and recorded, with their roles, in vocabularies/gateway-headers.json; this set does not repeat them."
+    }
+  ]
+}

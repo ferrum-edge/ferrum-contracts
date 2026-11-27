@@ -1,0 +1,124 @@
+{
+  "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-plugin-config-sensitivity/v1.schema.json",
+  "vocabulary": "plugin-config-sensitivity",
+  "version": 1,
+  "edge_release": "v0.9.21",
+  "description": "Which built-in plugin config paths Ferrum Edge treats as credential-bearing, and how it projects each one in a read that withholds secrets (PLUGIN_SENSITIVITY_SCHEMAS), plus the librdkafka producer properties that stay visible (KAFKA_SAFE_PRODUCER_PROPERTIES). Products that echo or display plugin configs (Foundry, GitForgeOps) use it to withhold the same values Edge withholds. These schema rules are one layer of Edge's projection: Edge also masks keys by a name heuristic and sweeps URLs and TLS material structurally, which this vocabulary does not transcribe; a custom plugin has no schema rules and Edge withholds every scalar of its config.",
+  "provenance": [
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/admin/plugin_config_projection.rs",
+      "symbols": [
+        "FieldSensitivity",
+        "SensitivityRule",
+        "normalize_config_key",
+        "PLUGIN_SENSITIVITY_SCHEMAS",
+        "KAFKA_SAFE_PRODUCER_PROPERTIES"
+      ],
+      "note": "Transcribed from the Rust tables at the tag, in source order, with each rule constructor (secret, endpoint_url, redis_url, private_key_source, endpoint_path, certificate_source, or an inline SensitivityRule) resolved to its FieldSensitivity variant and each shared rule set (NONE, REDIS_BACKED, MESH_AUTHZ) expanded in place. Edge's plugin_config_projection_tests require an entry for every built-in in BUILTIN_PLUGIN_PARITY_META."
+    }
+  ],
+  "path_matching": "Each path segment is compared after normalize_config_key (remove '-', '.' and '_', then ASCII-lowercase), so customHeaders, custom-headers, custom.headers, custom_headers and customheaders are one segment. A '*' segment matches every key of an object. Arrays are traversed transparently: a rule addresses channels.*.url whether channels is an object keyed by name or an array of objects.",
+  "sensitivities": [
+    {
+      "value": "Secret",
+      "meaning": "Replaced wholesale by the redaction placeholder: credential literals, vendor authentication header values and operator-authored templates."
+    },
+    {
+      "value": "EndpointUrl",
+      "meaning": "Projected to scheme://host[:port] plus structural markers for any path, query or fragment; userinfo is never shown; an unparseable value or one without a host is replaced by the placeholder."
+    },
+    {
+      "value": "RedisUrl",
+      "meaning": "Projected through Edge's Redis URL projection (redis://redacted@host:port/db), which keeps the database number."
+    },
+    {
+      "value": "KafkaProducerProperties",
+      "meaning": "A librdkafka producer_config map: every value is redacted except the properties in kafka_safe_producer_properties."
+    },
+    {
+      "value": "PrivateKeySource",
+      "meaning": "A TLS private-key source: inline key material is replaced by the placeholder, a reference (path, file://, k8s://, vault://, managed://) stays visible, a non-string is withheld."
+    },
+    {
+      "value": "CertificateSource",
+      "meaning": "A certificate or CA-bundle source: certificate-only PEM and references stay visible; a value carrying a PEM private-key block, or a non-string, is replaced by the placeholder."
+    },
+    {
+      "value": "EndpointPath",
+      "meaning": "An outbound path configured apart from its host and port: an empty path or / stays visible, anything else is replaced by the placeholder, a non-string is withheld."
+    }
+  ],
+  "plugins": [
+    {
+      "name": "otel_tracing",
+      "rules": [
+        {
+          "path": [
+            "endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "authorization"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "correlation_id",
+      "rules": []
+    },
+    {
+      "name": "mtls_auth",
+      "rules": [
+        {
+          "path": [
+            "allowed_issuers",
+            "*",
+            "ca_certificate_pem"
+          ],
+          "sensitivity": "CertificateSource"
+        }
+      ]
+    },
+    {
+      "name": "rate_limiting",
+      "rules": [
+        {
+          "path": [],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "kafka_logging",
+      "rules": [
+        {
+          "path": [
+            "producer_config"
+          ],
+          "sensitivity": "KafkaProducerProperties"
+        }
+      ]
+    }
+  ],
+  "kafka_safe_producer_properties": [
+    "acks",
+    "batch.num.messages",
+    "batch.size",
+    "client.id",
+    "compression.codec"
+  ]
+}

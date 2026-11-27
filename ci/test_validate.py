@@ -434,6 +434,61 @@ class MainBranchDeltaTests(unittest.TestCase):
                 self.assertIsNone(validate.first_error(validate.validator(schema, registry), doc))
 
 
+class SensitivityAndReservedHeaderTests(unittest.TestCase):
+    """plugin-config-sensitivity matches the catalog's plugins; reserved-header-names
+    sets are named for a catalog plugin."""
+
+    def setUp(self) -> None:
+        def read(name: str) -> dict:
+            return json.loads((ROOT / "vocabularies" / f"{name}.json").read_text(encoding="utf-8"))
+
+        self.catalog = read("plugin-catalog")
+        self.sensitivity = read("plugin-config-sensitivity")
+        self.reserved = read("reserved-header-names")
+
+    def check(self) -> list[str]:
+        report = validate.Report()
+        validate.check_plugin_config_sensitivity(
+            {"plugin-catalog": self.catalog, "plugin-config-sensitivity": self.sensitivity}, report
+        )
+        validate.check_reserved_header_names(
+            {"plugin-catalog": self.catalog, "reserved-header-names": self.reserved}, report
+        )
+        return report.errors
+
+    def test_the_repository_vocabularies_pass(self) -> None:
+        self.assertEqual(self.check(), [])
+        self.assertIn("x-real-ip", self.reserved["sets"][0]["names"])
+
+    def test_a_catalog_plugin_without_an_entry_fails(self) -> None:
+        removed = self.sensitivity["plugins"].pop()
+        errors = self.check()
+        self.assertEqual(errors, [f"vocabularies/plugin-config-sensitivity.json: catalog plugin {removed['name']!r} has no sensitivity entry"])
+
+    def test_an_unknown_plugin_fails(self) -> None:
+        self.sensitivity["plugins"].append({"name": "zz_unknown", "rules": []})
+        errors = self.check()
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("'zz_unknown' is not a plugin", errors[0])
+
+    def test_an_unlisted_class_and_a_repeated_path_fail(self) -> None:
+        plugin = next(p for p in self.sensitivity["plugins"] if p["rules"])
+        self.sensitivity["sensitivities"] = [
+            c for c in self.sensitivity["sensitivities"] if c["value"] != plugin["rules"][0]["sensitivity"]
+        ]
+        plugin["rules"].append(dict(plugin["rules"][0]))
+        errors = self.check()
+        self.assertTrue(any("uses unlisted sensitivity" in e for e in errors), errors)
+        self.assertTrue(any("repeats rule path" in e for e in errors), errors)
+
+    def test_a_misnamed_or_unknown_reserved_set_fails(self) -> None:
+        self.reserved["sets"][0]["name"] = "correlation_id.header"
+        self.reserved["sets"].append(dict(self.reserved["sets"][0], name="nope.header_name", plugin="nope"))
+        errors = self.check()
+        self.assertTrue(any("must be named correlation_id.header_name" in e for e in errors), errors)
+        self.assertTrue(any("names unknown plugin 'nope'" in e for e in errors), errors)
+
+
 class VocabularyInstanceTests(unittest.TestCase):
     """Every retained major of a vocabulary schema names its vocabulary file."""
 
