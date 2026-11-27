@@ -563,6 +563,7 @@ def check_cross(
 QUALIFICATION_DIR = "qualification"
 
 # Alloy's derived resource ID rule (ferrum-alloy crates/ferrum-alloy-edge at
+# v0.1.0, c949978d7e90be33bac6a16e23744bcdd4ee3924, unchanged since
 # db412da37564ffbe869e2b40530dbebf5afe7ac8: manifest.rs
 # EDGE_RESOURCE_ID_MAX_LENGTH and ServiceManifest::validate, export.rs
 # resources and the *_SUFFIX constants). Edge's MAX_ID_LENGTH is the same 254.
