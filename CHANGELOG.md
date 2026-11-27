@@ -6,6 +6,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ## [Unreleased]
 
+### Added
+
+- Agent dispatch skills under `.agents/skills/` with Claude entrypoints under
+  `.claude/skills/` (`astra-agents`, `sol-agents`, `opus-agents`,
+  `muse-agents`, `qwen-agents`, `deepseek-flash-agents`,
+  `antigravity-neon-agents`), matching ferrum-edge and adapted to this
+  repository's provenance, fixture and validation rules. Repository tooling
+  only; no schema, vocabulary or fixture changes.
+
 ### Changed
 
 - Sync `main_branch_delta` in `vocabularies/plugin-catalog.json`,
