@@ -22,7 +22,11 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   (`wildcard_matches` / `hosts_overlap` / `ambiguous_path_host_overlap`,
   `Proxy::effective_scheme`, `canonicalize_policy_path`, and cross-field
   `validate_fields` checks), with the consumer Edge Main Drift job that
-  checks each against Edge `main`.
+  checks each against Edge `main` (the omitted `backend_scheme` case of
+  `Proxy::effective_scheme` is marked uncovered). The release process's owner
+  configuration compatibility check now also covers the five resource roots
+  and everything they reference, and a breaking resource change is recorded
+  like a breaking plugin config change.
 
 - `plugin-config-schemas/<plugin>.schema.json`: one self-contained JSON
   Schema 2020-12 document per built-in plugin (82), holding the plugin's

@@ -51,15 +51,21 @@ When Ferrum Edge publishes `vX.Y.Z`:
    rule 5). Before re-pinning, compare the previously pinned file with the
    new one (`git diff <config_schema_document.commit> vX.Y.Z -- openapi.yaml`
    in a clean Edge clone) for `PluginConfigBase`, every component a plugin's
-   `config_schema` pointer names and everything those components reach
-   through `$ref`. Breaking for an existing configuration: a removed or
+   `config_schema` pointer names, the five published resource roots
+   (`ProxyCreate`, `UpstreamCreate`, `ConsumerCreate`, `PluginConfigCreate`,
+   `GatewayTrustBundleCreate`, the files in `resource-schemas/`), and
+   everything those components reach through `$ref`; comparing the
+   regenerated `plugin-config-schemas/` and `resource-schemas/` files with the
+   previous ones shows exactly this set. Breaking for an existing
+   configuration or resource: a removed or
    renamed property, a property that becomes required, a removed enum
    value, a narrowed type, pattern, bound or length, an object closed with
    `additionalProperties: false`, a pointer that no longer resolves, a plugin
    whose `config_required_when_enabled` becomes true or that gains a
    `scope_constraint`, and a plugin moved to `removed_plugins`. Compatible: a
    new optional property, a new enum value, a widened bound, a new plugin. A
-   breaking change is never re-pinned silently: the release PR names each one
+   breaking change, in a plugin config or a resource schema, is never
+   re-pinned silently: the release PR names each one
    and the Edge release that made it, asks the Edge owner to confirm it is
    allowed by Edge's support policy (with an Edge upgrade note), and the
    release record and `CHANGELOG.md` list it under "Changed". For
