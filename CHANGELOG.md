@@ -49,8 +49,9 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 - Sync `main_branch_delta` in `vocabularies/plugin-catalog.json`,
   `vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json`
-  to Ferrum Edge `main` `f1b4d3739dab704494a3caa68eb5bfff0b5db99c` (through
-  Edge PR #7531, which prepares version `1.0.0`; not tagged), and extend the
+  to Ferrum Edge `main` `e333ba3fe51ffed19ce3b0a53140ba4340707589` (through
+  Edge PR #7533, the release-notes refresh on top of Edge PR #7531, which
+  prepares version `1.0.0`; not tagged), and extend the
   unreleased Edge `main` note in `docs/admin-contracts.md`. Since the previous
   sync at `e837270d4b6c1c9756b80400d2a8e2e14b176ce4`: `openapi.yaml` moves to
   SHA-256 `145067e5b04161ad2bd8145856139a609744c4d804c2501fdc94cdb3f3cd5370`

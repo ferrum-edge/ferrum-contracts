@@ -154,9 +154,11 @@ From Edge `v0.9.21`, these admin rules also apply:
   manual recovery.
 
 **Unreleased on Edge `main`** (checked at
-[`f1b4d3739dab704494a3caa68eb5bfff0b5db99c`](https://github.com/ferrum-edge/ferrum-edge/commit/f1b4d3739dab704494a3caa68eb5bfff0b5db99c),
-through Edge PR [#7531](https://github.com/ferrum-edge/ferrum-edge/pull/7531),
-which prepares version `1.0.0` and is not tagged; the items below were first
+[`e333ba3fe51ffed19ce3b0a53140ba4340707589`](https://github.com/ferrum-edge/ferrum-edge/commit/e333ba3fe51ffed19ce3b0a53140ba4340707589),
+through Edge PR [#7533](https://github.com/ferrum-edge/ferrum-edge/pull/7533),
+the 1.0.0 release-notes refresh on top of Edge PR
+[#7531](https://github.com/ferrum-edge/ferrum-edge/pull/7531), which prepares
+version `1.0.0`; not tagged; the items below were first
 recorded at
 [`e837270d4b6c1c9756b80400d2a8e2e14b176ce4`](https://github.com/ferrum-edge/ferrum-edge/commit/e837270d4b6c1c9756b80400d2a8e2e14b176ce4)
 through Edge PR [#7491](https://github.com/ferrum-edge/ferrum-edge/pull/7491)
@@ -336,7 +338,7 @@ keep unchanged wire shapes):
   SQL database created by a `0.9.x` release; the supported upgrade, also for
   MongoDB, is a fresh database populated with `POST /restore` from
   per-namespace `GET /backup` exports, following Edge's
-  [rebuild procedure](https://github.com/ferrum-edge/ferrum-edge/blob/f1b4d3739dab704494a3caa68eb5bfff0b5db99c/docs/upgrade_guide.md#every-09x-database-is-rebuilt-and-restored-7523).
+  [rebuild procedure](https://github.com/ferrum-edge/ferrum-edge/blob/e333ba3fe51ffed19ce3b0a53140ba4340707589/docs/upgrade_guide.md#every-09x-database-is-rebuilt-and-restored-7523).
   A backup never carries the namespace registry row (description and
   timestamps), so the registry is recorded (`GET /namespaces`,
   `GET /namespaces/{name}`) and recreated (`POST /namespaces`, or
@@ -373,7 +375,7 @@ keep unchanged wire shapes):
   mesh slice version outside it is treated like any unparseable slice
   version. Rendered in-range timestamps, and the wire and storage text of these
   stamps, are byte-identical. Source: Edge `CHANGELOG.md` and
-  `docs/upgrade_guide.md` at the commit above and the notes refresh in Edge PR
+  `docs/upgrade_guide.md` at the commit above, as refreshed by Edge PR
   [#7533](https://github.com/ferrum-edge/ferrum-edge/pull/7533).
 
 ## Owner sources and artifact scope
