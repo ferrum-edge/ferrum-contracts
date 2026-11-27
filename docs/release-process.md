@@ -36,7 +36,31 @@ When Ferrum Edge publishes `vX.Y.Z`:
      classifier, label or guarantee meaning needs a new major of the response
      and vocabulary schemas (Edge v0.9.13 moved both to v2).
 2. Set `edge_release` to `vX.Y.Z` and every `provenance` commit to the tag's
-   commit. Update each `main_branch_delta` against Edge `main`.
+   commit. Keep the `main_branch_delta` block in `plugin-catalog.json`,
+   `gateway-headers.json` and `gateway-errors.json`; never remove it. Promote
+   what the release ships into released entries, then reset each delta
+   against Edge `main` as read for this PR: `commit` is that full Edge `main`
+   commit (on Edge `main`'s history; the release commit itself when `main`
+   has not moved past it), and `summary` lists only the contract-visible
+   changes on Edge `main` after `vX.Y.Z`. When there are none, use the empty
+   delta:
+
+   ```json
+   "main_branch_delta": {
+     "repo": "ferrum-edge/ferrum-edge",
+     "ref": "main",
+     "commit": "<full Edge main commit>",
+     "summary": "No contract-visible changes beyond vX.Y.Z (<full release commit>) at Edge main <full Edge main commit>."
+   }
+   ```
+
+   The consumers' scheduled Edge `main` checks read `.main_branch_delta.commit`
+   from this repository's `main`
+   ([consumer-pins.md](consumer-pins.md#checking-against-edge-main)). The
+   `contracts-edge-0.9.21` release PR (#88) removed the blocks, which left
+   those checks without an anchor until #89 restored them; `ci/validate.py`
+   now fails if any of the three vocabularies lacks the block or names a
+   repository or branch other than Edge `main`.
 3. Re-check Edge-owned schemas (`diagnostic-ref`, conditional backup metadata,
    backend egress policy, deployment snapshot and mutation acknowledgement)
    against the release, reading the owner sources listed in
@@ -62,6 +86,19 @@ When Ferrum Edge publishes `vX.Y.Z`:
    static source/diff inspection and integrity hashing, and the GitHub-hosted
    `Validate contracts` workflow on the exact PR head is the gate. An owner of
    each changed contract approves (see [ownership.md](ownership.md)).
+
+## Between releases
+
+Edge `main` moves between releases. A delta sync PR (for example #90) reads
+the Edge sources listed in step 1 at one full Edge `main` commit, sets each
+`main_branch_delta.commit` to that commit, and records in each `summary`
+every contract-visible change since the published release. It changes
+nothing that describes the release: `edge_release`, `provenance` and
+`config_schema_document` stay on the published tag, and entries for changes
+that only `main` has are marked unreleased. It adds a `CHANGELOG.md` entry
+under `[Unreleased]` and creates no tag. While an Edge release candidate is
+validated, the synced commit is the candidate commit
+([versioning.md](versioning.md#edge-release-candidates)).
 
 ## Release records and publication status
 

@@ -1,7 +1,7 @@
 """Tests for ci/validate.py: the bounded --fetch-openapi download, the
 schema provenance check, the gateway-headers availability check, the
 unpublished Edge tag check, the vocabulary x-contract.instance check, the
-diagnostic-ref values copied from gateway-errors, the PluginConfigBase
+main_branch_delta presence check, the diagnostic-ref values copied from gateway-errors, the PluginConfigBase
 parser and catalog parity check, the cross-contract fixture check, and the
 qualification case check.
 
@@ -337,6 +337,89 @@ class EdgeTagTests(unittest.TestCase):
             "provenance": [{"repo": "ferrum-edge/ferrum-nexus", "ref": "v0.9.16"}],
         }
         self.assertEqual(self.check(vocabulary), [])
+
+
+class MainBranchDeltaTests(unittest.TestCase):
+    """plugin-catalog, gateway-headers and gateway-errors keep a
+    main_branch_delta on Edge main; a release resets it, never removes it."""
+
+    RELEASE = "f" * 40
+    EMPTY_DELTA = {
+        "repo": validate.EDGE_REPO,
+        "ref": "main",
+        "commit": RELEASE,
+        "summary": f"No contract-visible changes beyond v0.9.21 ({RELEASE}) at Edge main {RELEASE}.",
+    }
+
+    def check(self, vocabularies: dict[str, dict]) -> list[str]:
+        report = validate.Report()
+        validate.check_main_branch_delta(vocabularies, report)
+        return report.errors
+
+    def vocabularies(self, delta) -> dict[str, dict]:
+        docs = {}
+        for name in validate.DELTA_VOCABULARIES:
+            docs[name] = {"edge_release": "v0.9.21"}
+            if delta is not None:
+                docs[name]["main_branch_delta"] = dict(delta)
+        return docs
+
+    def test_the_empty_delta_at_the_release_commit_passes(self) -> None:
+        self.assertEqual(self.check(self.vocabularies(self.EMPTY_DELTA)), [])
+
+    def test_a_removed_delta_fails_in_each_vocabulary(self) -> None:
+        errors = self.check(self.vocabularies(None))
+        self.assertEqual(len(errors), len(validate.DELTA_VOCABULARIES), errors)
+        for name, error in zip(validate.DELTA_VOCABULARIES, errors):
+            self.assertTrue(error.startswith(f"vocabularies/{name}.json: main_branch_delta is required"))
+
+    def test_one_vocabulary_without_the_delta_fails_alone(self) -> None:
+        vocabularies = self.vocabularies(self.EMPTY_DELTA)
+        del vocabularies["gateway-errors"]["main_branch_delta"]
+        errors = self.check(vocabularies)
+        self.assertEqual(len(errors), 1, errors)
+        self.assertTrue(errors[0].startswith("vocabularies/gateway-errors.json: main_branch_delta is required"))
+
+    def test_another_repository_or_branch_fails(self) -> None:
+        for field, value in (("repo", "ferrum-edge/ferrum-alloy"), ("ref", "v0.9.21")):
+            with self.subTest(field=field):
+                delta = dict(self.EMPTY_DELTA, **{field: value})
+                errors = self.check(self.vocabularies(delta))
+                self.assertEqual(len(errors), len(validate.DELTA_VOCABULARIES), errors)
+                self.assertIn("main_branch_delta must name ferrum-edge/ferrum-edge and ref main", errors[0])
+
+    def test_a_missing_vocabulary_fails(self) -> None:
+        vocabularies = self.vocabularies(self.EMPTY_DELTA)
+        del vocabularies["plugin-catalog"]
+        self.assertEqual(
+            self.check(vocabularies),
+            [
+                "vocabularies/plugin-catalog.json: "
+                "missing or invalid, so its main_branch_delta cannot be checked"
+            ],
+        )
+
+    def test_the_repository_vocabularies_pass(self) -> None:
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(ROOT, report)
+            registry = validate.build_registry(schemas)
+            vocabularies = validate.check_vocabularies(ROOT, schemas, registry, report)
+            validate.check_main_branch_delta(vocabularies, report)
+        self.assertEqual(report.errors, [])
+
+    def test_the_empty_delta_validates_against_each_vocabulary_schema(self) -> None:
+        report = validate.Report()
+        with contextlib.redirect_stdout(io.StringIO()):
+            schemas = validate.load_schemas(ROOT, report)
+            registry = validate.build_registry(schemas)
+        self.assertEqual(report.errors, [])
+        for name in validate.DELTA_VOCABULARIES:
+            with self.subTest(name=name):
+                doc = json.loads((ROOT / "vocabularies" / f"{name}.json").read_text(encoding="utf-8"))
+                doc["main_branch_delta"] = dict(self.EMPTY_DELTA)
+                schema = schemas[f"vocabulary-{name}"][doc["version"]]
+                self.assertIsNone(validate.first_error(validate.validator(schema, registry), doc))
 
     def test_a_schema_x_contract_naming_an_unpublished_tag_fails(self) -> None:
         report = validate.Report()

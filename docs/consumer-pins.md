@@ -154,6 +154,16 @@ this repository's `main`:
   the new `openapi.yaml` sha256, and header or error changes. It is for review;
   do not parse it.
 
+The object is always present on `main`, release commits included: a release
+resets it to the Edge `main` commit it read instead of removing it, and when
+Edge `main` has no contract-visible changes beyond the release, `summary` says
+so ([release-process.md](release-process.md#after-an-edge-release); CI fails
+if the object is missing). While an Edge release candidate is validated,
+`commit` names the candidate commit
+([versioning.md](versioning.md#edge-release-candidates)). The delta is
+informational and outside the
+[stability promise](versioning.md#stability-promise-for-contracts-edge-1).
+
 A vendored copy holds the delta as of its tag. To read the current delta, fetch
 the vocabulary from this repository's `main` at a resolved commit.
 

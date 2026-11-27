@@ -29,7 +29,7 @@ complete; the issue is closed and remains as project history.
 | [`fixtures/`](fixtures) | Payloads producers must emit and consumers must accept (`valid/`) or reject (`invalid/`); one `v<N>/` directory per major when a schema has several |
 | [`qualification/`](qualification) | Producer outcomes for payloads the schema accepts but the producer may refuse (rules applied after defaults); not fixtures |
 | [`docs/ownership.md`](docs/ownership.md) | Who owns each contract and how changes land |
-| [`docs/versioning.md`](docs/versioning.md) | Schema versions and `contracts-edge-X.Y.Z` tags |
+| [`docs/versioning.md`](docs/versioning.md) | Schema versions, `contracts-edge-X.Y.Z` tags, the Edge release-candidate policy and the `contracts-edge-1.*` stability promise |
 | [`docs/adoption.md`](docs/adoption.md) | Consumer pins, qualification evidence and remaining contract gaps |
 | [`docs/consumer-pins.md`](docs/consumer-pins.md) | The consumer `PIN` file format and the checks every consumer drift test makes |
 | [`docs/release-process.md`](docs/release-process.md) | How a release is cut after an Edge release |
@@ -40,9 +40,17 @@ complete; the issue is closed and remains as project history.
 | [`docs/releases/`](docs/releases) | Release records from `contracts-edge-0.9.11` on: Edge source, changes and what stayed unchanged |
 
 Every file records where it came from: owner repository, path, and commit.
-Latest: [`contracts-edge-0.9.21`](docs/releases/contracts-edge-0.9.21.md), for
-Edge `v0.9.21` (Edge commit `f9915358c8032214f4034a17c28cdf72d14006c3`). There
-is no `contracts-edge-0.9.18`: Edge `v0.9.18` was tagged but never published.
+Latest release: [`contracts-edge-0.9.21`](docs/releases/contracts-edge-0.9.21.md),
+for published Edge `v0.9.21` (Edge commit
+`f9915358c8032214f4034a17c28cdf72d14006c3`). Contracts tags only published
+Edge releases, never an Edge prerelease or release candidate; while an Edge
+candidate is validated, consumers stay on the latest release and
+`main_branch_delta` names the candidate commit
+([policy](docs/versioning.md#edge-release-candidates)). From
+`contracts-edge-1.0.0`, cut when Edge `v1.0.0` is published, the
+[stability promise](docs/versioning.md#stability-promise-for-contracts-edge-1)
+applies. There is no `contracts-edge-0.9.18`: Edge `v0.9.18` was tagged but
+never published.
 Release history: [`CHANGELOG.md`](CHANGELOG.md) and [`docs/releases/`](docs/releases);
 Edge-to-tag mapping: [docs/versioning.md](docs/versioning.md#release-tags).
 
