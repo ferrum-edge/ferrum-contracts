@@ -301,13 +301,16 @@ From `contracts-edge-1.0.0` until a `contracts-edge-2.0.0`, every
    conditionals) and pins that file by SHA-256. The vocabulary's JSON shape
    is covered by rules 1 to 4; the configuration schemas it points to are
    Edge's own API and are governed by Edge's support policy for its 1.x
-   line, not by this promise. A `1.*` release re-pins `openapi.yaml` only
-   after the compatibility check in
+   line, not by this promise; the same holds for the Admin API resource
+   request schemas published from it in `resource-schemas/`. A `1.*` release
+   re-pins `openapi.yaml` only after the compatibility check, which covers
+   both, in
    [release-process.md](release-process.md#after-an-edge-release), and
    records any incompatible owner configuration change it finds in its
    release record instead of passing it off as compatible. The standalone
    documents in `plugin-config-schemas/` are generated from that pinned file
-   (`ci/plugin_config_schemas.py`) and follow the same rule: they change
+   (`ci/plugin_config_schemas.py`), as are the Admin API resource request
+   schemas in `resource-schemas/`, and both follow the same rule: they change
    exactly when the pinned `openapi.yaml` changes, and they are not schema
    majors of this repository.
 6. **Tags are signed and immutable.** Every `1.*` tag is an SSH-signed

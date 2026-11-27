@@ -560,6 +560,27 @@ class PluginConfigSchemaFileTests(unittest.TestCase):
         self.assertTrue(any(f"{removed['name']}.schema.json: not a catalog plugin" in e for e in errors))
 
 
+class ResourceSchemaFileTests(unittest.TestCase):
+    """resource-schemas/ holds the published Edge resource request schemas."""
+
+    def setUp(self) -> None:
+        self.catalog = json.loads((ROOT / "vocabularies" / "plugin-catalog.json").read_text(encoding="utf-8"))
+
+    def check(self, catalog: dict) -> list[str]:
+        report = validate.Report()
+        validate.check_resource_schema_files(ROOT, {"plugin-catalog": catalog}, report)
+        return report.errors
+
+    def test_the_repository_files_pass(self) -> None:
+        self.assertEqual(self.check(self.catalog), [])
+
+    def test_a_re_pin_without_regeneration_fails_every_file(self) -> None:
+        catalog = json.loads(json.dumps(self.catalog))
+        catalog["config_schema_document"]["ref"] = "v9.9.9"
+        errors = self.check(catalog)
+        self.assertEqual(len(errors), 2 * len(validate.plugin_config_schemas.RESOURCE_ROOTS), errors)
+
+
 class YamlReaderParityTests(unittest.TestCase):
     """The generator's YAML reader and PyYAML with YAML 1.2 core resolvers agree."""
 

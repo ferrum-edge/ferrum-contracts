@@ -74,7 +74,9 @@ Checks, in order:
    `x-generated` (plugin, pointer, and the catalog's config_schema_document)
    the generator writes. With --openapi or --fetch-openapi, every file must
    also equal what ci/plugin_config_schemas.py generates from that pinned
-   openapi.yaml, so re-pinning the file without regenerating fails, and the
+   openapi.yaml, so re-pinning the file without regenerating fails. The same
+   holds for resource-schemas/ (one document per RESOURCE_ROOTS component of
+   that openapi.yaml). The
    generator's YAML reader must parse that file exactly as PyYAML does with
    YAML 1.2 core-schema resolvers.
 
@@ -1241,6 +1243,62 @@ def check_plugin_config_schema_files(root: Path, vocabularies: dict[str, dict], 
             report.ok()
 
 
+def check_resource_schema_files(root: Path, vocabularies: dict[str, dict], report: Report) -> None:
+    """resource-schemas/ holds exactly RESOURCE_ROOTS, each a valid 2020-12
+    document with the generator's `$id` and the catalog's pinned source (step 9)."""
+    catalog = vocabularies.get("plugin-catalog")
+    gen = plugin_config_schemas
+    if not catalog:
+        report.fail(gen.RESOURCE_DIR, "plugin-catalog is missing, so the resource schemas cannot be checked")
+        return
+    document = catalog["config_schema_document"]
+    directory = root / gen.RESOURCE_DIR
+    present = (
+        {path.name for path in directory.iterdir() if path.name != "README.md"}
+        if directory.is_dir()
+        else set()
+    )
+    wanted = {f"{name}.schema.json" for name in gen.RESOURCE_ROOTS}
+    for name in sorted(wanted - present):
+        report.fail(f"{gen.RESOURCE_DIR}/{name}", f"missing; run {gen.GENERATOR} --write")
+    for name in sorted(present - wanted):
+        report.fail(f"{gen.RESOURCE_DIR}/{name}", "not a published resource schema; remove it")
+    for name in sorted(wanted & present):
+        resource = name.removesuffix(".schema.json")
+        path = directory / name
+        doc = load_json(path, report)
+        if not isinstance(doc, dict):
+            report.fail(path, "a generated schema is a JSON object")
+            continue
+        source = {
+            "repo": document["repo"],
+            "ref": document["ref"],
+            "commit": document["commit"],
+            "path": document["path"],
+            "sha256": document["sha256"],
+            "pointer": gen.COMPONENT_PREFIX + resource,
+        }
+        problems = []
+        generated = doc.get("x-generated")
+        if not isinstance(generated, dict) or generated.get("resource") != resource:
+            problems.append(f"x-generated.resource must be {resource!r}")
+        elif generated.get("source") != source:
+            problems.append(f"x-generated.source differs from the catalog's config_schema_document; run {gen.GENERATOR} --write")
+        expected_id = f"{gen.RESOURCE_ID_BASE}/edge-{document['ref']}/{name}"
+        if doc.get("$id") != expected_id:
+            problems.append(f"$id must be {expected_id}")
+        if doc.get("$schema") != gen.SCHEMA_DIALECT:
+            problems.append(f"$schema must be {gen.SCHEMA_DIALECT}")
+        try:
+            Draft202012Validator.check_schema(doc)
+        except Exception as exc:  # jsonschema.SchemaError and friends
+            problems.append(f"not a valid JSON Schema 2020-12 document: {exc}")
+        for problem in problems:
+            report.fail(path, problem)
+        if not problems:
+            report.ok()
+
+
 def check_plugin_config_schema_generation(
     root: Path, label: str, data: bytes, vocabularies: dict[str, dict], report: Report
 ) -> None:
@@ -1255,7 +1313,7 @@ def check_plugin_config_schema_generation(
         return
     problems = plugin_config_schemas.compare(root, files)
     for problem in problems:
-        report.fail(plugin_config_schemas.OUTPUT_DIR, problem)
+        report.fail(problem.split(":", 1)[0], problem.split(":", 1)[1].strip())
     if not problems:
         report.ok()
 
@@ -1756,6 +1814,7 @@ def main() -> int:
     check_copied_values(schemas, vocabularies, report)
     print("plugin config schemas")
     check_plugin_config_schema_files(root, vocabularies, report)
+    check_resource_schema_files(root, vocabularies, report)
     print("qualification cases")
     check_qualifications(root, schemas, registry, report)
     if args.openapi or args.fetch_openapi:

@@ -1,0 +1,1476 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/resource-schemas/edge-v0.9.21/UpstreamCreate.schema.json",
+  "title": "UpstreamCreate request body",
+  "description": "Edge's UpstreamCreate request schema (openapi.yaml components.schemas.UpstreamCreate), generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3) with every component it references. Do not edit: run ci/plugin_config_schemas.py. Admission rules that exist only in Edge's Rust code are not in this schema; resource-schemas/README.md lists them. This is Edge's own API schema, governed by Edge's support policy (docs/versioning.md).",
+  "x-generated": {
+    "resource": "UpstreamCreate",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/UpstreamCreate"
+    }
+  },
+  "$ref": "#/$defs/UpstreamCreate",
+  "$defs": {
+    "ActiveHealthCheck": {
+      "type": "object",
+      "properties": {
+        "http_path": {
+          "type": "string",
+          "default": "/health",
+          "maxLength": 2048,
+          "pattern": "^/",
+          "description": "HTTP path to probe; must start with `/`"
+        },
+        "interval_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 3600,
+          "default": 10,
+          "description": "Seconds between probes"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400000,
+          "default": 5000,
+          "description": "Probe timeout in milliseconds"
+        },
+        "healthy_threshold": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 3,
+          "description": "Consecutive healthy probes to mark target healthy"
+        },
+        "unhealthy_threshold": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 3,
+          "description": "Consecutive unhealthy probes to mark target unhealthy"
+        },
+        "healthy_status_codes": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "default": [
+            200,
+            302
+          ],
+          "description": "Status codes considered healthy (HTTP probe only)"
+        },
+        "probe_type": {
+          "type": "string",
+          "enum": [
+            "http",
+            "tcp",
+            "udp",
+            "grpc"
+          ],
+          "default": "http",
+          "description": "Type of health probe.\n`http` — HTTP GET request (default).\n`tcp` — TCP SYN connection probe.\n`udp` — UDP probe with optional payload.\n`grpc` — gRPC health check using `grpc.health.v1.Health/Check`.\n"
+        },
+        "udp_probe_payload": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 2048,
+          "pattern": "^([0-9a-fA-F]{2})*$",
+          "description": "Hex-encoded payload to send for UDP probes (e.g., \"0000\").\nIf omitted, a single zero byte is sent.\n"
+        },
+        "grpc_service_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Service name for gRPC health check requests\n(`grpc.health.v1.Health/Check`). Empty/null (default) checks the\noverall server health. Only used when `probe_type: grpc`.\n"
+        },
+        "use_tls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use HTTPS for HTTP probes"
+        }
+      }
+    },
+    "BackendTlsConfig": {
+      "type": "object",
+      "properties": {
+        "client_cert_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "client_key_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "description": "Private-key source. Inline PEM key material is withheld from every non-admin Upstream read (`[REDACTED]`; a fingerprint in `GET /config/export`); references stay visible."
+        },
+        "server_ca_cert_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "verify_server_cert": {
+          "type": "boolean",
+          "default": true
+        },
+        "sni": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 253
+        },
+        "san_allow_list": {
+          "type": "array",
+          "maxItems": 256,
+          "default": [],
+          "items": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        }
+      }
+    },
+    "H2UpgradePolicy": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "UPGRADE",
+        "DO_NOT_UPGRADE"
+      ],
+      "description": "Mesh backend HTTP/2 upgrade policy."
+    },
+    "HashOnCookieConfig": {
+      "type": "object",
+      "description": "Cookie attributes for `hash_on: \"cookie:<name>\"` sticky sessions. Controls the Set-Cookie header injected when a new session is established.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "default": "/",
+          "description": "Cookie `Path` attribute. Must start with `/` and must not contain control bytes or `;`."
+        },
+        "ttl_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400,
+          "default": 3600,
+          "description": "Cookie `Max-Age` in seconds (default 1 hour). Ignored when `session_cookie` is true."
+        },
+        "session_cookie": {
+          "type": "boolean",
+          "default": false,
+          "description": "Omit `Max-Age` so the cookie is a browser session cookie, cleared when the browser closes. Set by the Gateway API translator for `sessionPersistence.cookieConfig.lifetimeType: Session`; a `Permanent` lifetime keeps `ttl_seconds` from `absoluteTimeout`."
+        },
+        "domain": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 253,
+          "description": "Optional ASCII domain name. An optional leading dot is accepted."
+        },
+        "http_only": {
+          "type": "boolean",
+          "default": true,
+          "description": "Set `HttpOnly` flag."
+        },
+        "secure": {
+          "type": "boolean",
+          "default": false,
+          "description": "Set `Secure` flag."
+        },
+        "same_site": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "Strict",
+            "Lax",
+            "None",
+            null
+          ],
+          "description": "`SameSite` attribute."
+        }
+      }
+    },
+    "HealthCheckConfig": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ActiveHealthCheck"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "passive": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PassiveHealthCheck"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "LoadBalancerAlgorithm": {
+      "type": "string",
+      "enum": [
+        "round_robin",
+        "weighted_round_robin",
+        "least_connections",
+        "least_latency",
+        "consistent_hashing",
+        "random",
+        "passthrough"
+      ],
+      "default": "round_robin",
+      "description": "Load-balancing algorithm. `passthrough` (mesh DestinationRule `loadBalancer.simple=PASSTHROUGH`) dials the request's captured original destination when it matches a target in the upstream's pool, bypassing load balancing; requests with no captured original destination, or one that matches no (healthy) pool target, fall back to round-robin. Outside the mesh capture data path no original destination is available, so `passthrough` behaves as `round_robin`."
+    },
+    "LocalityDistribute": {
+      "type": "object",
+      "required": [
+        "from"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source locality in `region/zone/subzone` form."
+        },
+        "to": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "uint32"
+          },
+          "description": "Target locality to relative-weight mapping."
+        }
+      }
+    },
+    "LocalityFailover": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source region."
+        },
+        "to": {
+          "type": "string",
+          "description": "Failover region."
+        }
+      }
+    },
+    "MeshTrafficPolicyTls": {
+      "type": "object",
+      "required": [
+        "mode",
+        "insecure_skip_verify"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "disable",
+            "simple",
+            "mutual",
+            "istio_mutual"
+          ],
+          "default": "simple",
+          "description": "DestinationRule client-side TLS mode."
+        },
+        "sni": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional backend TLS Server Name Indication value."
+        },
+        "ca_certificates": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional path to a PEM CA bundle."
+        },
+        "client_certificate": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Client-certificate path required by `mutual` mode."
+        },
+        "private_key": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Private-key source required by `mutual` mode. Inline PEM key material is withheld from every non-admin Upstream read (`[REDACTED]`; a fingerprint in `GET /config/export`); references stay visible."
+        },
+        "subject_alt_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Allowed backend certificate Subject Alternative Names."
+        },
+        "insecure_skip_verify": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable backend server-certificate verification."
+        }
+      }
+    },
+    "PassiveHealthCheck": {
+      "type": "object",
+      "properties": {
+        "unhealthy_status_codes": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "default": [
+            500,
+            502,
+            503,
+            504
+          ],
+          "description": "Status codes that count toward the unhealthy threshold"
+        },
+        "unhealthy_threshold": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 3,
+          "description": "Failures within the window to mark target unhealthy"
+        },
+        "unhealthy_window_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400,
+          "default": 30,
+          "description": "Sliding window for counting failures"
+        },
+        "healthy_after_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0,
+          "maximum": 86400,
+          "default": 30,
+          "description": "Seconds after which an unhealthy target is automatically restored\nto the rotation. Acts as a recovery timer / half-open circuit\nbreaker. Default: 30 seconds. Set to 0 to disable automatic\nrecovery (rely on active health checks or all-unhealthy fallback\nonly). On-success recovery is always active in addition to this\ntimer.\n"
+        },
+        "max_ejection_percent": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Maximum percentage of targets that may be passively ejected at the\nsame time. When passive ejections exceed this cap, the earliest\npassive ejections are re-admitted first. Null means no cap.\n"
+        },
+        "gateway_error_codes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 500,
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "description": "Reserved for DestinationRule parity. Validated and persisted, but\nnot yet applied by passive health at runtime.\n"
+        },
+        "split_external_local_origin_errors": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Reserved for DestinationRule parity. Validated and persisted, but\nnot yet applied by passive health at runtime.\n"
+        },
+        "consecutive_error_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Evaluate `unhealthy_threshold` against the target's consecutive\nfailure streak instead of the sliding-window failure count. False\n(default) keeps Ferrum's windowed passive health; true is Istio\n`outlierDetection.consecutive5xxErrors` semantics, where a single\nsuccess resets the streak and `unhealthy_window_seconds` is not\nconsulted. Set automatically for translated Istio DestinationRules;\ndirect native configuration may opt in explicitly.\n"
+        },
+        "consecutive_5xx_ejection_disabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the Istio consecutive-5xx detector is disabled\n(`consecutive5xxErrors: 0`). Matching `unhealthy_status_codes` and\nlocally originated connection failures are ignored — Envoy's\ndefault `splitExternalLocalOriginErrors=false` puts those\nconnection failures in the same 5xx bucket, and Ferrum's split\nmode is deferred and unused. Set automatically for translated\nIstio DestinationRules that explicitly disable the 5xx detector.\nDirect native configuration may opt into the same sentinel.\n"
+        }
+      }
+    },
+    "ResourceLabels": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 512
+      },
+      "description": "Informational operator metadata. Keys must be nonblank; keys and values cannot contain control characters. Runtime length limits are UTF-8 bytes (128 per key, 512 per value). Independent of target tags, routing, access control and api_spec_id. Omitted labels on resource PUT preserve the current map; an explicit map replaces it and {} clears it. Labels are retained in GET/list, backup/restore, file configuration and CP/DP sync. The provisioned-by label identifies the application that provisioned a resource; it is caller-supplied information, not proof of ownership. Resource labels landed on main in pull request 5483 on 2026-09-12, and every published release through v0.9.4 rejects the `labels` field with unknown field `labels`. v0.9.5 is the first tagged release with resource labels; operators and clients should use v0.9.5 or later.",
+      "examples": [
+        {
+          "provisioned-by": "ferrum-nexus",
+          "team": "platform"
+        }
+      ]
+    },
+    "ServiceDiscoveryConfig": {
+      "type": "object",
+      "required": [
+        "provider"
+      ],
+      "description": "The selected provider requires its matching configuration object. Its poll interval must be 1–3600 seconds, and a selected mesh port must be 1–65535. Configuration objects for inactive providers are ignored; their numeric fields still have to fit their unsigned integer types.",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "dns_sd",
+            "kubernetes",
+            "consul",
+            "mesh"
+          ],
+          "description": "Service discovery provider type"
+        },
+        "dns_sd": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "DNS-SD (SRV record) configuration. Required when provider is `dns_sd`.\nThe poller queries `service_name` off the request path. It discards\nthe RFC 2782 root target `.` and port `0`, admits surviving ports\nwith the same `1..=65535` rule as Kubernetes and Consul, and\npublishes every remaining priority tier (the eight numerically\nsmallest), tagging each target with its RFC 2782 priority.\nTraffic is then served only from the lowest-numbered tier that still\nhas a healthy target; the next tier becomes eligible only when every\nlower tier is fully unhealthy, and loses eligibility again as soon as\na lower tier recovers. Tiers are never mixed. Same-tier SRV weights\nare preserved (weight `0` uses `default_weight`) and the configured\nload-balancing algorithm runs inside the selected tier. Statically\nconfigured targets carry no tier and stay eligible in every tier. A\npoisoned tier never becomes a tier; if nothing admissible remains,\nthe snapshot is empty.\n",
+          "required": [
+            "service_name"
+          ],
+          "properties": {
+            "service_name": {
+              "type": "string",
+              "description": "DNS name to query for SRV records (e.g., `_http._tcp.my-service.example.com`)"
+            },
+            "poll_interval_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "maximum": 18446744073709551615,
+              "default": 30,
+              "description": "Re-query interval in seconds"
+            }
+          }
+        },
+        "kubernetes": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Kubernetes EndpointSlice configuration. Required when provider is `kubernetes`.",
+          "required": [
+            "service_name"
+          ],
+          "properties": {
+            "service_name": {
+              "type": "string",
+              "description": "Kubernetes service name"
+            },
+            "namespace": {
+              "type": "string",
+              "default": "default",
+              "description": "Kubernetes namespace"
+            },
+            "address_type": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "IPv4",
+                "IPv6",
+                null
+              ],
+              "description": "Select one EndpointSlice IP family. When omitted or null, use IPv4 if eligible IPv4 targets exist, otherwise IPv6. Explicit selection never falls back to the other family. Missing, unsupported, or mismatched EndpointSlice addressType values are rejected. Duplicate dial addresses count only once."
+            },
+            "port_name": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Named port to select from EndpointSlice"
+            },
+            "label_selector": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Label selector used to filter EndpointSlices (matches the Kubernetes `labelSelector` syntax, e.g. `app=my-svc,tier=backend`). Optional; when omitted all EndpointSlices for the service are considered."
+            },
+            "poll_interval_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "maximum": 18446744073709551615,
+              "default": 30
+            }
+          }
+        },
+        "consul": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "HashiCorp Consul configuration. Required when provider is `consul`.",
+          "required": [
+            "address",
+            "service_name"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Consul HTTP API address (e.g., `http://consul:8500`)"
+            },
+            "service_name": {
+              "type": "string",
+              "description": "Service name registered in Consul"
+            },
+            "datacenter": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Datacenter filter (uses local datacenter if not set)"
+            },
+            "tag": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Service tag filter"
+            },
+            "healthy_only": {
+              "type": "boolean",
+              "default": true,
+              "description": "Only return healthy services"
+            },
+            "token": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Consul ACL token for authentication"
+            },
+            "poll_interval_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "maximum": 18446744073709551615,
+              "default": 30
+            }
+          }
+        },
+        "mesh": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Ferrum mesh service configuration. Required when provider is `mesh`.",
+          "required": [
+            "service_name"
+          ],
+          "properties": {
+            "service_name": {
+              "type": "string",
+              "description": "Mesh service name from the CP-delivered mesh model"
+            },
+            "namespace": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Mesh namespace override. Defaults to the upstream namespace when omitted."
+            },
+            "port": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint16",
+              "minimum": 0,
+              "maximum": 65535,
+              "description": "Mesh service port to select. Defaults to the first service/workload port."
+            },
+            "poll_interval_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "maximum": 18446744073709551615,
+              "default": 30
+            },
+            "topology": {
+              "type": "string",
+              "enum": [
+                "ambient",
+                "sidecar"
+              ],
+              "default": "ambient",
+              "description": "Destination mesh topology; selects the mesh transport\ndiscovered targets are tagged for. `ambient` tags targets for\nHBONE dispatch (HTTP/2 CONNECT over SVID mTLS to the peer's\n`:15008` listener); `sidecar` tags targets for plain SVID-mTLS\nHTTP/2 dispatch to the peer sidecar's `:15006` inbound\nlistener. Sidecar peers have no HBONE listener, so the\ntopology must match the destination mesh or dispatch fails\nclosed.\n"
+            }
+          }
+        },
+        "default_weight": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 1,
+          "description": "Default weight assigned to discovered targets"
+        },
+        "max_stale_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "const": 0
+            },
+            {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 86400
+            }
+          ],
+          "description": "Per-upstream override of the maximum age of the last successfully\nadmitted **and published** discovery snapshot before the expiry\npolicy applies. Omitted uses\n`FERRUM_SERVICE_DISCOVERY_MAX_STALE_SECONDS` (default 300). The\neffective window is never shorter than three poll intervals for the\nconfigured provider. `0` means unbounded last-known retention and is\nhonored only when `FERRUM_SERVICE_DISCOVERY_ALLOW_UNBOUNDED_STALE`\nis `true`; otherwise the gateway warns and applies the bounded\nprocess default. Non-zero values must be between 5 and 86400.\n"
+        },
+        "stale_policy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "retain",
+            "withdraw",
+            "fail_readiness",
+            null
+          ],
+          "description": "Per-upstream override of the staleness expiry action. Omitted uses\n`FERRUM_SERVICE_DISCOVERY_STALE_POLICY` (default `withdraw`).\n`retain` keeps expired discovered targets routable and only degrades\n`/health` status; `withdraw` withdraws the discovered targets while\nretaining every statically configured target; `fail_readiness`\nwithdraws and additionally fails gateway readiness until a fresh\nsnapshot is published.\n"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "provider"
+            ],
+            "properties": {
+              "provider": {
+                "const": "dns_sd"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "dns_sd"
+            ],
+            "properties": {
+              "dns_sd": {
+                "type": "object",
+                "properties": {
+                  "poll_interval_seconds": {
+                    "minimum": 1,
+                    "maximum": 3600
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "provider"
+            ],
+            "properties": {
+              "provider": {
+                "const": "kubernetes"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "kubernetes"
+            ],
+            "properties": {
+              "kubernetes": {
+                "type": "object",
+                "properties": {
+                  "poll_interval_seconds": {
+                    "minimum": 1,
+                    "maximum": 3600
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "provider"
+            ],
+            "properties": {
+              "provider": {
+                "const": "consul"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "consul"
+            ],
+            "properties": {
+              "consul": {
+                "type": "object",
+                "properties": {
+                  "poll_interval_seconds": {
+                    "minimum": 1,
+                    "maximum": 3600
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "provider"
+            ],
+            "properties": {
+              "provider": {
+                "const": "mesh"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "mesh"
+            ],
+            "properties": {
+              "mesh": {
+                "type": "object",
+                "properties": {
+                  "port": {
+                    "minimum": 1
+                  },
+                  "poll_interval_seconds": {
+                    "minimum": 1,
+                    "maximum": 3600
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SubsetDefinition": {
+      "type": "object",
+      "required": [
+        "name",
+        "labels"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Name selected by `Proxy.upstream_subset`."
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Exact label selector. A target matches when its `tags` contain all\nkey/value pairs listed here. Keys in the reserved `ferrum.srv.`\nnamespace (DNS-SD RFC 2782 priority-tier metadata) are internal\nload-balancer state, not an addressable selector, and are rejected\non operator-provided config loads.\n"
+        },
+        "traffic_policy": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/SubsetTrafficPolicy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional per-subset traffic policy overrides."
+        }
+      }
+    },
+    "SubsetTrafficPolicy": {
+      "type": "object",
+      "properties": {
+        "load_balancer_algorithm": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/LoadBalancerAlgorithm"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional load-balancer algorithm override for this subset. When set,\nthe subset uses this algorithm instead of the parent upstream's\nalgorithm.\n"
+        },
+        "hash_on": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional hash-key source for subset-scoped consistent hashing. Uses\nthe same syntax as `Upstream.hash_on`: `ip`, `header:<name>`, or\n`cookie:<name>`.\n"
+        },
+        "tls": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/MeshTrafficPolicyTls"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "readOnly": true,
+          "description": "Subset TLS origination policy projected from a mesh DestinationRule. Direct admin/file configuration is rejected; the field can appear in read responses for mesh-derived upstreams."
+        },
+        "connect_timeout_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "readOnly": true,
+          "description": "Subset backend-connect timeout projected from a mesh DestinationRule. Direct admin/file configuration is rejected."
+        },
+        "h2_upgrade_policy": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/H2UpgradePolicy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "readOnly": true,
+          "description": "Subset plain-HTTP H2 upgrade policy projected from a mesh DestinationRule. Per-port policy has higher precedence; direct admin/file configuration is rejected."
+        },
+        "max_retries": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0,
+          "readOnly": true,
+          "description": "Subset cap on an existing per-request retry policy, projected from a mesh DestinationRule. It never enables retries; zero disables an existing policy for the selected destination. Direct admin/file configuration is rejected."
+        },
+        "http1_max_pending_requests": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1,
+          "readOnly": true,
+          "description": "Subset concurrent in-flight HTTP/1.1 admission cap projected from a mesh DestinationRule. Admission is isolated by selected subset; direct admin/file configuration is rejected."
+        },
+        "http_idle_timeout_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "readOnly": true,
+          "description": "Subset backend HTTP idle timeout in milliseconds projected from a mesh DestinationRule. Direct admin/file configuration is rejected."
+        },
+        "http2_max_requests": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1,
+          "readOnly": true,
+          "description": "Subset destination-wide active-request cap (DestinationRule `connectionPool.http.http2MaxRequests`) projected from a mesh DestinationRule. Applies to HTTP/1.1 and HTTP/2 alike; the admission lane is isolated by selected subset. Direct admin/file configuration is rejected."
+        },
+        "h2_max_concurrent_streams": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1,
+          "readOnly": true,
+          "description": "Subset per-connection HTTP/2 concurrent-stream cap (DestinationRule `connectionPool.http.maxConcurrentStreams`) projected from a mesh DestinationRule. Direct admin/file configuration is rejected."
+        },
+        "passive_health_check": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PassiveHealthCheck"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "readOnly": true,
+          "description": "Subset passive-health policy projected from mesh outlier detection. Direct admin/file configuration is rejected."
+        }
+      }
+    },
+    "TcpKeepaliveCfg": {
+      "type": "object",
+      "properties": {
+        "time_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1
+        },
+        "interval_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1
+        },
+        "probes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1
+        }
+      }
+    },
+    "Upstream": {
+      "type": "object",
+      "required": [
+        "targets"
+      ],
+      "anyOf": [
+        {
+          "properties": {
+            "targets": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "service_discovery"
+          ],
+          "properties": {
+            "service_discovery": {
+              "type": "object"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "labels": {
+          "$ref": "#/$defs/ResourceLabels"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique identifier (UUID auto-generated if omitted or empty on create). Custom IDs must start with an alphanumeric character and contain only alphanumeric characters, dots, underscores, or hyphens (max 254 chars).",
+          "pattern": "^$|^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+          "maxLength": 254
+        },
+        "namespace": {
+          "type": "string",
+          "default": "ferrum",
+          "readOnly": true,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+          "maxLength": 254,
+          "description": "Namespace this upstream belongs to. Read-only on the wire — set from the `X-Ferrum-Namespace` request header (or the `ferrum` default) on every create/update; any value in the request body is ignored."
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional friendly name. Must be unique across all upstreams when set."
+        },
+        "targets": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/UpstreamTarget"
+          },
+          "description": "Static list of backend targets. At least one target is required unless `service_discovery` is configured as an alternative target source."
+        },
+        "algorithm": {
+          "$ref": "#/$defs/LoadBalancerAlgorithm"
+        },
+        "hash_on": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Hash key source for consistent-hashing algorithm. Accepted values:\n- `ip` (default) — hash on client IP address\n- `header:<name>` — hash on a request header value (e.g. `header:x-user-id`)\n- `cookie:<name>` — hash on a cookie value; if the cookie is absent, the\n  gateway sets a `Set-Cookie` response header to establish a sticky session.\nHeader and cookie names must contain only ASCII HTTP token characters.\nIgnored by other algorithms.\n"
+        },
+        "hash_on_cookie_config": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/HashOnCookieConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Cookie attributes for `hash_on: \"cookie:<name>\"` sticky sessions. Ignored when `hash_on` is not cookie-based. Defaults are used if omitted."
+        },
+        "health_checks": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/HealthCheckConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "service_discovery": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ServiceDiscoveryConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Dynamic target discovery configuration. When set, discovered targets are merged with any static `targets`. Can be used as the sole target source (allowing `targets` to be empty)."
+        },
+        "subsets": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/SubsetDefinition"
+          },
+          "description": "Named target subsets for DestinationRule-style routing. A proxy's\n`upstream_subset` selects one of these names. A target matches a\nsubset when its `tags` are a superset of the subset's labels.\nEmpty arrays are rejected; omit the field when no subsets are\nconfigured.\n"
+        },
+        "port_overrides": {
+          "type": "object",
+          "readOnly": true,
+          "additionalProperties": {
+            "$ref": "#/$defs/UpstreamPortOverride"
+          },
+          "description": "Per-destination-port traffic policy projected from mesh DestinationRule `portLevelSettings`. Keys are decimal port numbers. A direct value in a create/update or file config is rejected; this field can appear in read responses for mesh-derived upstreams."
+        },
+        "source_locality": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "readOnly": true,
+          "description": "Source workload locality in `region/zone/subzone` form, projected by mesh slice apply. A direct operator value is rejected."
+        },
+        "source_labels": {
+          "type": "object",
+          "readOnly": true,
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Source workload labels used for DestinationRule `localityLbSetting.failoverPriority` ranking. Projected by mesh slice apply from authoritative slice workload labels, with unambiguous derived topology enrichment only. A direct operator value is rejected."
+        },
+        "locality_lb_setting": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/UpstreamLocalityLbSetting"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "readOnly": true,
+          "description": "Locality distribute/failover policy projected from a mesh DestinationRule. A direct operator value is rejected."
+        },
+        "backend_tls_client_cert_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Path to a PEM-encoded client certificate for mTLS with backend targets. When this upstream is referenced by a proxy, this TLS config takes precedence over the proxy's own backend TLS fields. Only meaningful for TLS-enabled backend schemes (`https`, `tcps`, `dtls`). When admin namespace-claim enforcement is on, or the token carries an `ns` claim even with enforcement off, an `operator` may set only inline PEM, `system://`, or a `k8s://` Secret in the addressed namespace; any other reference it introduces is refused with `400` before the material is loaded. A value already stored in this field is exempt, and `admin`-role tokens are not restricted."
+        },
+        "backend_tls_client_key_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Path to a PEM-encoded private key matching `backend_tls_client_cert_path`. Required when the cert path is set. With the optional pkcs11 build feature, also accepts a pkcs11 signer URI. Module overrides require FERRUM_PKCS11_MODULE_ALLOWED_PATHS on each node; without it, omit module options to use FERRUM_PKCS11_MODULE_PATH. Inline PEM key material is withheld from every non-admin read (`[REDACTED]`; a fingerprint in `GET /config/export`); references stay visible. When admin namespace-claim enforcement is on, or the token carries an `ns` claim even with enforcement off, an `operator` may set only inline PEM, `system://`, or a `k8s://` Secret in the addressed namespace; any other reference it introduces is refused with `400` before the material is loaded. A value already stored in this field is exempt, and `admin`-role tokens are not restricted."
+        },
+        "backend_tls_verify_server_cert": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to verify the backend server's TLS certificate. Set to `false` only for development/testing — disabling verification removes the security guarantees of TLS."
+        },
+        "backend_tls_server_ca_cert_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Path to a PEM CA bundle used as the sole trust anchor when verifying backend server certificates for this upstream. When set, the system/webpki trust store is NOT used (CA exclusivity). The reserved value `system://` inverts that: it pins the built-in system/webpki trust anchors, and — unlike leaving this field null — deliberately does NOT fall back to the global `FERRUM_TLS_CA_BUNDLE_PATH` and never inherits `FERRUM_TLS_NO_VERIFY`. It is the representation of Gateway API `BackendTLSPolicy` `wellKnownCACertificates: System`, requires `backend_tls_verify_server_cert: true`, and must be spelled exactly, with no path or query options. When admin namespace-claim enforcement is on, or the token carries an `ns` claim even with enforcement off, an `operator` may set only inline PEM, `system://`, or a `k8s://` Secret in the addressed namespace; any other reference it introduces is refused with `400` before the material is loaded. A value already stored in this field is exempt, and `admin`-role tokens are not restricted."
+        },
+        "backend_tls_sni": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 253,
+          "description": "Optional backend TLS Server Name Indication override. Mesh DestinationRule `trafficPolicy.tls.sni` and Gateway API `BackendTLSPolicy` `validation.hostname` both project to this field. Enforced at the backend handshake on every path where Ferrum owns TLS: direct HTTP/2, gRPC over H2, native H3, non-passthrough `tcps` streams that originate backend TLS, and the reqwest HTTP/1.1 dial (which carries the override in the request URL authority while pinning the socket to the selected target). It also partitions HTTP-family backend connection pools, so two values never share a connection. Stream proxies do not pool connections. Must be an exact DNS hostname — not a wildcard and not an IP literal (RFC 6066 §3). Because the reqwest HTTP/1.1 dial serves them, this field is accepted alongside effective retry, request-body-buffering plugins, and `pool_enable_http2: false`; admission returns no 400 for those combinations. Direct WebSocket (`wss://`) transport cannot apply it and refuses such an upgrade with 502; see `docs/backend_mtls.md`."
+        },
+        "backend_tls_san_allow_list": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "default": [],
+          "description": "Optional allow-list of backend certificate Subject Alternative Names. Entries may be exact DNS names, IP literals, or SPIFFE URI SANs. Mesh DestinationRule `trafficPolicy.tls.subjectAltNames` and Gateway API `BackendTLSPolicy` `validation.subjectAltNames` both project to this field. Enforced by the backend server verifier on the rustls-based backend paths, and part of the backend pool key (as a digest) so two allow-lists never share a connection. Not enforced when per-proxy or global no-verify is enabled, which is warned about at startup; see `docs/backend_mtls.md`."
+        },
+        "locality_lb_strict": {
+          "type": "boolean",
+          "default": false,
+          "readOnly": true,
+          "description": "Strict local-first locality load balancing for this upstream. Mesh slice apply projects this from the `FERRUM_MESH_LOCALITY_LB_STRICT` environment flag onto mesh upstreams; it is `false` for non-mesh upstreams. When `true` and no source locality resolves, the load balancer restricts selection to local-cluster endpoints (fail-closed-to-local), widening to remote endpoints only when no local endpoint is healthy; when `false` (default) it returns the mixed local+remote pool (fail-open). Read-only / projected — a direct value in a create/update request body is REJECTED (set the env var instead); it can appear in `GET`/list responses."
+        },
+        "api_spec_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "ID of the `ApiSpec` that created this upstream via the spec-import admin\nAPI (`POST /api-specs`). `null` for upstreams created via direct admin\nendpoints (`POST /upstreams`). When set, `DELETE /api-specs/{id}` also\ndeletes this upstream; `PUT /api-specs/{id}` replaces it.\n"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "UpstreamCreate": {
+      "description": "Request body for creating or updating an upstream. Same schema as\nUpstream but `id`, `created_at`, and `updated_at` are optional\n(server-managed).\n",
+      "allOf": [
+        {
+          "$ref": "#/$defs/Upstream"
+        }
+      ],
+      "required": [
+        "targets"
+      ],
+      "examples": [
+        {
+          "targets": [
+            {
+              "host": "backend.example.com",
+              "port": 8080,
+              "weight": 1
+            }
+          ],
+          "subsets": null
+        },
+        {
+          "targets": [],
+          "service_discovery": {
+            "provider": "dns_sd",
+            "dns_sd": {
+              "service_name": "_http._tcp.backend.example.com"
+            }
+          }
+        }
+      ]
+    },
+    "UpstreamLocalityLbSetting": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "distribute": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LocalityDistribute"
+          },
+          "description": "Weighted target-locality distributions. Mutually exclusive with failover and failover_priority."
+        },
+        "failover": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LocalityFailover"
+          },
+          "description": "Source-region to failover-region mappings. Mutually exclusive with distribute and failover_priority."
+        },
+        "failover_priority": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ordered Istio failoverPriority label keys (`key`) or key/value\noverrides containing exactly one equals sign (`key=value`). When an\napplicable upstream, per-port, or per-subset active/passive health\npolicy enables failover, replaces default region/zone/subzone tiers\nwith label-match priority tiers; otherwise remains inert and leaves\nbaseline selection unchanged. An empty source-label map produces no\ntiers. Mutually exclusive with distribute and failover.\n"
+        }
+      }
+    },
+    "UpstreamPortOverride": {
+      "type": "object",
+      "properties": {
+        "connect_timeout_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64"
+        },
+        "algorithm": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/LoadBalancerAlgorithm"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hash_on": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "passive_health_check": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PassiveHealthCheck"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "locality_lb_setting": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/UpstreamLocalityLbSetting"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_connections": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32"
+        },
+        "tcp_keepalive": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/TcpKeepaliveCfg"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tcp_idle_timeout_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0,
+          "description": "Bidirectional TCP idle bound in seconds (DestinationRule `connectionPool.tcp.idleTimeout`) for this port. `0` disables the idle watchdog. Distinct from `http_idle_timeout_ms` (HTTP pool idle)."
+        },
+        "http_idle_timeout_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64"
+        },
+        "http2_max_requests": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1,
+          "description": "Destination-wide active-request cap (DestinationRule `connectionPool.http.http2MaxRequests`) for this port, enforced for HTTP/1.1 and HTTP/2 across every connection and pool shard."
+        },
+        "h2_max_concurrent_streams": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1,
+          "description": "Per-connection HTTP/2 stream cap (DestinationRule `connectionPool.http.maxConcurrentStreams`) for this port."
+        },
+        "tls": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/BackendTlsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "h2_upgrade_policy": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/H2UpgradePolicy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_retries": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32"
+        },
+        "http1_max_pending_requests": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32"
+        }
+      }
+    },
+    "UpstreamTarget": {
+      "type": "object",
+      "required": [
+        "host",
+        "port"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Backend hostname or IP"
+        },
+        "port": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "weight": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 1,
+          "description": "Relative weight for weighted round-robin"
+        },
+        "tags": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Operator-defined key-value tags. Keys beginning with `mesh.` are\nreserved for Ferrum's trusted mesh projection, and keys beginning\nwith `ferrum.srv.` are reserved for DNS-SD's internal RFC 2782 SRV\npriority-tier metadata. Both namespaces are rejected on upstream\ncreate/update, API-spec import, restore, and file-config admission;\nordinary operator tag keys remain supported.\n"
+        },
+        "locality": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 255,
+          "description": "Optional locality in `region`, `region/zone`, or `region/zone/subzone` form. Used by locality-aware load balancing."
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional path prefix that overrides the proxy's backend_path when this target is selected by the load balancer. If omitted or null, the proxy's backend_path is used."
+        }
+      }
+    }
+  }
+}

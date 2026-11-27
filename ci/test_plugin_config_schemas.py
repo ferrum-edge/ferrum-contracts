@@ -186,6 +186,21 @@ components:
       enum: [x, y]
     Unused:
       type: integer
+    ProxyCreate:
+      type: object
+      properties:
+        upstream:
+          $ref: "#/components/schemas/UpstreamCreate"
+    UpstreamCreate:
+      type: object
+      additionalProperties: false
+    ConsumerCreate:
+      type: object
+    PluginConfigCreate:
+      allOf:
+        - $ref: "#/components/schemas/PluginConfigBase"
+    GatewayTrustBundleCreate:
+      type: object
 """
 
 
@@ -224,7 +239,12 @@ class GeneratorTests(unittest.TestCase):
     def test_documents_are_self_contained(self) -> None:
         files = gen.build(self.catalog, self.openapi)
         self.assertEqual(
-            sorted(files), ["plugin-config-schemas/a_plugin.schema.json", "plugin-config-schemas/b_plugin.schema.json"]
+            sorted(f for f in files if f.startswith(gen.OUTPUT_DIR)),
+            ["plugin-config-schemas/a_plugin.schema.json", "plugin-config-schemas/b_plugin.schema.json"],
+        )
+        self.assertEqual(
+            sorted(f for f in files if f.startswith(gen.RESOURCE_DIR)),
+            sorted(f"resource-schemas/{name}.schema.json" for name in gen.RESOURCE_ROOTS),
         )
         doc = json.loads(files["plugin-config-schemas/a_plugin.schema.json"])
         self.assertEqual(doc["$schema"], gen.SCHEMA_DIALECT)
@@ -261,6 +281,23 @@ class GeneratorTests(unittest.TestCase):
         plugins = [{"name": "p", "config_schema": {"document": "openapi.yaml", "pointer": "#/components/schemas/Holder/$defs/item"}}]
         with self.assertRaises(ValueError):
             gen.build(catalog_for(self.openapi, plugins), self.openapi)
+
+    def test_resource_schemas_are_self_contained(self) -> None:
+        files = gen.build(self.catalog, self.openapi)
+        doc = json.loads(files["resource-schemas/ProxyCreate.schema.json"])
+        self.assertEqual(doc["$id"], f"{gen.RESOURCE_ID_BASE}/edge-v9.9.9/ProxyCreate.schema.json")
+        self.assertEqual(doc["$ref"], "#/$defs/ProxyCreate")
+        self.assertEqual(sorted(doc["$defs"]), ["ProxyCreate", "UpstreamCreate"])
+        self.assertEqual(doc["$defs"]["ProxyCreate"]["properties"]["upstream"], {"$ref": "#/$defs/UpstreamCreate"})
+        self.assertEqual(doc["x-generated"]["resource"], "ProxyCreate")
+        self.assertEqual(doc["x-generated"]["source"]["pointer"], "#/components/schemas/ProxyCreate")
+        plugin_config = json.loads(files["resource-schemas/PluginConfigCreate.schema.json"])
+        self.assertEqual(sorted(plugin_config["$defs"]), ["PluginConfigBase", "PluginConfigCreate"])
+
+    def test_a_missing_resource_component_is_refused(self) -> None:
+        openapi = OPENAPI.replace("    ConsumerCreate:\n      type: object\n", "").encode()
+        with self.assertRaisesRegex(ValueError, "ConsumerCreate"):
+            gen.build(catalog_for(openapi), openapi)
 
     def test_ids_carry_the_edge_release(self) -> None:
         first = json.loads(gen.build(self.catalog, self.openapi)["plugin-config-schemas/b_plugin.schema.json"])
