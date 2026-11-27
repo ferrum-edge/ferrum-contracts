@@ -15,7 +15,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   sets expanded) and the visible librdkafka producer properties
   (`KAFKA_SAFE_PRODUCER_PROPERTIES`, 32), with the placeholders Edge writes
   (`[REDACTED]`, `redacted` userinfo, `[REDACTED_PATH]`, `[REDACTED_QUERY]`,
-  `[REDACTED_FRAGMENT]`) and how it recognizes them, transcribed from Edge
+  `[REDACTED_FRAGMENT]`), how Edge recognizes them and that a write is
+  refused only for a placeholder at a field the caller's read projection
+  withholds, and the endpoint projection's path marker only for a path other
+  than empty or `/`, transcribed from Edge
   `v0.9.21` `src/admin/plugin_config_projection.rs` and
   `src/plugins/utils/metadata_redaction.rs`. `path_matching` states the rule
   path grammar normatively (a `*` consumes one object key or array element; a
@@ -30,7 +33,9 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `schemas/vocabulary-reserved-header-names/v1.schema.json`): the 45
   header names Edge refuses as a `correlation_id` `header_name`
   (`RESERVED_HEADER_NAMES`, Edge `v0.9.21` `src/plugins/correlation_id.rs`),
-  which Nexus reads; names are compared after trimming and lowercasing. CI
+  which Nexus reads; names are compared after trimming and lowercasing, and
+  `deployment_dependent` records the refusal of the effective
+  `FERRUM_REAL_IP_HEADER`. CI
   requires each set to be named `<plugin>.<field>` for a catalog plugin, and
   name patterns end with `(?![\s\S])` so a trailing newline is refused.
 - `vocabularies/mcp-openapi-bridge.json` (shape
@@ -40,8 +45,17 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   (256 operations, 64-byte namespace, 128-byte tool name, 8 KiB text, 16 MiB
   body limit, 64 KiB error excerpt limit, 32 forwarded headers), the bridged
   methods, and the 38 reserved bridge request header names and 12 prefixes.
-  Alloy's agent-tool export reads them. CI refuses a reserved name already
-  covered by a reserved prefix.
+  Alloy's agent-tool export reads them. The reserved header data also lists,
+  as machine-readable names and prefixes, the fixed names Edge's bridge check
+  takes from `is_backend_request_strip_header` and
+  `is_gateway_assertion_header` (for example `x-grpc-web-mode`,
+  `x-authenticated-identity`, `x-geo-country`, `x-consumer-*`), states that
+  the lists restrict tool arguments and `forward_request_headers` while the
+  bridge forwards `accept-language`, `traceparent`, `tracestate` and
+  `user-agent` by default, and separates the configuration-dependent names.
+  `text_limits` states that extraction truncates operation titles and
+  descriptions to 8 KiB but the bridge refuses a longer `annotations.title`.
+  CI refuses a reserved name already covered by a reserved prefix.
 - Valid and invalid fixtures for both vocabularies, with
   `ci/test_validate.py` coverage.
 - `plugin-config-schemas/<plugin>.schema.json`: one self-contained JSON

@@ -17,7 +17,8 @@
         "PLUGIN_SENSITIVITY_SCHEMAS",
         "KAFKA_SAFE_PRODUCER_PROPERTIES",
         "REDACTED_PATH_PLACEHOLDER",
-        "is_redaction_placeholder"
+        "is_redaction_placeholder",
+        "redact_endpoint_url"
       ],
       "note": "Transcribed from the Rust tables at the tag, in source order, with each rule constructor (secret, endpoint_url, redis_url, private_key_source, endpoint_path, certificate_source, or an inline SensitivityRule) resolved to its FieldSensitivity variant and each shared rule set (NONE, REDIS_BACKED, MESH_AUTHZ) expanded in place. Edge's plugin_config_projection_tests require an entry for every built-in in BUILTIN_PLUGIN_PARITY_META."
     },
@@ -31,6 +32,15 @@
         "REDACTED_USERINFO_PLACEHOLDER",
         "REDACTED_QUERY_PLACEHOLDER",
         "REDACTED_FRAGMENT_PLACEHOLDER"
+      ]
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/admin/crud.rs",
+      "symbols": [
+        "masked_placeholder_sites"
       ]
     }
   ],
@@ -210,7 +220,7 @@
     },
     {
       "value": "EndpointUrl",
-      "meaning": "Projected to scheme://host[:port] plus structural markers for any path, query or fragment; userinfo is never shown; an unparseable value or one without a host is replaced by the placeholder."
+      "meaning": "Projected to scheme://host[:port], with userinfo shown only as the userinfo placeholder, a path marker (/ + placeholders.path) only for a path that is not empty and not /, and query and fragment markers when a query or fragment is present; an unparseable value or one without a host is replaced by the placeholder."
     },
     {
       "value": "RedisUrl",
@@ -239,7 +249,7 @@
     "path": "[REDACTED_PATH]",
     "query": "[REDACTED_QUERY]",
     "fragment": "[REDACTED_FRAGMENT]",
-    "recognition": "Edge treats a value as its own placeholder (is_redaction_placeholder) only when it is exactly redacted, or parses as a URL whose path is exactly / + path, whose query is exactly query, whose fragment is exactly fragment, or whose username is exactly userinfo with no password. A non-admin write that sends a placeholder back is refused."
+    "recognition": "Edge treats a value as its own placeholder (is_redaction_placeholder) only when it is exactly redacted, or parses as a URL whose path is exactly / + path, whose query is exactly query, whose fragment is exactly fragment, or whose username is exactly userinfo with no password. A write is refused when it carries a recognized placeholder at a field the caller's role-specific read projection withholds (masked_placeholder_sites); the same string at a field that projection leaves visible is stored as written."
   },
   "plugins": [
     {

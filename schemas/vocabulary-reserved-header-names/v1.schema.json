@@ -62,7 +62,8 @@
           "symbol",
           "matching",
           "names",
-          "also_refused"
+          "also_refused",
+          "deployment_dependent"
         ],
         "additionalProperties": false,
         "properties": {
@@ -102,6 +103,11 @@
             "type": "string",
             "minLength": 1,
             "description": "Names the same Edge check refuses outside this closed set, and where they are recorded."
+          },
+          "deployment_dependent": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Configuration-dependent names the same Edge check refuses."
           }
         }
       }

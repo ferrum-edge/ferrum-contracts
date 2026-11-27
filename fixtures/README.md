@@ -293,6 +293,7 @@ traffic. Both fixtures represent `all`-mode references with no gateway token.
 | `vocabulary-provisioned-by/invalid/untrimmed-value.json` | a value with leading whitespace; Edge trims the header |
 | `vocabulary-provisioned-by/invalid/wrong-label-key.json` | label key `provisioned_by` |
 | `vocabulary-mcp-openapi-bridge/invalid/prefix-without-trailing-dash.json` | From `valid/edge-0.9.21.json`: the reserved prefix `proxy-` spelled `proxy`, which would also reserve names such as `proxyname` |
+| `vocabulary-mcp-openapi-bridge/invalid/uppercase-predicate-name.json` | From `valid/edge-0.9.21.json`: the backend strip set's `x-grpc-web-mode` spelled `X-Grpc-Web-Mode`; every listed name is lowercase, as Edge compares them |
 | `vocabulary-mcp-openapi-bridge/invalid/zero-bound.json` | From `valid/edge-0.9.21.json`: `bounds.max_operations` is `0`; every Edge bound is a positive count |
 | `vocabulary-plugin-config-sensitivity/invalid/unknown-sensitivity.json` | From `valid/edge-0.9.21-subset.json`: the first `otel_tracing` rule's `sensitivity` is `Hidden`, which is not an Edge `FieldSensitivity` variant |
 | `vocabulary-plugin-config-sensitivity/invalid/empty-rule-path.json` | From `valid/edge-0.9.21-subset.json`: the `rate_limiting` `redis_url` rule's `path` is empty, so it addresses no config value |

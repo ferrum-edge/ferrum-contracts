@@ -95,7 +95,7 @@
     },
     {
       "value": "EndpointUrl",
-      "meaning": "Projected to scheme://host[:port] plus structural markers for any path, query or fragment; userinfo is never shown; an unparseable value or one without a host is replaced by the placeholder."
+      "meaning": "Projected to scheme://host[:port], with userinfo shown only as the userinfo placeholder, a path marker (/ + placeholders.path) only for a path that is not empty and not /, and query and fragment markers when a query or fragment is present; an unparseable value or one without a host is replaced by the placeholder."
     },
     {
       "value": "RedisUrl",
@@ -124,7 +124,7 @@
     "path": "[REDACTED_PATH]",
     "query": "[REDACTED_QUERY]",
     "fragment": "[REDACTED_FRAGMENT]",
-    "recognition": "Edge treats a value as its own placeholder (is_redaction_placeholder) only when it is exactly redacted, or parses as a URL whose path is exactly / + path, whose query is exactly query, whose fragment is exactly fragment, or whose username is exactly userinfo with no password. A non-admin write that sends a placeholder back is refused."
+    "recognition": "Edge treats a value as its own placeholder (is_redaction_placeholder) only when it is exactly redacted, or parses as a URL whose path is exactly / + path, whose query is exactly query, whose fragment is exactly fragment, or whose username is exactly userinfo with no password. A write is refused when it carries a recognized placeholder at a field the caller's role-specific read projection withholds (masked_placeholder_sites); the same string at a field that projection leaves visible is stored as written."
   },
   "plugins": [
     {

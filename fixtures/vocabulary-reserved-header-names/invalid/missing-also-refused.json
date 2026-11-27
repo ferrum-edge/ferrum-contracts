@@ -12,7 +12,8 @@
       "path": "src/plugins/correlation_id.rs",
       "symbols": [
         "RESERVED_HEADER_NAMES",
-        "is_reserved_header_name"
+        "is_reserved_header_name",
+        "CorrelationId::new_with_real_ip_header"
       ],
       "note": "Transcribed verbatim (45 lowercase names, in source order)."
     }
@@ -70,7 +71,8 @@
         "x-grpc-web-mode",
         "x-real-ip",
         "x-xsrf-token"
-      ]
+      ],
+      "deployment_dependent": "Edge also refuses a header_name equal, ASCII case-insensitively, to the deployment's effective FERRUM_REAL_IP_HEADER (CorrelationId::new_with_real_ip_header). It depends on configuration and is not listed in names."
     }
   ]
 }

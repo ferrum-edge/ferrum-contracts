@@ -21,8 +21,10 @@
     "extension_key",
     "keys",
     "bounds",
+    "text_limits",
     "bridged_methods",
-    "reserved_request_headers"
+    "reserved_request_headers",
+    "default_forwarded_client_headers"
   ],
   "additionalProperties": false,
   "properties": {
@@ -157,7 +159,7 @@
         "max_text_bytes": {
           "type": "integer",
           "minimum": 1,
-          "description": "Most bytes of a title or description Edge keeps (it truncates longer text)."
+          "description": "Most bytes of a tool title or description; text_limits says which are truncated and which refused."
         },
         "max_body_limit_bytes": {
           "type": "integer",
@@ -175,6 +177,11 @@
           "description": "Most names forward_request_headers may list."
         }
       }
+    },
+    "text_limits": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Which texts extraction truncates to bounds.max_text_bytes and which the bridge refuses when longer."
     },
     "bridged_methods": {
       "type": "array",
@@ -197,13 +204,20 @@
     "reserved_request_headers": {
       "type": "object",
       "required": [
+        "applies_to",
         "matching",
         "names",
         "prefixes",
-        "also_refused"
+        "other_predicates",
+        "deployment_dependent"
       ],
       "additionalProperties": false,
+      "description": "A header name is reserved when, after matching, it equals any name or starts with any prefix here or in other_predicates.",
       "properties": {
+        "applies_to": {
+          "type": "string",
+          "minLength": 1
+        },
         "matching": {
           "type": "string",
           "minLength": 1
@@ -226,11 +240,59 @@
             "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]*-(?![\\s\\S])"
           }
         },
-        "also_refused": {
+        "other_predicates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "predicate",
+              "path",
+              "names",
+              "prefixes"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "predicate": {
+                "type": "string",
+                "minLength": 1
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "names": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]+(?![\\s\\S])"
+                }
+              },
+              "prefixes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]*-(?![\\s\\S])"
+                }
+              }
+            }
+          }
+        },
+        "deployment_dependent": {
           "type": "string",
           "minLength": 1
         }
       }
+    },
+    "default_forwarded_client_headers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]+(?![\\s\\S])"
+      },
+      "description": "Client request headers a bridged call forwards to the REST backend by default."
     }
   },
   "$defs": {

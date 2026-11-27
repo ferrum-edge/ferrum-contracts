@@ -3,7 +3,7 @@
   "vocabulary": "mcp-openapi-bridge",
   "version": 1,
   "edge_release": "v0.9.21",
-  "description": "Admission rules Ferrum Edge applies to the x-ferrum-mcp OpenAPI extension (POST/PUT /api-specs) and to the OpenAPI bridge it generates (mcp_openapi_bridge): the closed key sets, the bounds, the bridged methods, and the request headers a bridged call never forwards. A product that writes x-ferrum-mcp (Alloy's agent-tool export) uses them to refuse what Edge refuses before submitting a spec.",
+  "description": "Admission rules Ferrum Edge applies to the x-ferrum-mcp OpenAPI extension (POST/PUT /api-specs) and to the OpenAPI bridge it generates (mcp_openapi_bridge): the closed key sets, the bounds, the bridged methods, the request header names a tool argument or forward_request_headers may not name, and the client headers a bridged call forwards by default. A product that writes x-ferrum-mcp (Alloy's agent-tool export) uses them to refuse what Edge refuses before submitting a spec.",
   "provenance": [
     {
       "repo": "ferrum-edge/ferrum-edge",
@@ -18,7 +18,8 @@
         "X_FERRUM_MCP_OPERATION_KEYS",
         "MAX_MCP_BRIDGE_NAMESPACE_BYTES",
         "MAX_MCP_BRIDGE_TOOL_NAME_BYTES",
-        "MAX_MCP_BRIDGE_TEXT_BYTES"
+        "MAX_MCP_BRIDGE_TEXT_BYTES",
+        "mcp_operation_text"
       ]
     },
     {
@@ -36,9 +37,22 @@
         "BridgeMethod::parse",
         "RESERVED_BRIDGE_HEADER_NAMES",
         "RESERVED_BRIDGE_HEADER_PREFIXES",
-        "bridge_header_name_is_reserved"
+        "bridge_header_name_is_reserved",
+        "DEFAULT_FORWARDED_CLIENT_HEADERS",
+        "parse_operation"
       ],
       "note": "Transcribed verbatim from the constants at the tag, in source order."
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/proxy/headers.rs",
+      "symbols": [
+        "is_backend_request_strip_header",
+        "is_gateway_assertion_header",
+        "is_consumer_assertion_header"
+      ]
     }
   ],
   "extension_key": "x-ferrum-mcp",
@@ -89,6 +103,7 @@
     "max_error_excerpt_limit_bytes": 65536,
     "max_forwarded_request_headers": 32
   },
+  "text_limits": "Extraction truncates the operation-level x-ferrum-mcp title and description, and the OpenAPI summary and description used for a tool, to max_text_bytes (at a UTF-8 boundary). An annotations.title longer than max_text_bytes is not truncated: the bridge refuses it, and every other annotation must be a boolean.",
   "bridged_methods": [
     "GET",
     "POST",
@@ -97,6 +112,7 @@
     "DELETE"
   ],
   "reserved_request_headers": {
+    "applies_to": "Header names a tool argument may set, and names openapi.forward_request_headers (x-ferrum-mcp forward_request_headers) may list. The bridge still forwards default_forwarded_client_headers from the MCP client by default.",
     "matching": "ASCII case-insensitive, with _ folded to -: a name is reserved when it equals one of names or starts with one of prefixes.",
     "names": [
       "accept",
@@ -152,6 +168,44 @@
       "x-istio-",
       "l5d-"
     ],
-    "also_refused": "bridge_header_name_is_reserved also refuses every gateway assertion header (vocabularies/gateway-headers.json) and every name in Edge's backend request strip set (is_backend_request_strip_header in src/proxy/headers.rs, for example proxy-connection, x-ferrum-original-content-encoding and x-grpc-web-mode). The plugin additionally refuses the deployment's FERRUM_REAL_IP_HEADER, the MCP session headers and the request's correlation_id headers."
-  }
+    "other_predicates": [
+      {
+        "predicate": "is_backend_request_strip_header",
+        "path": "src/proxy/headers.rs",
+        "names": [
+          "connection",
+          "content-length",
+          "expect",
+          "keep-alive",
+          "proxy-authorization",
+          "proxy-connection",
+          "te",
+          "trailer",
+          "transfer-encoding",
+          "upgrade",
+          "x-ferrum-original-content-encoding",
+          "x-grpc-web-mode"
+        ],
+        "prefixes": []
+      },
+      {
+        "predicate": "is_gateway_assertion_header",
+        "path": "src/proxy/headers.rs",
+        "names": [
+          "x-authenticated-identity",
+          "x-geo-country"
+        ],
+        "prefixes": [
+          "x-consumer-"
+        ]
+      }
+    ],
+    "deployment_dependent": "The plugin also refuses the deployment's effective FERRUM_REAL_IP_HEADER, the configured MCP session headers and the request's correlation_id header names; these depend on configuration and are not listed here."
+  },
+  "default_forwarded_client_headers": [
+    "accept-language",
+    "traceparent",
+    "tracestate",
+    "user-agent"
+  ]
 }

@@ -640,6 +640,10 @@
     "instance_path": "/reserved_request_headers/prefixes/0",
     "keyword": "pattern"
   },
+  "vocabulary-mcp-openapi-bridge/invalid/uppercase-predicate-name.json": {
+    "instance_path": "/reserved_request_headers/other_predicates/0/names/11",
+    "keyword": "pattern"
+  },
   "vocabulary-mcp-openapi-bridge/invalid/zero-bound.json": {
     "instance_path": "/bounds/max_operations",
     "keyword": "minimum"
