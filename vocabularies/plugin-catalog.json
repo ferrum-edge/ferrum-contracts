@@ -62,7 +62,7 @@
     "path": "openapi.yaml",
     "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
     "openapi": "3.1.0",
-    "note": "Each config_schema.pointer is a JSON Pointer into this exact file. The schemas are OpenAPI 3.1 (JSON Schema 2020-12 dialect) and may $ref other components in the same document. They apply to `config` only when the plugin config is enabled. They are referenced, not copied, in this release; see docs/adoption.md (follow-ups)."
+    "note": "Each config_schema.pointer is a JSON Pointer into this exact file. The schemas are OpenAPI 3.1 (JSON Schema 2020-12 dialect) and may $ref other components in the same document. They apply to `config` only when the plugin config is enabled. ci/plugin_config_schemas.py also publishes each pointer's schema, with every component it references, as a standalone JSON Schema 2020-12 document in plugin-config-schemas/<plugin>.schema.json, generated from this exact file; CI checks the generated files against it."
   },
   "protocol_values": {
     "http": "HTTP/1.1, HTTP/2 and HTTP/3, including HTTPS",

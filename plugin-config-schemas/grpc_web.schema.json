@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/grpc_web.schema.json",
+  "title": "grpc_web plugin config",
+  "description": "The `config` object of an enabled `grpc_web` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component GrpcWebConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "grpc_web",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/GrpcWebConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/GrpcWebConfig",
+  "$defs": {
+    "GrpcWebConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: grpc_web — Translates between gRPC-Web (browser-compatible) and native gRPC (HTTP/2) wire formats. Supports binary (application/grpc-web) and text (application/grpc-web-text) encoding, including message-format suffixes such as +proto, +json, +thrift, and other valid +subtype values. The request message-format suffix is preserved on the native backend Content-Type (application/grpc-web-text+json dispatches as application/grpc+json); a bare type and +proto both dispatch as the canonical bare application/grpc. Request-body decoding follows request Content-Type; response encoding and Content-Type follow Accept negotiation (absent Accept defaults to the request Content-Type mode and suffix; lists, q-values, and */* / application/* wildcards are honored; Accept can select binary versus text but cannot transcode to a different message-format suffix; malformed or fully refused Accept fails closed with HTTP 406; translated responses merge Vary: Accept so caches separate variants). A media range carrying parameters other than q still matches when its type, subtype, and suffix match (so application/grpc-web-text;charset=utf-8 is acceptable), but those parameters are ignored for precedence and quality selection and cannot veto an unparameterized representation (application/grpc-web+proto;q=1, application/grpc-web+proto;version=2;q=0 is served as application/grpc-web+proto). A range whose type or suffix does not match still yields HTTP 406. Config must be a JSON object (not null); `{}` and objects that only set `expose_headers` are accepted. Unknown keys are rejected. When a backend or intermediary response omits a valid numeric grpc-status, the response trailer frame synthesizes status from the official HTTP-to-gRPC client mapping (400→13, 401→16, 403→7, 404→12, 429/502/503/504→14, others→2); a valid supplied grpc-status remains authoritative. The client-visible HTTP status is not rewritten to 200 on this path. When such a non-200 response carries a non-gRPC entity (for example a text/plain or text/html error document), that entity is dropped rather than framed: the client receives a terminal-only gRPC-Web body carrying the mapped status, on both the streaming and buffered paths. The body trailer frame preserves backend `grpc-status` / `grpc-message`, binary `*-bin` metadata, and valid ASCII custom trailing metadata while excluding hop-by-hop, forbidden, pseudo, connection-listed, and invalid names/values; initial response headers are not copied into the frame. Multiple effective instances are supported: the first in configured order owns body translation exactly once; siblings union expose_headers only.",
+      "properties": {
+        "expose_headers": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[ \\t]*[!#$%&'*+\\-.^_`|~0-9A-Za-z]+[ \\t]*$"
+          },
+          "description": "Additional response headers to include in Access-Control-Expose-Headers for browser CORS compatibility. grpc-status, grpc-message, and grpc-status-details-bin are always exposed. Multiple grpc_web instances union their lists in configured order. Explicit null is accepted at this field and means the empty list (unlike the plugin config object itself, where null is rejected). Each item is trimmed of surrounding spaces/tabs and must then be a non-empty HTTP field name (token characters only); empty, whitespace-only, and names containing an internal space or a colon are rejected. Accepted names are lowercased and de-duplicated in first-seen order, so entries differing only in case collapse to one."
+        }
+      }
+    }
+  }
+}

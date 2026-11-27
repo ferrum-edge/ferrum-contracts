@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/jwt_auth.schema.json",
+  "title": "jwt_auth plugin config",
+  "description": "The `config` object of an enabled `jwt_auth` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component JwtAuthConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "jwt_auth",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/JwtAuthConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/JwtAuthConfig",
+  "$defs": {
+    "JwtAuthConfig": {
+      "type": "object",
+      "description": "Plugin: jwt_auth — HMAC (HS256/HS384/HS512) JWT Bearer token authentication.",
+      "additionalProperties": false,
+      "not": {
+        "required": [
+          "expected_issuer",
+          "expected_issuers"
+        ]
+      },
+      "properties": {
+        "token_lookup": {
+          "type": "string",
+          "default": "header:Authorization",
+          "pattern": "^(header:[!#$%&'*+.^_`|~0-9A-Za-z-]+|query:\\S+)$",
+          "description": "Exact credential location (header:<name> or query:<name>). Whitespace is not trimmed; header names must be valid HTTP tokens, and query names must be non-empty and contain no whitespace. A location no request could satisfy is rejected at config admission."
+        },
+        "consumer_claim_field": {
+          "type": "string",
+          "default": "sub",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "JWT claim identifying the consumer; must not be blank"
+        },
+        "expected_issuer": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Required iss claim, compared as an exact case-sensitive string; must not be blank. Mutually exclusive with expected_issuers — supplying both is rejected."
+        },
+        "expected_issuers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "description": "Accepted iss claims; no entry may be blank. Mutually exclusive with expected_issuer. A token still claims exactly one issuer: per RFC 7519 section 4.1.1 a present iss must be a single string, and an array, object, number, boolean, or null iss is rejected even when one element matches an accepted value."
+        },
+        "audiences": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "description": "Accepted aud claims (OR-matched); no entry may be blank. When non-empty, the token must carry a matching aud. When empty, a token without aud is accepted and a token that carries aud is rejected."
+        },
+        "require_exp": {
+          "type": "boolean",
+          "default": true,
+          "description": "Require an exp claim; expiration is always validated when present. exp is an RFC 7519 section 2 NumericDate (a JSON number that may carry a fractional part); a fractional exp bounds the authenticated stream exactly like an integer one, truncated toward the past so the enforced expiry is never later than the token states. nbf presence and validation are delegated to the JWT validation layer; Ferrum does not normalize a fractional nbf."
+        },
+        "require_nbf": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require an nbf claim; when present, nbf is always validated"
+        },
+        "leeway_secs": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 300,
+          "description": "Clock leeway for time-based JWT claims"
+        },
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "HS256",
+            "HS384",
+            "HS512"
+          ],
+          "default": "HS256",
+          "description": "HMAC algorithm every token on this instance must use. Pinned by configuration and never taken from the token header: a token whose header names any other algorithm is rejected. RSA/EC/JWKS verification belongs to `jwks_auth`."
+        },
+        "hide_credentials": {
+          "type": "boolean",
+          "default": false,
+          "description": "Remove the token-bearing header (for `header:Authorization`, only a `Bearer` value) or query parameter before forwarding an authenticated request upstream, including when another mechanism wins a multi-auth chain. Defaults to false so backends that re-verify the JWT keep receiving it."
+        }
+      }
+    }
+  }
+}

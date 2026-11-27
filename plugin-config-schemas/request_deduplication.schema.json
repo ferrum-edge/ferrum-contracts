@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/request_deduplication.schema.json",
+  "title": "request_deduplication plugin config",
+  "description": "The `config` object of an enabled `request_deduplication` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component RequestDeduplicationConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "request_deduplication",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/RequestDeduplicationConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/RequestDeduplicationConfig",
+  "$defs": {
+    "RequestDeduplicationConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "sync_mode"
+            ],
+            "properties": {
+              "sync_mode": {
+                "pattern": "^[Rr][Ee][Dd][Ii][Ss]$"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "redis_url"
+            ]
+          },
+          "else": {
+            "properties": {
+              "redis_url": false,
+              "redis_tls": false,
+              "redis_key_prefix": false,
+              "redis_pool_size": false,
+              "redis_connect_timeout_seconds": false,
+              "redis_health_check_interval_seconds": false,
+              "redis_username": false,
+              "redis_password": false,
+              "on_redis_unavailable": false
+            }
+          }
+        }
+      ],
+      "description": "Plugin: request_deduplication — Idempotency-key based request deduplication. Gateway-authored dispatch errors are not completed responses: proven pre-wire failures release the matching owner token at finalization, while any possible execution retains the in-flight lease until inflight_ttl_seconds. Real backend error responses remain replayable; provenance is independent of HTTP status. Logical keys are scoped by stable plugin-config identity, matched proxy namespace and ID, peer SPIFFE identity when present, authenticated identity when configured, and idempotency header value, then stored as framed SHA-256 digests. Stable plugin identity partitions sibling Redis-backed instances even when they share an explicit/default prefix, and matched proxy namespaces remain isolated even when an explicit Redis prefix is shared, while the same configured instance shares keys across gateways. Per-request completion ownership (logical key, fingerprint, local owner token, and optional Redis lock token) is held in an instance-keyed private structure rather than shared public metadata, so multiple scoped instances with distinct headers mark and token-release independently on the same request. Cached responses replay only when the request fingerprint also matches method, authority/host, exact path, effective outbound query string, deterministic request headers that can affect routing/transforms, and request-body digest. Cached bytes are already-finalized representations and bypass ordinary presentation transforms on replay while remaining subject to response inspection and final-body validation; a current-policy redaction decision runs only its required transform and fails closed with 502 if rewriting cannot complete. Applicable methods with declared bodies are prebuffered so keys added by earlier header transforms can be fingerprinted. Reusing a logical idempotency key for a different fingerprint returns 409. A synthetic short-circuit whose own execution performed the protected external operation — a terminate-mode serverless_function invocation or an ai_federation provider call — declares that provenance and never releases its ownership. What is published once every response decision is final depends on whether that finalized response can be retained. A terminate-mode serverless_function response that fits the entry/total limits and carries an establishable presentation policy is published as an ordinary REPLAYABLE completion through the fenced transition: an identical retry receives the cached status and body with X-Idempotent-Replayed: true for ttl_seconds and the function is invoked exactly once. Every other outcome — a response too large to retain, an unprovable or straddled presentation policy, a streamed fallthrough, an interrupted delivery, and every ai_federation-marked provider call, whose synthetic body was never a backend response and is never stored — publishes a durable non-replayable 409 completion tombstone under the key instead, so an identical idempotency-key retry cannot repeat the billable operation when inflight_ttl_seconds elapses. That tombstone is retained for max(ttl_seconds, inflight_ttl_seconds): it replaces an in-flight marker that blocked duplicates for inflight_ttl_seconds, so a deployment with inflight_ttl_seconds greater than ttl_seconds never becomes re-executable sooner than a bare marker left it, while ordinary replayable completions keep ttl_seconds. Externally executed synthetic plugins that do not declare this provenance must define their own completion contract. Completed response retention is bounded by per-entry and exact local total byte limits; size-skipped responses return normally and are not retained. In local mode, ordinary skipped responses clear in-flight state immediately. Supports centralized Redis-backed mode for cross-instance deduplication. The Redis endpoint must be deployed with maxmemory-policy noeviction (or no maxmemory limit at all): a deduplication record is the control rather than a cache copy, so an evicting endpoint would silently drop a live in-flight or completed record mid-lease and let a retry execute the operation a second time while Redis stayed reachable. Every newly established connection — first dial, dedicated transaction connection, and background recovery probe — is screened with INFO MEMORY and used only when the server proves maxmemory:0 or maxmemory_policy:noeviction; a proven allkeys-*/volatile-* policy is terminal for that client generation and an unproven screen is a recoverable outage, after which on_redis_unavailable governs (fail-closed by default). Redis mode stores ownership and completion in ONE versioned operation record per logical key: acquisition is a token-owned SET NX before backend dispatch, and publication is a compare-and-set fenced on that still-current token, so publication and the ownership transition are atomic. An owner whose inflight_ttl_seconds lease expired can neither overwrite a successor's completed response nor publish while a successor owns the operation; its local completion is discarded instead. Current-version records with a missing or empty in-flight owner token, impossible state-dependent fields, or mismatched inner/outer replay fingerprints fail closed as unknown writer state. When a completed response cannot be represented within max_entry_size_bytes, a small non-replayable completion tombstone is published so peers receive a deterministic 409 for max(ttl_seconds, inflight_ttl_seconds) instead of becoming free to re-execute when the raw lease expires; a record published without a replay payload never expires sooner than the lease it replaced. Redis values include the fingerprint, obey the per-entry size limit for both retained response size and serialized payload size, and v7 logical keys plus the versioned record format are not backward-compatible with earlier versions. The matched route's response-header policy (a mesh_route_dispatch response_transform) is bound into the request fingerprint rather than the logical key: it changes how a result is presented, not which operation an identical retry executes, so a response-header-only route reload returns 409 for a same-key retry instead of addressing a fresh key and executing the operation again. A request whose idempotency header, authority, or framing/coding header is present under case-variant spellings with different values is refused with 400 rather than resolved by map iteration order. When Redis cannot be consulted, on_redis_unavailable decides between a fail-closed 503 (default) and an explicitly opted-in process-local fallback. Unknown top-level keys are rejected, and Redis-only keys are rejected outside sync_mode='redis'. If an owned terminal response fits locally but its serialized Redis value exceeds the cap, Redis admission settles before ordinary local eviction; the matching local gateway preserves one replay while active entries occupy the cap, and later pressure converts an unretainable protected replay to a fixed-size execution barrier that inherits the completion's original insertion time and retention while peers remain blocked. Persistent per-key execution barriers are hard-capped at max_entries; overflow extends one fixed process-global deadline and returns 503 for applicable idempotency-key requests rather than allocating unbounded key state or failing open. If a completion is skipped only by the local total cap and Redis publication fails, local and distributed in-flight locks are left to expire under inflight_ttl_seconds to avoid immediate duplicate execution without a replay value. When sync_mode is redis, redis_url is required. Every retained response, local or Redis, is stamped with the response-side presentation policy it was produced under: a content digest of the published response_transformer RTDS gate map plus a content digest of the effective static presentation rules of the proxy (response_transformer, sse, and a2a_gateway in its configured-public-base mode), folded in configured execution order. A stored response replays only while both digests still match the live policy; a stamp that no longer matches, a record written without provenance, and a record with malformed provenance all return 409 rather than replaying under a superseded policy or re-executing a possibly completed side effect. A response whose request straddled a gate publication, or whose effective presentation policy could not be established, is retained for replay neither in Redis nor locally, while in-flight ownership is kept until its TTL. The non-replayable external-operation completion tombstone is the one exception: its bytes are a fixed 409 refusal that asserts no presentation policy, so it is published even under an unprovable or straddled policy rather than leaving an already-performed operation executable again when inflight_ttl_seconds elapses. Only fixed-size digests are stored, never rule text or header values. The built-in priority 3010 runs after route dispatch and request_transformer header/query rules but before terminate-mode serverless execution. Admission rejects every same-protocol request header/query mutator at or after deduplication (including priority overrides), and rejects any deferred request-body transformer whose final bytes were not already established by pre-before_proxy normalization. request_deduplication cannot be composed with mcp_gateway on the same proxy: admission rejects the pair with 400 (fatal in file mode, rejected update in DP) because an MCP public-URI rewrite is derived from live upstream discovery state that no persisted digest can witness. It also cannot be composed with an a2a_gateway instance that derives its public base from the request - discovery.public_base_url unset while discovery.trust_forwarded_headers is true - because the rewritten Agent Card origin then depends on per-request forwarded headers and the connection's transport security, neither of which the fingerprint binds; that refusal is per instance, so a configured-public-base a2a_gateway composes normally.",
+      "properties": {
+        "header_name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+          "default": "Idempotency-Key",
+          "not": {
+            "type": "string",
+            "pattern": "^[Xx][-_][Cc][Oo][Nn][Ss][Uu][Mm][Ee][Rr][-_]"
+          },
+          "description": "Request header name containing the deduplication key. Must be a valid RFC 9110 HTTP field-name token. Names in the gateway-owned x-consumer-* request namespace (case-insensitive, `_` equivalent to `-`) are rejected at config load, because the gateway strips them from every client request and no request could carry the key."
+        },
+        "ttl_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 300,
+          "description": "Time-to-live in seconds for cached completed responses. Must be greater than zero and representable as an unsigned 64-bit integer."
+        },
+        "inflight_ttl_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Time-to-live in seconds for in-flight request entries used to coalesce duplicate requests while the first is still being processed. Defaults to `ttl_seconds` when omitted. Must be greater than zero and representable as an unsigned 64-bit integer."
+        },
+        "max_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 10000,
+          "description": "Maximum number of tracked local deduplication entries and hard maximum number of persistent per-key execution barriers. Active in-flight work is never evicted while live and may temporarily exceed the entry target, up to the separate hard max_inflight_entries ceiling. If completed external operations fill the per-key barrier budget, additional barriers collapse into one fixed process-global deadline and applicable idempotency-key requests receive 503 until it expires."
+        },
+        "max_inflight_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Hard ceiling on live local in-flight markers per policy identity, counted exactly and reserved by a single atomic compare-and-swap — requests currently executing plus interrupted or ambiguous requests (for example a client that reset a streamed response) whose markers are retained until inflight_ttl_seconds. Defaults to max_entries when omitted. A request with a new idempotency key that cannot reserve a slot is refused with 503 and any Redis ownership it acquired is released; requests for keys that are already tracked still replay or conflict, and live ownership is never evicted to admit new work. Execution barriers are bounded separately by max_entries. Must be greater than zero and representable as an unsigned 64-bit integer."
+        },
+        "max_entry_size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 1048576,
+          "description": "Maximum retained size of one completed response entry. Oversized responses return the original response to the client without retaining a replayable entry. In local mode, ordinary oversized responses clear in-flight state without retaining it, so a later retry can re-execute. A completed external operation instead atomically replaces its exact owner with a fixed-size execution barrier retained for max(ttl_seconds, inflight_ttl_seconds), without retaining response bytes. In Redis mode, when a replayable response does not fit, a small non-replayable completion tombstone is atomically published so peers refuse identical retries for the same barrier window."
+        },
+        "max_total_size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 104857600,
+          "description": "Exact maximum retained size across local completed response entries. Responses that would exceed this cap are returned normally and are not retained. In local mode, ordinary skipped responses clear in-flight state immediately, while a completed external operation uses a fixed-size execution barrier with its authoritative retention and no response-byte charge. In Redis mode, an ordinary local-total-cap skip keeps local and distributed in-flight locks until inflight_ttl_seconds only if Redis publication fails."
+        },
+        "applicable_methods": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^\\s*[!#$%&'*+.^_`|~0-9A-Za-z-]+\\s*$"
+          },
+          "default": [
+            "POST",
+            "PUT",
+            "PATCH"
+          ],
+          "description": "HTTP methods that require deduplication. Must contain at least one entry, and every entry must be a valid RFC 9110 HTTP method token. The runtime parser trims surrounding whitespace and uppercases the token before matching (`\" post \"` is accepted and matches `POST`), which is why the pattern tolerates padding."
+        },
+        "scope_by_consumer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Additionally include the authenticated consumer's display identity in the deduplication key. Caller isolation no longer depends on this flag — every logical key binds a mandatory caller-authorization partition (authentication mechanism, resolved identity/consumer, peer SPIFFE identity, and SHA-256 digests of every credential header presented, unless caller_partition is authenticated_identity) plus the effective destination, so two credentials resolving to one display subject with different scopes can never claim or replay one another's operation under the default caller_partition."
+        },
+        "anonymous_caller_scope": {
+          "type": "string",
+          "enum": [
+            "caller_address",
+            "caller-address",
+            "shared"
+          ],
+          "default": "caller_address",
+          "description": "How anonymous callers (no gateway identity, no credential header, no peer SPIFFE identity) are partitioned. caller_address (default) binds the gateway-resolved canonical peer address, which the origin observes through Ferrum's regenerated X-Forwarded-For; a request whose canonical address cannot be parsed is refused rather than keyed incompletely. shared is an explicit operator attestation that the origin does not vary its result by caller address on this route — only set it when that is known-safe, because it re-opens cross-caller replay for address-sensitive origins. It applies to anonymous callers only: an authenticated caller always binds its canonical peer address, because the backend receives Ferrum's regenerated forwarding identity for that caller too and may vary policy or content by it. Explicit null is rejected (`'anonymous_caller_scope' must be a string`); omit the field to select the default. The runtime parser trims surrounding whitespace and is case-insensitive, and `_`/`-` are interchangeable (`\" SHARED \"`, `\"caller-address\"` are accepted); the enum lists only canonical and alias forms because JSON Schema cannot express case-insensitivity, so strict schema validators may reject mixed-case or padded inputs the gateway itself accepts."
+        },
+        "caller_partition": {
+          "type": "string",
+          "enum": [
+            "credential",
+            "authenticated_identity"
+          ],
+          "default": "credential",
+          "description": "How the caller dimension of the logical key is bound. `credential` (default) binds the full caller-authorization partition: mechanism, resolved identity and consumer, peer SPIFFE identity, SHA-256 digests of every presented credential header (pristine and live views), and the canonical peer address — so a refreshed token, a per-request signature (hmac_auth, SigV4), or a new client address is a different caller and a retry executes again. `authenticated_identity` is an operator opt-in for clients whose credentials or addresses change between retries: when the gateway verified a principal (a resolved Consumer, a peer SPIFFE identity, or an external identity committed with its verified realm through the authentication boundary) the key binds that principal only — no credential digests and no peer address — and the request fingerprint binds the presence but not the values of credential headers, of credential query parameters an authentication plugin captured from its configured query location, and of the signature-context headers `date`, `x-amz-date`, `x-amz-content-sha256`, `amz-sdk-invocation-id`, `amz-sdk-request`, `digest`, and `content-digest` (exactly this list) that an hmac_auth or SigV4 re-signature or an AWS SDK retry attempt regenerates. A credential header or query parameter renamed by an earlier request_transformer keeps that classification under its current name; every other header and query pair stays value-bound. Two credentials of one principal with different scopes then share an operation, so scope-level distinction rests on the authorization plugins that ran before deduplication. Requests without a verified principal fall back to `credential`. The mode is framed into the key, so changing it never reuses retained state. Matched exactly (no case or whitespace normalization)."
+        },
+        "enforce_required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reject requests missing the deduplication header with 400"
+        },
+        "sync_mode": {
+          "type": "string",
+          "enum": [
+            "local",
+            "redis"
+          ],
+          "default": "local",
+          "description": "Dedup cache storage: 'local' (in-memory) or 'redis' (centralized completed responses plus distributed in-flight locks). Any RESP-compatible server works, and the endpoint must not evict (see the component description). The runtime parser is case-insensitive (`\"REDIS\"` selects centralized mode and requires redis_url); the enum lists only the canonical spellings because JSON Schema cannot express case-insensitivity, so strict schema validators may reject mixed-case inputs the gateway itself accepts."
+        },
+        "redis_url": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[rR][eE][dD][iI][sS][sS]?://[^/?#\\s]+(?:/(?:0|[1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])?)?(?:\\?[^\\s#]*)?(?![\\s\\S])",
+          "description": "Redis connection URL with a redis:// or rediss:// scheme and a non-empty authority/hostname. Must not carry a URL fragment; TLS skip-verify is only FERRUM_TLS_NO_VERIFY. Required when sync_mode is 'redis'."
+        },
+        "redis_tls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable TLS for the Redis connection. CA verification uses gateway-level FERRUM_TLS_CA_BUNDLE_PATH; skip-verify uses FERRUM_TLS_NO_VERIFY."
+        },
+        "redis_key_prefix": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Key prefix for all Redis keys. Must be non-empty when supplied. When omitted, the runtime derives `{FERRUM_NAMESPACE}:dedup` (for example `ferrum:dedup` when the namespace is `ferrum`). No static OpenAPI default is advertised because the value depends on the gateway namespace. Sibling request_deduplication instances remain isolated under a shared default or explicit prefix because logical keys include the stable plugin-config id. Matched proxy namespaces also remain isolated when an explicit prefix is shared across namespaces; corresponding copies of one config still share locks and completed values across gateways."
+        },
+        "redis_pool_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "default": 4,
+          "description": "Number of multiplexed Redis connections. Must be between 1 and 128."
+        },
+        "redis_connect_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Redis connection timeout in seconds. Must be greater than zero."
+        },
+        "redis_health_check_interval_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Health check ping interval when Redis is unavailable. Must be greater than zero."
+        },
+        "redis_username": {
+          "type": "string",
+          "description": "Redis username for ACL authentication"
+        },
+        "redis_password": {
+          "type": "string",
+          "description": "Redis password"
+        },
+        "on_redis_unavailable": {
+          "type": "string",
+          "enum": [
+            "fail_closed",
+            "local_only"
+          ],
+          "default": "fail_closed",
+          "description": "Behavior when `sync_mode: redis` is configured but Redis cannot be consulted. `fail_closed` (default) refuses the request with 503 rather than making an ownership decision only one process can see: during an outage a local-only decision lets the same idempotency key execute once per gateway process. `local_only` explicitly opts into process-local deduplication for availability. Only valid when `sync_mode` is `redis`."
+        }
+      }
+    }
+  }
+}

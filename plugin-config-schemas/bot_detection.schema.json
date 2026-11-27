@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/bot_detection.schema.json",
+  "title": "bot_detection plugin config",
+  "description": "The `config` object of an enabled `bot_detection` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component BotDetectionConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "bot_detection",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/BotDetectionConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/BotDetectionConfig",
+  "$defs": {
+    "BotDetectionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "blocked_patterns"
+            ],
+            "properties": {
+              "blocked_patterns": {
+                "type": "array",
+                "maxItems": 0
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "allow_missing_user_agent"
+            ],
+            "properties": {
+              "allow_missing_user_agent": {
+                "const": false
+              }
+            }
+          }
+        }
+      ],
+      "description": "Plugin: bot_detection — case-insensitive User-Agent matching. Configuration must be an object and unknown properties are rejected. `blocked_patterns` are substring matches; `allow_list` entries are word-boundary matches and are consulted before blocked patterns, so a User-Agent that contains a blocked substring can still pass if it also contains an allow-list entry as a standalone token (useful for permitting GoogleBot while blocking generic `bot` patterns). The word-boundary anchoring on the allow list prevents an allowed token from being smuggled inside an otherwise-blocked agent. A no-op config (empty `blocked_patterns` while missing User-Agent headers are allowed) is rejected; an allow-list alone is not enforcement. The User-Agent is client-controlled and spoofable, so this is a coarse filter, not strong bot verification. Pattern entry whitespace follows Rust `str::trim` Unicode `White_Space` semantics. A User-Agent whose every field line is empty or only spaces/tabs is treated as missing. A present User-Agent field line that is not valid UTF-8 cannot be matched, so the request is rejected with `custom_response_code` regardless of `allow_list` and `allow_missing_user_agent`. HTTP-family only.",
+      "properties": {
+        "blocked_patterns": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"
+          },
+          "default": [
+            "curl",
+            "wget",
+            "python-requests",
+            "python-urllib",
+            "scrapy",
+            "httpclient",
+            "java/",
+            "libwww-perl",
+            "mechanize",
+            "php/"
+          ],
+          "description": "User-Agent substrings to reject (case-insensitive). Specifying this field with an array replaces the defaults entirely. Entries are trimmed and must contain a non-whitespace character. `null` is the same as omission and installs the documented defaults. Setting the field to `[]` is valid only when `allow_missing_user_agent: false` creates a missing-header reject path; an allow-list alone is not enforcement."
+        },
+        "allow_list": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"
+          },
+          "default": [],
+          "description": "User-Agent tokens that always pass, evaluated before `blocked_patterns` (allow wins). Matching is case-insensitive and word-boundary anchored, so an entry only matches when it appears as a standalone token in the User-Agent. Entries are trimmed and must contain a non-whitespace character. `null` is the same as omission and installs an empty allow list."
+        },
+        "allow_missing_user_agent": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "When true (default), requests with no User-Agent header, or only empty/whitespace-only User-Agent values, pass — this keeps health-check and load-balancer probes working. Set to false to reject them with `custom_response_code`. A non-UTF-8 User-Agent is not treated as missing and is rejected either way. `null` is the same as omission and selects `true`."
+        },
+        "custom_response_code": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 400,
+          "maximum": 599,
+          "default": 403,
+          "description": "For non-gRPC requests, the final 4xx or 5xx HTTP status returned with the JSON rejection body. Native gRPC requests instead return an empty-body HTTP 200 trailers-only error with this HTTP status mapped to `grpc-status` and `Forbidden` in `grpc-message`. Values outside 400–599, including informational and no-body status codes, and non-integer values are rejected. `null` is the same as omission and selects 403."
+        }
+      }
+    }
+  }
+}

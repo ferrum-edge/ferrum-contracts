@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/correlation_id.schema.json",
+  "title": "correlation_id plugin config",
+  "description": "The `config` object of an enabled `correlation_id` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component CorrelationIdConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "correlation_id",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/CorrelationIdConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/CorrelationIdConfig",
+  "$defs": {
+    "CorrelationIdConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: correlation_id — With the default inbound_policy preserve, keeps a non-empty inbound ID only when it is at most 256 bytes and matches [A-Za-z0-9._-]+; every missing or rejected value is replaced (never truncated) with UUID v4. With inbound_policy generate, every HTTP/gRPC/WebSocket request receives a fresh gateway-owned UUID v4 that overwrites any inbound value on that header. Multiple instances retain independent authoritative values in private typed request/session state. The first instance in priority order owns the canonical request_id, while every instance forwards and echoes only its own private value, including on successful H1/H2/H3 WebSocket handshakes. Public request_id and correlation_id.instance.* metadata are compatibility projections; later plugin writes cannot change authoritative forwarding, echo, or logged values. Effective instances on one proxy chain that overlap on any supported protocol must normalize to distinct header_name values and have distinct effective priorities; use priority_override to make canonical ownership deterministic. Disjoint protocol owners do not conflict. Admission and reload reject either overlapping ambiguous composition. Runtime admission also rejects the deployment-specific effective FERRUM_REAL_IP_HEADER value case-insensitively; that dynamic exclusion cannot be expressed by this static schema. CP/DP config sync requires every DP to advertise the same effective value as the CP before configuration is distributed. The top-level config must be an object; null fields select defaults.",
+      "properties": {
+        "header_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": "x-request-id",
+          "minLength": 1,
+          "maxLength": 65535,
+          "pattern": "^[\t-\r    -     　]*[!#$%&'*+.^_`|~0-9A-Za-z-]+[\t-\r    -     　]*$",
+          "not": {
+            "type": "string",
+            "pattern": "^[\t-\r    -     　]*(?:[Ee][Aa][Rr][Ll][Yy]-[Dd][Aa][Tt][Aa]|[Xx]-[Ff][Ee][Rr][Rr][Uu][Mm]-[Oo][Rr][Ii][Gg][Ii][Nn][Aa][Ll]-[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Xx]-[Gg][Rr][Pp][Cc]-[Ww][Ee][Bb]-[Mm][Oo][Dd][Ee]|[Aa][Pp][Ii]-[Kk][Ee][Yy]|[Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ii][Oo][Nn]-[Ii][Nn][Ff][Oo]|[Aa][Uu][Tt][Hh][Oo][Rr][Ii][Zz][Aa][Tt][Ii][Oo][Nn]|[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ll][Ee][Nn][Gg][Tt][Hh]|[Cc][Oo][Oo][Kk][Ii][Ee]|[Ee][Xx][Pp][Ee][Cc][Tt]|[Gg][Rr][Pp][Cc]-[Mm][Ee][Ss][Ss][Aa][Gg][Ee]|[Gg][Rr][Pp][Cc]-[Ss][Tt][Aa][Tt][Uu][Ss]|[Gg][Rr][Pp][Cc]-[Ss][Tt][Aa][Tt][Uu][Ss]-[Dd][Ee][Tt][Aa][Ii][Ll][Ss]-[Bb][Ii][Nn]|[Hh][Oo][Ss][Tt]|[Kk][Ee][Ee][Pp]-[Aa][Ll][Ii][Vv][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ii][Oo][Nn]-[Ii][Nn][Ff][Oo]|[Pp][Rr][Oo][Xx][Yy]-[Aa][Uu][Tt][Hh][Oo][Rr][Ii][Zz][Aa][Tt][Ii][Oo][Nn]|[Pp][Rr][Oo][Xx][Yy]-[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Ss][Ee][Cc]-[Ww][Ee][Bb][Ss][Oo][Cc][Kk][Ee][Tt]-[Aa][Cc][Cc][Ee][Pp][Tt]|[Ss][Ee][Cc]-[Ww][Ee][Bb][Ss][Oo][Cc][Kk][Ee][Tt]-[Ee][Xx][Tt][Ee][Nn][Ss][Ii][Oo][Nn][Ss]|[Ss][Ee][Cc]-[Ww][Ee][Bb][Ss][Oo][Cc][Kk][Ee][Tt]-[Kk][Ee][Yy]|[Ss][Ee][Cc]-[Ww][Ee][Bb][Ss][Oo][Cc][Kk][Ee][Tt]-[Pp][Rr][Oo][Tt][Oo][Cc][Oo][Ll]|[Ss][Ee][Cc]-[Ww][Ee][Bb][Ss][Oo][Cc][Kk][Ee][Tt]-[Vv][Ee][Rr][Ss][Ii][Oo][Nn]|[Ss][Ee][Tt]-[Cc][Oo][Oo][Kk][Ii][Ee]|[Tt][Ee]|[Tt][Rr][Aa][Cc][Ee][Pp][Aa][Rr][Ee][Nn][Tt]|[Tt][Rr][Aa][Cc][Ee][Ss][Tt][Aa][Tt][Ee]|[Tt][Rr][Aa][Ii][Ll][Ee][Rr]|[Tt][Rr][Aa][Nn][Ss][Ff][Ee][Rr]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Uu][Pp][Gg][Rr][Aa][Dd][Ee]|[Ww][Ww][Ww]-[Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ee]|[Xx]-[Aa][Pp][Ii]-[Kk][Ee][Yy]|[Xx]-[Aa][Uu][Tt][Hh]-[Tt][Oo][Kk][Ee][Nn]|[Xx]-[Cc][Ss][Rr][Ff]-[Tt][Oo][Kk][Ee][Nn]|[Xx]-[Ff][Oo][Rr][Ww][Aa][Rr][Dd][Ee][Dd]-[Aa][Uu][Tt][Hh][Oo][Rr][Ii][Zz][Aa][Tt][Ii][Oo][Nn]|[Xx]-[Ff][Oo][Rr][Ww][Aa][Rr][Dd][Ee][Dd]-[Ff][Oo][Rr]|[Xx]-[Gg][Oo][Oo][Gg]-[Aa][Pp][Ii]-[Kk][Ee][Yy]|[Xx]-[Xx][Ss][Rr][Ff]-[Tt][Oo][Kk][Ee][Nn])[\t-\r    -     　]*$"
+          },
+          "allOf": [
+            {
+              "not": {
+                "type": "string",
+                "pattern": "^[\t-\r    -     　]*(?:[Ee][Aa][Rr][Ll][Yy]-[Dd][Aa][Tt][Aa]|[Xx]-[Ff][Ee][Rr][Rr][Uu][Mm]-[Oo][Rr][Ii][Gg][Ii][Nn][Aa][Ll]-[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Xx]-[Gg][Rr][Pp][Cc]-[Ww][Ee][Bb]-[Mm][Oo][Dd][Ee]|[Tt][Rr][Aa][Cc][Ee][Pp][Aa][Rr][Ee][Nn][Tt]|[Tt][Rr][Aa][Cc][Ee][Ss][Tt][Aa][Tt][Ee]|[Ff][Oo][Rr][Ww][Aa][Rr][Dd][Ee][Dd]|[Vv][Ii][Aa]|[Xx]-[Ff][Oo][Rr][Ww][Aa][Rr][Dd][Ee][Dd]-[Hh][Oo][Ss][Tt]|[Xx]-[Ff][Oo][Rr][Ww][Aa][Rr][Dd][Ee][Dd]-[Pp][Rr][Oo][Tt][Oo])[\t-\r    -     　]*$"
+              }
+            },
+            {
+              "not": {
+                "type": "string",
+                "pattern": "^[\t-\r    -     　]*[Xx][-_][Cc][Oo][Nn][Ss][Uu][Mm][Ee][Rr][-_]"
+              }
+            },
+            {
+              "not": {
+                "type": "string",
+                "pattern": "^[\t-\r    -     　]*[Xx][-_][Ff][Ee][Rr][Rr][Uu][Mm][-_][Hh][Oo][Pp][Ss][\t-\r    -     　]*$"
+              }
+            },
+            {
+              "not": {
+                "type": "string",
+                "pattern": "^[\t-\r    -     　]*(?:[Xx][-_][Gg][Ee][Oo][-_][Cc][Oo][Uu][Nn][Tt][Rr][Yy]|[Xx][-_][Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ee][Dd][-_][Ii][Dd][Ee][Nn][Tt][Ii][Tt][Yy]|[Xx]-[Rr][Ee][Aa][Ll]-[Ii][Pp])[\t-\r    -     　]*$"
+              }
+            }
+          ],
+          "description": "Header name (surrounding Rust `str::trim` Unicode White_Space is trimmed and the name is lowercased internally). After trimming, the token must be a valid `http::HeaderName` of at most 65,535 ASCII bytes. Used for the inbound preserved value and this instance's outbound/echoed value. Protocol-managed request, forwarding, framing, connection, content-coding, W3C tracing context (traceparent and tracestate), gRPC status, WebSocket handshake, and internal marker names (including early-data, x-grpc-web-mode, and x-ferrum-original-content-encoding), plus security-sensitive credential/authentication names, every name in the gateway-owned x-consumer-* consumer assertion namespace (with `_` equivalent to `-`, so x_consumer_role is included), the other gateway-owned backend assertions that outbound refresh strips and regenerates (x-authenticated-identity and the GeoIP x-geo-country, either spelling), the literal x-real-ip that backend builders drop from untrusted peers, and the gateway-owned x-ferrum-hops proxy hop count (either spelling), are rejected case-insensitively. Runtime also rejects the effective deployment-specific FERRUM_REAL_IP_HEADER value case-insensitively; CP/DP config sync enforces one matching value across the cluster before distribution. Null selects x-request-id."
+        },
+        "echo_downstream": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "When true, this instance's resolved ID is added to ordinary responses, rejection responses, and successful H1 Upgrade/H2-H3 Extended CONNECT WebSocket handshakes. Null selects true."
+        },
+        "inbound_policy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "preserve",
+            "generate",
+            null
+          ],
+          "default": "preserve",
+          "description": "preserve keeps a well-formed inbound ID (at most 256 bytes matching [A-Za-z0-9._-]+) and replaces only missing or rejected values. generate always mints a fresh UUID v4 and overwrites any inbound value, so the backend header, downstream echo, canonical request_id log metadata, WebSocket handshake echo, and response_caching generated-value provenance all carry the gateway-owned ID. TCP/UDP sessions always generate. Null selects preserve."
+        }
+      }
+    }
+  }
+}

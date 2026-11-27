@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/response_size_limiting.schema.json",
+  "title": "response_size_limiting plugin config",
+  "description": "The `config` object of an enabled `response_size_limiting` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component ResponseSizeLimitingConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "response_size_limiting",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/ResponseSizeLimitingConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/ResponseSizeLimitingConfig",
+  "$defs": {
+    "ResponseSizeLimitingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: response_size_limiting — Per-proxy response body size limits.\nRejects oversized responses with HTTP 502 either via Content-Length\nfast path (`after_proxy`) or after final buffering when\n`require_buffered_check: true` is set (`on_final_response_body`).\n`max_bytes` is additionally published to the proxy core as the effective\ncollection/streaming ceiling across H1/H2, H3, gRPC, retries,\ncoalescing, mesh mTLS, and HBONE: buffered collection aborts at this\nroute ceiling rather than retaining up to the larger global allowance,\nand unknown-length streaming paths engage the frame-by-frame\n`SizeLimitedStreamingResponse` adapter at this ceiling (known-length\npaths reject an over-limit declaration before forwarding). Already-buffered\nsynthetic responses (mock, serverless, cache, federation, dedup replay)\nare checked against the ceiling even when no plugin activated the\nresponse body-hook gate, after any body transform. The effective bound\nis the strictest active (nonzero) value of this limit and\nFERRUM_MAX_RESPONSE_BODY_SIZE_BYTES; a global limit of 0 means unlimited\nand does not disable an active route limit, and multiple instances\ncompose to their minimum. It also bounds the buffered-representation\ndecode gate and compression admission.\nResponse-transformer output above this ceiling is a deterministic\ngateway policy refusal: HTTP 502 with the Response body too large JSON error and limit,\nX-Gateway-Error: overload, and error_class: dispatch_policy_rejected.\nIt emits one bounded warning. Oversized backend bodies retain backend\nattribution; actual aggregate-buffer exhaustion remains HTTP 503.\nRepeated identical Content-Length values are parsed per comma-folded\nmember and compared against the limit; a declared length that cannot be\nreduced to one agreed value fails closed with HTTP 502. Bodyless\nsemantics (HEAD, 1xx, 204/205/304) are exempt from both checks.\nStreaming rewrites are charged on the client-visible bytes: response\nstream inspectors (every Forward, Terminate payload, and end-of-stream\nflush), incremental gRPC-Web translation (base64 text expansion and the\ngenerated trailer frame), and the gateway-generated mcp_gateway\naggregate SSE listener (greeting, events, keepalives) cannot deliver\nmore than the effective ceiling; the crossing frame is withheld and the\ncommitted stream ends with a ResponseBodyTooLarge abort/reset.\nUnknown keys and non-object configs are rejected. Explicit null\nmembers are rejected; omitted keys keep defaults.\n",
+      "required": [
+        "max_bytes"
+      ],
+      "properties": {
+        "max_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Maximum allowed response body size in bytes. Required and must be greater than zero — the gateway rejects plugin creation when missing or 0."
+        },
+        "require_buffered_check": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force route-bounded whole-body buffering so the complete final post-transform size is proven before response headers are committed. Unknown-length streams are already bounded frame by frame when this is false. Enabling it adds memory overhead and rejects indefinite SSE streams whose complete size cannot be proven, including the gateway-generated mcp_gateway aggregate SSE listener (HTTP 502 before commit). An event stream whose backend declared one exact Content-Length within max_bytes (agreeing repeated members count as one), matching the pristine backend response, has proven its size and is admitted when no streaming response inspector on the route (for example an sse retry_ms prefix or an ai_* stream inspector) can rewrite its bytes."
+        }
+      }
+    }
+  }
+}

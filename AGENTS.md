@@ -2,10 +2,13 @@
 
 Versioned wire contracts shared by the Ferrum products (Edge, Anvil, Alloy,
 Nexus, Foundry, GitForgeOps), kept as data: JSON Schemas, machine-readable
-vocabularies, and conformance fixtures. There is no application code. The
-only executable files are the repository's own CI check, `ci/validate.py`,
-and its tests, `ci/test_*.py`, plus the agent dispatch launchers under
-`.agents/skills/` (repository tooling, not contract content).
+vocabularies, and conformance fixtures. There is no application code, no
+parser or client library, and no generated types or crates: consumers
+generate or write their own types from the schemas. The only executable files
+are the repository's own CI check, `ci/validate.py`, the stdlib-only generator
+`ci/plugin_config_schemas.py`, their tests, `ci/test_*.py`, and the agent
+dispatch launchers under `.agents/skills/` (repository tooling, not contract
+content).
 License: PolyForm Noncommercial 1.0.0 (`LICENSE`); commercial use needs the
 commercial license in `LICENSE-COMMERCIAL.md`.
 
@@ -25,6 +28,10 @@ completed).
 - `fixtures/<name>/{valid,invalid}/*.json`: conformance payloads; a schema
   with several majors uses `fixtures/<name>/v<N>/{valid,invalid}/` per major.
   Provenance and the reason each invalid fixture fails: `fixtures/README.md`.
+- `plugin-config-schemas/<plugin>.schema.json`: generated, never hand-edited.
+  One standalone JSON Schema 2020-12 document per catalog plugin, made by
+  `ci/plugin_config_schemas.py --openapi <pinned openapi.yaml> --write` from
+  the file `config_schema_document` pins; regenerate whenever that pin moves.
 - `qualification/<name>/v<N>/*.json`: schema-valid (or invalid) payloads with
   the producer's own outcome for rules the schema cannot express; not
   fixtures. Layout and policy: `qualification/README.md`.
@@ -41,8 +48,9 @@ completed).
   tag checks, the vocabulary `x-contract.instance` check, the
   `main_branch_delta` presence check, the
   `diagnostic-ref` values copied from `gateway-errors`, the
-  `PluginConfigBase` parser and catalog parity check, and the
-  cross-contract fixture check. `ci/test_release_signing.py`: offline
+  `PluginConfigBase` parser and catalog parity check, the generated plugin
+  config schema check, and the cross-contract fixture check.
+  `ci/test_plugin_config_schemas.py`: the generator's YAML reader and output. `ci/test_release_signing.py`: offline
   tests of the documented release verification using public signed data;
   no keys are generated or private keys accessed. `.github/workflows/validate.yml`
   runs both.
@@ -97,7 +105,10 @@ completed).
   `schema_valid` says so, and recorded producer outcomes match the producer
   rule CI transcribes), and the
   plugin catalog's pointers, `config_required_when_enabled` and
-  `scope_constraint` against the pinned Edge `openapi.yaml`.
+  `scope_constraint` against the pinned Edge `openapi.yaml`, and
+  `plugin-config-schemas/` (2020-12 meta-schema, catalog pin, and with the
+  pinned file, byte equality with the generator and an independent PyYAML
+  parse equal to the generator's YAML reader).
 - Actions are pinned by full commit SHA with a version comment.
   `permissions: contents: read`; no secrets; `persist-credentials: false`.
 - Python packages are pinned by version and sha256 in `ci/requirements.txt`

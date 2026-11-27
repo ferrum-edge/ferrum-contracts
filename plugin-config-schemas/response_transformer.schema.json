@@ -1,0 +1,349 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/response_transformer.schema.json",
+  "title": "response_transformer plugin config",
+  "description": "The `config` object of an enabled `response_transformer` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component ResponseTransformerConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "response_transformer",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/ResponseTransformerConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/ResponseTransformerConfig",
+  "$defs": {
+    "ResponseTransformerBodyRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "target",
+        "key"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/TransformerOperationFieldExactness"
+        },
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "const": "rename"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/TransformerBodyRenamePath"
+              },
+              "new_key": {
+                "$ref": "#/$defs/TransformerBodyRenamePath"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "add",
+            "remove",
+            "update",
+            "rename"
+          ],
+          "description": "add: insert if absent (does not overwrite).\nupdate: write, creating intermediate objects as needed.\nremove: delete the field.\nrename: move old → new, with rollback if the destination is unreachable.\nOperation-incompatible extras are rejected: only add/update\nmay set `value`; only rename may set `new_key`; remove may\nset neither.\n"
+        },
+        "target": {
+          "type": "string",
+          "const": "body"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "^\\.|(^|[^\\\\])(\\\\\\\\)*\\.(\\.|$)"
+          },
+          "description": "Dot-notation body path. Supports nested objects, array indexing\n('items.0'), and backslash-escaped literal dots. Empty segments\n(an empty path, or a leading, trailing, or doubled unescaped `.`)\nare rejected. `rename` additionally rejects unescaped numeric\nsegments here and in `new_key`.\n"
+        },
+        "value": {
+          "description": "Required for add/update; must not be set for remove/rename.\nAccepts any JSON value — strings, numbers, booleans, objects,\narrays, and explicit null. Strings that parse as JSON\n(e.g., \"42\", \"true\", '{\"a\":1}') are inserted as the parsed\ntype at runtime; otherwise kept as a JSON string.\n"
+        },
+        "new_key": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "^\\.|(^|[^\\\\])(\\\\\\\\)*\\.(\\.|$)"
+          },
+          "description": "Required for rename; must not be set for add/update/remove.\nArray indices and empty dot-segments are rejected in a rename\n`key` / `new_key`.\n"
+        }
+      }
+    },
+    "ResponseTransformerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: response_transformer — Modifies response headers and JSON\nbody. Configuration is fail-closed: unknown top-level keys and\nunknown per-rule keys are rejected at plugin load time. Header\nrules enforce operation-exact fields (only add/update accept\n`value`; only rename accepts `new_key`; remove accepts neither).\nProtocol-managed hop-by-hop and framing destinations are rejected\nfor add/update and as rename destinations (`Connection`,\n`Keep-Alive`, `Proxy-Authenticate`, `Proxy-Connection`, `TE`,\n`Trailer`, `Transfer-Encoding`, `Upgrade`, `Content-Length`,\ncase-insensitive); remove of those names remains allowed. The\ngateway derives Content-Length and strips connection/framing\nfields at the final H1/H2/H3 response boundary after every\nmutable hook. Every configured header `value` must be a valid\nHTTP `HeaderValue` (same complete syntax accepted at emission),\nincluding rejection of non-CR/LF forbidden control bytes. Unknown\noperations / targets and missing required fields are also\nrejected. Every rule must set an explicit `target` (`header` or\n`body`); there is no default. Valid targets are `header` and\n`body` only — unlike request_transformer, there is no `query`\ntarget.\n\nBody-rule output above the effective response ceiling is refused with\nHTTP 502 and the Response body too large JSON error with numeric limit, X-Gateway-Error:\noverload, and error_class: dispatch_policy_rejected. One warning names\nproxy id, plugin, ceiling, and the produced-size lower bound at the first\nrefused serializer write; no payload is logged. Exactly-at-ceiling\noutput passes. Aggregate retained-buffer exhaustion remains HTTP 503.\n\nWhen `apply_route_overrides: true`, the plugin accepts an empty `rules`\narray so it can participate in the chain-level response route-header\nfinal phase for transforms published by `mesh_route_dispatch` onto\n`RequestContext.route_override_response_transform`. Every enabled\ninstance applies only its static rules first; proxy core then applies\nthe matched route list exactly once after the last eligible instance.\nThe same composition contract as `request_transformer` applies on the\nresponse side: the exact translator-owned empty-rule consumer is\nADDITIVE to a same-name global transformer (no shadowing, no warning),\nwhile an ordinary operator-configured proxy-scoped instance replaces the\nglobal.\n\nAt least one of a non-empty `rules` array or `apply_route_overrides:\ntrue` is required: a config with no effect is rejected at plugin load\ntime. Per-operation required and forbidden properties are modelled in\nthe target-specific rule schemas below, by PRESENCE — an explicit `null`\nfails exactly as a string would. Explicit `null` on an optional\ntop-level field is accepted and treated as absent.\n",
+      "anyOf": [
+        {
+          "required": [
+            "rules"
+          ],
+          "properties": {
+            "rules": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "apply_route_overrides"
+          ],
+          "properties": {
+            "apply_route_overrides": {
+              "const": true
+            }
+          }
+        }
+      ],
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ResponseTransformerHeaderRule"
+              },
+              {
+                "$ref": "#/$defs/ResponseTransformerBodyRule"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "target",
+              "mapping": {
+                "header": "#/$defs/ResponseTransformerHeaderRule",
+                "body": "#/$defs/ResponseTransformerBodyRule"
+              }
+            }
+          }
+        },
+        "apply_route_overrides": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "Counterpart to `request_transformer.apply_route_overrides` for\nresponse headers: accept empty `rules` and remain eligible for the\nchain-level route-header finalization phase. Auto-emitted by the\nIstio VirtualService translator on routes carrying\n`headers.response.{set,add,remove}` that have no operator-configured\n`response_transformer`, and by the Gateway API translator on rules\ncarrying `ResponseHeaderModifier`. With no\nstatic `rules`, the instance's fail-closed response-trailer policy\napplies only to requests whose matched `mesh_route_dispatch` rule\npublished a `response_transform`, so other requests on the same\nproxy keep their backend trailers; any static rule makes that policy\napply to every response. Such a rules-free instance cannot carry a\nper-instance `trigger`. Explicit `null` is accepted and treated as\n`false`.\n"
+        },
+        "runtime_overlay_scope": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Optional RTDS boolean key controlling whether the transformer runs. Must contain at least one non-whitespace character; surrounding whitespace is trimmed at runtime. Explicit `null` is accepted and treated as absent."
+        },
+        "default_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "Fallback when `runtime_overlay_scope` is configured but the accepted RTDS overlay has no boolean value for that key. Explicit `null` is accepted and treated as absent (so the `true` default applies)."
+        },
+        "runtime_overlay_resolved_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Reserved, mesh-managed. Counterpart to `RequestTransformerConfig.runtime_overlay_resolved_enabled`. Binding the gate to the generation is what keeps this plugin's buffering preflight and its later header/body hooks in agreement: a gate that moved between those phases could otherwise stream a response that had already been header-marked as transformed (GHSA-83rc-23c9-3g9x)."
+        }
+      }
+    },
+    "ResponseTransformerHeaderRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "target",
+        "key"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/TransformerOperationFieldExactness"
+        },
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "const": "rename"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "key": {
+                "not": {
+                  "pattern": "^[sS][eE][tT]-[cC][oO][oO][kK][iI][eE]$"
+                }
+              },
+              "new_key": {
+                "not": {
+                  "pattern": "^[sS][eE][tT]-[cC][oO][oO][kK][iI][eE]$"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "add",
+            "remove",
+            "update",
+            "rename"
+          ],
+          "description": "add: insert if absent (does not overwrite).\nupdate: write the header value.\nremove: delete the header.\nrename: move old → new header name. Set-Cookie is rejected as\neither source or destination (case-insensitive), regardless of\ncookie count, because its multi-value representation is name-bound.\nOperation-incompatible extras are rejected: only add/update\nmay set `value`; only rename may set `new_key`; remove may\nset neither.\n"
+        },
+        "target": {
+          "type": "string",
+          "const": "header"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "[^-!#$%&'*+.^_`|~0-9A-Za-z]"
+          },
+          "description": "HTTP header name; must be a complete HTTP field-name token (the same\ngrammar `HeaderName` accepts). For add/update, must not be a\nprotocol-managed\nhop-by-hop or framing destination (`connection`, `content-length`,\n`keep-alive`, `proxy-authenticate`, `proxy-connection`, `te`,\n`trailer`, `transfer-encoding`, `upgrade`). Remove may target\nthose names. `rename` additionally rejects `set-cookie` as source.\n"
+        },
+        "value": {
+          "type": "string",
+          "not": {
+            "pattern": "[\\x00-\\x08\\x0a-\\x1f\\x7f]"
+          },
+          "description": "Required for add/update; must not be set for remove/rename.\nMust be a valid HTTP HeaderValue (HTAB, visible ASCII, and\nobs-text are accepted; CR, LF, DEL, and other C0 controls are\nrejected).\n"
+        },
+        "new_key": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "[^-!#$%&'*+.^_`|~0-9A-Za-z]"
+          },
+          "description": "Required for rename; must not be set for add/update/remove.\nMust be a complete HTTP field-name token, must not be `set-cookie`,\nand must not be a protocol-managed hop-by-hop or framing destination\n(`connection`, `content-length`, `keep-alive`,\n`proxy-authenticate`, `proxy-connection`, `te`, `trailer`,\n`transfer-encoding`, `upgrade`).\n"
+        }
+      }
+    },
+    "TransformerBodyRenamePath": {
+      "type": "string",
+      "description": "A dot-notation body path usable as a `rename` source or destination.\nArray indices are rejected at plugin load time: rename over an array is\nambiguous (move? swap? overwrite?) and `Vec::remove`'s leftward shift\nwould silently drop a trailing element. Use `remove` + `add` to relocate\nan array element. An ESCAPED numeric segment (`counts\\.0` — a literal\nkey named `counts.0`) remains valid, so the exclusion applies only to an\nunescaped path whose dot-delimited segments contain a plain integer.\n",
+      "anyOf": [
+        {
+          "pattern": "\\\\"
+        },
+        {
+          "not": {
+            "pattern": "(^|\\.)\\+?[0-9]{1,19}($|\\.)"
+          }
+        }
+      ]
+    },
+    "TransformerOperationFieldExactness": {
+      "description": "The operation-exact field contract both transformers enforce at plugin\nload time, shared by every header / query / body rule schema: `add` and\n`update` require `value` and forbid `new_key`; `rename` requires\n`new_key` and forbids `value`; `remove` forbids both. Forbidden\nproperties are rejected by PRESENCE, so an explicit `null` fails exactly\nas a string would. A body `value` may itself be `null` on `add` /\n`update` — that sets the target field to JSON null.\n",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "enum": [
+                  "add",
+                  "update"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "value"
+            ],
+            "not": {
+              "required": [
+                "new_key"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "const": "rename"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "new_key"
+            ],
+            "not": {
+              "required": [
+                "value"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "const": "remove"
+              }
+            }
+          },
+          "then": {
+            "allOf": [
+              {
+                "not": {
+                  "required": [
+                    "value"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "new_key"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

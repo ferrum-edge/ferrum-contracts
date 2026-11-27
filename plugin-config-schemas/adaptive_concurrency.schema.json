@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/adaptive_concurrency.schema.json",
+  "title": "adaptive_concurrency plugin config",
+  "description": "The `config` object of an enabled `adaptive_concurrency` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component AdaptiveConcurrencyConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "adaptive_concurrency",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/AdaptiveConcurrencyConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/AdaptiveConcurrencyConfig",
+  "$defs": {
+    "AdaptiveConcurrencyConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: adaptive_concurrency — Target-aware backend admission for upstream survival. Runs after load balancing for HTTP, gRPC, native HTTP/3 backend dispatch, HTTP/3 fallback bridge dispatch, and WebSocket upgrade admission with the permit held for the full session lifetime.",
+      "properties": {
+        "key_by": {
+          "type": "string",
+          "enum": [
+            "proxy_target",
+            "upstream_target",
+            "backend_target"
+          ],
+          "default": "proxy_target",
+          "description": "Limit key scope. `proxy_target` keys by proxy plus selected backend. `upstream_target` keys by upstream plus selected backend when the proxy uses an upstream, and falls back to proxy-target scoping for direct backends. `backend_target` shares one limit per backend endpoint across every proxy using this plugin instance."
+        },
+        "max_tracked_keys": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 10000,
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Maximum number of distinct target keys this stable plugin policy will track, bounding limiter memory for high-cardinality wildcard upstreams. State is retained across compatible config reloads. Lowering this value or changing the policy's effective subset-filtered backend targets, route-override destinations, or route execution order publishes an independent tracking space; retired permits finish against detached state, while retired cache and load-balancer views cannot admit, repopulate, or train the replacement. Service-discovery changes outside the policy's selected subset remain compatible. When the cap is reached, new target keys fail open — they are admitted without adaptive limiting (never rejected with a 503) until the policy is removed/recreated, its route key space changes, or the process restarts. Existing keys continue to be admitted subject to their adaptive limit."
+        },
+        "min_limit": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Lower bound for the adaptive in-flight request limit."
+        },
+        "initial_limit": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 32,
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Starting in-flight request limit for a new target key. Must be between `min_limit` and `max_limit`."
+        },
+        "max_limit": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 1024,
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Upper bound for the adaptive in-flight request limit. Must be greater than or equal to `min_limit`."
+        },
+        "min_samples": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Successful backend samples required before latency-based limit changes are applied."
+        },
+        "baseline_window_samples": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 1000,
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Healthy backend samples per latency-baseline window, counted per target key. The learned baseline is the minimum latency of the current and the previous window, so an unusually fast outlier stops tightening the latency target once two windows have closed after it (at most `2 × baseline_window_samples` healthy samples), and saturated healthy traffic can then regain capacity. A sustained latency increase is measured against the older, faster window and keeps shrinking the limit until that window rolls out; explicit backend failures always shrink it. Changing this value is a compatible reload that keeps learned state."
+        },
+        "target_latency_multiplier": {
+          "type": "number",
+          "format": "double",
+          "default": 1.5,
+          "exclusiveMinimum": 1,
+          "description": "Target latency threshold as a multiple of the learned windowed-minimum backend latency (see `baseline_window_samples`)."
+        },
+        "decrease_ratio": {
+          "type": "number",
+          "format": "double",
+          "default": 0.8,
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1,
+          "description": "Multiplicative decrease applied after backend 5xx responses, connection errors, or high latency."
+        },
+        "increase_step": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Additive increase applied when the target is saturated and latency remains within the target."
+        },
+        "shadow_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Learn and expose state without rejecting requests when the current in-flight count is at or above the limit; each such admission is counted as `would_reject` on `ferrum_adaptive_concurrency_decisions_total`. Retired cache/load-balancer views and requests crossing a structural generation handoff still fail closed so they cannot repopulate the replacement tracking space."
+        },
+        "expose_headers": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include `x-adaptive-concurrency-limit` and `x-adaptive-concurrency-inflight` on genuine per-target limit rejections. Generation-handoff rejections omit them because no truthful per-target limit or in-flight value exists."
+        }
+      }
+    }
+  }
+}

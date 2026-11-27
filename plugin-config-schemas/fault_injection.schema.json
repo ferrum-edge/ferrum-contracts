@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/fault_injection.schema.json",
+  "title": "fault_injection plugin config",
+  "description": "The `config` object of an enabled `fault_injection` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component FaultInjectionConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "fault_injection",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/FaultInjectionConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/FaultInjectionConfig",
+  "$defs": {
+    "FaultInjectionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: fault_injection — Probabilistic aborts and latency injection for chaos testing. HTTP-family faults run in before_proxy; TCP/UDP/DTLS session admission faults run on stream connect; UDP/DTLS also apply per-datagram faults on on_udp_datagram (client→backend) in isolated session workers without blocking the shared recv loop. Each fault side is decided once per first contact: a session's first client→backend datagram (the plain-UDP opening packet, or the first DTLS application datagram after an admitted handshake) has its abort decided only by stream connect and its delay only by the datagram hook. Optional `match.headers` targets HTTP-family requests and `expires_at` ends the experiment.",
+      "properties": {
+        "abort": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "status_code": {
+              "type": "integer",
+              "minimum": 200,
+              "maximum": 599,
+              "description": "Final HTTP status returned when the abort fault triggers. JSON numbers with a zero fractional part (for example 503.0) are accepted as integers."
+            },
+            "percentage": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100,
+              "description": "Abort probability as a percentage. Positive values below one 64-bit sampler bucket round up to that first bucket."
+            },
+            "grpc_status": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16,
+              "description": "Optional gRPC status emitted only for native application/grpc requests; plain HTTP, WebSocket, and gRPC-Web rejects omit it. JSON numbers with a zero fractional part (for example 14.0) are accepted as integers."
+            },
+            "body": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": "",
+              "description": "HTTP response body returned with the abort. Null is equivalent to omission and yields an empty body. Non-gRPC responses label a body that parses as JSON `application/json` and every other body, including empty, `text/plain`. Native gRPC still normalizes to trailers-only."
+            }
+          },
+          "required": [
+            "status_code",
+            "percentage"
+          ]
+        },
+        "delay": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "duration_ms": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "maximum": 60000,
+              "description": "Delay duration before continuing or aborting, capped at one minute. JSON numbers with a zero fractional part (for example 80.0) are accepted as integers."
+            },
+            "percentage": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100,
+              "description": "Delay probability as a percentage. Positive values below one 64-bit sampler bucket round up to that first bucket."
+            }
+          },
+          "required": [
+            "duration_ms",
+            "percentage"
+          ]
+        },
+        "runtime_overlay_scope": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]",
+          "description": "Optional RTDS scope containing at least one non-whitespace\ncharacter after Rust `str::trim` Unicode White_Space trimming;\nnull is equivalent to omission. The published pattern uses the same\nWhite_Space set as Rust (including U+0085, excluding U+FEFF), not\nECMAScript `\\S`. The accepted request epoch captures\n`ferrum.fault_injection.<scope>.abort_percent` and `.delay_percent`\natomically with this plugin config. Missing or malformed keys fall\nback independently to the static percentage.\n"
+        },
+        "match": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "Optional blast-radius targeting; null is equivalent to omission. An HTTP-family request is faulted only when every configured header is present on the client-sent request with a field line exactly equal to the configured value; unmatched requests are never faulted and consume no roll. Raw TCP connections and UDP/DTLS datagrams carry no request headers, so an instance with `match` never faults stream or datagram traffic.",
+          "properties": {
+            "headers": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 16,
+              "description": "Header name to exact expected value. Names are valid HTTP header names, matched case-insensitively and unique ignoring case; gateway-asserted names (`x-consumer-*`, the private GeoIP header, path-param headers) are rejected. Values are valid HTTP header values compared byte-for-byte (case-sensitive) against each field line. Values are redacted in non-admin projections.",
+              "propertyNames": {
+                "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "headers"
+          ]
+        },
+        "expires_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "description": "Optional RFC 3339 timestamp (offset required) ending the experiment; null is equivalent to omission. From this wall-clock instant every hook of the instance is a no-op. A timestamp already in the past is accepted and leaves the instance inert, so a stored config that outlives its experiment never blocks a restart or reload."
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "abort"
+          ],
+          "properties": {
+            "abort": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "required": [
+            "delay"
+          ],
+          "properties": {
+            "delay": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

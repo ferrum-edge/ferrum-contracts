@@ -1,0 +1,1308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/mcp_gateway.schema.json",
+  "title": "mcp_gateway plugin config",
+  "description": "The `config` object of an enabled `mcp_gateway` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component McpGatewayConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "mcp_gateway",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/McpGatewayConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/McpGatewayConfig",
+  "$defs": {
+    "McpGatewayConfig": {
+      "type": "object",
+      "description": "Plugin: mcp_gateway — HTTP MCP / Agent Tool Gateway for JSON-RPC MCP traffic. Supports transparent_proxy and aggregate_router modes, MCP session mediation, catalog aggregation, namespaced tool/resource/prompt routing, bounded JSON-RPC batch admission with per-item validation and ordered synthetic response assembly. Aggregate-router mode also supports OPT-IN MCP Streamable HTTP event streams (sessions.sse_multiplexing, default false). When enabled, GET with Accept text/event-stream attaches one generation-scoped server-message listener per live downstream session, and a POST carrying a JSON-RPC request whose result had to be fetched upstream is answered with its OWN text/event-stream response on that POST; a result the gateway already holds stays an application/json reply, 202 stays reserved for notification-only POSTs, and a freshly attached GET listener never carries a response to a request that arrived on a POST. Every aggregate JSON-RPC request with a representable id opens a bounded, type-sensitive request/stream identity preserving the exact numeric wire token before catalog refresh or upstream dispatch, so a concurrent notifications/cancelled marks a genuinely open request and its late result is suppressed (its POST stream closes carrying no message). A GET listener is not a precondition, and the client's Accept decides the representation. Delivered events enter the single retained-event ring already delivered, so they only occupy the Last-Event-ID replay window: an explicit resumption cursor replays them, a fresh listener never does, and a ring too small to keep one costs resumability rather than delivery. Notifications, batch members, and initialize never open a stream. Completing, cancelling, or refusing a stream returns its capacity exactly once through a request-owned lease, a late or duplicate response for a terminal identity is refused rather than misattributed; mismatched or ambiguous correlated responses are replaced by a bounded gateway -32603 error that carries the request's own JSON-RPC id token so the pending call still resolves, and are never framed as that request's event stream or returned as successful inline answers (the id comparison is byte-exact; mcp.sse.delivery records refused). Teardown is unconditional on client disconnect, session DELETE, idle eviction, and plugin reload/update/delete; a listener past its configured lifetime is superseded by a fresh GET so a stalled transport can never hold the slot. Duplicate listeners, invalid/unknown/stale identities, and invalid, oversized, unknown, or too-old Last-Event-ID cursors fail closed with fixed, value-redacted diagnostics. Aggregate upstream-routed members such as tools/call must be singleton requests so later plugin phases are preserved; batch request members return JSON-RPC -32009, while notification-only batches report the restriction once at batch level. MCP initialize must also be a singleton HTTP request: initialize batch members return JSON-RPC -32010 before any session mint or eviction, so no batch mints or evicts a session or returns a session header. A notification-only batch whose gateway dispatch otherwise fails reports JSON-RPC -32011. A batch member whose session is no longer live contributes a per-item JSON-RPC -32004 element because the singleton bare HTTP 404 cannot be expressed per item. Aggregate batches always answer HTTP 200 with a response array, so an unsupported MCP-Protocol-Version surfaces per item rather than as the singleton HTTP 400; transparent_proxy batches cannot be partially forwarded and are rejected whole with HTTP 400. The plugin also supports tool argument JSON Schema validation and mcp.* metadata emission. A servers entry may instead carry `openapi` (aggregate_router only): tools generated from OpenAPI operations that run as HTTP requests to this proxy's own configured backend through ordinary backend dispatch, answered with tools/call results (see McpGatewayOpenApiBridge); POST /api-specs generates such a gateway from the `x-ferrum-mcp` document extension. Aggregate tools/call rewrites stage a private gateway-authenticated public-to-upstream tool-name mapping so ai_tool_governor can keep policy keys on public namespaced identities. Aggregate admission is re-checked over the final backend-visible request body: a routed tools/call, prompts/get, resources/read, or passthrough message whose JSON-RPC message kind, method (or, for a client-sent response, answered id), selected upstream destination, mediated upstream session header, tool/prompt name, resource URI, or admitted arguments were changed by a later plugin (including a later mesh_route_dispatch destination rewrite) (for example a request_transformer body rule) is refused before egress with JSON-RPC -32014; the gateway's own public-to-upstream name rewrite is the only permitted difference, and the check holds on HTTP/1.1, HTTP/2, and HTTP/3. The mediated upstream session header is also re-asserted over the final backend headers (every spelling removed, the recorded value re-inserted), including after a serverless_function pre_proxy header overlay, and a JSON-RPC envelope carrying both method and result or error is refused with -32600. A downstream aggregate session is bound to the principal that created it: a mapped Consumer by namespace and record id, or an unmapped external identity by its subject together with the verified authentication realm (mechanism and issuer / key source / directory), so equal subject strings from different accepted issuers, tenants of an issuer-less jwks_auth provider, identity claims, or auth plugins are different owners, and changing the verifying authority configuration ends existing external-identity sessions; a mismatch is refused with the ordinary 404 session-not-found response. Generic auth, rate limiting, WAF, retry, timeout, tracing, DLP, and semantic safety remain separate Ferrum plugins. Cannot be composed with request_deduplication on the same proxy; admission rejects the pair with 400 because a deduplicated replay is served before this plugin runs and cannot be proven to match the live catalog mapping. Two enabled mcp_gateway instances on one proxy may not have nesting endpoint.path scopes, and endpoint.path may not be \"/\", because the endpoint reserves its whole path subtree. A client JSON-RPC id token reflected into a gateway-authored singleton response is bounded at 4096 wire bytes; a larger id is refused with a fixed -32600 that does not echo it. The admitted singleton id is retained privately so a gateway-authored terminal decided in a response phase (result validation, an uninspectable or oversized upstream representation, an upstream transport failure) names the request it answers instead of returning id null. Every response phase is instance-scoped: an instance acts on a response only for a request it admitted itself, so instances with disjoint endpoint scopes on one proxy never apply each other's response policies. Unknown keys are rejected at the root and in every fixed-shape object here; the operator-defined servers.* and policy.tools.* key sets stay open. Rules this schema deliberately leaves to plugin load, because portable JSON Schema cannot compare sibling values or resolve external state: endpoint.path canonicalization beyond the shape checked here, the 512 distinct policy.tools grant groups cap, allowed_groups/denied_groups overlap, the 255-byte grant group bound, a group-conditioned policy.tools key naming a configured server namespace, HTTP header-name destinations that are protocol-managed, servers.*.headers reserved names / case-insensitive duplicates / session-header names / `${FERRUM_PLUGIN_SECRET_<NAME>}` resolution, policy.resources template deny keys decoding to valid URI templates, upstream_url host egress screening, namespace uniqueness, at-least-one-enabled-server (exactly one in transparent_proxy, at least one exposing a family in aggregate_router), max_batch_item_bytes <= max_batch_bytes, and the sse_* budget relationships.",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "transparent_proxy"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "policy": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "default_action"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "default_prompt_action"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "default_resource_action"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "tools"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "prompts"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "resources"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "hide_denied_tools"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "discovery": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "aggregate_tools"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "aggregate_resources"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "aggregate_prompts"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "namespace_separator"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "cache_ttl_seconds"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "on_new_tool"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "on_schema_change"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "properties": {
+                  "validate_tool_results": {
+                    "not": {
+                      "const": true
+                    }
+                  }
+                }
+              },
+              "servers": {
+                "additionalProperties": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "openapi"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "forward_client_credentials"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "aggregate_router"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "capabilities"
+                ],
+                "properties": {
+                  "capabilities": {
+                    "required": [
+                      "passthrough_unknown_methods"
+                    ],
+                    "properties": {
+                      "passthrough_unknown_methods": {
+                        "const": true
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "capabilities": {
+                    "properties": {
+                      "advertise_logging": {
+                        "not": {
+                          "const": true
+                        }
+                      },
+                      "advertise_completions": {
+                        "not": {
+                          "const": true
+                        }
+                      },
+                      "advertise_tasks": {
+                        "not": {
+                          "const": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "required": [
+        "mode",
+        "endpoint",
+        "servers"
+      ],
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "An explicit null selects the default, exactly as omission does."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "transparent_proxy",
+            "aggregate_router"
+          ]
+        },
+        "endpoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 2,
+              "pattern": "^/",
+              "not": {
+                "pattern": "%|\\\\|(^|/)\\.\\.?($|/)"
+              },
+              "description": "Canonical public MCP endpoint path, such as /mcp. Must not be \"/\" — the endpoint reserves its whole path subtree, so a root endpoint would refuse every other handler on the proxy and is rejected at admission. Only the exact configured spelling is served; /mcp and /mcp/ are distinct so authorization and MCP routing evaluate the same request target. Extra segments, repeated trailing slashes, case variants, encoded separators, and dot segments are different, rejected paths. Variants reaching the plugin return 404 with JSON-RPC -32600 / Unknown MCP endpoint; the HTTP frontend rejects encoded separators and dot segments earlier with 400. Two enabled mcp_gateway instances on one proxy may not have overlapping endpoint scopes, including case variants; admission rejects the pair. Queries do not change selection. Methods other than GET, POST, and DELETE return 405 when they reach this plugin."
+            },
+            "protocol_versions": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "default": [
+                "2025-11-25"
+              ],
+              "description": "Supported MCP protocol versions, in preference order. The first entry is the gateway's preferred version, returned by aggregate-mode initialize when the client requests an unsupported version. Includes 2025-03-26 when JSON-RPC batches are desired; batches are admitted under validation.max_batch_* limits."
+            }
+          }
+        },
+        "discovery": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "Catalog discovery requires aggregate_router. Explicit aggregate_tools, aggregate_resources, aggregate_prompts, namespace_separator, cache_ttl_seconds, on_new_tool, and on_schema_change fields are rejected in transparent_proxy, including explicit defaults, because every one of them is inert without a mediated catalog. An explicit null block, and an explicit null on any field below, selects the defaults exactly as omission does.",
+          "properties": {
+            "aggregate_tools": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true
+            },
+            "aggregate_resources": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true
+            },
+            "aggregate_prompts": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true
+            },
+            "namespace_separator": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "default": "."
+            },
+            "cache_ttl_seconds": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 1,
+              "default": 300,
+              "description": "Also bounds recovery from a wholly unavailable catalog family — that outage is cached for this long before the family is retried."
+            },
+            "on_new_tool": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "allow",
+                "hide_until_configured",
+                null
+              ],
+              "default": "hide_until_configured"
+            },
+            "on_schema_change": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "allow",
+                "hide_until_configured",
+                null
+              ],
+              "default": "hide_until_configured"
+            }
+          }
+        },
+        "sessions": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "An explicit null block, and an explicit null on any field below, selects the defaults exactly as omission does. The sse_* relationships (event bytes inside the retained-byte budget, replay inside retention, keepalive inside the listener lifetime) compare sibling values and are enforced at plugin load.",
+          "properties": {
+            "downstream_session_header": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "pattern": "^[!#$%&*+\\-.^_`|~0-9A-Za-z]+$",
+              "default": "mcp-session-id",
+              "not": {
+                "type": "string",
+                "pattern": "^[Xx][-_][Cc][Oo][Nn][Ss][Uu][Mm][Ee][Rr][-_]"
+              },
+              "description": "Must be a valid HTTP header name; rejected at config validation otherwise. This name is stamped onto the client response, so protocol-managed hop-by-hop and framing destinations (`connection`, `content-length`, `keep-alive`, `proxy-authenticate`, `proxy-connection`, `te`, `trailer`, `transfer-encoding`, `upgrade`, case-insensitive) are also rejected. Names in the gateway-owned `x-consumer-*` request namespace (case-insensitive, `_` equivalent to `-`) are rejected because the gateway strips them from client requests."
+            },
+            "upstream_session_header": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "pattern": "^[!#$%&*+\\-.^_`|~0-9A-Za-z]+$",
+              "default": "mcp-session-id",
+              "not": {
+                "type": "string",
+                "pattern": "^[Xx][-_][Cc][Oo][Nn][Ss][Uu][Mm][Ee][Rr][-_]"
+              },
+              "description": "Must be a valid HTTP header name; rejected at config validation otherwise. Names in the gateway-owned `x-consumer-*` request namespace (case-insensitive, `_` equivalent to `-`) are rejected because the gateway scrubs them before dispatch. Both configured session header names are registered as credential headers for the route (redacted from diagnostics and policy calls, withheld from request_mirror, bound into replay partitions)."
+            },
+            "initialize_upstreams": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "lazy",
+                "passthrough",
+                null
+              ],
+              "default": "lazy"
+            },
+            "session_ttl_seconds": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 3600,
+              "minimum": 1,
+              "description": "Idle downstream MCP session lifetime before eviction."
+            },
+            "max_sessions": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 16384,
+              "minimum": 1,
+              "description": "Maximum downstream MCP sessions retained by this plugin instance. When full, only an expired session or one owned by the principal opening a replacement may be removed; otherwise initialization is refused."
+            },
+            "max_sessions_per_principal": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 128,
+              "minimum": 1,
+              "description": "Maximum live downstream MCP sessions owned by one authenticated principal (or by unauthenticated requests as one shared principal). At this cap, the principal's own oldest session is evicted."
+            },
+            "sse_multiplexing": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false,
+              "description": "Aggregate-router only. Enables the MCP Streamable HTTP event-stream surfaces: GET with Accept text/event-stream attaches one server-message listener for the downstream session, AND a POST carrying a JSON-RPC request whose result the gateway does not already hold is answered with its OWN text/event-stream response on that same POST. Response placement follows the advertised transport: a POST carrying a request is always answered on that POST (application/json when the result is ready, its own event stream when it had to be fetched), 202 stays reserved for a POST carrying only notifications and responses, and a freshly attached GET listener never carries a response to a request that arrived on a POST — only an explicit Last-Event-ID resumption replays one. The client's Accept decides the representation; a client offering only application/json is answered with JSON. OFF by default because the listener surface is optional: with it false, aggregate GET keeps a 405 rejection and every request is answered with application/json on its own POST, which is equally conforming. Transparent mode ignores this flag and continues to forward GET upstream."
+            },
+            "sse_max_streams_per_session": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 64,
+              "minimum": 1,
+              "maximum": 4096,
+              "description": "Max concurrent OPEN request-stream identities per downstream SSE session. Completing or cancelling a stream returns its capacity; the same bound also caps the retained terminal records that refuse a late or duplicate response."
+            },
+            "sse_max_retained_events": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 128,
+              "minimum": 1,
+              "maximum": 16384,
+              "description": "Capacity of the single retained-event ring, which serves both pre-listener staging and Last-Event-ID replay. An event still owed to a consumer is never evicted. A POST-attached response enters the ring already delivered, so a ring too small to keep it costs resumability rather than delivery and the eviction watermark advances so a stale cursor fails closed."
+            },
+            "sse_max_retained_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 1048576,
+              "minimum": 1,
+              "maximum": 16777216,
+              "description": "The one aggregate retained-byte budget for that ring (framed event bytes). Must leave room for SSE framing above sse_max_event_bytes."
+            },
+            "sse_max_event_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 262144,
+              "minimum": 1,
+              "maximum": 2097152,
+              "description": "Max serialized JSON-RPC payload bytes admitted for one SSE event; a larger response is answered as application/json on the POST instead."
+            },
+            "sse_max_replay_events": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 64,
+              "minimum": 0,
+              "maximum": 4096,
+              "description": "How many already-consumed events stay in the ring for Last-Event-ID resume; must not exceed sse_max_retained_events. 0 evicts a consumed event immediately, so POST-attached streams are delivered but never resumable: only the current delivery watermark can resume and any older cursor fails closed with HTTP 410."
+            },
+            "sse_max_stream_id_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 128,
+              "minimum": 1,
+              "maximum": 512,
+              "description": "Max UTF-8 bytes admitted for a JSON-RPC request id used as a stream identity."
+            },
+            "sse_max_last_event_id_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 64,
+              "minimum": 1,
+              "maximum": 1024,
+              "description": "Max accepted Last-Event-ID header bytes; values are never logged."
+            },
+            "sse_listener_max_lifetime_seconds": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 300,
+              "minimum": 5,
+              "maximum": 86400,
+              "description": "Bounded lifetime of one attached SSE listener; the client resumes with Last-Event-ID. The stream ends cleanly at this age whenever the transport is still polling its body, and native HTTP/3 enforces it as a hard bound around its send loop. On HTTP/1.1 and HTTP/2 a peer that stops reading can park the write and with it that timer, so the unconditional guarantee is supersession instead: past this age the session stops routing new responses to that listener and a fresh GET takes the single-listener slot rather than receiving 409."
+            },
+            "sse_keepalive_seconds": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "default": 15,
+              "minimum": 1,
+              "maximum": 3600,
+              "description": "Idle keepalive comment interval; must not exceed sse_listener_max_lifetime_seconds. Also how a vanished peer is discovered on a quiet session."
+            }
+          }
+        },
+        "capabilities": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "An explicit null block, and an explicit null on any field below, selects the defaults exactly as omission does.",
+          "properties": {
+            "advertise_tools": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true,
+              "description": "Advertises the tools capability in the synthetic aggregate initialize result, with listChanged false because the gateway does not emit notifications/tools/list_changed."
+            },
+            "advertise_resources": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true,
+              "description": "Advertises the resources capability in the synthetic aggregate initialize result, with listChanged false because the gateway does not emit notifications/resources/list_changed."
+            },
+            "advertise_prompts": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true,
+              "description": "Advertises the prompts capability in the synthetic aggregate initialize result, with listChanged false because the gateway does not emit notifications/prompts/list_changed."
+            },
+            "advertise_logging": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false,
+              "description": "In aggregate_router mode, requires passthrough_unknown_methods=true until logging methods are routed or implemented."
+            },
+            "advertise_completions": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false,
+              "description": "In aggregate_router mode, requires passthrough_unknown_methods=true until explicit completion routing is implemented."
+            },
+            "advertise_tasks": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false,
+              "description": "In aggregate_router mode, requires passthrough_unknown_methods=true until task methods are routed or implemented."
+            },
+            "passthrough_unknown_methods": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false
+            }
+          }
+        },
+        "servers": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9._-]+$",
+            "description": "Server ids are embedded in public mcp:// resource URIs, so they must be URI-safe (ASCII alphanumerics, '.', '_', '-')."
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "namespace"
+            ],
+            "description": "A server is EITHER an HTTP MCP server (upstream_url) OR an OpenAPI bridge (openapi) whose tools are generated from OpenAPI operations and executed as HTTP requests to this proxy's own backend; exactly one of the two is required. Claude-Desktop-style stdio spawn fields (command, args, stdio) are rejected here: mcp_gateway is HTTP-only and never spawns a process. \"At least one enabled server\", \"exactly one enabled server in transparent_proxy\", \"at least one enabled server exposing a family in aggregate_router\", namespace uniqueness, \"passthrough_unknown_methods requires an upstream_url server\", and \"no OpenAPI header parameter may be named after a session header\" compare sibling entries and are enforced at plugin load.",
+            "oneOf": [
+              {
+                "required": [
+                  "upstream_url"
+                ],
+                "not": {
+                  "required": [
+                    "openapi"
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "openapi"
+                ],
+                "not": {
+                  "required": [
+                    "upstream_url"
+                  ]
+                },
+                "properties": {
+                  "expose_resources": {
+                    "not": {
+                      "const": true
+                    }
+                  },
+                  "expose_prompts": {
+                    "not": {
+                      "const": true
+                    }
+                  },
+                  "initialize_strategy": {
+                    "type": "null"
+                  },
+                  "headers": {
+                    "type": "null"
+                  },
+                  "forward_client_credentials": {
+                    "type": "null"
+                  }
+                }
+              }
+            ],
+            "properties": {
+              "upstream_url": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https?://",
+                "not": {
+                  "anyOf": [
+                    {
+                      "pattern": "^https?://[^/]*@"
+                    },
+                    {
+                      "pattern": "[?#]"
+                    }
+                  ]
+                },
+                "description": "HTTP or HTTPS upstream MCP endpoint URL. Credentials, query, and fragment are rejected. Literal-IP hosts are additionally screened against the backend egress policy at plugin load."
+              },
+              "namespace": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Public namespace prefix used for tool and prompt names. Must be non-blank and unique across servers."
+              },
+              "enabled": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "default": true
+              },
+              "expose_tools": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "default": true
+              },
+              "expose_resources": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "default": false
+              },
+              "expose_prompts": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "default": false
+              },
+              "initialize_strategy": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "lazy",
+                  "passthrough",
+                  null
+                ],
+                "description": "Overrides sessions.initialize_upstreams for this server."
+              },
+              "headers": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "maxProperties": 32,
+                "propertyNames": {
+                  "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1,
+                  "not": {
+                    "pattern": "[\\u0000-\\u0008\\u000A-\\u001F\\u007F]"
+                  }
+                },
+                "description": "Upstream request headers (name to value, at most 32) sent on every gateway-originated request to this MCP server — initialize, notifications/initialized, every */list page, and the session DELETE — and installed on every routed call to it, replacing any client-supplied spelling (re-asserted over the final backend headers after later header rules). Use it for a service credential such as Authorization or an API-key header. A value that is exactly `${FERRUM_PLUGIN_SECRET_<NAME>}` is resolved from the process environment at plugin load (any other `${...}` reference is rejected before anything is read, and an unset or empty variable is a load error); the final value must be a valid HTTP header value. Names are case-insensitive and join the route's credential-header registry (redacted, withheld from secondary egress). Rejected at plugin load: duplicate names differing only in case, hop-by-hop and framing names, Host, Content-Type, Accept, MCP-Protocol-Version, Last-Event-ID, Forwarded / X-Forwarded-*, X-Ferrum-Hops, gateway x-consumer-* assertion names, and the configured session header names. Not accepted on an openapi server."
+              },
+              "forward_client_credentials": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "default": false,
+                "description": "aggregate_router only (rejected in transparent_proxy, which forwards the client request unchanged; not accepted on an openapi server). By default an aggregate-routed tools/call, prompts/get, resources/read, or passthrough request to this server does NOT carry the client's Authorization, Proxy-Authorization, or Cookie header, any header in the route's credential-header registry, or any query string (the backend query is committed empty, and the header boundary is re-asserted over the final backend headers after later header rules), because the client chose this upstream by naming an item (MCP token passthrough). Set true only for an upstream in the same trust domain that must receive end-user tokens; it restores the client credential headers and the ordinary query. Configured headers apply either way."
+              },
+              "openapi": {
+                "$ref": "#/$defs/McpGatewayOpenApiBridge"
+              }
+            }
+          }
+        },
+        "policy": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "Catalog policy requires aggregate_router. Explicit default_action, default_prompt_action, default_resource_action, tools, prompts, resources, and hide_denied_tools fields are rejected in transparent_proxy, including explicit defaults. An explicit null block, and an explicit null on any field below, selects the defaults exactly as omission does.",
+          "properties": {
+            "default_action": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "allow",
+                "deny",
+                null
+              ],
+              "default": "deny"
+            },
+            "default_prompt_action": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "allow",
+                "deny",
+                null
+              ],
+              "description": "Action for a prompt with no policy.prompts entry. Defaults to policy.default_action."
+            },
+            "default_resource_action": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "allow",
+                "deny",
+                null
+              ],
+              "description": "Action for a resource or resource template with no policy.resources entry. Defaults to policy.default_action."
+            },
+            "prompts": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Public namespaced prompt name to policy. A prompt whose action is not allow is omitted from prompts/list and prompts/get answers JSON-RPC -32001 before any upstream initialize or dispatch. The key set is operator-defined; each entry is a closed object.",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "allow",
+                      "deny"
+                    ]
+                  }
+                }
+              }
+            },
+            "resources": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Public resource URI (mcp://{server_id}/...) or public resource-template URI (as resources/templates/list publishes it) to policy. A resource or template whose action is not allow is omitted from resources/list or resources/templates/list. resources/read is decided once the URI resolves to an upstream binding, before any upstream initialize or dispatch, and answers JSON-RPC -32001 when refused; an entry for the exact requested public URI wins, otherwise every catalog binding of the same upstream URI decides and any deny wins (each exact resource with that upstream URI and each matching template), so a denied resource cannot be read through an allowed template under another public spelling and a denied template covers the exact resources it matches (they are not listed either). Configured denies are decided from configuration against the resolved upstream URI (a deny key in mcp://{server_id}/... form is decoded at plugin load, and a template deny key must be a valid public resource-template URI or the configuration is rejected), so a deny holds even when that server's resources or templates have never listed; with a deny default, a template-routed read whose server's resources/list has never succeeded fails closed with -32006. The key set is operator-defined; each entry is a closed object.",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "allow",
+                      "deny"
+                    ]
+                  }
+                }
+              }
+            },
+            "hide_denied_tools": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true
+            },
+            "tools": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Public namespaced tool name to policy. The key set is operator-defined, so this map stays open; each entry is a closed object. An allow entry may carry a per-consumer grant through allowed_groups and denied_groups, matched against the request Consumer's acl_groups as read from the live configuration on every request. A tool is granted iff its action is allow, the request carries a gateway-mapped Consumer, that Consumer holds none of denied_groups (which takes precedence), and allowed_groups is absent or the Consumer holds at least one of its groups. A request with no mapped Consumer (an anonymous proxy, or an external identity with no Consumer mapping) is never granted a group-conditioned tool. An ungranted tool is omitted from tools/list whatever hide_denied_tools says, and tools/call answers it with JSON-RPC -32001; once any entry carries a group condition, a tools/call naming an unknown tool answers the same -32001 instead of -32003 so hidden tool names cannot be probed. The grant is re-decided in the final request-body hook after the admission re-check. Grants cover tools/list and tools/call only; prompts and resources are gated by policy.prompts / policy.resources actions (not per-consumer), and passthrough methods (including tasks/*) are not grant-checked. A group-conditioned key must be a configured server's namespace (enabled or not, exposing tools or not) followed by discovery.namespace_separator and a tool name. At most 512 distinct group names may be referenced across the whole map, and one entry may not name the same group in both lists. Those rules compare values across the configuration and are enforced at plugin load; pair grants with default_action deny and discovery.on_new_tool hide_until_configured.",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "allow",
+                      "deny",
+                      "hide_from_discovery"
+                    ]
+                  },
+                  "allowed_groups": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "minItems": 1,
+                    "maxItems": 512,
+                    "description": "Requires action allow. The Consumer must hold at least one of these acl_groups. Omitting it (or null) drops only the allowed-group requirement; a mapped Consumer is still required whenever denied_groups is present. An empty list is rejected. Entries are matched byte-for-byte, must not contain control characters other than tab, LF, and CR, and are at most 255 bytes (the schema bounds code points; the byte bound is enforced at plugin load, as for Consumer acl_groups).",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255,
+                      "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]",
+                      "not": {
+                        "pattern": "[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]"
+                      }
+                    }
+                  },
+                  "denied_groups": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "minItems": 1,
+                    "maxItems": 512,
+                    "description": "Requires action allow. A Consumer holding any of these acl_groups is not granted the tool, even when it also holds an allowed group; with no allowed_groups it grants every mapped Consumer except these, and never a request without a mapped Consumer. An empty list is rejected. Entries follow the allowed_groups entry rules.",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255,
+                      "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]",
+                      "not": {
+                        "pattern": "[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]"
+                      }
+                    }
+                  }
+                },
+                "if": {
+                  "properties": {
+                    "action": {
+                      "not": {
+                        "const": "allow"
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "allowed_groups": {
+                      "type": "null"
+                    },
+                    "denied_groups": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "validation": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "An explicit null block, and an explicit null on any field below, selects the defaults exactly as omission does. max_batch_item_bytes must not exceed max_batch_bytes; that comparison is between sibling values and is enforced at plugin load.",
+          "properties": {
+            "validate_tool_arguments": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true,
+              "description": "Validates tools/call arguments against the discovered inputSchema. It does NOT gate observability.log_argument_hash or observability.log_raw_arguments, which are evaluated independently."
+            },
+            "validate_tool_results": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false,
+              "description": "Aggregate-router only. When true, compile each discovered tool outputSchema at catalog construction, pin the exact validator selected for each dispatched call, and validate bounded tools/call results against it before releasing the caller-visible response or publishing audit metadata. structuredContent is preferred; a single JSON text content block is accepted when structuredContent is absent; mixed disagreeing variants and exact response bytes with duplicate object members fail closed. Well-formed tool execution errors (result.isError true with array content) and upstream JSON-RPC errors are preserved; non-boolean or bare isError values, event-stream, and non-JSON tool results fail closed. Invalid or unrepresentable outputSchema values are refused at catalog admission with field-specific diagnostics. Default false.\n"
+            },
+            "max_upstream_response_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64",
+              "minimum": 1,
+              "default": 4194304,
+              "description": "Maximum bytes read from a single non-SSE upstream application/json response before the read is aborted (DoS backstop). Must be greater than 0."
+            },
+            "max_catalog_items_per_list": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64",
+              "minimum": 1,
+              "default": 10000,
+              "description": "Maximum items accumulated across paginated catalog list pages (tools/resources/prompts) before the aggregation is rejected. Must be greater than 0."
+            },
+            "max_catalog_bytes_per_list": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64",
+              "minimum": 1,
+              "default": 8388608,
+              "description": "Maximum total serialized bytes accumulated across paginated catalog list pages before the aggregation is rejected. Must be greater than 0."
+            },
+            "max_batch_items": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64",
+              "minimum": 1,
+              "default": 32,
+              "description": "Maximum JSON-RPC batch array members admitted before session, catalog, or upstream work. Empty batches are rejected separately as Invalid Request. Must be greater than 0."
+            },
+            "max_batch_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64",
+              "minimum": 1,
+              "default": 1048576,
+              "description": "Maximum aggregate request-body bytes admitted for a JSON-RPC batch. Enforced on the raw request body before any JSON parsing, using the first non-whitespace byte to detect array-shaped input. Must be greater than 0 and at least max_batch_item_bytes."
+            },
+            "max_batch_item_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64",
+              "minimum": 1,
+              "default": 262144,
+              "description": "Maximum raw wire bytes admitted for one JSON-RPC batch member. Measured on the member's exact raw JSON slice as received (internal whitespace and escape sequences included, array separators and surrounding inter-member whitespace excluded), before the member is deserialized, so a member cannot shrink under the cap by normalizing. Oversized members yield a bounded per-item Invalid Request with id null (their id is never materialized or reflected) while siblings continue. Must be greater than 0 and must not exceed max_batch_bytes."
+            },
+            "max_batch_response_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "int64",
+              "minimum": 1,
+              "default": 1048576,
+              "description": "Maximum serialized bytes admitted for an assembled JSON-RPC batch response array (including array framing). Oversized aggregates fail closed without returning a partial body. Must be greater than 0."
+            }
+          }
+        },
+        "observability": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "There are no result-side observation settings. `log_raw_results` and `log_result_hash` had no producer anywhere in the plugin, so they are rejected as unknown keys rather than accepted and ignored.",
+          "properties": {
+            "emit_metadata": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true
+            },
+            "log_raw_arguments": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false,
+              "description": "Copies raw MCP tool arguments into request metadata (mcp.arguments), capped at 4096 bytes on a UTF-8 boundary; a longer value is cut and mcp.arguments_truncated is set to \"true\". Arguments can contain secrets or PII; prefer log_argument_hash unless the logging path is explicitly protected. Evaluated independently of validation.validate_tool_arguments."
+            },
+            "log_argument_hash": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true,
+              "description": "Emits mcp.arguments_hash. Evaluated independently of validation.validate_tool_arguments."
+            }
+          }
+        }
+      }
+    },
+    "McpGatewayOpenApiBridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operations"
+      ],
+      "description": "mcp_gateway OpenAPI bridge server (aggregate_router only). Each operation is published as one MCP tool named `namespace` + discovery.namespace_separator + `name`, entering the same per-session catalog, policy (allow / deny / hide_from_discovery), discovery gates, per-consumer grants, validation.validate_tool_arguments, and mcp.* metadata as a tool listed by an upstream MCP server. A tools/call runs as an HTTP request to THIS proxy's own configured backend through ordinary backend dispatch (upstreams, retries, circuit breaker, TLS, observability): only the backend method, path, query, headers, and body change, never the destination host, scheme, or port, and no URL from an OpenAPI document is ever dialed. The proxy's allowed_methods applies to the bridged method too: a tool whose method the route does not allow is omitted from tools/list, and a call to it is refused with JSON-RPC -32003 (Unknown MCP tool) when no grants are configured, or -32001 when grants are configured. The method check follows tool policy and the per-consumer grant and precedes argument validation. Method- or path-conditioned plugin triggers, WAF path and method rules, and authorization keyed on the request path see the client's POST to the MCP endpoint, never the bridged method and path; restrict a bridged operation through mcp_gateway policy (deny, hide_from_discovery, per-consumer grants). Client request headers are an allowlist: only user-agent, accept-language, traceparent, tracestate, the gateway's correlation header, and forward_request_headers reach the backend. The response becomes a tools/call result: a 2xx is isError false with the body as text content plus structuredContent when it is a JSON object within max_structured_content_bytes, and a 2xx body the bridge cannot return (past a bound, coded, streamed, partial, ambiguous JSON) is omitted with a note, still isError false. Anything else is isError true with the status line and at most max_error_excerpt_bytes of the body; a gateway or dispatch failure carries its gateway-error class, derived from the dispatch outcome, in the status line. The JSON-RPC answer always rides HTTP 200 (status-code metrics and the wire X-Gateway-Error header reflect that 200); the backend status and failure class are always recorded as mcp.bridge.upstream_status and mcp.bridge.gateway_error. Generated by `x-ferrum-mcp` on POST /api-specs, or written by hand.",
+      "properties": {
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/McpGatewayOpenApiOperation"
+          }
+        },
+        "max_request_body_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64",
+          "minimum": 1,
+          "maximum": 16777216,
+          "default": 1048576,
+          "description": "Largest JSON request body a tools/call may send; a larger `body` argument is refused with JSON-RPC -32602."
+        },
+        "max_response_body_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64",
+          "minimum": 1,
+          "maximum": 16777216,
+          "default": 1048576,
+          "description": "Largest 2xx backend body returned as a tool result. A larger declared or received body is omitted (the result stays isError false and says why) and is never copied into the response."
+        },
+        "max_error_excerpt_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64",
+          "minimum": 1,
+          "maximum": 65536,
+          "default": 2048,
+          "description": "Bytes of a non-2xx backend body quoted in the isError result (cut at a UTF-8 boundary, with a truncation note)."
+        },
+        "max_structured_content_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64",
+          "minimum": 1,
+          "maximum": 16777216,
+          "default": 262144,
+          "description": "Largest JSON object returned as structuredContent. A larger JSON body is checked before parsing and returned as text content only, with a note (isError false), never truncated."
+        },
+        "forward_request_headers": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Client request headers forwarded to the backend on top of the fixed user-agent, accept-language, traceparent, and tracestate set (plus the gateway's own correlation header). Every other client header is dropped. A reserved name (hop-by-hop, Host, Authorization, Cookie, Range, If-Range, method or URL override families, trace baggage, client-address attribution, MCP transport, the MCP session headers, FERRUM_REAL_IP_HEADER, or a Ferrum-internal field) is refused. Add backend credentials with request_transformer, which runs after mcp_gateway."
+        }
+      }
+    },
+    "McpGatewayOpenApiOperation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "method",
+        "path"
+      ],
+      "description": "One bridged operation. The generated tool's inputSchema is a closed object: one property per parameter (keyed by its name) plus `body` for a JSON request body. Serialized tool definitions are bounded at 256 KiB and their schemas by the same depth, node, and local-reference budgets as a discovered outputSchema.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,128}$",
+          "description": "Upstream tool name (unique within the server); the public name is namespaced."
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ],
+          "description": "Backend HTTP method. HEAD, OPTIONS, TRACE, and CONNECT are not bridged."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^/",
+          "not": {
+            "pattern": "[?#%\\\\]|(^|/)\\.\\.?($|/)"
+          },
+          "description": "The operation's PUBLIC request path on this proxy (listen path included), with `{name}` path parameters each occupying a whole segment. It is mapped onto the backend exactly as a direct request to that path would be (strip_listen_path, backend_path). It must sit under the matched proxy's listen path on a segment boundary whether or not strip_listen_path is set; a call whose path does not is refused with JSON-RPC -32603 and nothing is dispatched. On an exact (`=`) or regex (`~`) route every bridged call is refused the same way. It must not be able to fall inside endpoint.path's reserved subtree (ASCII case-insensitive, like the runtime claim; a `{name}` segment matches any endpoint segment, and repeats of one name must match the same text); load rejects it, and a substituted path inside the scope is refused with JSON-RPC -32602 before dispatch. Path arguments are percent-encoded per segment and the result must be a canonical policy path, so an argument can never add `/`, a dot segment, `?`, or `#`."
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 8192
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 8192
+        },
+        "parameters": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/McpGatewayOpenApiParameter"
+          }
+        },
+        "request_body": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "A JSON request body, carried by the tools/call argument `body`.",
+          "properties": {
+            "required": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 8192
+            },
+            "schema": {
+              "type": [
+                "object",
+                "boolean",
+                "null"
+              ]
+            }
+          }
+        },
+        "output_schema": {
+          "description": "Published as the tool's outputSchema; must describe an object, because structuredContent is a JSON object.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "const": "object"
+                }
+              }
+            }
+          ]
+        },
+        "annotations": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "Overrides the method-derived hints (readOnlyHint for GET, destructiveHint for DELETE, idempotentHint for PUT).",
+          "properties": {
+            "title": {
+              "type": "string",
+              "maxLength": 8192
+            },
+            "readOnlyHint": {
+              "type": "boolean"
+            },
+            "destructiveHint": {
+              "type": "boolean"
+            },
+            "idempotentHint": {
+              "type": "boolean"
+            },
+            "openWorldHint": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "McpGatewayOpenApiParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "in"
+      ],
+      "description": "A path, query, or header parameter. Query arrays are sent exploded and form-encoded; header arrays comma-joined. Object-typed parameters, cookie parameters, and array path parameters are rejected. A header parameter may never name a hop-by-hop field, Host, Authorization, Cookie, Proxy-*, X-Forwarded-*, Forwarded, an MCP transport field (Mcp-*, Last-Event-ID, the configured session headers), or a Ferrum-internal field (X-Ferrum-*, Ferrum-*, X-Gateway-*, X-Consumer-*), compared case-insensitively with `_` treated as `-`; the plugin refuses such a configuration at load and again when a call is built.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "in": {
+          "type": "string",
+          "enum": [
+            "path",
+            "query",
+            "header"
+          ]
+        },
+        "required": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "Path parameters are always required."
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 8192
+        },
+        "schema": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "JSON Schema of the argument; omitted means a string."
+        }
+      }
+    }
+  }
+}

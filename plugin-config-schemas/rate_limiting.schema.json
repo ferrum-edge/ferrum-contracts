@@ -1,0 +1,427 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/rate_limiting.schema.json",
+  "title": "rate_limiting plugin config",
+  "description": "The `config` object of an enabled `rate_limiting` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component RateLimitingConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "rate_limiting",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/RateLimitingConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/RateLimitingConfig",
+  "$defs": {
+    "RateLimitingConfig": {
+      "type": "object",
+      "required": [
+        "limits"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "limits"
+            ],
+            "properties": {
+              "limits": {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "scope"
+                  ],
+                  "properties": {
+                    "scope": {
+                      "type": "string",
+                      "pattern": "^[cC][oO][nN][sS][uU][mM][eE][rR][sS]$"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "limit_by"
+            ],
+            "properties": {
+              "limit_by": {
+                "type": "string",
+                "pattern": "^[cC][oO][nN][sS][uU][mM][eE][rR]$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "sync_mode"
+            ],
+            "properties": {
+              "sync_mode": {
+                "pattern": "^[rR][eE][dD][iI][sS]$"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "redis_url"
+            ]
+          }
+        }
+      ],
+      "description": "Plugin: rate_limiting — Per-IP, per-consumer, per-SPIFFE-identity, or per-policy aggregate (`limit_by: service`) request rate limiting. Quota 429 responses carry a Retry-After header. On stream proxies, consumer mode uses the identified stream Consumer when available and otherwise falls back to client IP; `spiffe_identity` keys on the SPIFFE ID extracted by the `spiffe_identity` / `mtls_auth` mesh chain and falls back to client IP when no SPIFFE identity is present. Supports centralized Redis-backed mode for coordinating rate limits across multiple gateway instances. `limits` must contain exactly one `scope: default` rule for generic keys and fallback IPs, plus optional `scope: consumers` rules that apply the same rate rule to one or many consumer identities, each with an independent counter. Counter storage supports only local memory and Redis; database-backed counters are intentionally unsupported. Residual admission rules this schema cannot express, enforced by the plugin constructor alone: one consumer identity may not appear in two different `scope: consumers` rules (JSON Schema can only reject a duplicate inside one rule), and `redis_url` details noted on that field.",
+      "properties": {
+        "limit_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^([iI][pP]|[cC][oO][nN][sS][uU][mM][eE][rR]|[sS][pP][iI][fF][fF][eE](_[iI][dD][eE][nN][tT][iI][tT][yY])?|[sS][eE][rR][vV][iI][cC][eE])$",
+          "default": "ip",
+          "description": "Rate limit key. Parsed case-insensitively; `null` is the same as omitting the field:\n- `ip` (default) — client IP.\n- `consumer` — identified consumer (HTTP) or stream consumer (TCP/UDP); falls back to client IP when no consumer is present.\n- `spiffe_identity` — SPIFFE ID extracted from peer certificate (mesh authn). `spiffe` is accepted as an alias.\n- `service` — one aggregate budget per policy shared by every caller (a total route/service rate), charged after authentication (authorize phase) on HTTP and once per connection/session on TCP/UDP. With `sync_mode: redis` the budget is shared by every gateway serving the policy. Compose it beside a per-caller instance to enforce both a per-caller and a total limit.\n"
+        },
+        "ipv6_prefix": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "default": 64,
+          "description": "IPv6 prefix length used to group source addresses for IP rate-limit keys. IPv4 addresses remain host-specific."
+        },
+        "expose_headers": {
+          "type": "boolean",
+          "default": false,
+          "description": "Inject x-ratelimit-* headers on requests and responses. Every admitted (counted) request's client-visible response carries the headers, including successful WebSocket handshake responses and gateway-generated responses such as cache hits, response mocks, serverless short-circuits, and rejections from plugins that run after rate limiting. The header names are one public set, so when several rate_limiting instances run on a route exactly one verdict is published: the limiter that refused the request, or — when all of them admitted — the tightest remaining budget. A refusing limiter with expose_headers=false, and any fail-closed 503, publish no rate-limit headers at all."
+        },
+        "max_state_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000000,
+          "default": 100000,
+          "description": "Hard cap on distinct keys this policy keeps in local (and Redis-fallback) state. At the cap, keys already tracked keep their budgets and a previously unseen key is refused with 429 until idle keys are pruned. Read per admission and not part of the local-state compatibility fingerprint, so changing it never resets live budgets."
+        },
+        "limits": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/RateLimitingRuleConfig"
+          },
+          "contains": {
+            "type": "object",
+            "required": [
+              "scope"
+            ],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "pattern": "^[dD][eE][fF][aA][uU][lL][tT]$"
+              }
+            }
+          },
+          "minContains": 1,
+          "maxContains": 1,
+          "description": "Rate-limit rules. Must include exactly one `scope: default` rule. `scope: consumers` rules are only valid when `limit_by` is `consumer`."
+        },
+        "mcp_tool_calls": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "Count MCP JSON-RPC tools/call requests instead of HTTP requests (null or omitted counts requests). Only tools/call is charged: each tools/call member of a JSON-RPC batch is one charge, including notification-form tools/call members (a tools/call without an id is still charged); notifications/* methods, initialize, tools/list, and every other method pass uncounted. The charge runs in before_proxy over the buffered body, with the media types mcp_gateway admits (application/json, application/json-rpc, +json, or no Content-Type); a body with duplicate member names, or a batch past 32 members / 1 MiB / 256 KiB per member, is refused with JSON-RPC -32600. So is an in-scope request whose Content-Type declares a charset other than UTF-8, and a body strict UTF-8 JSON cannot read (UTF-16/32, a byte-order mark, NaN, comments, invalid UTF-8) that could still carry a tools/call for a lenient upstream parser. These recognizer bounds are fixed at 32 members / 1 MiB / 256 KiB per member; setting mcp_gateway validation.max_batch_* above these values makes the limiter refuse the larger request with -32600. An in-scope request with non-identity Content-Encoding is refused with JSON-RPC -32017 unless an earlier decompression hook has removed the encoding. An exhausted budget is answered on HTTP 200 with a JSON-RPC error (code -32015, one per request-form batch member) plus x-ratelimit-* headers when expose_headers is set; a fail-closed Redis outage answers -32016. The mode is HTTP-only.",
+          "properties": {
+            "endpoint_path": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^/[^?#\\x00-\\x1f\\x7f-\\x9f]*$",
+              "description": "Inspect and buffer only requests to exactly this path (normally mcp_gateway endpoint.path). No query, fragment, or control character."
+            },
+            "tools": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "minItems": 1,
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f]+$"
+              },
+              "description": "Count only calls naming one of these public tool names. The per-name bound is enforced by the constructor in UTF-8 bytes (maxLength counts characters)."
+            },
+            "per_tool": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false,
+              "description": "Keep one budget per listed tool instead of one shared by every counted call. Requires tools."
+            }
+          },
+          "if": {
+            "required": [
+              "per_tool"
+            ],
+            "properties": {
+              "per_tool": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "tools"
+            ],
+            "properties": {
+              "tools": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        "sync_mode": {
+          "type": "string",
+          "pattern": "^([lL][oO][cC][aA][lL]|[rR][eE][dD][iI][sS])$",
+          "default": "local",
+          "description": "Rate limit state storage: 'local' (in-memory per instance) or 'redis' (centralized across instances), parsed case-insensitively. `redis` additionally requires `redis_url`. Database-backed counters are unsupported. Any RESP-compatible server works (Redis, Valkey, DragonflyDB, KeyDB, Garnet)."
+        },
+        "redis_url": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[rR][eE][dD][iI][sS][sS]?://[^/?#\\s]+(?:/(?:0|[1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])?)?(?:\\?[^\\s#]*)?(?![\\s\\S])",
+          "description": "Redis connection URL (e.g., redis://host:6379/0), required with sync_mode=redis. The database selector is a canonical decimal integer from 0 through 2147483647, without signs, zero-padding, or extra slashes. An absent path or bare slash selects database 0. Ferrum uses the portable signed-32-bit bound; redis-rs represents indexes as i64. The server separately checks its configured databases on SELECT. TCP port range is constructor-validated. URL fragments are forbidden; TLS skip-verify is only FERRUM_TLS_NO_VERIFY."
+        },
+        "redis_tls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable TLS for the Redis connection (upgrades redis:// to rediss://; the URL scheme is matched case-insensitively and stored lowercase). CA verification uses gateway-level FERRUM_TLS_CA_BUNDLE_PATH; skip-verify uses FERRUM_TLS_NO_VERIFY."
+        },
+        "redis_key_prefix": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Key prefix for all Redis keys. Defaults to `{FERRUM_NAMESPACE}:{plugin_name}:{plugin-config-id}` so two independent policies of this plugin type in one namespace do not share counters. Setting this explicitly is the documented opt-in for a deliberately shared budget: every instance configured with the same prefix increments and rejects against the same counters."
+        },
+        "redis_pool_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "default": 4,
+          "description": "Number of multiplexed Redis connections. Must be between 1 and 128."
+        },
+        "redis_username": {
+          "type": "string",
+          "description": "Redis username for ACL-based authentication (Redis 6+)"
+        },
+        "redis_password": {
+          "type": "string",
+          "description": "Redis password for authentication"
+        },
+        "redis_failure_policy": {
+          "type": "string",
+          "enum": [
+            "fail_closed",
+            "local_fallback"
+          ],
+          "default": "local_fallback",
+          "description": "Behavior when the centralized Redis store cannot be consulted: an outage, an egress/DNS screen failure, or an endpoint rejected as an unsupported topology (Redis Cluster is not supported). fail_closed explicitly refuses the request with 503 and no rate-limit headers; local_fallback (the default) uses per-process budgets, which enforce the configured limit once per gateway process. Only meaningful with sync_mode=redis, but validated in either mode."
+        },
+        "redis_connect_timeout_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "default": 5,
+          "description": "Effective Redis connection-attempt timeout in seconds. Applied to the redis-rs inner connection config for cached, dedicated, and health-check paths (TCP connect, TLS handshake when enabled, Redis protocol handshake). It is also the deadline for the proactive `INFO CLUSTER` topology screen (and the no-eviction memory screen) issued on every new connection, on the pooled and dedicated paths as well as the recovery probe — the redis-rs 500ms command cap does not preempt it. That per-command cap is installed on the connection once it is screened, so ordinary command execution stays bounded. Gateway DNS screening/resolution of the Redis hostname runs before this timeout starts."
+        },
+        "redis_health_check_interval_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "default": 5,
+          "description": "Interval in seconds for health check pings when Redis is marked unavailable. Must be greater than zero."
+        }
+      }
+    },
+    "RateLimitingRuleConfig": {
+      "type": "object",
+      "required": [
+        "scope"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "allOf": [
+            {
+              "required": [
+                "window_seconds",
+                "max_requests"
+              ]
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "requests_per_second"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "requests_per_minute"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "requests_per_hour"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "requests_per_second"
+                  ]
+                },
+                {
+                  "required": [
+                    "requests_per_minute"
+                  ]
+                },
+                {
+                  "required": [
+                    "requests_per_hour"
+                  ]
+                }
+              ]
+            },
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "window_seconds"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "max_requests"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "pattern": "^[cC][oO][nN][sS][uU][mM][eE][rR][sS]$"
+              }
+            },
+            "required": [
+              "scope"
+            ]
+          },
+          "then": {
+            "required": [
+              "consumers"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "pattern": "^[dD][eE][fF][aA][uU][lL][tT]$"
+              }
+            },
+            "required": [
+              "scope"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "consumers"
+              ]
+            }
+          }
+        }
+      ],
+      "description": "One rate_limiting rule. Every rule must set either one or more preset fields (`requests_per_second`/`requests_per_minute`/`requests_per_hour`) or the custom-window pair (`window_seconds` + `max_requests`), but not both styles in the same rule. Exactly one rule in the plugin config must use `scope: default`. `scope: consumers` is only valid with `limit_by: consumer`; each listed identity gets its own independent counter using this rule's windows.",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "pattern": "^([dD][eE][fF][aA][uU][lL][tT]|[cC][oO][nN][sS][uU][mM][eE][rR][sS])$",
+          "description": "`default` applies to all keys without a more specific consumer rule and to IP fallback. `consumers` selects the identities listed in `consumers`; each identity has its own counter. Parsed case-insensitively."
+        },
+        "consumers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Effective consumer identities for `scope: consumers` rules. Each listed identity gets an independent counter using this rule's windows. Matched against the mapped Consumer username only; an unmapped external identity never matches, even one that spells a listed username, and is counted under its own realm-scoped key. A repeated identity is rejected here and across rules; JSON Schema can only express the within-rule half, so the cross-rule duplicate is refused by the plugin constructor alone."
+        },
+        "requests_per_second": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Max requests per second. Capped at 1000000 (see `max_requests`)."
+        },
+        "requests_per_minute": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Max requests per minute. Capped at 1000000 (see `max_requests`)."
+        },
+        "requests_per_hour": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Max requests per hour. Capped at 1000000 (see `max_requests`)."
+        },
+        "window_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 2678400,
+          "description": "Custom rate-limit window length in seconds. Must be paired with `max_requests`. Capped at 2678400 (31 days) so the window stays representable as a monotonic duration and as a signed Redis TTL."
+        },
+        "max_requests": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Maximum requests permitted within `window_seconds`. Capped at 1000000 as an operational budget ceiling. Local sliding-window memory is bounded independently by a fixed aggregate-bucket ring per key, not by one timestamp per admitted request."
+        }
+      }
+    }
+  }
+}

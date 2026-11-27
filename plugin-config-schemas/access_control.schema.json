@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/access_control.schema.json",
+  "title": "access_control plugin config",
+  "description": "The `config` object of an enabled `access_control` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component AccessControlConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "access_control",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/AccessControlConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/AccessControlConfig",
+  "$defs": {
+    "AccessControlConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: access_control — consumer-based, group-based, and exact external-principal allow/deny for HTTP-family and TCP/UDP stream proxies. Evaluation order: deny (consumer username → group) then allow (consumer username → group); unmapped external identities are judged by `disallowed_consumers`, `disallowed_external_identities`, then `allowed_external_identities` or the `allow_authenticated_identity` bypass. Deny always overrides allow. Once any allow-list is configured, a principal matching none of them is denied — a mapped Consumer on a policy whose only allow-list is `allowed_external_identities` included. At least one of `allowed_consumers`, `disallowed_consumers`, `allowed_groups`, `disallowed_groups`, `allowed_external_identities`, `disallowed_external_identities`, or `allow_authenticated_identity=true` must be configured, and an allow-list (`allowed_consumers`/`allowed_groups`/`allowed_external_identities`) that is present must be non-empty: omit it for no allow restriction. Unknown config keys are rejected. `allow_authenticated_identity=true` cannot be combined with an allow-list (`allowed_consumers`/`allowed_groups`/`allowed_external_identities`): the consumer allow-lists are not applied to unmapped external identities, and the bypass would admit every external identity an external allow-list omits. Use ip_restriction for IP/CIDR rules. Rule entries match principal values byte-for-byte (no trimming) and must contain at least one non-whitespace character. Whitespace admission follows Rust `str::trim` Unicode `White_Space` semantics.",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "required": [
+                "allowed_consumers"
+              ],
+              "properties": {
+                "allowed_consumers": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "disallowed_consumers"
+              ],
+              "properties": {
+                "disallowed_consumers": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "allowed_groups"
+              ],
+              "properties": {
+                "allowed_groups": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "disallowed_groups"
+              ],
+              "properties": {
+                "disallowed_groups": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "allowed_external_identities"
+              ],
+              "properties": {
+                "allowed_external_identities": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "disallowed_external_identities"
+              ],
+              "properties": {
+                "disallowed_external_identities": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "allow_authenticated_identity"
+              ],
+              "properties": {
+                "allow_authenticated_identity": {
+                  "enum": [
+                    true
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "not": {
+            "allOf": [
+              {
+                "required": [
+                  "allow_authenticated_identity"
+                ],
+                "properties": {
+                  "allow_authenticated_identity": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "required": [
+                      "allowed_consumers"
+                    ],
+                    "properties": {
+                      "allowed_consumers": {
+                        "minItems": 1
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "allowed_groups"
+                    ],
+                    "properties": {
+                      "allowed_groups": {
+                        "minItems": 1
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "allowed_external_identities"
+                    ],
+                    "properties": {
+                      "allowed_external_identities": {
+                        "minItems": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "allowed_consumers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"
+          },
+          "description": "Consumer usernames that are explicitly allowed. Omit the key for no username allow check (other allow rules still apply). An explicitly empty array is rejected rather than read as allow-all or deny-all. Each entry is at most 255 Unicode characters."
+        },
+        "disallowed_consumers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"
+          },
+          "default": [],
+          "description": "Consumer usernames or, when allow_authenticated_identity is true, exact external principals that are explicitly denied. Takes precedence over every allow rule. The 4096-character bound is independent of the 255-character gateway Consumer username ceiling so JWT, OIDC, and SPIFFE-style principals can be revoked; longer external identities fail closed at runtime."
+        },
+        "allowed_groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"
+          },
+          "description": "ACL group names that are explicitly allowed. The check matches if any of the consumer's `acl_groups` appears in this list. Omit the key for no group allow check; an explicitly empty array is rejected. Each entry is at most 255 Unicode characters."
+        },
+        "disallowed_groups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"
+          },
+          "default": [],
+          "description": "ACL group names that are explicitly denied. If any of the consumer's `acl_groups` appears in this list the request is rejected, even when the username is in `allowed_consumers`. Each entry is at most 255 Unicode characters."
+        },
+        "allow_authenticated_identity": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow requests whose `ctx.authenticated_identity` is set by an external auth plugin (e.g. jwks_auth) even when no gateway Consumer was mapped. Empty or whitespace-only identities are unauthenticated. Cannot be combined with an allow-list (`allowed_consumers`/`allowed_groups`/`allowed_external_identities`); the deny-lists `disallowed_consumers` and `disallowed_external_identities` are still applied to the external identity."
+        },
+        "allowed_external_identities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "identity"
+            ],
+            "description": "One exact external-principal rule for `access_control`.",
+            "properties": {
+              "identity": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096,
+                "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]",
+                "description": "The external identity string, matched byte-for-byte (no trimming). Must contain a non-whitespace character; at most 4096 characters."
+              },
+              "mechanism": {
+                "type": "string",
+                "enum": [
+                  "jwks_auth",
+                  "ldap_auth",
+                  "oauth2_introspection",
+                  "oidc_relying_party",
+                  "soap_ws_security"
+                ],
+                "description": "Restrict the rule to identities committed by this built-in authentication mechanism. Omit to match the identity from every mechanism."
+              },
+              "authority": {
+                "type": "string",
+                "pattern": "^[0-9A-Fa-f]{64}$",
+                "description": "Restrict the rule to identities committed with this verifying authority: the opaque 64-character hex realm authority digest the authentication boundary commits with the identity (the value `opa` exposes as `input.consumer.realm.authority`, and the plugin-trigger `external_identity_authority` predicate accepts; compared case-insensitively). Two providers of one mechanism (two `jwks_auth` issuers, two `oauth2_introspection` endpoints) have different digests, so this is what tells them apart, as far as the mechanism's realm derivation does. For `oauth2_introspection`, client credentials do not distinguish authorities, and a provider without an `issuer` pin commits one digest per returned `iss` (plus a base digest when `iss` is absent), so two such providers on the same endpoint and identity claim share a digest whenever the returned issuer is equal. Pinning `issuer` gives one digest per provider and requires the response `iss` to match; distinct endpoints separate providers, but an unpinned provider still commits one digest per returned `iss`, so cover each with its own entry. `jwks_auth`, `oauth2_introspection`, `ldap_auth`, and `oidc_relying_party` commit a digest for every identity; `soap_ws_security` commits none. Allow entries never match an identity with no committed digest. Combined with `mechanism`, both must hold."
+              }
+            }
+          },
+          "description": "Exact unmapped external principals (for example a `jwks_auth` `sub`) that are allowed when no gateway Consumer was mapped — the narrow alternative to `allow_authenticated_identity`. An entry with `mechanism` matches only an identity committed by that authentication mechanism, and an entry with `authority` only an identity committed with that verifying authority; an identity with no verified realm (stream proxies, or an identity a custom plugin set directly) never matches a realm-scoped allow entry. On a route with more than one provider of one mechanism (multi-provider `jwks_auth` or `oauth2_introspection`), bind `authority`: `mechanism` alone cannot tell the providers apart, so an equal subject from any of them would match. Omit the key for no external allow list; an explicitly empty array is rejected. Mapped Consumers are not judged by this list, but configuring it makes the policy an allow-list, so a mapped Consumer must then match `allowed_consumers`/`allowed_groups` to pass."
+        },
+        "disallowed_external_identities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "identity"
+            ],
+            "description": "One exact external-principal rule for `access_control`.",
+            "properties": {
+              "identity": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096,
+                "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]",
+                "description": "The external identity string, matched byte-for-byte (no trimming). Must contain a non-whitespace character; at most 4096 characters."
+              },
+              "mechanism": {
+                "type": "string",
+                "enum": [
+                  "jwks_auth",
+                  "ldap_auth",
+                  "oauth2_introspection",
+                  "oidc_relying_party",
+                  "soap_ws_security"
+                ],
+                "description": "Restrict the rule to identities committed by this built-in authentication mechanism. Omit to match the identity from every mechanism."
+              },
+              "authority": {
+                "type": "string",
+                "pattern": "^[0-9A-Fa-f]{64}$",
+                "description": "Restrict the rule to identities committed with this verifying authority: the opaque 64-character hex realm authority digest the authentication boundary commits with the identity (the value `opa` exposes as `input.consumer.realm.authority`, and the plugin-trigger `external_identity_authority` predicate accepts; compared case-insensitively). A deny entry fails closed: it also matches an identity with no verified realm or no committed digest, unless the entry also names a `mechanism` and the identity was committed by a different one. Combined with `mechanism`, both must hold."
+              }
+            }
+          },
+          "default": [],
+          "description": "Exact unmapped external principals that are denied, optionally scoped to the authentication mechanism and/or verifying authority that verified them, so one principal can be revoked without revoking an equal subject string from a different mechanism or provider. A realm-scoped entry also matches an identity with no verified realm, and an `authority`-scoped entry also matches an identity with no committed digest (it fails closed) unless its `mechanism` is a known mismatch. Takes precedence over every allow rule. `disallowed_consumers` remains a realm-blind deny for external identities."
+        }
+      }
+    }
+  }
+}
