@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/geo_restriction.schema.json",
+  "title": "geo_restriction plugin config",
+  "description": "The `config` object of an enabled `geo_restriction` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component GeoRestrictionConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "geo_restriction",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/GeoRestrictionConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/GeoRestrictionConfig",
+  "$defs": {
+    "GeoRestrictionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: geo_restriction — country-level access control backed by a MaxMind GeoIP2 / GeoLite2 `.mmdb` file. The database is fully verified and loaded into bounded owned immutable memory at construction. Files larger than 512 MiB, aggregate verified MMDB content above 512 MiB per validation generation/cache build, and records containing unsupported country codes are rejected before publication. File dependency validation is fatal in file mode and warns for absent/unreadable files in database mode. CP performs structure-only validation without opening node-local files; DP validates and refreshes its node-local files for full snapshots and affected incremental rebuilds. On runtime nodes that construct the plugin, a missing file uses `on_lookup_failure`, while a readable corrupt, incompatible, or wrong-product database is rejected. Exactly one of `allow_countries` and `deny_countries` must be non-empty. Runs on every protocol — HTTP, gRPC, WebSocket, TCP, UDP. Every evaluated request or stream session records the log-allowlisted metadata `geo.decision` (`allowed`, `country_not_allowed`, `country_denied`, `lookup_failed_allowed`, `lookup_failed_denied`, `db_not_loaded_allowed`, `db_not_loaded_denied`) and, when a country was resolved, `geo.country`.",
+      "required": [
+        "db_path"
+      ],
+      "oneOf": [
+        {
+          "title": "Allow-list mode",
+          "required": [
+            "allow_countries"
+          ],
+          "properties": {
+            "allow_countries": {
+              "minItems": 1
+            },
+            "deny_countries": {
+              "maxItems": 0
+            }
+          }
+        },
+        {
+          "title": "Deny-list mode",
+          "required": [
+            "deny_countries"
+          ],
+          "properties": {
+            "allow_countries": {
+              "maxItems": 0
+            },
+            "deny_countries": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "properties": {
+        "db_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Filesystem path to a MaxMind GeoIP2 or GeoLite2 `.mmdb` database no larger than 512 MiB. Across one validation generation/cache build, the verified sizes of all distinct content snapshots must also total no more than 512 MiB; equivalent path spellings with identical verified content are charged once. A changed candidate overlaps the live snapshot; when their combined size exceeds 512 MiB, hot replacement is rejected and the installed database must be loaded by restarting the gateway. Required."
+        },
+        "allow_countries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GeoRestrictionCountryCode"
+          },
+          "default": [],
+          "description": "ISO 3166-1 alpha-2 country codes (case-insensitive — normalized to uppercase) that are allowed. Mutually exclusive with `deny_countries`. Example: `[\"US\", \"CA\", \"GB\"]`."
+        },
+        "deny_countries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GeoRestrictionCountryCode"
+          },
+          "default": [],
+          "description": "ISO 3166-1 alpha-2 country codes (case-insensitive — normalized to uppercase) that are denied. Mutually exclusive with `allow_countries`."
+        },
+        "inject_headers": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, inject the resolved country code into the proxied request as the `x-geo-country` header (uppercase ISO 3166-1 alpha-2). Central header materialization strips any client-supplied value even when no geo plugin is attached. The header remains absent on fail-open lookup paths unless an earlier geo instance already emitted an authoritative value; later non-injecting instances preserve that value. HTTP-family proxies only — ignored on TCP/UDP streams."
+        },
+        "on_lookup_failure": {
+          "type": "string",
+          "enum": [
+            "allow",
+            "deny"
+          ],
+          "default": "allow",
+          "description": "Action when the client IP cannot be resolved to a country. Applies to both genuine MaxMind misses (private IPs, unallocated ranges) and to the data plane fallback path when the `.mmdb` file is missing on disk. The default `allow` is fail-open: unresolved traffic is permitted, so a missing or stale `.mmdb` silently disables the geo gate. Set this explicitly to `deny` for fail-closed behaviour. When the default is used, a one-time warning is logged at startup, and the first request-time fail-open is logged at warn."
+        }
+      }
+    },
+    "GeoRestrictionCountryCode": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 2,
+      "pattern": "^(?:[Aa][DdEeFfGgIiLlMmOoQqRrSsTtUuWwXxZz]|[Bb][AaBbDdEeFfGgHhIiJjLlMmNnOoQqRrSsTtVvWwYyZz]|[Cc][AaCcDdFfGgHhIiKkLlMmNnOoRrUuVvWwXxYyZz]|[Dd][EeJjKkMmOoZz]|[Ee][CcEeGgHhRrSsTt]|[Ff][IiJjKkMmOoRr]|[Gg][AaBbDdEeFfGgHhIiLlMmNnPpQqRrSsTtUuWwYy]|[Hh][KkMmNnRrTtUu]|[Ii][DdEeLlMmNnOoQqRrSsTt]|[Jj][EeMmOoPp]|[Kk][EeGgHhIiMmNnPpRrWwYyZz]|[Ll][AaBbCcIiKkRrSsTtUuVvYy]|[Mm][AaCcDdEeFfGgHhKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz]|[Nn][AaCcEeFfGgIiLlOoPpRrUuZz]|[Oo][Mm]|[Pp][AaEeFfGgHhKkLlMmNnRrSsTtWwYy]|[Qq][Aa]|[Rr][EeOoSsUuWw]|[Ss][AaBbCcDdEeGgHhIiJjKkLlMmNnOoRrSsTtVvXxYyZz]|[Tt][CcDdFfGgHhJjKkLlMmNnOoRrTtVvWwZz]|[Uu][AaGgMmSsYyZz]|[Vv][AaCcEeGgIiNnUu]|[Ww][FfSs]|[Xx][Kk]|[Yy][EeTt]|[Zz][AaMmWw])$",
+      "description": "A currently assigned ISO 3166-1 alpha-2 country code, or XK (the user-assigned Kosovo code emitted by MaxMind). Matching is case-insensitive and runtime storage is normalized to uppercase. Other reserved, user-assigned, deleted, and alias codes are rejected."
+    }
+  }
+}

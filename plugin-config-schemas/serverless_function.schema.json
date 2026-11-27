@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/serverless_function.schema.json",
+  "title": "serverless_function plugin config",
+  "description": "The `config` object of an enabled `serverless_function` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component ServerlessFunctionConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "serverless_function",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/ServerlessFunctionConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/ServerlessFunctionConfig",
+  "$defs": {
+    "ServerlessFunctionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: serverless_function — Invokes AWS Lambda, Azure Functions, or\nGoogle Cloud Functions as middleware in the proxy pipeline. The function\nis invoked in the finalized-request-egress phase, after request-body\ntransforms and after every final request-policy hook (WAF body rules,\nOpenAPI request schema, body validation, the post-transform request-size\nceiling) has accepted the exact backend-visible body, so those policies\nnever reject only after the function was contacted. Backend admission,\ncircuit-breaker, or transport checks can still fail later. In\n`pre_proxy` mode the function response can inject request headers and\nmetadata before the backend call. In `terminate` mode the function\nresponse is returned directly to the client. Native gRPC terminate\nrequires a JSON contract with `grpc_status` plus optional\n`message_base64` (raw protobuf bytes), `grpc_message`,\n`status_details_base64`, and custom `trailers`; the gateway frames an\nuncompressed unary DATA message and owns reserved terminal metadata.\nThe request is classified as native gRPC by the HTTP flavor the\nfrontend stamps at intake, not by a mutable effective content-type.\nEvery terminal trailer value is bounded by an 8 KiB wire-value\nceiling, measured after sanitization and after base64 or\npercent-encoding, and the complete terminal metadata block —\n`grpc-status`, `grpc-message`, `grpc-status-details-bin`, every\ncustom trailer, and `content-type` — is bounded by a separate 16 KiB\naggregate budget charged as name + value + 32 bytes per field, the\nway HTTP/2 charges `SETTINGS_MAX_HEADER_LIST_SIZE` and HTTP/3 charges\n`SETTINGS_MAX_FIELD_SECTION_SIZE`. Custom trailers are additionally\ncapped at 32 entries. `grpc_message` is authored as human-readable text\nand emitted in the canonical percent-encoded `grpc-message` wire form\n(uppercase hex for `%` and every byte outside the grammar's\nunescaped range). Custom trailers use the gRPC Custom-Metadata name\nalphabet and printable-ASCII value grammar; `-bin` values must be\nstandard base64 with or without padding. Names are case-insensitive,\nso two `trailers` members differing only in case are rejected rather\nthan one silently overwriting the other. The raw function output is\nalso screened for duplicate JSON object member names before parsing —\nbyte-identical, escaped-equivalent, or nested inside `trailers` — so a\ndocument whose terminal outcome depends on which parser reads it is\nrefused instead of resolved.\ngRPC-Web terminate is rejected with 500. Streaming and compression\ncontract shapes fail closed. Malformed or oversized function output\nfails closed without reflecting untrusted bodies. The validated\nframed response enters the shared response-body policy lifecycle, so\nconfigured gRPC response validators and limits still apply; if a body\npolicy or transform invalidates that authorized representation, the\nresponse fails closed to a nonzero gRPC error rather than degrading to\nan empty successful trailers-only reply. An over-limit raw function\nresponse on a native gRPC terminate request is likewise a mandatory\nrejection rather than a fall-through, even with `on_error: continue`.\nThe same representation is produced on HTTP/1.1, HTTP/2, and HTTP/3:\nthe HTTP/3 finalized-request-egress rejection is written through the\ncontext-aware writer, so the authored frame, the terminal metadata, and\nan original gRPC-Web client's browser framing all survive that\nboundary. The status-only shape carries\nthe same provenance: unchanged, it stays trailers-only and restores its\ncomplete terminal metadata (grpc-status, optional grpc-message,\ngrpc-status-details-bin, and validated custom trailers) from the\nvalidated contract rather than the reject header map, with an omitted\ngrpc-message emitted as omission rather than a synthesized reason; a\nchanged status or an unauthored body fails closed the same way and\ndiscards every authored terminal key with it, and it can never\nauthorize DATA. Cloud credential\nfields fall\nback to well-known environment variables. Every recognized provider\nfield is validated whenever it is SUPPLIED, independently of which\nprovider the row selects: JSON type, the Lambda Invoke identifier\ngrammars, the HTTP field-value grammar for credential headers, and the\nlexical URL contract. A well-typed, well-formed field belonging to an\ninactive provider stays accepted, so changing `provider` later cannot\nturn an already-admitted row into a constructor error. Terminate mode forwards\napplicable end-to-end response headers, preserving repeated Set-Cookie\nand list-valued Link while requiring Location, Content-Location, and\nRefresh to remain singleton,\nwhile stripping hop-by-hop, Connection-listed, transport-managed,\nprovider-control, and credential-bearing fields. URL-valued Location,\nContent-Location, Refresh (url= and bare URI forms after semicolon,\ncomma, or ASCII-whitespace delay separators), and every Link target are removed\nwhen a relative, absolute, encoded, or nested target exposes the\nconfigured signed function path/query. Duplicate singleton URL-valued\nfields fail closed instead of being comma-folded; repeated Link lines\nare revalidated as the exact combined list returned downstream.\nComplete signed paths match at\nslash-delimited segment boundaries even with added prefix or descendant\nsegments, not inside arbitrary substrings. The complete slash-trimmed\nsigned path is also protected when copied exactly into either side of a\ndecoded query pair; longer scalar lookalikes remain observable. Both\nnon-empty components of every configured query pair are protected\ncredential scalars: a key\nremains protected whether it is key-only (`?SIGNED_TOKEN=`) or paired\nwith a value (`?SIGNED_TOKEN=1`), and a non-empty value is protected\nindependently. Exact ASCII-case-insensitive URI scheme copies are also\ngoverned. Leading and trailing slashes remain part of each scalar;\na slash-only scalar remains protected and makes ambiguous URL-path\nsurfaces fail closed. Each scalar remains protected if copied into\neither side of another query pair or into decoded paths at URI-component\nboundaries (including path-parameter/query delimiters), and decoded fragments are checked\ndirectly at URI-component boundaries even when they are scalar rather\nthan URI-shaped. Query comparison\npercent-decodes generic URI components but preserves literal `+` characters\ninstead of applying form-data space conversion. Inspection checks\nexplicit numeric authority ports before normalization can erase default\nports, and is bounded to 16 KiB per field, 32 Link targets, 32 embedded\npath URI references, eight percent-decoding transforms, and two nested\nURI-reference hops. URI userinfo, residual\nencoding, malformed target syntax, malformed percent triplets,\npercent-decoded non-UTF-8 bytes, budget overflow, or another structural\nURI reference at the nesting boundary fails closed even for root\nfunction destinations, while unrelated URL targets, non-URL\nRefresh directives, quoted Link parameters, and scalar labels without\nsigned components remain observable.\nLater body rewrites invalidate ranges, validators, integrity metadata,\nand content-bound signatures while unmodified responses retain them;\n206 Partial Content and 226 IM Used responses skip rewriting to preserve\nrange and delta semantics; transform-dependent header hooks also decline\nthem rather than relabelling untouched bytes. Inspection still runs,\nand enforcing\nredaction-dependent plugins reject governed content when those bytes\ncannot be safely rewritten.\nProven pre-invocation payload-validation, unsupported-gRPC-Web,\nDNS-policy,\nand literal-IP-policy rejections release every acquired deduplication\nowner after commit. Real remote 502 responses remain application\nresponses; uncertain post-invocation failures retain their protection.\nDeduplicated terminal replays preserve the final status/body but use\nsanitized headers: session/authentication fields, Retry-After,\ntrace/correlation fields, and rate-limit counters are not replayed. The\nstored body is already finalized and bypasses ordinary presentation\ntransforms on replay while remaining subject to response inspection and\nfinal-body validation. A current-policy redaction decision runs only its\nrequired transform and fails closed with 502 if rewriting cannot\ncomplete.\nIf request_deduplication is attached, every same-protocol instance must\nhave a strictly lower effective priority than terminate mode; candidate\nadmission rejects equal or reversed ordering before persistence. This\ncandidate check derives static serverless capabilities without resolving\nCP-local cloud credentials; runtime construction still validates the\nnode-local credentials and environment fail closed. CP and admin\nadmission of the plugin config itself is shape-only for the same\nreason: every supplied field is validated, while AWS/Azure/GCP\ncredentials that intentionally exist only on data planes are resolved\nand enforced when the serving node builds its plugin cache. `validate`\ntherefore checks the shape of the row rather than whether the\nvalidating node holds the credentials the row needs at serve time.\nHEAD/204/205/304 bodies are empty. Automatic redirects are disabled;\npre_proxy accepts only 2xx as approval, while terminate may\nintentionally return only final 2xx-5xx statuses (200-599).\nInformational and out-of-range three-digit function statuses follow the\nconfigured error path. For aws_lambda, every non-2xx Lambda Invoke API\nstatus (throttling, access denied, a missing function, an oversized\npayload, a service fault) is authored by the Lambda service rather than\nby the function, so it is an invocation failure\n(`lambda_service_error`) under `on_error` / `error_status_code` in\nevery mode, and the AWS error body is never returned.\n",
+      "required": [
+        "provider"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "aws_lambda",
+            "azure_functions",
+            "gcp_cloud_functions"
+          ],
+          "description": "Cloud provider for the serverless function."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "pre_proxy",
+            "terminate"
+          ],
+          "default": "pre_proxy",
+          "description": "pre_proxy: invoke and inject headers/metadata, then continue.\nterminate: invoke and return response to client (HTTP body\npassthrough, or native-gRPC JSON unary contract).\n"
+        },
+        "function_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://(?:\\[[0-9A-Fa-f:.]+\\]|[^\\x00-\\x20\\x7F@/?#:\\[\\]]+)(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?(?:[/?][^\\x00-\\x20\\x7F#]*)?$",
+          "description": "HTTP(S) trigger URL without URL userinfo or a fragment. Required for azure_functions and gcp_cloud_functions; ignored for aws_lambda invocation (the URL is derived from region + function name), but still validated when supplied, whichever provider is selected. The lexical contract matches runtime admission: a non-empty host (a registered name, an IPv4 literal, or a bracketed IPv6 literal), an optional port of 0-65535, no URL userinfo, no fragment, and no raw ASCII whitespace or control character anywhere in the value. Path/query credentials are structurally redacted from diagnostics and non-admin/audit projections."
+        },
+        "aws_region": {
+          "type": "string",
+          "description": "AWS region (aws_lambda only). Falls back to AWS_DEFAULT_REGION, then AWS_REGION env vars. The default endpoint is partition-aware: cn-* regions derive lambda.<region>.amazonaws.com.cn and every other region derives lambda.<region>.amazonaws.com. The air-gapped ISO partitions and the AWS European Sovereign Cloud are not derived and require an explicit aws_endpoint_url. When the key id or secret resolves from the process environment, the region must be a lowercase commercial, GovCloud, or China region (see allow_custom_endpoint_with_ambient_credentials)."
+        },
+        "aws_access_key_id": {
+          "type": "string",
+          "pattern": "^[^\\x00-\\x08\\x0A-\\x1F\\x7F]*$",
+          "description": "IAM access key (aws_lambda only). Falls back to AWS_ACCESS_KEY_ID env var. The key id is interpolated into the SigV4 Authorization header, so the effective config or environment value must be representable as an HTTP field value (no NUL, CR, LF, or other control byte except horizontal tab); validated whenever supplied, whichever provider is selected. A process-environment credential may only be signed for an official AWS Lambda endpoint (see allow_custom_endpoint_with_ambient_credentials). Not allowed with aws_credentials: default_chain."
+        },
+        "aws_secret_access_key": {
+          "type": "string",
+          "description": "IAM secret key (aws_lambda only). Falls back to AWS_SECRET_ACCESS_KEY env var. A process-environment credential may only be signed for an official AWS Lambda endpoint (see allow_custom_endpoint_with_ambient_credentials). Not allowed with aws_credentials: default_chain."
+        },
+        "aws_function_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 170,
+          "pattern": "^(arn:(aws[a-zA-Z-]*)?:lambda:)?([a-z]{2}(-gov)?(-iso([a-z])?)?-[a-z]+-[0-9]:)?([0-9]{12}:)?(function:)?[a-zA-Z0-9_.-]+(:(\\$LATEST|[a-zA-Z0-9_-]+))?$",
+          "description": "Lambda function name, partial ARN, or full ARN (aws_lambda only), matching the Lambda Invoke API FunctionName grammar. Falls back to AWS_LAMBDA_FUNCTION_NAME env var; the environment value is held to the same grammar. Validated whenever supplied, whichever provider is selected. Existence and invoke permission are not checked at admission."
+        },
+        "aws_session_token": {
+          "type": "string",
+          "pattern": "^[^\\x00-\\x08\\x0A-\\x1F\\x7F]*$",
+          "description": "STS session token (aws_lambda only). Falls back to AWS_SESSION_TOKEN env var only when aws_access_key_id and aws_secret_access_key also resolve from the environment; the environment token is never paired with a config key pair. Sent verbatim as x-amz-security-token, so the effective value must be representable as an HTTP field value (no NUL, CR, LF, or other control byte except horizontal tab). A process-environment token may only be sent to an official AWS Lambda endpoint (see allow_custom_endpoint_with_ambient_credentials). Not allowed with aws_credentials: default_chain."
+        },
+        "aws_qualifier": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9$_-]+$",
+          "description": "Optional version/alias qualifier (e.g., $LATEST, prod), matching the Lambda Invoke API Qualifier grammar. Validated whenever supplied, whichever provider is selected."
+        },
+        "aws_endpoint_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://(?:\\[[0-9A-Fa-f:.]+\\]|[^\\x00-\\x20\\x7F@/?#:\\[\\]]+)(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[0-9]{1,4}))?/?$",
+          "description": "Optional HTTP(S) Lambda endpoint override for LocalStack or a VPC-internal endpoint. Must be an origin without userinfo, path, query, or fragment, using the same lexical URL contract as `function_url` (non-empty host, port 0-65535, no raw whitespace or control characters). Validated whenever supplied, whichever provider is selected. Falls back to `AWS_LAMBDA_ENDPOINT_URL`. A non-default port is part of the signed SigV4 canonical `Host`, so a verifying endpoint accepts the invocation. When the AWS key id or secret resolves from the process environment, a configured override must be an official AWS Lambda endpoint unless `allow_custom_endpoint_with_ambient_credentials` is true (see that field); an `AWS_LAMBDA_ENDPOINT_URL` fallback is set by the same environment owner and is trusted like the environment credentials."
+        },
+        "aws_credentials": {
+          "type": "string",
+          "enum": [
+            "static",
+            "default_chain"
+          ],
+          "default": "static",
+          "description": "aws_lambda only. `static` (default) signs with a literal key pair from the config or from the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (and AWS_SESSION_TOKEN) environment variables, resolved once when the plugin is built. `default_chain` signs with the gateway process's own AWS identity from the AWS SDK default credential chain — environment variables, shared config/credentials profiles, web identity (EKS IRSA), ECS container credentials, and EC2 instance metadata (IMDSv2) — cached and refreshed in the background before expiry, so temporary workload credentials keep working without a reload. A request waits (bounded) only when no usable credential is cached; expired credentials are never used, and an unavailable chain is an invocation failure (`aws_credentials_unavailable`) under `on_error`. `default_chain` may not be combined with aws_access_key_id, aws_secret_access_key, or aws_session_token, and is subject to the same ambient endpoint scope as process-environment credentials (see allow_custom_endpoint_with_ambient_credentials). It requires a build with the `secrets-aws` (or `cloud-secrets`) Cargo feature: CP/admin shape-only admission accepts the row, and a serving node built without the feature refuses to construct it."
+        },
+        "allow_custom_endpoint_with_ambient_credentials": {
+          "type": "boolean",
+          "default": false,
+          "description": "aws_lambda only. When `aws_access_key_id` or `aws_secret_access_key` is omitted from the config and resolves from the gateway process environment (`AWS_SESSION_TOKEN` is then used too; it never completes a config key pair), or when `aws_credentials` is `default_chain`, `aws_region` must be a lowercase commercial, GovCloud, or China region, and the config-chosen Lambda endpoint (the host derived from `aws_region`, or the `aws_endpoint_url` override) must be an official AWS Lambda endpoint for that region over HTTPS on the default port: lambda[-fips].<region>.amazonaws.com, lambda[-fips].<region>.api.aws, or an interface VPC endpoint vpce-<id>[-<az>].lambda[-fips].<region>.vpce.amazonaws.com, where <region> is a commercial or GovCloud region; a cn-* region uses amazonaws.com.cn and the dual-stack api.amazonwebservices.com.cn instead. An `AWS_LAMBDA_ENDPOINT_URL` set in the environment (used only when the config sets no `aws_endpoint_url`) is trusted like the environment credentials. Anything else is refused at configuration admission (CP/admin shape-only admission screens a configured `aws_region` and `aws_endpoint_url` whenever the config omits the key pair), and every invocation re-checks the endpoint and fails closed with 500 (`ambient_credential_endpoint_refused`) regardless of `on_error`. Credentials written into the config are not scoped. Set true only to deliberately sign invocations for a private endpoint (for example LocalStack), an air-gapped ISO partition, or the AWS European Sovereign Cloud with the process credentials; anyone who can write this plugin config can then direct those credentials to that endpoint."
+        },
+        "azure_function_key": {
+          "type": "string",
+          "pattern": "^[^\\x00-\\x08\\x0A-\\x1F\\x7F]*$",
+          "description": "Function key for x-functions-key auth (azure_functions only). Falls back to the FERRUM_PLUGIN_SECRET_AZURE_FUNCTIONS_KEY env var (never the ambient AZURE_FUNCTIONS_KEY, because the key is sent to the config-chosen function_url). The value must be representable as an HTTP field value (no NUL, CR, LF, or other control byte except horizontal tab); the effective config or environment value is parsed at admission so an unusable credential never reaches the serving cache. Validated whenever supplied, whichever provider is selected."
+        },
+        "gcp_bearer_token": {
+          "type": "string",
+          "pattern": "^[^\\x00-\\x08\\x0A-\\x1F\\x7F]*$",
+          "description": "Bearer token for Authorization header (gcp_cloud_functions only). Falls back to the FERRUM_PLUGIN_SECRET_GCP_CLOUD_FUNCTIONS_BEARER_TOKEN env var (never the ambient GCP_CLOUD_FUNCTIONS_BEARER_TOKEN). The assembled `Bearer <token>` value must be representable as an HTTP field value (no NUL, CR, LF, or other control byte except horizontal tab) and is parsed at admission. Validated whenever supplied, whichever provider is selected."
+        },
+        "payload_format": {
+          "type": "string",
+          "enum": [
+            "ferrum",
+            "aws_api_gateway_v2"
+          ],
+          "default": "ferrum",
+          "description": "`ferrum` (default) sends the Ferrum invocation payload and uses the Ferrum response contracts. `aws_api_gateway_v2` (aws_lambda with mode terminate only) sends an API Gateway HTTP API proxy event, payload format 2.0 (`version`, `routeKey`, `rawPath`, `rawQueryString`, `cookies`, `headers`, `queryStringParameters`, `requestContext`, `body`, `isBase64Encoded`), built from the same finalized request view and the same fail-closed forward_headers / forward_query_params / forward_body selection, and maps the function result like an API Gateway proxy integration: a JSON object with `statusCode` (integer 200-599) is a structured response with optional `headers`, `multiValueHeaders`, `cookies` (one Set-Cookie each), `body`, and `isBase64Encoded`, with an identical name/value pair in `headers` and `multiValueHeaders` merged into one field line and at most 128 header field lines / 32 KiB of header names and values; a JSON string result is returned as the decoded string and any other JSON value as its JSON text, both with status 200 and content-type application/json. Mapped headers are sanitized like provider response headers. A duplicate-member or malformed result fails with `invalid_api_gateway_response` under `on_error`. Native gRPC terminate requests are refused before invocation with `unsupported_grpc_payload_format`."
+        },
+        "forward_body": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include one authoritative lossless finalized request-body representation in the function payload for every HTTP method. Ferrum never parses JSON into a structured value: exact UTF-8 bytes are carried as a string with body_encoding=utf8, arbitrary bytes are base64 with body_encoding=base64, and the active hook Content-Type is carried separately as body_content_type. The plugin buffers before invocation and fails closed if bytes are unavailable or either the original or active request headers use a non-identity Content-Encoding. Because invocation occurs after request-body transforms and final request-policy acceptance, this plugin may share a protocol chain with a request-body transformer and observes the exact backend-visible bytes. Candidate admission and runtime cache construction retain the fail-closed composition refusal only for registered custom plugins that declare pre-finalization request-body egress."
+        },
+        "forward_headers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+          },
+          "description": "Each entry must be a non-empty RFC 9110 HTTP field-name token (no empty string, spaces, or other separators), matching runtime admission. Header names to forward into the function payload (lowercased at config load). Values come from the finalized backend-visible header view (the function is invoked in the finalized-request-egress phase, after request-body transforms and every final request-policy hook), so a header an earlier plugin removed - authorization under strip_authorization_on_success, or a gateway-owned claim_headers destination with no verified claim - is omitted rather than re-read from the client's original request."
+        },
+        "forward_query_params": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include decoded query parameters from the shared canonical backend-bound query view in the function payload, after omitting credentials that an earlier auth plugin marked for backend stripping. Behavior is identical on HTTP/1.1, HTTP/2, and HTTP/3 and includes any earlier ordered query transform. Duplicate decoded names (including percent-encoded aliases and bare/valued pairs), literal '+', an unencoded ';' ('%3B' is unambiguous), malformed percent-encoding, non-UTF-8 decodings, and parameters lacking their original encoded representation are rejected before invocation even when on_error=continue."
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 900000,
+          "default": 5000,
+          "description": "Function invocation timeout in milliseconds, 1-900000 (15 minutes, the AWS Lambda synchronous invocation maximum). A larger value is rejected at admission."
+        },
+        "max_response_body_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 67108864,
+          "default": 10485760,
+          "description": "Max function response body size (10 MiB default), 1-67108864 (64 MiB). The response is buffered whole, so this is the per-invocation retained-memory ceiling; a larger value is rejected at admission."
+        },
+        "on_error": {
+          "type": "string",
+          "enum": [
+            "reject",
+            "continue"
+          ],
+          "default": "reject",
+          "description": "reject: return error to client. continue: skip and proxy normally."
+        },
+        "error_status_code": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 400,
+          "maximum": 599,
+          "default": 502,
+          "description": "Final HTTP error status when rejecting an invocation or pre_proxy non-2xx response. Must be in range 400-599."
+        },
+        "allow_plaintext": {
+          "type": "boolean",
+          "default": false,
+          "description": "Admit an http:// function_url or aws_endpoint_url whose host is not a loopback IP literal written as a dotted-quad 127.d.d.d or [::1]. The invocation payload and the provider credential (function key, bearer token, or SigV4 signature) then cross the network in clear. The AWS_LAMBDA_ENDPOINT_URL environment fallback is operator-controlled and is not screened. Omit for false; an explicit null is rejected like every other optional field."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "provider"
+            ],
+            "properties": {
+              "provider": {
+                "enum": [
+                  "azure_functions",
+                  "gcp_cloud_functions"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "function_url"
+            ],
+            "properties": {
+              "function_url": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "payload_format"
+            ],
+            "properties": {
+              "payload_format": {
+                "const": "aws_api_gateway_v2"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "provider",
+              "mode"
+            ],
+            "properties": {
+              "provider": {
+                "const": "aws_lambda"
+              },
+              "mode": {
+                "const": "terminate"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "aws_credentials"
+            ],
+            "properties": {
+              "aws_credentials": {
+                "const": "default_chain"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "aws_access_key_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "aws_secret_access_key"
+                  ]
+                },
+                {
+                  "required": [
+                    "aws_session_token"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "function_url"
+            ],
+            "properties": {
+              "function_url": {
+                "pattern": "^[hH][tT][tT][pP]:",
+                "not": {
+                  "pattern": "^[hH][tT][tT][pP]://(?:127(?:\\.[0-9]{1,3}){3}|\\[::1\\])(?::[0-9]*)?(?:[/?#]|$)"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "allow_plaintext"
+            ],
+            "properties": {
+              "allow_plaintext": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "aws_endpoint_url"
+            ],
+            "properties": {
+              "aws_endpoint_url": {
+                "pattern": "^[hH][tT][tT][pP]:",
+                "not": {
+                  "pattern": "^[hH][tT][tT][pP]://(?:127(?:\\.[0-9]{1,3}){3}|\\[::1\\])(?::[0-9]*)?(?:[/?#]|$)"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "allow_plaintext"
+            ],
+            "properties": {
+              "allow_plaintext": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

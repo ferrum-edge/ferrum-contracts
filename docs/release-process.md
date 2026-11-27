@@ -42,7 +42,12 @@ When Ferrum Edge publishes `vX.Y.Z`:
      failure policies, parity phases/priorities/protocols and every
      `PluginConfigBase` conditional; do not refresh only their pins. Record the
      new `openapi.yaml` sha256 (`git show vX.Y.Z:openapi.yaml | shasum -a 256`)
-     only after the owner configuration compatibility check below.
+     only after the owner configuration compatibility check below. Then
+     regenerate the standalone plugin config schemas from that file:
+     `git show vX.Y.Z:openapi.yaml > /tmp/openapi.yaml` and
+     `python3 -I ci/plugin_config_schemas.py --openapi /tmp/openapi.yaml --write`
+     (standard library only), and commit `plugin-config-schemas/`. CI fails a
+     catalog re-pin whose generated files were not regenerated.
    - `vocabularies/backend-egress-policy.json`: `openapi.yaml`,
      `src/admin/backend_egress_policy.rs`,
      `src/grpc/backend_egress_attestation.rs`, `src/config/env_config.rs`, and

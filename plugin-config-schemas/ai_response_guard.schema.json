@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/ai_response_guard.schema.json",
+  "title": "ai_response_guard plugin config",
+  "description": "The `config` object of an enabled `ai_response_guard` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component AiResponseGuardConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "ai_response_guard",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/AiResponseGuardConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/AiResponseGuardConfig",
+  "$defs": {
+    "AiResponseGuardConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: ai_response_guard — validation and filtering for AI/LLM API responses. Enforcing actions fail closed when a governed buffered response is oversized or uninspectable. Native gRPC protobuf responses are inspected only for methods enrolled in the descriptor-based grpc block; unenrolled methods are never decoded and never buffered. With grpc, JSON-only rules must be inactive: require_json must be omitted or false, and required_fields must be omitted or empty.",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "grpc"
+            ]
+          },
+          "then": {
+            "properties": {
+              "require_json": {
+                "const": false
+              },
+              "required_fields": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "pii_patterns"
+          ],
+          "properties": {
+            "pii_patterns": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "custom_pii_patterns"
+          ],
+          "properties": {
+            "custom_pii_patterns": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "blocked_phrases"
+          ],
+          "properties": {
+            "blocked_phrases": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "blocked_patterns"
+          ],
+          "properties": {
+            "blocked_patterns": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "require_json"
+          ],
+          "properties": {
+            "require_json": {
+              "const": true
+            }
+          }
+        },
+        {
+          "required": [
+            "required_fields"
+          ],
+          "properties": {
+            "required_fields": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "max_completion_length"
+          ],
+          "properties": {
+            "max_completion_length": {
+              "minimum": 1
+            }
+          }
+        }
+      ],
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "reject",
+            "redact",
+            "warn"
+          ],
+          "default": "reject",
+          "description": "Action when a violation is detected in the response body. Content rules govern successful (2xx) responses; max_scan_bytes applies to every buffered status, and a redact transform may still rewrite a buffered non-2xx body it can parse. warn records ai_response_guard_* metadata and never adds a response header. Buffered SSE is parsed and redacted by complete event; content spanning events that cannot be safely rewritten is rejected. Live SSE requests are never re-buffered by this plugin. A governed JSON body, SSE data payload, or serialized tool-arguments document with duplicate object members is uninspectable (reject/redact answer 502; warn records ambiguous_json_document) whenever a detection, required_fields, or max_completion_length rule is active."
+        },
+        "pii_patterns": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "enum": [
+              "ssn",
+              "credit_card",
+              "email",
+              "phone_us",
+              "api_key",
+              "aws_key",
+              "ip_address",
+              "iban"
+            ]
+          },
+          "default": [],
+          "description": "Built-in PII pattern names to scan for (e.g., ssn, credit_card, email, phone_us, api_key, aws_key, ip_address, iban). Each name at most once. credit_card covers Visa, Mastercard (including the 2221-2720 2-series), Discover, UnionPay, JCB, American Express (contiguous, 4-6-5, or 4-4-4-3), and Diners Club numbers and is confirmed with a Luhn checksum; api_key covers multi-segment sk-proj-/sk-ant-api03- style keys plus GitHub, Google, and Slack token formats; ip_address covers IPv4 (octets 0-255) and IPv6 (full, or ::-compressed, inner or trailing, with at least three groups); iban accepts compact or space-grouped IBANs with a registry country code."
+        },
+        "custom_pii_patterns": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "regex"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Pattern identifier used in redaction placeholders and violation reports (at most 128 characters)"
+              },
+              "regex": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Regular expression pattern to match. Must not match the empty string; a zero-width rule is rejected at construction."
+              }
+            }
+          },
+          "default": [],
+          "description": "Custom PII {name, regex} patterns for domain-specific detection. At most 256 entries. A regex that matches the empty string is rejected at construction, and a zero-width match produced at runtime (for example by a bare word-boundary assertion) makes redaction fail closed."
+        },
+        "blocked_phrases": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": [],
+          "description": "Exact phrases to block in response content (case-insensitive). Literal values are never exposed in placeholders, metadata, logs, or reject bodies; bounded positional rule IDs are used instead. At most 1024 entries."
+        },
+        "blocked_patterns": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "regex"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Pattern identifier for violation reports (at most 128 characters)"
+              },
+              "regex": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Regular expression pattern to match. Must not match the empty string; a zero-width rule is rejected at construction."
+              }
+            }
+          },
+          "default": [],
+          "description": "Custom {name, regex} patterns for blocking arbitrary content in responses. At most 256 entries; the empty-match rule is the same as custom_pii_patterns."
+        },
+        "scan_fields": {
+          "type": "string",
+          "enum": [
+            "content",
+            "all"
+          ],
+          "default": "content",
+          "description": "Which response fields to scan: 'content' scans supported completion and tool/function-call fields (OpenAI chat/Responses, Anthropic content[], Gemini candidates[].content.parts[], Bedrock Converse output.message.content[], Cohere v1 text and chat_history[].message, and Hugging Face TGI's top-level array of generated_text objects), 'all' scans the entire response body"
+        },
+        "redaction_placeholder": {
+          "type": "string",
+          "default": "[REDACTED:{type}]",
+          "description": "Template for redacted text. {type} is replaced with the pattern name; the RENDERED result must be at most 512 UTF-8 bytes, since every match re-emits it. Structured (JSON, SSE, gRPC) redaction output is additionally charged against a per-response growth allowance of four times the response body size (minimum 65536, maximum 67108864 bytes), never more than the room the response's retained-body ceiling leaves above the body. Growth is measured on the JSON-escaped form, and live intermediate buffers are bounded by the same allowance, so a rewrite can be refused even when its final net growth would fit; an expanding policy that exhausts it fails closed rather than delivering a partially redacted body."
+        },
+        "max_scan_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 67108864,
+          "default": 1048576,
+          "description": "Maximum governed buffered response size, including the aggregate decoded/decompressed native-gRPC payload across frames. Hard ceiling 67108864 (64 MiB). Reject/redact and structural rules fail closed above this limit; warn-only content rules record a bounded warning and pass through."
+        },
+        "require_json": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reject responses that are not valid JSON"
+        },
+        "required_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": [],
+          "description": "JSON field names that must be present in the response body"
+        },
+        "max_completion_length": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Maximum allowed length of completion content, measured in characters (Unicode scalar values, not UTF-8 bytes). 0 = no limit"
+        },
+        "allowlist": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Exceptions for PII findings (pii_patterns and custom_pii_patterns only; blocked_phrases and blocked_patterns are never excused). Compared against the complete matched text, identically for detection, redaction (an allowed match is left verbatim), and residual re-scans.",
+          "properties": {
+            "values": {
+              "type": "array",
+              "maxItems": 1024,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024,
+                "description": "Exact matched text that is not a finding. The runtime bound is 1024 UTF-8 bytes, so a multi-byte value within 1024 characters can still be refused."
+              },
+              "default": [],
+              "description": "Exact values never reported as PII, e.g. a public support address. At most 1024 entries."
+            },
+            "patterns": {
+              "type": "array",
+              "maxItems": 256,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Regular expression anchored by the runtime as ^(?:pattern)$, so it must match the entire matched text. Must compile on its own."
+              },
+              "default": [],
+              "description": "Whole-match regexes for values never reported as PII, e.g. an order-number family. At most 256 entries."
+            }
+          }
+        },
+        "grpc": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "descriptor_path",
+            "methods"
+          ],
+          "description": "Native-gRPC response inspection contract. Present means the plugin also applies to native gRPC, but only for the enrolled methods: every other gRPC method is left undecoded, uninspected, and unbuffered. Enrolled methods fail closed for reject/redact actions when the descriptor is unavailable, the payload does not decode as the configured type, the message carries fields outside the descriptor, the framing is malformed or truncated, the message encoding is not gzip/identity, or a bound is exceeded. Requires at least one detection pattern, blocked phrase, or positive max_completion_length. require_json must be omitted or false, and required_fields must be omitted or empty. Unchanged responses preserve trailers; a redaction rewrite retains reserved gRPC terminal metadata and retires application trailers and their merged-header copies under the shared body-rewrite policy.",
+          "properties": {
+            "descriptor_path": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S",
+              "description": "Node-local path to a compiled protobuf FileDescriptorSet. Validated shape-only at Admin/CP admission and against the real descriptor by mode-aware file-dependency validation. A readable but invalid descriptor rejects the candidate configuration; an absent or unreadable descriptor retains enrollment and fails closed for enforcing actions at request time."
+            },
+            "methods": {
+              "type": "object",
+              "minProperties": 1,
+              "description": "Map of \"/package.Service/Method\" to that method's response inspection contract. Only these methods are inspected. Leading/trailing whitespace and one optional leading slash are normalized by the runtime; every dotted service segment and the method identifier must be a protobuf/gRPC identifier. Duplicate normalized forms are rejected at runtime.",
+              "propertyNames": {
+                "pattern": "^\\s*/?[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*/[A-Za-z_][A-Za-z0-9_]*\\s*$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "response_type"
+                ],
+                "properties": {
+                  "response_type": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S",
+                    "description": "Fully-qualified protobuf response message type."
+                  },
+                  "text_fields": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[^.]*[^\\s.][^.]*(?:\\.[^.]*[^\\s.][^.]*){0,31}$"
+                    },
+                    "description": "Dotted field paths restricting what is scanned and rewritten. Each path has 1 to 32 segments, each non-empty after trimming whitespace. Exact duplicates are rejected by the schema; duplicates after segment trimming are rejected at runtime. Descriptor resolution also runs at runtime: paths must end at a string field, may traverse repeated messages, and may not traverse map fields. Omit to cover every string field and known extension value recursively."
+                  }
+                }
+              }
+            },
+            "max_message_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 67108864,
+              "default": 1048576,
+              "description": "Per-message ceiling, applied to the declared frame length and enforced while inflating a gzip-compressed frame; inflation stops at the tighter of this ceiling and the remaining max_scan_bytes budget. Aggregate decoded payload across frames is additionally capped by max_scan_bytes. Bounded by an immutable deployment maximum of 67108864 (64 MiB), equal to the max_scan_bytes ceiling — a larger per-message value could never produce an inspection."
+            },
+            "max_messages": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1024,
+              "default": 64,
+              "description": "Maximum number of length-prefixed frames one buffered gRPC response may carry. Bounded by an immutable deployment maximum of 1024 frames: the decoded-byte scan budget bounds decoded payload, not frame count, so legal zero-length frames would otherwise let an operator-configured value drive an effectively unbounded frame vector."
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1536 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/mesh_route_dispatch.schema.json",
+  "title": "mesh_route_dispatch plugin config",
+  "description": "The `config` object of an enabled `mesh_route_dispatch` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component MeshRouteDispatchConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "mesh_route_dispatch",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/MeshRouteDispatchConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/MeshRouteDispatchConfig",
+  "$defs": {
+    "MeshRouteBackendTlsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Strict route-local backend TLS override for mesh_route_dispatch.\nUnknown keys (for example `client_certpath` or\n`verify_server_certificate`) fail admission instead of silently\ndisabling intended mTLS materials or verification.\n\n`client_cert_path` and `client_key_path` must be supplied together.\nA `system://` `server_ca_cert_path` cannot be combined with\n`verify_server_cert: false` (the same contradiction Proxy and Upstream\nadmission reject); that pairing is a runtime check because the schema\ncannot condition on a value prefix and a sibling boolean at once.\n\nAdmin writes of a `mesh_route_dispatch` plugin config apply the\nProxy/Upstream backend TLS reference admission to `client_cert_path`,\n`client_key_path`, and `server_ca_cert_path` in every\n`rules[].destination.backend_tls`: when admin namespace-claim\nenforcement is on, or the token carries an `ns` claim even with\nenforcement off, an `operator` may set only inline PEM, `system://`,\nor a `k8s://` Secret in the addressed namespace, and any other\nreference it introduces is refused with `400` before the material is\nloaded. A value already stored at the same rule index and field is\nexempt, and `admin`-role tokens are not restricted.\n",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "client_cert_path"
+            ],
+            "properties": {
+              "client_cert_path": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "client_key_path"
+            ],
+            "properties": {
+              "client_key_path": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "client_key_path"
+            ],
+            "properties": {
+              "client_key_path": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "client_cert_path"
+            ],
+            "properties": {
+              "client_cert_path": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "client_cert_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "client_key_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "server_ca_cert_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "verify_server_cert": {
+          "type": "boolean",
+          "default": true
+        },
+        "sni": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 253
+        },
+        "san_allow_list": {
+          "type": "array",
+          "maxItems": 256,
+          "default": [],
+          "items": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        }
+      }
+    },
+    "MeshRouteBackoffStrategy": {
+      "description": "Strict route-local retry delay strategy for mesh_route_dispatch. Each\ndelay is bounded to `[0, 300000]` ms by the shared gateway\n`RetryConfig` field validation the route policy runs; `base_ms` must\nadditionally not exceed `max_ms`, which JSON Schema cannot express\nacross two sibling properties and is therefore a runtime-only check.\n",
+      "oneOf": [
+        {
+          "type": "object",
+          "title": "Fixed delay",
+          "required": [
+            "fixed"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "fixed": {
+              "type": "object",
+              "required": [
+                "delay_ms"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "delay_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "maximum": 300000,
+                  "default": 100
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "title": "Exponential backoff",
+          "required": [
+            "exponential"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "exponential": {
+              "type": "object",
+              "required": [
+                "base_ms",
+                "max_ms"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "base_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "maximum": 300000
+                },
+                "max_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "maximum": 300000
+                }
+              }
+            }
+          }
+        }
+      ],
+      "default": {
+        "fixed": {
+          "delay_ms": 100
+        }
+      }
+    },
+    "MeshRouteDispatchConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: mesh_route_dispatch — Per-request route override driven by\nmethod / header / query-param predicates. Closes the Istio\n`VirtualService.http[].match` header/method gap without extending\nthe `Proxy` schema. Runs after authentication, authorization, and\nrate limiting — admission decisions still use the public listener\nidentity; only downstream `before_proxy` plugins and backend\ndispatch see the effective override destination.\n\nAt least one rule is required unless `weighted_splits` is set. When multiple plugin instances run on\none proxy, each matching instance replaces the override destination\nset by earlier instances. Per-rule `backend_tls` is direct-backend\nonly (`upstream_id` destinations inherit TLS from the referenced\nUpstream).\n\nUnknown keys are rejected at every owned nesting level, including\nroute-local `retry` / backoff and destination `backend_tls`\n(`additionalProperties: false` / serde `deny_unknown_fields`). Shared\ngateway `RetryConfig` and `BackendTlsConfig` schemas remain open for\nother consumers; mesh routes use `MeshRouteRetryConfig` and\n`MeshRouteBackendTlsConfig`.\n\n`rules` may be empty only when `weighted_splits` lists at least one\nsplit (an instance that only resolves weighted splits).\n",
+      "anyOf": [
+        {
+          "required": [
+            "rules"
+          ],
+          "properties": {
+            "rules": {
+              "type": "array",
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "weighted_splits"
+          ],
+          "properties": {
+            "weighted_splits": {
+              "type": "array",
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "One ordered route rule. `destination` is required — and must\ncarry at least one override field — unless the rule carries a\n`redirect` (which answers the request itself and needs no\nbackend). First match wins.\n",
+            "anyOf": [
+              {
+                "required": [
+                  "redirect"
+                ],
+                "properties": {
+                  "redirect": {
+                    "type": "object"
+                  }
+                }
+              },
+              {
+                "required": [
+                  "destination"
+                ],
+                "properties": {
+                  "destination": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "upstream_id"
+                        ],
+                        "properties": {
+                          "upstream_id": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "backend_host"
+                        ],
+                        "properties": {
+                          "backend_host": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "backend_port"
+                        ],
+                        "properties": {
+                          "backend_port": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "backend_tls"
+                        ],
+                        "properties": {
+                          "backend_tls": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "required": [
+                      "match"
+                    ],
+                    "properties": {
+                      "match": {
+                        "anyOf": [
+                          {
+                            "required": [
+                              "methods"
+                            ],
+                            "properties": {
+                              "methods": {
+                                "type": "array",
+                                "minItems": 1
+                              }
+                            }
+                          },
+                          {
+                            "required": [
+                              "headers"
+                            ],
+                            "properties": {
+                              "headers": {
+                                "type": "object",
+                                "minProperties": 1
+                              }
+                            }
+                          },
+                          {
+                            "required": [
+                              "without_headers"
+                            ],
+                            "properties": {
+                              "without_headers": {
+                                "type": "object",
+                                "minProperties": 1
+                              }
+                            }
+                          },
+                          {
+                            "required": [
+                              "port"
+                            ],
+                            "properties": {
+                              "port": {
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          {
+                            "required": [
+                              "query_params"
+                            ],
+                            "properties": {
+                              "query_params": {
+                                "type": "object",
+                                "minProperties": 1
+                              }
+                            }
+                          },
+                          {
+                            "required": [
+                              "authority"
+                            ],
+                            "properties": {
+                              "authority": {
+                                "not": {
+                                  "type": "null"
+                                }
+                              }
+                            }
+                          },
+                          {
+                            "required": [
+                              "source_namespace"
+                            ],
+                            "properties": {
+                              "source_namespace": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          {
+                            "required": [
+                              "uri"
+                            ],
+                            "properties": {
+                              "uri": {
+                                "not": {
+                                  "type": "null"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "request_transform"
+                    ],
+                    "properties": {
+                      "request_transform": {
+                        "type": "array",
+                        "minItems": 1
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "response_transform"
+                    ],
+                    "properties": {
+                      "response_transform": {
+                        "type": "array",
+                        "minItems": 1
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "fault"
+                    ],
+                    "properties": {
+                      "fault": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "rewrite"
+                    ],
+                    "properties": {
+                      "rewrite": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "redirect"
+                    ],
+                    "properties": {
+                      "redirect": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "timeout_ms"
+                    ],
+                    "properties": {
+                      "timeout_ms": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "timeout_disabled"
+                    ],
+                    "properties": {
+                      "timeout_disabled": {
+                        "const": true
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "request_timeout_ms"
+                    ],
+                    "properties": {
+                      "request_timeout_ms": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "attempt_timeout_ms"
+                    ],
+                    "properties": {
+                      "attempt_timeout_ms": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "retry"
+                    ],
+                    "properties": {
+                      "retry": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "retry_disabled"
+                    ],
+                    "properties": {
+                      "retry_disabled": {
+                        "const": true
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "if": {
+                  "required": [
+                    "timeout_disabled"
+                  ],
+                  "properties": {
+                    "timeout_disabled": {
+                      "const": true
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "timeout_ms": {
+                      "type": "null"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "retry_disabled"
+                  ],
+                  "properties": {
+                    "retry_disabled": {
+                      "const": true
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "retry": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            ],
+            "properties": {
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[!-~]+$",
+                "description": "Optional operator label for the rule: 1-128 printable ASCII\ncharacters without whitespace. A match publishes\n`mesh_route_dispatch.rule_index` (the rule's zero-based\nposition) and, when set, `mesh_route_dispatch.rule_name`\ntransaction-log metadata; both are withdrawn when a\nNodeWaypoint authorization veto refuses the matched\ndestination.\n"
+              },
+              "match": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Match criteria — all configured fields must match for the\nrule to fire. At least one of `methods`/`headers`/\n`without_headers`/`query_params`/`authority`/\n`source_namespace`/`uri`/`port` must be\nconfigured, UNLESS the rule carries a route action\n(`request_transform`, `response_transform`, `fault`,\n`rewrite`, `redirect`, `timeout_ms`,\n`timeout_disabled: true`, `request_timeout_ms`,\n`attempt_timeout_ms`, `retry`, or\n`retry_disabled: true`), which makes an empty match the\ntranslator's deliberate action-only catch-all. An empty\nmatch with no route action is rejected at load time because\nit would silently shadow every later rule. `ignore_uri_case`\nis not a predicate: it decorates `uri` and is rejected\nwithout one.\n",
+                "allOf": [
+                  {
+                    "if": {
+                      "required": [
+                        "ignore_uri_case"
+                      ],
+                      "properties": {
+                        "ignore_uri_case": {
+                          "const": true
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "uri"
+                      ],
+                      "properties": {
+                        "uri": {
+                          "not": {
+                            "type": "null"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "methods": {
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[-!#$%&'*+.^_`|~0-9A-Za-z]+$",
+                          "description": "Bare-string back-compat form, interpreted as Exact.\nMust be a non-empty RFC 9110 method token: the hot\npath compares it with `==` against the request\nmethod, so an operand carrying a space or another\nnon-token character can never match and is\nrejected at config load.\n"
+                        },
+                        {
+                          "type": "object",
+                          "description": "Istio StringMatch shape — EXACTLY one of\n`exact` / `prefix` / `regex`. The runtime is an\nexternally tagged enum, so both `{}` and\n`{\"exact\": \"GET\", \"prefix\": \"G\"}` are rejected.\nPrefix patterns are uppercased at compile time\n(methods are uppercase ASCII per RFC 9110 §9.1);\nregex patterns are interpreted verbatim inside\nfull-input anchors. `exact` / `prefix` operands\nmust be non-empty method tokens (case and\nextension methods such as `PROPFIND` are\npreserved); `regex` is a pattern rather than a\ntoken and is only checked for regex validity.\n",
+                          "additionalProperties": false,
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "properties": {
+                            "exact": {
+                              "type": "string",
+                              "pattern": "^[-!#$%&'*+.^_`|~0-9A-Za-z]+$"
+                            },
+                            "prefix": {
+                              "type": "string",
+                              "pattern": "^[-!#$%&'*+.^_`|~0-9A-Za-z]+$"
+                            },
+                            "regex": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "description": "HTTP methods (any-of). Empty = no method restriction."
+                  },
+                  "headers": {
+                    "type": "object",
+                    "propertyNames": {
+                      "pattern": "^[-!#$%&'*+.^_`|~0-9A-Za-z]+$",
+                      "description": "Header names are RFC 9110 tokens, normalized to ASCII\nlowercase at config load. A name outside the token\ngrammar (empty, `x bad`, `x:bad`) can never appear in\na parsed request header map, so it is rejected at\nconfig load rather than admitted as a rule that\nsilently never fires.\n"
+                    },
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "description": "Bare-string back-compat form, interpreted as Exact."
+                        },
+                        {
+                          "type": "object",
+                          "description": "Istio StringMatch shape — EXACTLY one of\n`exact` / `prefix` / `regex`. The runtime is an\nexternally tagged enum, so both `{}` and\n`{\"exact\": \"a\", \"prefix\": \"b\"}` are rejected.\nAn empty `exact` is a legitimate \"header present\nand empty\" predicate; empty `prefix` / `regex`\noperands are rejected at config load.\n",
+                          "additionalProperties": false,
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "properties": {
+                            "exact": {
+                              "type": "string"
+                            },
+                            "prefix": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "regex": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "description": "Header matches (all-of). Header names are case-insensitive."
+                  },
+                  "without_headers": {
+                    "type": "object",
+                    "propertyNames": {
+                      "pattern": "^[-!#$%&'*+.^_`|~0-9A-Za-z]+$"
+                    },
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "description": "Bare-string form, interpreted as Exact."
+                        },
+                        {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "properties": {
+                            "exact": {
+                              "type": "string"
+                            },
+                            "prefix": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "regex": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "description": "Negated header matches (Istio `withoutHeaders`), keyed\nand normalized exactly like `headers`. The rule fails\nwhen ANY listed header is present and its value\nsatisfies the matcher; an absent header never vetoes\nthe rule, so `{\"x-legacy\": {\"regex\": \".*\"}}` requires\nthe header to be absent.\n"
+                  },
+                  "port": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint16",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "description": "Destination port the client addressed (Istio\n`HTTPMatchRequest.port`), read from trusted provenance\nonly: the original destination when capture rewrote the\naccept socket, otherwise the frontend listener port —\nnever `Host` or forwarding headers. A request with\nneither does not match.\n"
+                  },
+                  "query_params": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "string",
+                          "description": "Bare-string form, interpreted as Exact."
+                        },
+                        {
+                          "type": "object",
+                          "description": "Istio StringMatch shape — EXACTLY one of `exact` /\n`prefix` / `regex`. `regex` must match the full\ndecoded value; empty `prefix` / `regex` operands\nare rejected at config load.\n",
+                          "additionalProperties": false,
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "properties": {
+                            "exact": {
+                              "type": "string"
+                            },
+                            "prefix": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "regex": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "description": "Query parameter matches (all-of), compared after percent-decoding the backend-bound query representation available at the dispatch hook, including authentication-owned credential strips and any priority-overridden request_transformer that already ran. A deliberately later route/request transform remains a separate ordered operation. A request whose query cannot be decoded to one value is rejected with 400 before any rule is evaluated: a repeated or percent-encoded duplicate name, a literal '+' (RFC 3986 plus vs form-urlencoded space), an unencoded ';' (a pair separator for backends that also split on ';'; '%3B' is unambiguous), malformed percent-encoding, or a non-UTF-8 decoding."
+                  },
+                  "uri": {
+                    "description": "Optional URI predicate (Istio `StringMatch` shape).\nExactly one of `exact` / `prefix` / `regex`. This is\nnormally omitted because the parent proxy `listen_path`\ngates URI selection; the VirtualService translator emits\nit for widened `ignoreUriCase` routes and collapsed\nroute-order fallbacks that need dispatch-layer URI\nprecision. Regex patterns must match the full URI path.\n",
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "exact"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "exact": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "prefix"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "prefix": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "regex"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "regex": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "ignore_uri_case": {
+                    "type": "boolean",
+                    "description": "When true, folds ASCII case for `match.uri.exact` and\n`match.uri.prefix` comparisons only. Regex URI matches\nkeep their operator-supplied regex unchanged; operators\nwho want case-insensitive regex should write `(?i)` in\nthe pattern. Requires `match.uri`.\n"
+                  },
+                  "source_namespace": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "pattern": "^\\S+$",
+                    "description": "Source workload Kubernetes namespace (exact match).\nMirrors Istio `VirtualService.http[].match.sourceNamespace`:\nthe CRD models this as an exact-only string (no\n`prefix`/`regex` arms). Resolved from the peer's SPIFFE\nID via the Istio convention\n`spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>`.\nMatches are case-sensitive (Kubernetes namespace names\nare RFC 1123 lowercase). The predicate fails closed\n(returns no-match) when the request carries no resolved\npeer SPIFFE identity, so non-mesh requests and clients\nthat present non-SPIFFE certificates do not match.\nEmpty / whitespace-only values are rejected at load time.\n"
+                  },
+                  "authority": {
+                    "description": "`:authority` / `Host` match (Istio `HTTPMatchRequest.authority`).\nExactly one of `exact` / `prefix` / `regex` per rule.\nExact and prefix patterns compare against the raw request\n`Host`/`:authority` case-sensitively, including an\nexplicit request port when present. Regex patterns are\ncompiled verbatim and must match the full authority\nstring; operators who want case-insensitive regex should\nwrite `(?i)` in the pattern. Distinct from\nVirtualService-level `hosts`, which gates proxy\nadmission — this is a per-rule predicate evaluated AFTER\nrouting has picked the proxy.\n",
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Bare-string back-compat form, interpreted as Exact."
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "exact"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "exact": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "prefix"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "prefix": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "regex"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "regex": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "destination": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Override applied on match. At least one field must be set\n(enforced at rule level, where a `redirect` rule is allowed\nto omit `destination` entirely). `upstream_id` is mutually\nexclusive with the direct-backend fields\n(`backend_host`/`backend_port`/`backend_tls`);\n`backend_host` and `backend_port` must be set together, and\n`backend_tls` requires both.\n",
+                "allOf": [
+                  {
+                    "if": {
+                      "required": [
+                        "backend_host"
+                      ],
+                      "properties": {
+                        "backend_host": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "backend_port"
+                      ],
+                      "properties": {
+                        "backend_port": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "backend_port"
+                      ],
+                      "properties": {
+                        "backend_port": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "backend_host"
+                      ],
+                      "properties": {
+                        "backend_host": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "upstream_id"
+                      ],
+                      "properties": {
+                        "upstream_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "backend_host": {
+                          "type": "null"
+                        },
+                        "backend_port": {
+                          "type": "null"
+                        },
+                        "backend_tls": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "backend_tls"
+                      ],
+                      "properties": {
+                        "backend_tls": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "backend_host",
+                        "backend_port"
+                      ],
+                      "properties": {
+                        "backend_host": {
+                          "type": "string"
+                        },
+                        "backend_port": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "upstream_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "backend_host": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "pattern": "^\\s*(?:\\[[0-9A-Fa-f:.]+\\]|[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*|[^\\s/?#@:\\[\\]]+)\\s*$",
+                    "description": "Direct-backend host. This is a BARE host — a DNS name,\nan IPv4 literal, or an IPv6 literal in either `::1` or\n`[::1]` form — with the port carried by `backend_port`.\nThe dispatch path hands the value straight to DNS\nresolution, so an embedded authority port, scheme, path,\nquery, fragment, or userinfo resolves to nothing and is\nrejected at config load rather than answering 502 on\nevery matching request. Leading / trailing whitespace is\ntrimmed and the value is ASCII-lowercased at load, so\nthe length bound applies to the TRIMMED value at\nruntime while `maxLength` here counts the raw string.\nThe pattern is likewise a conservative approximation:\nthe runtime additionally parses the IPv6 forms, so a\ncolon-bearing value that is not a valid IPv6 literal\n(`1:2:3`) passes this schema and is still refused at\nadmission.\n"
+                  },
+                  "backend_port": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint16",
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  "backend_tls": {
+                    "description": "Optional per-rule backend TLS override (direct backends only).",
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/MeshRouteBackendTlsConfig"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "requires_node_waypoint_authz": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Trusted mesh-translator marker. When scoped NodeWaypoint\nauthorization is active, a matching destination carrying\nthis marker requires an authorized destination stamp.\n"
+                  }
+                }
+              },
+              "timeout_ms": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Optional route-local backend response/read timeout in\nmilliseconds. Mutually exclusive with\n`timeout_disabled: true`. `0` means \"no timeout\" and is the\nvalue `timeout_disabled: true` resolves to.\n"
+              },
+              "timeout_disabled": {
+                "type": "boolean",
+                "default": false,
+                "description": "Explicitly clear the selected proxy's inherited backend\nresponse/read timeout. Cannot be true when `timeout_ms` is set.\n"
+              },
+              "request_timeout_ms": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 1,
+                "description": "Optional TOTAL request deadline for this rule, in\nmilliseconds from request receipt (Gateway API\n`HTTPRoute.rules[].timeouts.request`). Unlike `timeout_ms`,\nwhich bounds one backend attempt's wait for response headers\nand the idle gap between response frames, it spans every\nattempt, retry backoff, and the streaming response body, and\nis never re-armed by a retry. Request-scoped: it never changes\nthe selected proxy or upstream. Expiry before a non-gRPC\nresponse head answers `504` (with `X-Gateway-Error:\nrequest_timeout` when no backend held the request, otherwise\n`backend_timeout`); expiry mid-body resets the HTTP/2\nstream, closes the HTTP/1.1 connection, or resets the\nHTTP/3 stream with `H3_REQUEST_CANCELLED`; a gRPC request\nfolds it into its RPC deadline and ends with\n`DEADLINE_EXCEEDED`. HTTP/1.1, HTTP/2 and native HTTP/3\nenforce it alike. Expiry is charged to a backend's health\nonly when that backend held the cancelled attempt; expiry\nbefore the attempt was handed to a backend, in retry backoff,\nor after the response head is health-neutral. Upgraded\nWebSocket / CONNECT-UDP tunnels are not bounded by it. `0` is\nrejected; omit the field for no route deadline.\n"
+              },
+              "attempt_timeout_ms": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 1,
+                "description": "Optional TOTAL bound on each backend attempt for this rule, in\nmilliseconds (Gateway API\n`HTTPRoute.rules[].timeouts.backendRequest`, which the\ntranslator also projects as `timeout_ms`). The budget starts\nwhen the attempt is handed to the backend and covers its\nresponse head and its whole response body; every retry\nattempt gets a fresh budget, and `request_timeout_ms`, when\nset, still bounds the whole transaction. It is independent of\n`timeout_ms` / `timeout_disabled`, which keep bounding the\nheader wait and the idle gap between frames. Expiry before a\nnon-gRPC response head answers the ordinary backend-timeout\n`504` (retried when the rule's `retry` lists `504`); expiry\nafter the head has been sent is never retried and cuts the\nbody exactly like `request_timeout_ms` does (HTTP/2 stream\nreset, HTTP/1.1 connection close, HTTP/3\n`H3_REQUEST_CANCELLED` stream reset, health-neutral). A gRPC\nrequest folds it into its RPC deadline, anchored when the rule\nis selected and re-armed for each retry attempt, and ends with\n`DEADLINE_EXCEEDED`. HTTP/1.1, HTTP/2 and native HTTP/3\nenforce it alike. Request-scoped: it never changes the\nselected proxy or upstream. `0` is rejected; omit the field\nfor no per-attempt total bound.\n"
+              },
+              "retry": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/MeshRouteRetryConfig"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Optional route-local retry policy. Mutually exclusive with\n`retry_disabled: true`. Request-scoped: it replaces the\nselected proxy's retry policy only for requests this rule\nmatches. Istio `VirtualService.http[].retries` and Gateway\nAPI `HTTPRoute.rules[].retry` are projected here; the Gateway\nAPI translator emits `max_retries` = `attempts` (retries\nafter the initial attempt), `retryable_status_codes` =\n`codes`, a `fixed` backoff of `backoff`, the default\nreplay-safe `retryable_methods`, and\n`retry_on_connect_failure: true`. Backoff and every attempt\nstay inside the rule's `request_timeout_ms` budget.\n"
+              },
+              "retry_disabled": {
+                "type": "boolean",
+                "default": false,
+                "description": "Explicitly clear the selected proxy's inherited retry\npolicy. Cannot be true when `retry` is set.\n"
+              },
+              "request_transform": {
+                "type": "array",
+                "description": "Per-rule request header transforms (Istio VirtualService\n`http[].headers.request.{set,add,remove}`). Published onto\n`RequestContext.route_override_request_transform` when this\nrule matches. Every enabled `request_transformer` on the\nproxy applies only its static header rules first; proxy core\nthen applies this list exactly once after the last eligible\n(enabled) instance so route-level header writes win under\nmultiple same-type instances and priority overrides. A\ndisabled RTDS transformer is not eligible and does not\nconsume the list. `apply_route_overrides: true` lets an\nauto-emitted empty-rules instance act as that eligible\nconsumer. Validated at config load — CRLF in values,\nunknown operations, and `add`/`update` destinations in the\ngateway-owned `x-consumer-*` consumer assertion namespace or\nthe router's `x-path-param-*` route-capture namespace\n(case-insensitive, `_` or `-`) are rejected. The request list\nis applied after the LATER of the last eligible consumer and\nthe last dispatch instance, so a consumer a priority override\nmoves ahead of the dispatcher still applies it. An effective\nchain whose rules carry `request_transform` but that has no\nconfigured `request_transformer` is refused at plugin-cache\nconstruction and admin admission (the list would otherwise be\nsilently dropped); an RTDS-disabled transformer still counts\nas configured.\n",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "operation",
+                    "key"
+                  ],
+                  "allOf": [
+                    {
+                      "if": {
+                        "required": [
+                          "operation"
+                        ],
+                        "properties": {
+                          "operation": {
+                            "enum": [
+                              "add",
+                              "update"
+                            ]
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "value"
+                        ],
+                        "properties": {
+                          "value": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "required": [
+                          "operation"
+                        ],
+                        "properties": {
+                          "operation": {
+                            "const": "remove"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "value": {
+                            "type": "null"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "properties": {
+                    "operation": {
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "update",
+                        "remove"
+                      ]
+                    },
+                    "target": {
+                      "type": "string",
+                      "enum": [
+                        "header"
+                      ],
+                      "default": "header"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "Required and non-null for add/update; omitted or null for remove."
+                    }
+                  }
+                }
+              },
+              "response_transform": {
+                "type": "array",
+                "description": "Per-rule response header transforms (Istio VirtualService\n`http[].headers.response.{set,add,remove}`). Same shape as\n`request_transform` but applied on the response path: every\nenabled `response_transformer` applies static header rules\nfirst, then proxy core applies this list exactly once after\nthe last eligible instance (ordinary H1/H2/H3, synthetic/\nrejection, header simulation, and deadline provenance paths).\n\nBecause this publishes onto the `response_transformer`\nwrite surface, it shares that plugin's closed destination\nset: add/update of a protocol-managed hop-by-hop or\nframing name (`connection`, `content-length`,\n`keep-alive`, `proxy-authenticate`, `proxy-connection`,\n`te`, `trailer`, `transfer-encoding`, `upgrade`,\ncase-insensitive) is rejected at construction. Remove of\nthose names remains allowed. `request_transform` keeps its\nexisting contract. An effective chain whose rules carry\n`response_transform` but that has no configured\n`response_transformer` is refused at plugin-cache\nconstruction and admin admission.\n",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "operation",
+                    "key"
+                  ],
+                  "allOf": [
+                    {
+                      "if": {
+                        "required": [
+                          "operation"
+                        ],
+                        "properties": {
+                          "operation": {
+                            "enum": [
+                              "add",
+                              "update"
+                            ]
+                          }
+                        }
+                      },
+                      "then": {
+                        "required": [
+                          "value"
+                        ],
+                        "properties": {
+                          "value": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "if": {
+                        "required": [
+                          "operation"
+                        ],
+                        "properties": {
+                          "operation": {
+                            "const": "remove"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "value": {
+                            "type": "null"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "properties": {
+                    "operation": {
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "update",
+                        "remove"
+                      ]
+                    },
+                    "target": {
+                      "type": "string",
+                      "enum": [
+                        "header"
+                      ],
+                      "default": "header"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "Required and non-null for add/update; omitted or null for remove."
+                    }
+                  }
+                }
+              },
+              "fault": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": false,
+                "description": "Optional per-rule fault action; `null` is accepted and means\n\"no fault\", exactly as omitting the key does. Projects Istio\n`VirtualService.http[].fault` onto the matched dispatch\nrule (replacing the historical proxy-scoped\n`fault_injection` plugin that could not be collapsed\nwith sibling routes). At least one of `delay` / `abort`\nmust be present.\n\nRTDS scope: the percentages baked into a per-rule fault\nare NOT runtime-tunable via the GAP-3E RTDS keys\n`ferrum.fault_injection.<scope>.{abort,delay}_percent` —\nthose keys apply only to `fault_injection` plugin\ninstances configured with `runtime_overlay_scope`.\nOperators who need RTDS-driven fault percentages\nshould use a global / proxy-scoped `fault_injection`\nplugin instead.\n",
+                "properties": {
+                  "delay": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": false,
+                    "required": [
+                      "duration_ms",
+                      "percentage"
+                    ],
+                    "properties": {
+                      "duration_ms": {
+                        "type": "integer",
+                        "format": "uint64",
+                        "minimum": 1,
+                        "maximum": 60000,
+                        "description": "Sleep duration in milliseconds before dispatch\nwhen the percentile roll hits. Bounded to\n`[1, 60_000]` (1 ms to 1 minute).\n"
+                      },
+                      "percentage": {
+                        "type": "number",
+                        "format": "double",
+                        "exclusiveMinimum": 0,
+                        "maximum": 100,
+                        "description": "Percent of matching requests that trigger the\ndelay. `0.0` is rejected at config load time\n(omit the action to disable it instead). Positive\nvalues below one 64-bit sampler bucket round up\nto that first bucket so every accepted value can\ntrigger.\n"
+                      }
+                    }
+                  },
+                  "abort": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": false,
+                    "required": [
+                      "status_code",
+                      "percentage"
+                    ],
+                    "properties": {
+                      "status_code": {
+                        "type": "integer",
+                        "minimum": 200,
+                        "maximum": 599
+                      },
+                      "percentage": {
+                        "type": "number",
+                        "format": "double",
+                        "exclusiveMinimum": 0,
+                        "maximum": 100,
+                        "description": "Percent of matching requests that abort. Positive\nvalues below one 64-bit sampler bucket round up to\nthat first bucket so every accepted value can trigger.\n"
+                      },
+                      "grpc_status": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 16,
+                        "description": "Optional gRPC status code emitted only when the\nimmutable pre-plugin request flavor is native\ngRPC. Plain HTTP, WebSocket, and gRPC-Web requests\nnever receive a stray `grpc-status` header even if\nan earlier hook rewrites `content-type`.\n"
+                      },
+                      "body": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "Optional response body; empty when omitted."
+                      }
+                    }
+                  }
+                }
+              },
+              "rewrite": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": false,
+                "description": "Optional per-rule URI / authority rewrite; `null` is\naccepted and means \"no rewrite\". Projects Istio\n`VirtualService.http[].rewrite` onto the matched dispatch\nrule so a rewriting route can be collapsed with sibling\nroutes onto one Ferrum proxy without rewriting the siblings'\ntraffic. At least one of `uri` / `authority` must be set.\nApplied when the rule matches and no `redirect` fires.\n",
+                "properties": {
+                  "uri": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "pattern": "^/",
+                    "description": "Replacement request path forwarded to the backend. When\n`match_prefix` is set (the source `match.uri` was a\nprefix) only that prefix is replaced; otherwise the whole\npath is replaced. Must be a canonical absolute path\nwithout a query or fragment. Percent escapes, dot\nsegments, backslashes, and CRLF are rejected at load\ntime (the schema only checks the leading `/`; full\ncanonical-path admission is a runtime check). The\ncomposed path is checked again before policy and\ndispatch; ambiguous paths are refused, not resolved.\n"
+                  },
+                  "authority": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "pattern": "^(?:[A-Za-z0-9._-]+|\\[[0-9A-Fa-f:.]+\\])(?::[0-9]{1,5})?$",
+                    "description": "Replacement `Host` / `:authority` forwarded to the\nbackend. Must be exactly `host` or `host:port`: a DNS\nname or IPv4 literal (letters, digits, `-`, `.`, `_`) or a\nbracketed IPv6 literal, optionally followed by a decimal\nport 1-65535. A path, query, fragment, userinfo,\nwhitespace, or bare IPv6 literal is rejected at load. The\nruntime additionally parses the IPv6 literal and the port\nrange, which the pattern only approximates.\n"
+                  },
+                  "match_prefix": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Literal path prefix the source `match.uri.prefix`\nmatched. The plugin replaces exactly this prefix with\n`uri` and appends the unmatched suffix VERBATIM (Istio\n`HTTPRewrite` / Envoy `prefix_rewrite`), so a prefix\nending inside a path segment keeps that segment: with\n`match_prefix: /prefix/old` and `uri: /new`,\n`/prefix/oldtail` forwards as `/newtail`. A separator is\nnever synthesized; a doubled one is collapsed when both\nsides carry a `/`. An empty string strips nothing and\nprepends `uri` (the Gateway API root `PathPrefix: /`\ncase); omit the field for whole-path replacement. A\n`match_prefix` with no `uri` is inert and dropped.\nNormally set by the VirtualService or Gateway API\ntranslator, not hand-authored.\n"
+                  }
+                }
+              },
+              "redirect": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": false,
+                "description": "Optional per-rule HTTP redirect; `null` is accepted and\nmeans \"no redirect\" (a rule that is `null` here still needs\na `destination`). Projects Istio\n`VirtualService.http[].redirect`. When the rule matches the\nrequest is answered with a 3xx + `Location` and never reaches\na backend; takes precedence over `rewrite` and the route\noverride destination. A status-only redirect is valid and\npreserves the original URL. A rule carrying a `redirect`\ndoes not require a `destination`. `port` and `derive_port`\nare mutually exclusive (Istio oneof); scheme-default ports\nare omitted from Location.\n",
+                "allOf": [
+                  {
+                    "if": {
+                      "required": [
+                        "port"
+                      ],
+                      "properties": {
+                        "port": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "derive_port": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "derive_port"
+                      ],
+                      "properties": {
+                        "derive_port": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "port": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "uri": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "pattern": "^/[!\"$-~]*$",
+                    "description": "Replacement path for the Location header; request path\npreserved when unset. Must be an absolute path (leading\n`/`) of printable ASCII only — no fragment, whitespace,\nraw control byte, or unencoded non-ASCII, query included\n— whose path\ncomponent is already canonical (dot segments,\nbackslashes, and escapes that decode differently are\nrejected at load — a runtime check the pattern does not\nexpress). It may carry its own `?query` unless\n`match_prefix` is set, because the unmatched request\nsuffix is appended after `uri`.\n"
+                  },
+                  "match_prefix": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Literal matched path prefix replaced by `uri`; the\nunmatched suffix is appended verbatim, exactly as for\n`rewrite.match_prefix` (no separator is synthesized at a\nboundary that had none). An empty string strips nothing\nand prepends `uri`; omit the field for whole-path\nreplacement. Normally emitted by the VirtualService or\nGateway API translator.\n"
+                  },
+                  "authority": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "pattern": "^(?:[A-Za-z0-9._-]+|\\[[0-9A-Fa-f:.]+\\])(?::[0-9]{1,5})?$",
+                    "description": "Replacement authority (`host` or `host:port`) for the\nLocation header; request authority preserved when unset.\nSame grammar as `rewrite.authority`.\n"
+                  },
+                  "port": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint16",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "description": "Replacement authority port (Istio `redirect.port`); request\nhost is preserved when authority is unset. Mutually\nexclusive with `derive_port`. Scheme-default ports\n(`80`/`http`, `443`/`https`) are omitted from Location.\n"
+                  },
+                  "derive_port": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "FROM_PROTOCOL_DEFAULT",
+                      "FROM_REQUEST_PORT",
+                      null
+                    ],
+                    "description": "Dynamically derive the Location authority port (Istio\n`redirect.derivePort`). `FROM_PROTOCOL_DEFAULT` uses 80 for\nhttp and 443 for https (including when `scheme` is set on\nthe same redirect). `FROM_REQUEST_PORT` uses the trusted\nrequest port: original-destination port when capture\nrewrote the accept socket, otherwise the frontend listener\nport — never spoofable `X-Forwarded-Port` / `Forwarded`\nheaders. Mutually exclusive with `port`.\n"
+                  },
+                  "scheme": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[Hh][Tt][Tt][Pp][Ss]?$",
+                    "description": "Replacement scheme for the Location header; request\nscheme preserved when unset. The constructor\nASCII-lowercases the value before checking it, so\n`HTTPS` and `Https` are accepted and stored as `https`.\n"
+                  },
+                  "redirect_code": {
+                    "type": "integer",
+                    "minimum": 300,
+                    "maximum": 399,
+                    "default": 301,
+                    "description": "HTTP redirect status code (Istio `redirectCode`). Defaults to 301."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "reject_unmatched": {
+          "type": "boolean",
+          "default": false,
+          "description": "When `true`, requests that match no rule are rejected with 404\ninstead of falling through to the proxy's default backend. The\nIstio VirtualService translator sets this so a route gated by a\nmethod/header/query-param `match` does not serve traffic that\nmisses those predicates. Across multiple attached instances, the\ndecision is finalized only after all instances run and only when\nno instance matched and no earlier route override exists.\n"
+        },
+        "weighted_splits": {
+          "type": "array",
+          "maxItems": 64,
+          "description": "Weighted splits dispatched leg by leg (issue #7387). When the\ndestination the whole dispatch group selects is one of these\n`upstream_id`s (a matched rule's `destination.upstream_id`, or the\nroute's own `upstream_id` when no rule overrides it), the dispatch\nfinalizer the plugin cache installs after the last instance picks\none leg by weight (an exact, interleaved weighted cycle) and sends\nthe request through that leg's own upstream, so the leg's own\nDestinationRule projection and authorization apply to exactly the\nrequests it receives. A split no leg was selected for is never\ndispatched. NodeWaypoint mesh slice preparation writes this for a\nVirtualService split that names a DestinationRule-governed Service\nor external host and refuses a carried route that already carries\nit.\n",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "upstream_id",
+              "legs"
+            ],
+            "properties": {
+              "upstream_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The split destination this entry resolves; unique per instance."
+              },
+              "legs": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 32,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "upstream_id",
+                    "weight"
+                  ],
+                  "properties": {
+                    "upstream_id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "The upstream this leg dispatches through. Distinct\nwithin the split and never itself a weighted split.\n"
+                    },
+                    "weight": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 4294967295,
+                      "description": "The leg's share, relative to the other legs."
+                    },
+                    "originate_tls": {
+                      "type": "boolean",
+                      "default": false,
+                      "description": "Dial this leg over TLS (backend scheme `https`) with\nits upstream's backend TLS settings. The selected leg\ndecides the request's backend scheme; a leg without\nit keeps the route's own scheme. NodeWaypoint slice\npreparation sets it on an external host's leg whose\nDestinationRule `tls.mode` originates TLS (`SIMPLE`,\n`MUTUAL`, `ISTIO_MUTUAL`) on that port, never on a\nService leg, which keeps the mesh transport.\n"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "MeshRouteRetryConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Strict route-local retry policy for mesh_route_dispatch. Unknown keys\n(for example `max_retry` or `retry_on_connect_failur`) fail admission\ninstead of silently falling back to defaults. The numeric bounds below\nmirror the shared gateway `RetryConfig` field validation the route\npolicy runs after deserialization.\n",
+      "properties": {
+        "max_retries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 3
+        },
+        "retryable_status_codes": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "default": []
+        },
+        "retryable_methods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?:[Gg][Ee][Tt]|[Pp][Oo][Ss][Tt]|[Pp][Uu][Tt]|[Pp][Aa][Tt][Cc][Hh]|[Dd][Ee][Ll][Ee][Tt][Ee]|[Hh][Ee][Aa][Dd]|[Oo][Pp][Tt][Ii][Oo][Nn][Ss]|[Tt][Rr][Aa][Cc][Ee]|[Cc][Oo][Nn][Nn][Ee][Cc][Tt])$",
+            "description": "One of GET / POST / PUT / PATCH / DELETE / HEAD / OPTIONS /\nTRACE / CONNECT. The validator ASCII-uppercases before\ncomparing, so `get` and `Get` are accepted.\n"
+          },
+          "maxItems": 9,
+          "default": [
+            "GET",
+            "HEAD",
+            "OPTIONS",
+            "PUT",
+            "DELETE"
+          ]
+        },
+        "backoff": {
+          "$ref": "#/$defs/MeshRouteBackoffStrategy"
+        },
+        "retry_on_connect_failure": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/security_headers.schema.json",
+  "title": "security_headers plugin config",
+  "description": "The `config` object of an enabled `security_headers` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component SecurityHeadersConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "security_headers",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/SecurityHeadersConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/SecurityHeadersConfig",
+  "$defs": {
+    "SecurityHeadersConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: security_headers — Injects validated response security headers (secure defaults) and strips fingerprinting headers at the client-visible initial-header boundary, including buffered gRPC/gRPC-Web and WebSocket handshakes. Unknown configuration keys are rejected, `config` must be an object, and `set` and `remove` reject gateway-owned destinations: protocol-managed hop-by-hop / framing fields and representation metadata (`content-type`, `content-encoding`, `content-range`). `set` holds at most 64 entries, `remove` at most 64 names, and every configured value at most 8192 bytes. With `override_existing: false`, a backend copy of a built-in security header that browsers ignore entirely (empty or ineffective) is replaced rather than preserved; values browsers act on are kept. An effective policy that sets and removes nothing is rejected.",
+      "not": {
+        "allOf": [
+          {
+            "required": [
+              "content_type_options"
+            ],
+            "properties": {
+              "content_type_options": {
+                "oneOf": [
+                  {
+                    "const": false
+                  },
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "required": [
+              "frame_options"
+            ],
+            "properties": {
+              "frame_options": {
+                "oneOf": [
+                  {
+                    "const": false
+                  },
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "required": [
+              "referrer_policy"
+            ],
+            "properties": {
+              "referrer_policy": {
+                "oneOf": [
+                  {
+                    "const": false
+                  },
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "required": [
+              "remove"
+            ],
+            "properties": {
+              "remove": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "maxItems": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "hsts": {
+                "oneOf": [
+                  {
+                    "const": false
+                  },
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "content_security_policy": {
+                "oneOf": [
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "permissions_policy": {
+                "oneOf": [
+                  {
+                    "const": ""
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "set": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "maxProperties": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "properties": {
+        "content_type_options": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "maxLength": 8192,
+              "pattern": "^(?:[\\t ]*[Nn][Oo][Ss][Nn][Ii][Ff][Ff][\\t ]*)?$"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "nosniff",
+          "description": "X-Content-Type-Options. true = nosniff (default); a string must be `nosniff` (ASCII case-insensitive, optional surrounding spaces/tabs); false/null/\"\" disables."
+        },
+        "frame_options": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "maxLength": 8192,
+              "pattern": "^(?:[\\t ]*(?:[Dd][Ee][Nn][Yy]|[Ss][Aa][Mm][Ee][Oo][Rr][Ii][Gg][Ii][Nn])[\\t ]*)?$"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "SAMEORIGIN",
+          "description": "X-Frame-Options. Default SAMEORIGIN; a string must be `DENY` or `SAMEORIGIN` (ASCII case-insensitive, optional surrounding spaces/tabs), because browsers ignore any other value; false/null/\"\" disables."
+        },
+        "referrer_policy": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "maxLength": 8192,
+              "pattern": "^(?:[\\t ]*(?:[Nn][Oo]-[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]-[Ww][Hh][Ee][Nn]-[Dd][Oo][Ww][Nn][Gg][Rr][Aa][Dd][Ee]|[Nn][Oo]-[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]|[Oo][Rr][Ii][Gg][Ii][Nn]-[Ww][Hh][Ee][Nn]-[Cc][Rr][Oo][Ss][Ss]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Aa][Mm][Ee]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Tt][Rr][Ii][Cc][Tt]-[Oo][Rr][Ii][Gg][Ii][Nn]-[Ww][Hh][Ee][Nn]-[Cc][Rr][Oo][Ss][Ss]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Tt][Rr][Ii][Cc][Tt]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Uu][Nn][Ss][Aa][Ff][Ee]-[Uu][Rr][Ll])[\\t ]*(?:,[\\t ]*(?:[Nn][Oo]-[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]-[Ww][Hh][Ee][Nn]-[Dd][Oo][Ww][Nn][Gg][Rr][Aa][Dd][Ee]|[Nn][Oo]-[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]|[Oo][Rr][Ii][Gg][Ii][Nn]-[Ww][Hh][Ee][Nn]-[Cc][Rr][Oo][Ss][Ss]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Aa][Mm][Ee]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Tt][Rr][Ii][Cc][Tt]-[Oo][Rr][Ii][Gg][Ii][Nn]-[Ww][Hh][Ee][Nn]-[Cc][Rr][Oo][Ss][Ss]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Tt][Rr][Ii][Cc][Tt]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Uu][Nn][Ss][Aa][Ff][Ee]-[Uu][Rr][Ll])[\\t ]*)*)?$"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "strict-origin-when-cross-origin",
+          "description": "Referrer-Policy. Default strict-origin-when-cross-origin; a string must be a comma-separated list of Referrer-Policy tokens (no-referrer, no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url; ASCII case-insensitive); false/null/\"\" disables."
+        },
+        "hsts": {
+          "description": "Strict-Transport-Security (opt-in). true = max-age=31536000; includeSubDomains; a string is used verbatim and must use the admitted subset of RFC 6797: exactly one `max-age=<delta-seconds>` directive (optionally quoted), at most one valueless `includeSubDomains`, and `;`-separated token directives with an optional token or quoted value (configured quoted values may not contain `\"`, `\\`, or `;`); directive names are ASCII case-insensitive; false/null/\"\" disables; an object {max_age, include_subdomains, preload} builds the value. Object members accept JSON null as the documented default: max_age 31536000 (unsigned 64-bit integer), include_subdomains true, preload false.",
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "maxLength": 8192,
+              "pattern": "^$|^(?=(?:[^;]*;)*[\\t ]*[Mm][Aa][Xx]-[Aa][Gg][Ee][\\t ]*=[\\t ]*(?:[0-9]+|\"[0-9]+\")[\\t ]*(?:;|$))(?!(?:[^;]*;)*[\\t ]*[Mm][Aa][Xx]-[Aa][Gg][Ee][\\t ]*(?:=[^;]*)?;(?:[^;]*;)*[\\t ]*[Mm][Aa][Xx]-[Aa][Gg][Ee][\\t ]*(?:=|;|$))(?!(?:[^;]*;)*[\\t ]*[Ii][Nn][Cc][Ll][Uu][Dd][Ee][Ss][Uu][Bb][Dd][Oo][Mm][Aa][Ii][Nn][Ss][\\t ]*=)(?!(?:[^;]*;)*[\\t ]*[Ii][Nn][Cc][Ll][Uu][Dd][Ee][Ss][Uu][Bb][Dd][Oo][Mm][Aa][Ii][Nn][Ss][\\t ]*;(?:[^;]*;)*[\\t ]*[Ii][Nn][Cc][Ll][Uu][Dd][Ee][Ss][Uu][Bb][Dd][Oo][Mm][Aa][Ii][Nn][Ss][\\t ]*(?:;|$))[\\t ]*(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+(?:[\\t ]*=[\\t ]*(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+|\"[\\t \\x21\\x23-\\x3A\\x3C-\\x5B\\x5D-\\x7E]*\"))?[\\t ]*)?(?:;[\\t ]*(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+(?:[\\t ]*=[\\t ]*(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+|\"[\\t \\x21\\x23-\\x3A\\x3C-\\x5B\\x5D-\\x7E]*\"))?[\\t ]*)?)*$"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "max_age": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "maximum": 18446744073709551615,
+                  "default": 31536000
+                },
+                "include_subdomains": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "default": true
+                },
+                "preload": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "default": false
+                }
+              }
+            }
+          ]
+        },
+        "content_security_policy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 8192,
+          "pattern": "^[\\u0009\\u0020-\\u007E]*$",
+          "description": "Content-Security-Policy value (opt-in; application-specific)."
+        },
+        "permissions_policy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 8192,
+          "pattern": "^[\\u0009\\u0020-\\u007E]*$",
+          "description": "Permissions-Policy value (opt-in)."
+        },
+        "set": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "maxProperties": 64,
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65535,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+            "not": {
+              "pattern": "^(?:[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ll][Ee][Nn][Gg][Tt][Hh]|[Kk][Ee][Ee][Pp]-[Aa][Ll][Ii][Vv][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Tt][Ee]|[Tt][Rr][Aa][Ii][Ll][Ee][Rr]|[Tt][Rr][Aa][Nn][Ss][Ff][Ee][Rr]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Uu][Pp][Gg][Rr][Aa][Dd][Ee]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Tt][Yy][Pp][Ee]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Rr][Aa][Nn][Gg][Ee])$"
+            }
+          },
+          "patternProperties": {
+            "^[Xx]-[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Tt][Yy][Pp][Ee]-[Oo][Pp][Tt][Ii][Oo][Nn][Ss]$": {
+              "type": "string",
+              "maxLength": 8192,
+              "pattern": "^[\\t ]*[Nn][Oo][Ss][Nn][Ii][Ff][Ff][\\t ]*$"
+            },
+            "^[Xx]-[Ff][Rr][Aa][Mm][Ee]-[Oo][Pp][Tt][Ii][Oo][Nn][Ss]$": {
+              "type": "string",
+              "maxLength": 8192,
+              "pattern": "^[\\t ]*(?:[Dd][Ee][Nn][Yy]|[Ss][Aa][Mm][Ee][Oo][Rr][Ii][Gg][Ii][Nn])[\\t ]*$"
+            },
+            "^[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]-[Pp][Oo][Ll][Ii][Cc][Yy]$": {
+              "type": "string",
+              "maxLength": 8192,
+              "pattern": "^[\\t ]*(?:[Nn][Oo]-[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]-[Ww][Hh][Ee][Nn]-[Dd][Oo][Ww][Nn][Gg][Rr][Aa][Dd][Ee]|[Nn][Oo]-[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]|[Oo][Rr][Ii][Gg][Ii][Nn]-[Ww][Hh][Ee][Nn]-[Cc][Rr][Oo][Ss][Ss]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Aa][Mm][Ee]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Tt][Rr][Ii][Cc][Tt]-[Oo][Rr][Ii][Gg][Ii][Nn]-[Ww][Hh][Ee][Nn]-[Cc][Rr][Oo][Ss][Ss]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Tt][Rr][Ii][Cc][Tt]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Uu][Nn][Ss][Aa][Ff][Ee]-[Uu][Rr][Ll])[\\t ]*(?:,[\\t ]*(?:[Nn][Oo]-[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]-[Ww][Hh][Ee][Nn]-[Dd][Oo][Ww][Nn][Gg][Rr][Aa][Dd][Ee]|[Nn][Oo]-[Rr][Ee][Ff][Ee][Rr][Rr][Ee][Rr]|[Oo][Rr][Ii][Gg][Ii][Nn]-[Ww][Hh][Ee][Nn]-[Cc][Rr][Oo][Ss][Ss]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Aa][Mm][Ee]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Tt][Rr][Ii][Cc][Tt]-[Oo][Rr][Ii][Gg][Ii][Nn]-[Ww][Hh][Ee][Nn]-[Cc][Rr][Oo][Ss][Ss]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Ss][Tt][Rr][Ii][Cc][Tt]-[Oo][Rr][Ii][Gg][Ii][Nn]|[Uu][Nn][Ss][Aa][Ff][Ee]-[Uu][Rr][Ll])[\\t ]*)*$"
+            },
+            "^[Ss][Tt][Rr][Ii][Cc][Tt]-[Tt][Rr][Aa][Nn][Ss][Pp][Oo][Rr][Tt]-[Ss][Ee][Cc][Uu][Rr][Ii][Tt][Yy]$": {
+              "type": "string",
+              "maxLength": 8192,
+              "pattern": "^(?=(?:[^;]*;)*[\\t ]*[Mm][Aa][Xx]-[Aa][Gg][Ee][\\t ]*=[\\t ]*(?:[0-9]+|\"[0-9]+\")[\\t ]*(?:;|$))(?!(?:[^;]*;)*[\\t ]*[Mm][Aa][Xx]-[Aa][Gg][Ee][\\t ]*(?:=[^;]*)?;(?:[^;]*;)*[\\t ]*[Mm][Aa][Xx]-[Aa][Gg][Ee][\\t ]*(?:=|;|$))(?!(?:[^;]*;)*[\\t ]*[Ii][Nn][Cc][Ll][Uu][Dd][Ee][Ss][Uu][Bb][Dd][Oo][Mm][Aa][Ii][Nn][Ss][\\t ]*=)(?!(?:[^;]*;)*[\\t ]*[Ii][Nn][Cc][Ll][Uu][Dd][Ee][Ss][Uu][Bb][Dd][Oo][Mm][Aa][Ii][Nn][Ss][\\t ]*;(?:[^;]*;)*[\\t ]*[Ii][Nn][Cc][Ll][Uu][Dd][Ee][Ss][Uu][Bb][Dd][Oo][Mm][Aa][Ii][Nn][Ss][\\t ]*(?:;|$))[\\t ]*(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+(?:[\\t ]*=[\\t ]*(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+|\"[\\t \\x21\\x23-\\x3A\\x3C-\\x5B\\x5D-\\x7E]*\"))?[\\t ]*)?(?:;[\\t ]*(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+(?:[\\t ]*=[\\t ]*(?:[!#$%&'*+.^_`|~0-9A-Za-z-]+|\"[\\t \\x21\\x23-\\x3A\\x3C-\\x5B\\x5D-\\x7E]*\"))?[\\t ]*)?)*$"
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 8192,
+            "pattern": "^[\\u0009\\u0020-\\u007E]*$"
+          },
+          "description": "Arbitrary response headers to set (name -> value), at most 64 entries. An entry for X-Content-Type-Options, X-Frame-Options, Referrer-Policy or Strict-Transport-Security (case-insensitive name) must carry a value the matching built-in option accepts (`nosniff`; `DENY` or `SAMEORIGIN`; a comma-separated list of Referrer-Policy tokens; an HSTS value with exactly one `max-age`), since browsers ignore any other value; an empty value is rejected. Names accept the complete HTTP field-name token grammar, are limited to 65,535 ASCII bytes, and are canonicalized to lowercase, EXCEPT protocol-managed hop-by-hop and framing destinations (`connection`, `content-length`, `keep-alive`, `proxy-authenticate`, `proxy-connection`, `te`, `trailer`, `transfer-encoding`, `upgrade`, case-insensitive) and representation metadata (`content-type`, `content-encoding`, `content-range`), which are rejected at construction — the gateway owns framing at the final H1/H2/H3 response boundary, where it derives Content-Length from the final body, preserves a valid representation length only for HEAD, and removes it on ordinary streamed responses; content-type-selective body inspection, compression, and range handling decide from the backend representation before this plugin runs. Values must satisfy the HTTP HeaderValue builder rules (only HTAB and printable ASCII) and are at most 8192 bytes."
+        },
+        "remove": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 65535,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+            "not": {
+              "pattern": "^(?:[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ll][Ee][Nn][Gg][Tt][Hh]|[Kk][Ee][Ee][Pp]-[Aa][Ll][Ii][Vv][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Tt][Ee]|[Tt][Rr][Aa][Ii][Ll][Ee][Rr]|[Tt][Rr][Aa][Nn][Ss][Ff][Ee][Rr]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Uu][Pp][Gg][Rr][Aa][Dd][Ee]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Tt][Yy][Pp][Ee]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Rr][Aa][Nn][Gg][Ee])$"
+            }
+          },
+          "default": [
+            "server",
+            "x-powered-by"
+          ],
+          "description": "Valid HTTP field names (maximum 65,535 ASCII bytes, at most 64 names) to strip case-insensitively. Names are canonicalized to lowercase. Protocol-managed hop-by-hop / framing destinations and representation metadata (`content-type`, `content-encoding`, `content-range`) are rejected, the same closed set `set` refuses. Defaults to Server and X-Powered-By; set [] to strip nothing."
+        },
+        "override_existing": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "When false, only add a header the backend did not already set. A backend copy of a built-in security header (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Strict-Transport-Security, Content-Security-Policy, Permissions-Policy) that browsers ignore entirely — empty, or ineffective under browser processing (a lone ALLOW-FROM/ALLOWALL, no known Referrer-Policy token, first X-Content-Type-Options value not nosniff, HSTS without exactly one valid max-age) — counts as missing and every case variant is replaced; any value a browser acts on (for example DENY, SAMEORIGIN or no-referrer, future-policy) is kept even when it differs from the configured default. STS/nosniff case variants collapse to one effective backend copy under the lowercase name; if several are effective, the bytewise first header-name spelling wins because the map has no wire order. X-Frame-Options is classified across all spellings together, preserving jointly effective sets such as ALLOWALL plus an unknown value. Other built-in headers keep all spellings when any copy is effective. Backend HSTS classification splits only at unquoted semicolons and respects escaped characters in quoted extensions; extension text cannot supply or duplicate max-age. Arbitrary `set` headers keep pure presence semantics. Null selects true."
+        }
+      }
+    }
+  }
+}

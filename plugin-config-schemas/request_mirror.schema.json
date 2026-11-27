@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/request_mirror.schema.json",
+  "title": "request_mirror plugin config",
+  "description": "The `config` object of an enabled `request_mirror` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component RequestMirrorConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "request_mirror",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/RequestMirrorConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/RequestMirrorConfig",
+  "$defs": {
+    "RequestMirrorConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: request_mirror — Duplicates live proxy traffic to a secondary\ndestination for shadow testing, validation, or migration checks\nwithout affecting client responses. The shadow request is dispatched in\nthe finalized-request-egress phase, after request-body transforms and\nafter every final request-policy hook has accepted the backend-visible\nrepresentation, so the mirror receives the byte-identical finalized body\nplus the finalized pre-egress header baseline. A preceding function may\nadd a later backend-only header overlay. Final request-body policy never\nrejects only after mirror dispatch; backend admission or transport still\ncan. Only the properties below are\nadmitted; unknown top-level keys are rejected so misspelled sampling,\nbody, protocol, or endpoint controls cannot silently fall back to\nsecurity-sensitive defaults (cleartext http, 100% mirroring, body\nmirroring enabled). Mirrored requests are\nfire-and-forget: spawned via `tokio::spawn`, the gateway never waits\nfor the mirror response and mirror failures never propagate to the\nclient. Mirror response metadata (status, size, latency) is captured\nvia a `tokio::sync::watch` channel and surfaced through transaction\nlogs. Outbound mirror headers use Ferrum's canonical secondary-request\nsanitizer (Connection-listed hop-by-hop, Trailer, framing, Ferrum\nrequest-only markers, and proxy-owned X-Forwarded-* identity); these\nforwarding fields are stripped rather than regenerated, so mirrors do\nnot receive Ferrum-authored X-Forwarded-* identity. Host is derived from\nthe mirror URL (mesh shadow Host uses a protocol-valid DNS `-shadow`\nsuffix; IPv4/IPv6 literals are left unchanged). Cross-origin credential\nforwarding is deny-by-default: any header whose lowercased name is a\nbuilt-in credential (Authorization, Cookie, Proxy-Authorization,\nProxy-Authenticate, WWW-Authenticate, X-Api-Key, …), contains a built-in\ncredential substring\n(so vendor variants like x-openai-api-key / x-amz-security-token are also\ncaught), is credential-shaped (any separator-delimited segment is a\ncredential-class word such as auth, jwt, session, sid, key, pass, pwd,\nticket, otp, or contains a credential stem such as session, sessid,\ntoken, secret, auth, pwd, otp, verifier, or contains key or pass other\nthan ordinary words such as keyword or passenger; the whole name code\nis denied too; continuation cursors like\nx-continuation-token, authorship/authority names, and Idempotency-Key\nare not), or matches a configured\nsensitive_header_patterns entry is stripped before the distinct mirror\norigin. Native gRPC metadata travels\nas HTTP/2 headers, so the same predicate covers gRPC credential metadata.\nForwarding any denied header requires the fail-closed pair\nforward_sensitive_headers=true plus a non-empty exact-name\nforward_sensitive_header_allowlist. Native gRPC mirrors re-synthesise te: trailers and dial\nvia the shared PluginHttpClient HTTP/2 companion (h2c prior knowledge for\ncleartext http targets; ALPN h2 for https). Ordinary HTTP mirrors keep\nthe default all-version client so HTTP/1.1 destinations continue to work.\nMirror response bodies are always drained under max_response_body_bytes\nso Content-Length responses do not strand keep-alive pools; the short\npost-header drain cap is clamped to whatever remains of the absolute\nmirror deadline, and a deadline that expires after response headers but\nbefore the body completes is counted as a drain TIMEOUT rather than a\ntransport failure. Each selected instance copies the finalized request\nbody once into an owned Bytes retained by its detached task (the primary\nbuffer is untouched and never shared with the mirror), and that copy is\nadmitted under max_in_flight plus that instance's\nmax_retained_request_body_bytes budget. Sampling and that\nadmission run in the authorize phase, BEFORE the request body is\ncollected: a percentage-zero, sampled-out, or saturated request keeps\nstreaming and never allocates a mirror body, and\nmax_mirrored_request_body_bytes bounds a single mirrored body even when\nthe global request-body limit is unlimited. The mirror request\nalways has a finite deadline (mirror_timeout_ms, else positive proxy\nbackend_read_timeout_ms, else 60000ms, capped at 300000ms), and that\ndeadline is ABSOLUTE for the whole detached mirror: every shared-client\nattempt, every FERRUM_PLUGIN_HTTP_RETRY_DELAY_MS delay between retried\nattempts, and the response drain spend the same budget, so enabling\nFERRUM_PLUGIN_HTTP_MAX_RETRIES cannot extend it or hold the max_in_flight\npermit past it.\nSeveral runtime admission rules cannot be expressed portably in JSON\nSchema and are enforced only at construction: allowlist entries must\nname a header/query parameter the deny-by-default policy actually strips;\npattern and allowlist lengths are measured in UTF-8 BYTES after trimming\n(JSON Schema maxLength counts characters); an explicit\nmax_mirrored_request_body_bytes must not exceed the sibling\nmax_retained_request_body_bytes; byte-count fields require a JSON\ninteger LITERAL, so a whole-valued float such as 1.0 is rejected at\nconstruction even though JSON Schema treats it as an integer; and a\ncleartext mirror (mirror_protocol http, the default) to a mirror_host\nthat is not a loopback IP literal requires allow_plaintext true. Label-safe\nprocess-wide ferrum_request_mirror_*_total lifecycle counters are exported\non authenticated /metrics (no URLs, header names, or plugin IDs). The mirror\nrequest-target snapshots the same canonical backend-visible query primary\ndispatch uses (after auth credential strips), then drops deny-by-default\nsensitive query pairs from the mirror URL only. Query names are classified\nwith bounded staged percent-decode (every layer through a hard cap of 4;\nresidual valid %XX, malformed, or control-bearing names fail closed).\nBuilt-in token/sig/signature matching is delimiter-bounded (oauth_token,\nx-amz-signature, x-goog-signature denied; continuation_token and signal\nretained). The same credential-shaped rule as headers applies to the\ndecoded name (session_id, jwt, access_key, private_key, key, sid, …\ndenied; continuation_token retained). Credentials keep provenance\nthrough renames: a request_transformer rename whose source is a\ncredential name under this mirror's classifiers and patterns (across\nchained instances) makes the destination a credential, and any header\nor query value equal to a credential value seen on the request is\nwithheld under whatever name it now has.\nDelimiter variants of api_key are denied, and raw semicolon-\nbearing segments fail closed because backend query parsers disagree on\nwhether they contain additional pairs. Retained pairs keep raw encoding,\norder, flags, empty values, +, percent escapes, and non-ASCII encoded\nbytes. The primary backend\nrequest-target is never rewritten. Forwarding a denied query name requires\nforward_sensitive_query=true plus a non-empty exact decoded-name\nforward_sensitive_query_allowlist.\n",
+      "required": [
+        "mirror_host"
+      ],
+      "properties": {
+        "mirror_host": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^\\s*(?:\\[(?:(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){6}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}|::(?:(?:[0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,5}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,4}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){1}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){2}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,2}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){3}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,1}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){4}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,1}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,0}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){5}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,0}[0-9A-Fa-f]{1,4})?|(?:[0-9A-Fa-f]{1,4}:){6}[0-9A-Fa-f]{1,4}::)|(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})\\]|(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){6}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3}|::(?:(?:[0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,5}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,4}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){1}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){2}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,2}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){3}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,1}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){4}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,1}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){0,0}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(?:\\.(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])){3})?|(?:[0-9A-Fa-f]{1,4}:){5}[0-9A-Fa-f]{1,4}::(?:(?:[0-9A-Fa-f]{1,4}:){0,0}[0-9A-Fa-f]{1,4})?|(?:[0-9A-Fa-f]{1,4}:){6}[0-9A-Fa-f]{1,4}::)|[^\\s/?#@:\\[\\]]+)\\s*$",
+          "description": "Hostname or IP of the mirror target. Normalized to ASCII-lowercase at config load. A bare host only: surrounding whitespace is trimmed, but a blank value, a scheme (https://example.test), an embedded path/query/fragment, userinfo, or a host:port authority (example.test:80) is rejected at construction. An IP literal is validated exactly as the runtime IP parser does: an IPv6 literal may be written bracketed ([2001:db8::10]) or bare (2001:db8::10) and is normalized to the bracketed URL authority; an IPv4 literal may be bare or bracketed ([127.0.0.1]) and is normalized to its bare form. Malformed IPv6 literals (:::1, 1::2::3, 12345::1, or an embedded IPv4 tail with an out-of-range or zero-padded octet) and malformed bracketed IPv4 are rejected. No other value may contain brackets or a colon. null is rejected because mirror_host is required."
+        },
+        "mirror_port": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Port of the mirror target. Defaults to 80 (http) or 443 (https)."
+        },
+        "mirror_protocol": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[Hh][Tt][Tt][Pp][Ss]?$",
+          "default": "http",
+          "description": "Transport scheme for the mirror URL. Matched case-insensitively: the value is ASCII-lowercased at construction, so HTTPS and https are the same setting. http (the default) is admitted without allow_plaintext only when mirror_host is a loopback IP literal (127.0.0.0/8 or ::1); any other host needs https or an explicit allow_plaintext true. For native gRPC content-types, http uses cleartext HTTP/2 prior knowledge (h2c) and https negotiates ALPN h2 via the shared plugin HTTP/2 companion. Ordinary HTTP mirrors retain the default all-version client (HTTP/1.1 capable).\n"
+        },
+        "allow_plaintext": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "Explicit opt-in to mirror over cleartext http to a mirror_host that is not a loopback IP literal. The mirror request replays the backend-visible request (its body by default, plus any allowlisted credential headers or query names), so leave this false and use mirror_protocol https unless the path to the mirror is otherwise protected. Has no effect with https or a loopback IP literal host."
+        },
+        "mirror_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^$|^/[^?#]*$",
+          "description": "Override path used for the mirror request. Must start with `/` and cannot contain a query or fragment. Empty (and null) is treated as omitted. Path selection precedence is: (1) this explicit mirror_path, which always wins; (2) otherwise the matched mesh_route_dispatch route_override_path (the final selected/rebased URI), read without consuming the override primary dispatch still needs; (3) otherwise the backend-effective authorized path when route-sensitive backend-path policy such as grpc_method_router is active, so a rewritten unauthorized method is never replayed to the shadow destination; (4) otherwise the original request path."
+        },
+        "percentage": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double",
+          "minimum": 0.0,
+          "maximum": 100.0,
+          "default": 100.0,
+          "description": "Percentage of requests to mirror (0.0–100.0). Quantized to 0.1% steps as round(percentage × 10) in 0..=1000. Sampling is deterministic and evenly spaced (Bresenham phase accumulator over a 1,000-request cycle): 0% never selects, 100% always selects, and other thresholds mirror exactly that many requests per cycle with gaps of floor(1000/threshold) or ceil(1000/threshold). No RNG. Construction/reload resets the phase to 0 so the first selection is deferred (no mirrored prefix burst). The phase stays bounded in 0..1000 via lock-free atomic updates on the request hot path.\n"
+        },
+        "mirror_request_body": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "When true, the request body is forwarded to the mirror target. Binary-safe (preserves gRPC protobuf and other non-UTF-8 payloads). Body collection is gated by authorize-phase sampling and admission: only an admitted request is buffered, and one owned copy of the finalized body per selected instance — not a buffer shared with the primary request — is charged against that instance's max_retained_request_body_bytes for each in-flight task. When false, or when percentage quantizes to 0, this instance declares no request-body capability at all."
+        },
+        "max_in_flight": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 1048576,
+          "default": 256,
+          "description": "Maximum mirror tasks allowed concurrently. Requests that arrive while every permit is in use are still served normally but are not mirrored. Capped at 1048576 (2^20): a larger value is rejected at construction rather than panicking Tokio's semaphore."
+        },
+        "max_retained_request_body_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 67108864,
+          "description": "Aggregate retained request-body budget for in-flight mirrors on this plugin instance. Charged at pre-buffer admission as the full max_mirrored_request_body_bytes ceiling for every admitted request (declared Content-Length is never trusted for the charge; it is used only to skip already-oversized bodies before sampling) and reconciled to the observed body length, returning any surplus exactly once. Size this against max_in_flight times max_mirrored_request_body_bytes when mirroring at high concurrency. Exhaustion drops the new mirror attempt without affecting the primary request. Default is 64 MiB."
+        },
+        "max_mirrored_request_body_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 10485760,
+          "description": "Positive plugin-local ceiling on one mirrored request body, applied even when the global FERRUM_MAX_REQUEST_BODY_SIZE_BYTES is set to 0 (unlimited). Combined with the global limit by the proxy; the strictest positive value wins, and it applies only to requests this instance admitted for mirroring. An explicit value above max_retained_request_body_bytes is rejected at construction; when the key is omitted the default clamps down to max_retained_request_body_bytes instead of failing. Default is 10 MiB, matching the global default."
+        },
+        "mirror_timeout_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 300000,
+          "description": "Finite, ABSOLUTE mirror deadline in milliseconds covering every shared-client attempt, every retry delay between attempts, and the response-body drain. When omitted, uses the matched proxy backend_read_timeout_ms when positive, otherwise 60000. Always capped at 300000. A zero primary timeout never disables this deadline."
+        },
+        "forward_sensitive_headers": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "Dangerous opt-in. When true, selected origin-bound credential headers may cross to the distinct mirror origin, but only exact names listed in forward_sensitive_header_allowlist. Construction is fail-closed: both fields are required together and the allowlist must be non-empty."
+        },
+        "forward_sensitive_header_allowlist": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^\\s*[!#$%&'*+.^_`|~0-9A-Za-z-]+\\s*$"
+          },
+          "description": "Lowercased exact allowlist of denied sensitive header names to forward when forward_sensitive_headers is true. Each entry must be a valid HTTP header name (at most 256 bytes) that the deny-by-default policy actually strips (a built-in credential or a sensitive_header_patterns match); non-sensitive names are rejected at construction. At most 64 entries. Default (with forward_sensitive_headers false) strips every sensitive header."
+        },
+        "sensitive_header_patterns": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "\\S"
+          },
+          "description": "Additional lowercased substrings matched against the header name (case-insensitive; each at most 128 bytes, at most 64 entries) that extend the built-in deny-by-default credential set. A header whose lowercased name contains any pattern is stripped before the mirror origin unless it is on the exact-name forward_sensitive_header_allowlist. Covers HTTP headers and native gRPC metadata (gRPC metadata is carried as HTTP/2 headers). Default empty."
+        },
+        "forward_sensitive_query": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "Dangerous opt-in. When true, selected origin-bound credential query parameter names may cross to the distinct mirror origin, but only exact percent-decoded names listed in forward_sensitive_query_allowlist. Construction is fail-closed: both fields are required together and the allowlist must be non-empty. Does not change the primary backend request-target."
+        },
+        "forward_sensitive_query_allowlist": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[!\"$'()*,.0-9:<>A-Z\\[\\\\\\]^_`a-z{|}~-]+$(?![\\s\\S])"
+          },
+          "description": "Lowercased exact allowlist of denied sensitive query parameter names to forward when forward_sensitive_query is true. Entries are visible ASCII without whitespace; brackets such as filter[key] are allowed, while % + = & ? # / @ ; are refused because entries match the decoded name. Each entry is matched against the fully percent-decoded (bounded staged decode) ASCII-lowercased name (at most 256 bytes) that the deny-by-default policy actually strips (a built-in credential or a sensitive_query_patterns match); non-sensitive names are rejected at construction. At most 64 entries. Default (with forward_sensitive_query false) strips every sensitive query pair."
+        },
+        "sensitive_query_patterns": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "\\S"
+          },
+          "description": "Additional lowercased substrings matched against each staged percent-decoded query parameter name (case-insensitive; each at most 128 bytes, at most 64 entries) that extend the built-in deny-by-default query credential set. A name whose decoded lowercased form contains any pattern is stripped from the mirror request-target unless it is on the exact-name forward_sensitive_query_allowlist. Default empty."
+        },
+        "max_response_body_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 1048576,
+          "description": "Cap on bytes drained from every mirror response when deriving its size (with or without Content-Length). Streaming is aborted as soon as the limit is crossed and the mirror task records the truncated/observed count. Bytes are discarded after measurement so HTTP/1.1 keep-alive pools can reclaim the socket. Must be a JSON integer literal: a whole-valued float such as 1.0 is rejected at construction. Default is 1 MiB."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "forward_sensitive_headers"
+            ],
+            "properties": {
+              "forward_sensitive_headers": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "forward_sensitive_header_allowlist"
+            ],
+            "properties": {
+              "forward_sensitive_header_allowlist": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "forward_sensitive_header_allowlist"
+            ],
+            "properties": {
+              "forward_sensitive_header_allowlist": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "forward_sensitive_headers"
+            ],
+            "properties": {
+              "forward_sensitive_headers": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "forward_sensitive_query"
+            ],
+            "properties": {
+              "forward_sensitive_query": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "forward_sensitive_query_allowlist"
+            ],
+            "properties": {
+              "forward_sensitive_query_allowlist": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "forward_sensitive_query_allowlist"
+            ],
+            "properties": {
+              "forward_sensitive_query_allowlist": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "forward_sensitive_query"
+            ],
+            "properties": {
+              "forward_sensitive_query": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

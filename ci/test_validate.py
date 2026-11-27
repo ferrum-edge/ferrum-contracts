@@ -527,6 +527,92 @@ class SensitivityAndReservedHeaderTests(unittest.TestCase):
         self.assertTrue(any("names unknown plugin 'nope'" in e for e in errors), errors)
 
 
+class PluginConfigSchemaFileTests(unittest.TestCase):
+    """plugin-config-schemas/ matches the catalog offline: one valid 2020-12
+    document per plugin, carrying the catalog's pin."""
+
+    def setUp(self) -> None:
+        self.catalog = json.loads((ROOT / "vocabularies" / "plugin-catalog.json").read_text(encoding="utf-8"))
+
+    def check(self, catalog: dict) -> list[str]:
+        report = validate.Report()
+        validate.check_plugin_config_schema_files(ROOT, {"plugin-catalog": catalog}, report)
+        return report.errors
+
+    def test_the_repository_files_pass(self) -> None:
+        self.assertEqual(self.check(self.catalog), [])
+
+    def test_a_re_pin_without_regeneration_fails_every_file(self) -> None:
+        catalog = json.loads(json.dumps(self.catalog))
+        catalog["config_schema_document"]["sha256"] = "0" * 64
+        errors = self.check(catalog)
+        self.assertEqual(len(errors), len(catalog["plugins"]), errors[:3])
+        self.assertTrue(all("x-generated.source differs" in e for e in errors))
+
+    def test_a_missing_or_extra_plugin_fails(self) -> None:
+        catalog = json.loads(json.dumps(self.catalog))
+        removed = catalog["plugins"].pop(0)
+        added = dict(removed, name="zz_new_plugin")
+        catalog["plugins"].append(added)
+        errors = self.check(catalog)
+        self.assertEqual(len(errors), 2, errors)
+        self.assertTrue(any("zz_new_plugin.schema.json: missing" in e for e in errors))
+        self.assertTrue(any(f"{removed['name']}.schema.json: not a catalog plugin" in e for e in errors))
+
+
+class YamlReaderParityTests(unittest.TestCase):
+    """The generator's YAML reader and PyYAML with YAML 1.2 core resolvers agree."""
+
+    DOC = (
+        "a: 017\nb: 0o17\nc: 0x1F\nd: 1.0e288\ne: yes\nf: true\ng: ~\nh: 2026-11-27\n"
+        "i: [two  spaces, 'q', \"x\\ty\"]\nj: |\n  line\n    more\nk: >-\n  folded\n  text\n"
+        "l:\n  - m: 1\n    n: [1, 2]\n"
+    )
+
+    def test_the_parsers_agree_on_core_schema_scalars(self) -> None:
+        report = validate.Report()
+        validate.check_yaml_reader("doc", self.DOC.encode(), report)
+        self.assertEqual(report.errors, [])
+        yaml, loader = validate.yaml_core_12_loader()
+        parsed = yaml.load(self.DOC, Loader=loader)
+        self.assertEqual((parsed["a"], parsed["b"], parsed["e"], parsed["h"]), (17, 15, "yes", "2026-11-27"))
+
+    def test_a_disagreement_is_reported(self) -> None:
+        report = validate.Report()
+        with unittest.mock.patch.object(validate.plugin_config_schemas, "load_yaml", return_value={"a": "17"}):
+            validate.check_yaml_reader("doc", b"a: 17\n", report)
+        self.assertEqual(len(report.errors), 1, report.errors)
+        self.assertIn("disagree at /a: str", report.errors[0])
+
+    def test_types_are_compared_strictly(self) -> None:
+        self.assertIsNotNone(validate.yaml_difference({"a": 1}, {"a": 1.0}))
+        self.assertIsNotNone(validate.yaml_difference({"a": 1}, {"a": True}))
+        self.assertIsNone(validate.yaml_difference({"a": [1, "x"]}, {"a": [1, "x"]}))
+
+    def test_a_generated_file_that_is_not_an_object_fails(self) -> None:
+        catalog = json.loads((ROOT / "vocabularies" / "plugin-catalog.json").read_text(encoding="utf-8"))
+        real = validate.load_json
+        calls = []
+
+        def first_is_null(path, report):
+            calls.append(path)
+            return None if len(calls) == 1 else real(path, report)
+
+        report = validate.Report()
+        with unittest.mock.patch.object(validate, "load_json", side_effect=first_is_null):
+            validate.check_plugin_config_schema_files(ROOT, {"plugin-catalog": catalog}, report)
+        self.assertEqual(len(report.errors), 1, report.errors)
+        self.assertIn("a generated schema is a JSON object", report.errors[0])
+
+    def test_non_json_constants_are_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "x.json"
+            path.write_text('{"maximum": Infinity}\n', encoding="utf-8")
+            report = validate.Report()
+            self.assertIsNone(validate.load_json(path, report))
+            self.assertEqual(len(report.errors), 1, report.errors)
+
+
 class VocabularyInstanceTests(unittest.TestCase):
     """Every retained major of a vocabulary schema names its vocabulary file."""
 

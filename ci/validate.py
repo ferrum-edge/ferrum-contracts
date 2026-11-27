@@ -68,6 +68,15 @@ Checks, in order:
    The download refuses redirects and stops at MAX_OPENAPI_BYTES, so an
    oversized response fails before it is buffered whole or hashed;
    --openapi applies the same cap.
+9. Standalone plugin config schemas: plugin-config-schemas/ holds exactly
+   one <plugin>.schema.json per catalog plugin with a config_schema, each
+   valid against the JSON Schema 2020-12 meta-schema, with the `$id` and
+   `x-generated` (plugin, pointer, and the catalog's config_schema_document)
+   the generator writes. With --openapi or --fetch-openapi, every file must
+   also equal what ci/plugin_config_schemas.py generates from that pinned
+   openapi.yaml, so re-pinning the file without regenerating fails, and the
+   generator's YAML reader must parse that file exactly as PyYAML does with
+   YAML 1.2 core-schema resolvers.
 
 Exit status is 0 when every check passes and 1 otherwise. Only the Python
 standard library and the pinned packages in ci/requirements.txt are used.
@@ -83,8 +92,18 @@ import sys
 import urllib.request
 from pathlib import Path
 
+import importlib.util
+
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
+
+# The stdlib-only generator of plugin-config-schemas/ (run with -I, so it is
+# loaded by path rather than from sys.path).
+_GENERATOR_SPEC = importlib.util.spec_from_file_location(
+    "plugin_config_schemas", Path(__file__).resolve().parent / "plugin_config_schemas.py"
+)
+plugin_config_schemas = importlib.util.module_from_spec(_GENERATOR_SPEC)
+_GENERATOR_SPEC.loader.exec_module(plugin_config_schemas)
 
 BASE = "https://github.com/ferrum-edge/ferrum-contracts/schemas"
 META = "https://json-schema.org/draft/2020-12/schema"
@@ -187,9 +206,12 @@ def load_json(path: Path, report: Report):
             seen[key] = value
         return seen
 
+    def no_constants(name):
+        raise ValueError(f"{name} is not JSON")
+
     try:
         text = path.read_text(encoding="utf-8")
-        return json.loads(text, object_pairs_hook=no_duplicates)
+        return json.loads(text, object_pairs_hook=no_duplicates, parse_constant=no_constants)
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         report.fail(path, f"not valid JSON: {exc}")
         return None
@@ -1142,6 +1164,197 @@ def mirroring_major(versions: dict[int, dict]) -> int | None:
     return max(implemented) if implemented else None
 
 
+def check_plugin_config_schema_files(root: Path, vocabularies: dict[str, dict], report: Report) -> None:
+    """plugin-config-schemas/ matches the catalog without the openapi.yaml (step 9).
+
+    Every catalog plugin with a config_schema has exactly one generated
+    document, which is a valid JSON Schema 2020-12 schema whose `$id`,
+    `x-generated.plugin`, `x-generated.source` and the catalog's
+    config_required_when_enabled / scope_constraint are what the generator
+    writes for the catalog as it stands. A catalog re-pin without
+    regeneration therefore fails even offline.
+    """
+    catalog = vocabularies.get("plugin-catalog")
+    output = plugin_config_schemas.OUTPUT_DIR
+    if not catalog:
+        report.fail(output, "plugin-catalog is missing, so the generated schemas cannot be checked")
+        return
+    document = catalog["config_schema_document"]
+    expected = {
+        p["name"]: p["config_schema"] for p in catalog["plugins"] if p.get("config_schema")
+    }
+    directory = root / output
+    present = (
+        {path.name for path in directory.iterdir() if path.name != "README.md"}
+        if directory.is_dir()
+        else set()
+    )
+    wanted = {f"{name}.schema.json" for name in expected}
+    for name in sorted(wanted - present):
+        report.fail(f"{output}/{name}", f"missing; run {plugin_config_schemas.GENERATOR} --write")
+    for name in sorted(present - wanted):
+        report.fail(f"{output}/{name}", "not a catalog plugin with a config_schema; remove it")
+    for name in sorted(wanted & present):
+        plugin = name.removesuffix(".schema.json")
+        config = expected[plugin]
+        path = directory / name
+        doc = load_json(path, report)
+        if not isinstance(doc, dict):
+            report.fail(path, "a generated schema is a JSON object")
+            continue
+        source = {
+            "repo": document["repo"],
+            "ref": document["ref"],
+            "commit": document["commit"],
+            "path": document["path"],
+            "sha256": document["sha256"],
+            "pointer": config["pointer"],
+        }
+        generated = doc.get("x-generated") if isinstance(doc, dict) else None
+        problems = []
+        if not isinstance(generated, dict):
+            problems.append("x-generated is missing")
+        else:
+            if generated.get("plugin") != plugin:
+                problems.append(f"x-generated.plugin must be {plugin!r}")
+            if generated.get("source") != source:
+                problems.append(
+                    "x-generated.source differs from the catalog's config_schema_document and "
+                    f"pointer; run {plugin_config_schemas.GENERATOR} --write"
+                )
+            if generated.get("config_required_when_enabled") != config.get(
+                "config_required_when_enabled", False
+            ) or generated.get("scope_constraint") != config.get("scope_constraint"):
+                problems.append("x-generated config_required_when_enabled/scope_constraint differ from the catalog")
+        expected_id = f"{plugin_config_schemas.ID_BASE}/edge-{document['ref']}/{name}"
+        if doc.get("$id") != expected_id:
+            problems.append(f"$id must be {expected_id}")
+        if doc.get("$schema") != plugin_config_schemas.SCHEMA_DIALECT:
+            problems.append(f"$schema must be {plugin_config_schemas.SCHEMA_DIALECT}")
+        try:
+            Draft202012Validator.check_schema(doc)
+        except Exception as exc:  # jsonschema.SchemaError and friends
+            problems.append(f"not a valid JSON Schema 2020-12 document: {exc}")
+        for problem in problems:
+            report.fail(path, problem)
+        if not problems:
+            report.ok()
+
+
+def check_plugin_config_schema_generation(
+    root: Path, label: str, data: bytes, vocabularies: dict[str, dict], report: Report
+) -> None:
+    """Every generated file equals the generator output for the pinned openapi.yaml (step 9)."""
+    catalog = vocabularies.get("plugin-catalog")
+    if not catalog:
+        return
+    try:
+        files = plugin_config_schemas.build(catalog, data)
+    except ValueError as exc:  # YamlError is a ValueError
+        report.fail(label, f"plugin config schema generation failed: {exc}")
+        return
+    problems = plugin_config_schemas.compare(root, files)
+    for problem in problems:
+        report.fail(plugin_config_schemas.OUTPUT_DIR, problem)
+    if not problems:
+        report.ok()
+
+
+def yaml_core_12_loader():
+    """A PyYAML SafeLoader that resolves plain scalars with the YAML 1.2 core
+    schema (the schema ci/plugin_config_schemas.py implements), not YAML 1.1:
+    no yes/no booleans, no sexagesimal or timestamp scalars, no merge keys,
+    and 1.2 integers and floats."""
+    import yaml  # hash-pinned in ci/requirements.txt; used only by this check
+
+    class Core12Loader(yaml.SafeLoader):
+        pass
+
+    Core12Loader.yaml_implicit_resolvers = {}
+    resolvers = [
+        ("tag:yaml.org,2002:bool", r"^(?:true|True|TRUE|false|False|FALSE)$", "tTfF"),
+        ("tag:yaml.org,2002:null", r"^(?:~|null|Null|NULL|)$", ["~", "n", "N", ""]),
+        ("tag:yaml.org,2002:int", r"^(?:[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+)$", "-+0123456789"),
+        (
+            "tag:yaml.org,2002:float",
+            r"^(?:[-+]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$",
+            "-+.0123456789",
+        ),
+    ]
+    for tag, pattern, first in resolvers:
+        Core12Loader.add_implicit_resolver(tag, re.compile(pattern), list(first))
+
+    def construct_int(loader, node):
+        value = loader.construct_scalar(node)
+        if value.startswith("0o"):
+            return int(value[2:], 8)
+        if value.startswith("0x"):
+            return int(value[2:], 16)
+        return int(value)
+
+    def construct_float(loader, node):
+        value = loader.construct_scalar(node)
+        bare = value.lstrip("+-").lower()
+        if bare in (".inf", ".nan"):
+            return float(value.replace(".", "", 1))
+        return float(value)
+
+    def construct_bool(loader, node):
+        return loader.construct_scalar(node).lower() == "true"
+
+    Core12Loader.add_constructor("tag:yaml.org,2002:int", construct_int)
+    Core12Loader.add_constructor("tag:yaml.org,2002:float", construct_float)
+    Core12Loader.add_constructor("tag:yaml.org,2002:bool", construct_bool)
+    return yaml, Core12Loader
+
+
+def yaml_difference(left, right, path: str = "") -> str | None:
+    """The first difference between two parsed documents, types included."""
+    if type(left) is not type(right):
+        return f"{path or '/'}: {type(left).__name__} {left!r:.80} vs {type(right).__name__} {right!r:.80}"
+    if isinstance(left, dict):
+        if list(left) != list(right):
+            return f"{path or '/'}: keys {sorted(set(left) ^ set(right))[:5] or 'order'}"
+        for key in left:
+            found = yaml_difference(left[key], right[key], f"{path}/{key}")
+            if found:
+                return found
+        return None
+    if isinstance(left, list):
+        if len(left) != len(right):
+            return f"{path or '/'}: {len(left)} vs {len(right)} items"
+        for index, (a, b) in enumerate(zip(left, right)):
+            found = yaml_difference(a, b, f"{path}/{index}")
+            if found:
+                return found
+        return None
+    if left != right and not (isinstance(left, float) and left != left and right != right):
+        return f"{path or '/'}: {left!r:.80} vs {right!r:.80}"
+    return None
+
+
+def check_yaml_reader(label: str, data: bytes, report: Report) -> None:
+    """ci/plugin_config_schemas.py's YAML reader parses the pinned openapi.yaml
+    exactly as an independent YAML 1.2 core-schema parser does (step 9)."""
+    text = data.decode("utf-8")
+    try:
+        ours = plugin_config_schemas.load_yaml(text)
+    except ValueError as exc:
+        report.fail(label, f"the generator's YAML reader refuses the pinned file: {exc}")
+        return
+    yaml, loader = yaml_core_12_loader()
+    try:
+        theirs = yaml.load(text, Loader=loader)  # noqa: S506 (SafeLoader subclass)
+    except yaml.YAMLError as exc:
+        report.fail(label, f"PyYAML cannot parse the pinned file: {exc}")
+        return
+    difference = yaml_difference(ours, theirs)
+    if difference:
+        report.fail(label, f"the generator's YAML reader and PyYAML (YAML 1.2 core) disagree at {difference}")
+    else:
+        report.ok()
+
+
 def check_copied_values(schemas, vocabularies: dict[str, dict], report: Report) -> None:
     """Values a schema copies from a vocabulary must match it exactly.
 
@@ -1541,6 +1754,8 @@ def main() -> int:
     check_vocabulary_consistency(vocabularies, report)
     check_main_branch_delta(vocabularies, report)
     check_copied_values(schemas, vocabularies, report)
+    print("plugin config schemas")
+    check_plugin_config_schema_files(root, vocabularies, report)
     print("qualification cases")
     check_qualifications(root, schemas, registry, report)
     if args.openapi or args.fetch_openapi:
@@ -1556,6 +1771,9 @@ def main() -> int:
             data, label = fetch_openapi(vocabularies, report), "pinned openapi.yaml"
         if data is not None:
             check_openapi(label, data, vocabularies, report)
+            print("generated plugin config schemas")
+            check_yaml_reader(label, data, report)
+            check_plugin_config_schema_generation(root, label, data, vocabularies, report)
 
     if report.errors:
         print(f"\n{len(report.errors)} problem(s):", file=sys.stderr)

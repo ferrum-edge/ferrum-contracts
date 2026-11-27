@@ -1,0 +1,1146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/proxy_alerts.schema.json",
+  "title": "proxy_alerts plugin config",
+  "description": "The `config` object of an enabled `proxy_alerts` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component ProxyAlertsConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "proxy_alerts",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/ProxyAlertsConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/ProxyAlertsConfig",
+  "$defs": {
+    "DisconnectCause": {
+      "type": "string",
+      "description": "Stream session termination cause. `gateway_policy` is a gateway admission or dispatch-policy decision before any backend was selected (for example opaque-TLS SNI fail-closed refusal).",
+      "enum": [
+        "idle_timeout",
+        "recv_error",
+        "backend_error",
+        "graceful_shutdown",
+        "gateway_policy"
+      ]
+    },
+    "ErrorClass": {
+      "type": "string",
+      "enum": [
+        "connection_timeout",
+        "connection_refused",
+        "connection_reset",
+        "connection_closed",
+        "dns_lookup_error",
+        "tls_error",
+        "read_write_timeout",
+        "client_disconnect",
+        "protocol_error",
+        "response_body_too_large",
+        "gateway_buffer_capacity",
+        "request_body_too_large",
+        "connection_pool_error",
+        "port_exhaustion",
+        "graceful_remote_close",
+        "dispatch_policy_rejected",
+        "backend_connection_limit",
+        "trust_withdrawn",
+        "request_error"
+      ],
+      "description": "Stable classification of a backend dispatch failure. Emitted on\n`TransactionSummary.error_class` / `StreamTransactionSummary.error_class`\nand used by alert rules. `graceful_remote_close` is the HTTP/3 backend's\nspec-legal teardown signal (RFC 9114 §8.1) — the request still 502s but\nthe connection stays H3-capable. `dispatch_policy_rejected` covers\nterminal gateway decisions taken before any backend dial (for example\nan unsupportable backend TLS SNI override) and is intentionally not a\nconnection error, so retry policies do not fire.\n`gateway_buffer_capacity` is the gateway's process-wide budget for\n*retained* (buffered) response bodies refusing another response: the\nbackend answered correctly and within every configured per-response\nceiling, so the refusal is gateway-local transient capacity. It is\nhealth-neutral (no circuit-breaker, passive-health, or\nadaptive-concurrency effect) and not retried, and it surfaces as HTTP\n`503` or gRPC `RESOURCE_EXHAUSTED` — never as a backend `502` /\n`response_body_too_large`.\n`backend_connection_limit` is the gateway refusing to open one more\nphysical backend connection because the destination is already at its\nDestinationRule `connectionPool.tcp.maxConnections` ceiling. Nothing was\ndialed, so it is health-neutral (no circuit-breaker, passive-health,\nload-balancer-penalty, or adaptive-concurrency effect) — a saturated\noperator-configured ceiling must never eject a healthy destination —\nwhile still being pre-wire, so `retry_on_connect_failure` may rotate to\nanother load-balanced target with its own admission lane.\n`trust_withdrawn` is a gateway-to-mesh transport refused because an\naccepted gateway trust publication withdrew an authority: the connection\nwas dialed under the outgoing trust generation, or a checked-out\ntransport was retired before it could open the next stream. Nothing was\nsent, so it is health-neutral for the same reason as\n`backend_connection_limit` — withdrawing a root is gateway policy, not\nevidence about the destination workload — while staying pre-wire, so a\nretry re-dials under the freshly published trust generation.\n"
+    },
+    "ProxyAlertsChannel": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsSlackChannel"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsTeamsChannel"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsDiscordChannel"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsWebhookChannel"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsEmailChannel"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "slack": "#/$defs/ProxyAlertsSlackChannel",
+          "teams": "#/$defs/ProxyAlertsTeamsChannel",
+          "discord": "#/$defs/ProxyAlertsDiscordChannel",
+          "webhook": "#/$defs/ProxyAlertsWebhookChannel",
+          "email": "#/$defs/ProxyAlertsEmailChannel"
+        }
+      }
+    },
+    "ProxyAlertsConfig": {
+      "type": "object",
+      "description": "Plugin: proxy_alerts — in-gateway anomaly notifications for proxy\ntraffic. Observes HTTP/gRPC transaction summaries, TCP/UDP stream\ndisconnect summaries, and WebSocket disconnect summaries, then sends\nTrigger/Resolve notifications to Slack, Microsoft Teams, Discord,\ngeneric HTTP webhooks, or SMTP email. See docs/proxy_alerts.md.\n\nUnknown top-level keys are rejected. Present values must match their\ndeclared types (`enabled` boolean, `quiet_hours_utc` array,\n`max_concurrent_dispatches` integer 1..=4294967295, `max_delivery_retries`\ninteger 0..=8, `delivery_retry_base_ms` / `delivery_retry_max_ms`\nintegers in [10, 60000]). The constructor additionally requires\n`delivery_retry_max_ms >= delivery_retry_base_ms`; standard JSON Schema\ncannot compare those sibling numbers, so this schema does not claim\ncomplete admission equivalence for that pair. The `channels` map remains\nopen for arbitrary channel names; each channel/rule variant is closed\nto its selected shape. Rules may also be `enabled: false` drafts.\nWebhook `method` is case-insensitive (constructor normalizes to\nPOST / PUT / PATCH). Channel URL and `*_env` strings must be nonempty;\nHTTP webhook URLs must be HTTP(S) with a host and no userinfo.\n\nEmail `subject_template` / `body_template` reject empty strings.\nSchema `maxLength` on those fields is a character ceiling for tooling;\nthe constructor enforces UTF-8 byte bounds (1024 / 65536) and balanced\n`${` template syntax. SMTP `username` / `username_env` must be paired\nwith `password` / `password_env` and vice versa. `from` / `to` use the\nconstructor's ASCII addr-spec grammar (not annotation-only `format: email`).\n\nRegistration is OptionalFailOpen. Admin create/update performs strict\nconstruction and returns HTTP 400 for an invalid enabled config before\nstoring it. During file-mode load, `ferrum-edge validate`, pre-existing\nDB/CP snapshot application, or cache rebuild, invalid enabled configs\nproduce a validation/construction warning and omit this instance from\nthe published plugin cache rather than rejecting the surrounding\nsnapshot. `ferrum-edge validate` can therefore exit 0 with optional\nplugin warnings; inspect those warnings to confirm the alert instance\nis active.\n",
+      "additionalProperties": false,
+      "required": [
+        "channels",
+        "rules"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Master runtime switch for this plugin instance."
+        },
+        "default_cooldown_seconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 86400,
+          "default": 300,
+          "description": "Per-rule fallback cooldown. Cooldown is tracked per `(rule, proxy, channel)`."
+        },
+        "default_min_request_count": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "default": 50,
+          "description": "Per-rule fallback for error-rate, latency-percentile, and grpc-status-rate rules."
+        },
+        "default_window_seconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 5,
+          "maximum": 3600,
+          "default": 60,
+          "description": "Per-rule fallback sliding-window length."
+        },
+        "default_resolved_window_seconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 5,
+          "maximum": 86400,
+          "default": 300,
+          "description": "Per-rule fallback recovery quiet period after a breach clears."
+        },
+        "max_concurrent_dispatches": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 4294967295,
+          "default": 8,
+          "description": "Maximum concurrent outbound notification requests. Excess alerts are dropped, not queued. Values above uint32 (`4294967295`) are rejected."
+        },
+        "max_delivery_retries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "maximum": 8,
+          "default": 2,
+          "description": "Number of re-attempts after the initial send for transient\ntransport/HTTP failures (408/429/5xx and connect/timeout errors).\nRetries hold the dispatch semaphore permit and never enqueue extra\nwork. Permanent failures (other 4xx) are not retried.\n"
+        },
+        "delivery_retry_base_ms": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 10,
+          "maximum": 60000,
+          "default": 100,
+          "description": "Initial jittered backoff delay between transient delivery retries."
+        },
+        "delivery_retry_max_ms": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 10,
+          "maximum": 60000,
+          "default": 2000,
+          "description": "Upper bound for exponential jittered backoff between transient\ndelivery retries. The constructor requires this to be\n`>= delivery_retry_base_ms`. That sibling comparison is\nconstructor-only; this schema cannot assert it.\n"
+        },
+        "quiet_hours_utc": {
+          "type": "array",
+          "default": [],
+          "description": "UTC time windows where Trigger alerts are suppressed. Resolve alerts still dispatch.",
+          "items": {
+            "$ref": "#/$defs/ProxyAlertsQuietHourWindow"
+          }
+        },
+        "channels": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ProxyAlertsChannel"
+          },
+          "description": "Map of channel name to channel definition. Rule `channels` entries reference these names."
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Alert rules evaluated per matched proxy. At least one rule must be active.",
+          "items": {
+            "$ref": "#/$defs/ProxyAlertsRule"
+          },
+          "contains": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ProxyAlertsErrorRateRule"
+              },
+              {
+                "$ref": "#/$defs/ProxyAlertsStatusCodeCountRule"
+              },
+              {
+                "$ref": "#/$defs/ProxyAlertsLatencyPercentileRule"
+              },
+              {
+                "$ref": "#/$defs/ProxyAlertsErrorClassRule"
+              },
+              {
+                "$ref": "#/$defs/ProxyAlertsStreamDisconnectCauseRule"
+              },
+              {
+                "$ref": "#/$defs/ProxyAlertsGrpcStatusCountRule"
+              },
+              {
+                "$ref": "#/$defs/ProxyAlertsGrpcStatusRateRule"
+              }
+            ]
+          }
+        }
+      },
+      "example": {
+        "enabled": true,
+        "default_cooldown_seconds": 300,
+        "default_min_request_count": 50,
+        "default_window_seconds": 60,
+        "default_resolved_window_seconds": 300,
+        "max_concurrent_dispatches": 8,
+        "max_delivery_retries": 2,
+        "delivery_retry_base_ms": 100,
+        "delivery_retry_max_ms": 2000,
+        "quiet_hours_utc": [
+          {
+            "from": "23:00",
+            "to": "06:00",
+            "weekdays": [
+              0,
+              6
+            ]
+          }
+        ],
+        "channels": {
+          "ops_slack": {
+            "type": "slack",
+            "webhook_url_env": "FERRUM_PLUGIN_SECRET_ALERTS_SLACK_WEBHOOK",
+            "channel_override": "#alerts-prod"
+          },
+          "pagerduty_v2": {
+            "type": "webhook",
+            "url_env": "FERRUM_PLUGIN_SECRET_PAGERDUTY_EVENTS_URL",
+            "method": "POST",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body_template": "{\"routing_key\":\"$ROUTING_KEY\",\"event_action\":\"${event_action}\",\"dedup_key\":\"${incident_key}\",\"payload\":{\"summary\":\"${rule_name}: ${reason}\",\"source\":\"${proxy_name}\",\"severity\":\"${severity}\"}}"
+          }
+        },
+        "rules": [
+          {
+            "name": "proxy_5xx_spike",
+            "enabled": true,
+            "type": "error_rate",
+            "status_codes": [
+              500,
+              501,
+              502,
+              503,
+              504
+            ],
+            "threshold_percent": 5.0,
+            "min_request_count": 100,
+            "window_seconds": 60,
+            "channels": [
+              "ops_slack",
+              "pagerduty_v2"
+            ],
+            "cooldown_seconds": 300,
+            "recovery": {
+              "resolved_window_seconds": 300
+            },
+            "severity": "high"
+          }
+        ]
+      }
+    },
+    "ProxyAlertsDisabledDraftRule": {
+      "type": "object",
+      "description": "Explicitly disabled draft rule. Runtime skips these before validation,\nso incomplete, unknown, or otherwise invalid fields are allowed when\n`enabled` is the boolean `false`. Active complete rules must not use\nthis branch (`enabled: false` is excluded from active variants).\n",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "const": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "ProxyAlertsDiscordChannel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "webhook_url"
+          ]
+        },
+        {
+          "required": [
+            "webhook_url_env"
+          ]
+        }
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "discord"
+          ]
+        },
+        "webhook_url": {
+          "$ref": "#/$defs/ProxyAlertsHttpUrl",
+          "description": "Discord-compatible webhook URL. Prefer `webhook_url_env` for secrets."
+        },
+        "webhook_url_env": {
+          "$ref": "#/$defs/ProxyAlertsEnvName",
+          "description": "Environment variable containing the Discord webhook URL."
+        },
+        "username": {
+          "type": "string",
+          "description": "Optional webhook username override."
+        }
+      }
+    },
+    "ProxyAlertsEmailAddress": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 254,
+      "format": "email",
+      "pattern": "^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$",
+      "description": "ASCII addr-spec as enforced by the constructor (no quoted local parts,\ncomments, or address literals; local-part dots cannot start, end, or\nrepeat). `format: email` is an annotation; this pattern is the\nenforceable grammar. Constructor also caps the local part at 64 bytes.\n"
+    },
+    "ProxyAlertsEmailChannel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "smtp_host",
+        "from",
+        "to"
+      ],
+      "description": "Native SMTP delivery. TLS is mandatory: `starttls` upgrades the session\nand fails closed when the relay does not advertise STARTTLS, and\n`implicit_tls` handshakes immediately (SMTPS). Plaintext SMTP is not\noffered, `AUTH` is never sent before the handshake completes, and\ncertificate verification is always enforced (this channel does not honor\n`FERRUM_TLS_NO_VERIFY`; use `FERRUM_TLS_CA_BUNDLE_PATH` for private CAs).\nUsername and password (inline or `*_env`) must be paired: either both\nsides are set or neither is.\n",
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "username"
+                ]
+              },
+              {
+                "required": [
+                  "username_env"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "password"
+                ]
+              },
+              {
+                "required": [
+                  "password_env"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "password"
+                ]
+              },
+              {
+                "required": [
+                  "password_env"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "username"
+                ]
+              },
+              {
+                "required": [
+                  "username_env"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "email"
+          ]
+        },
+        "smtp_host": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "anyOf": [
+              {
+                "pattern": "://"
+              },
+              {
+                "pattern": "[/?#@\\s]"
+              },
+              {
+                "pattern": "^[^\\[\\]:]+:[^:]+$"
+              }
+            ]
+          },
+          "description": "SMTP relay hostname or IP literal. No scheme, port, path, or credentials. Literal IPs must pass the resolved backend egress policy at admission (including allow/deny CIDRs and dangerous-range overrides). Construction does not resolve DNS; every send rechecks the resolved IP before connecting."
+        },
+        "smtp_port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "SMTP port. Defaults to 587 for `starttls` and 465 for `implicit_tls`."
+        },
+        "tls_mode": {
+          "type": "string",
+          "enum": [
+            "starttls",
+            "implicit_tls"
+          ],
+          "default": "starttls",
+          "description": "TLS posture for the session. Both values complete a verified handshake before any credential or message data is written."
+        },
+        "tls_server_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Verified TLS identity override. Defaults to `smtp_host`."
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SMTP AUTH username. Prefer `username_env`. Must be paired with `password` or `password_env`."
+        },
+        "username_env": {
+          "$ref": "#/$defs/ProxyAlertsEnvName",
+          "description": "Environment variable containing the SMTP AUTH username."
+        },
+        "password": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SMTP AUTH password. Prefer `password_env`. Redacted from lower-privilege plugin projections and audit records; full-admin reads remain raw by repository policy. Must be paired with `username` or `username_env`."
+        },
+        "password_env": {
+          "$ref": "#/$defs/ProxyAlertsEnvName",
+          "description": "Environment variable containing the SMTP AUTH password."
+        },
+        "from": {
+          "$ref": "#/$defs/ProxyAlertsEmailAddress",
+          "description": "Envelope and header sender address (max 254 bytes, ASCII addr-spec)."
+        },
+        "to": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/ProxyAlertsEmailAddress"
+          },
+          "description": "Recipient addresses. Duplicates are collapsed."
+        },
+        "subject_template": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "default": "[${severity}] ${title}",
+          "description": "Subject template. Schema `maxLength` is a character ceiling for\ntooling. The constructor enforces a 1024-byte UTF-8 bound (a\n600-character string of `é` is 1200 bytes and is rejected), rejects\nempty strings, and rejects unbalanced `${` placeholders.\n"
+        },
+        "body_template": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 65536,
+          "default": "${body}\n\n${fields}",
+          "description": "Plain-text body template. Adds `${fields}`, the notification's\nkey/value rows rendered as `Name: value` lines. Schema `maxLength`\nis a character ceiling; the constructor enforces a 65536-byte UTF-8\nbound, rejects empty strings, and rejects unbalanced `${`\nplaceholders.\n"
+        },
+        "helo_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "EHLO identity. Defaults to the domain of `from`."
+        },
+        "connect_timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 60000,
+          "default": 5000,
+          "description": "Applied independently to DNS resolution, TCP connect, and the TLS handshake, so a stalled connect can take up to three times this value before it fails."
+        },
+        "command_timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000,
+          "default": 10000,
+          "description": "Bounds each SMTP command/reply exchange, including DATA."
+        }
+      }
+    },
+    "ProxyAlertsEnvName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!.*_(?:FILE|VAULT|AWS|AZURE|GCP)$)FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*$",
+      "description": "Name of a `FERRUM_PLUGIN_SECRET_<NAME>` environment variable\n(`<NAME>` uppercase `[A-Z_][A-Z0-9_]*`) resolved at construction.\nAny other process environment variable, including every other\n`FERRUM_*` setting, is refused at admission with a 400. The named\nvariable must also be set and nonempty at construction; that\nprocess-environment check is constructor-only.\n"
+    },
+    "ProxyAlertsErrorClassRule": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsRuleCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "type",
+            "classes",
+            "threshold_count",
+            "channels"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "error_class"
+              ]
+            },
+            "classes": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/ErrorClass"
+              },
+              "description": "Error classes counted by this rule. HTTP rules also check `body_error_class`."
+            },
+            "threshold_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "description": "Alert when at least this many matching errors occur in the window."
+            }
+          }
+        }
+      ]
+    },
+    "ProxyAlertsErrorRateRule": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsRuleCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "type",
+            "status_codes",
+            "threshold_percent",
+            "channels"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "error_rate"
+              ]
+            },
+            "status_codes": {
+              "$ref": "#/$defs/ProxyAlertsStatusCodeList"
+            },
+            "threshold_percent": {
+              "type": "number",
+              "format": "double",
+              "exclusiveMinimum": 0,
+              "maximum": 100,
+              "description": "Alert when the matching status-code percentage is at least this value."
+            },
+            "min_request_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "description": "Minimum total requests in the window before the percentage can alert."
+            }
+          }
+        }
+      ]
+    },
+    "ProxyAlertsGrpcStatusCountRule": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsRuleCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "type",
+            "grpc_statuses",
+            "threshold_count",
+            "channels"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "grpc_status_count"
+              ]
+            },
+            "grpc_statuses": {
+              "$ref": "#/$defs/ProxyAlertsGrpcStatusList"
+            },
+            "threshold_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "description": "Alert when at least this many completed gRPC transactions carry a\nmatching terminal application status in the window. Evaluated from\nthe terminal `log()` summary after buffered, trailers-only, and\nstreamed bodies finish. HTTP transport status is not consulted.\n"
+            }
+          }
+        }
+      ]
+    },
+    "ProxyAlertsGrpcStatusList": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Terminal gRPC application statuses to match. Integers are standard codes\n`0..=16`. The string `OTHER` matches malformed (`u32::MAX`) and future\nout-of-range codes, matching the bounded StatsD/Prometheus bucket.\nDistinct from HTTP `status_codes`.\n",
+      "items": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 16
+          },
+          {
+            "type": "string",
+            "enum": [
+              "OTHER"
+            ]
+          }
+        ]
+      }
+    },
+    "ProxyAlertsGrpcStatusRateRule": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsRuleCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "type",
+            "grpc_statuses",
+            "threshold_percent",
+            "channels"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "grpc_status_rate"
+              ]
+            },
+            "grpc_statuses": {
+              "$ref": "#/$defs/ProxyAlertsGrpcStatusList"
+            },
+            "threshold_percent": {
+              "type": "number",
+              "format": "double",
+              "exclusiveMinimum": 0,
+              "maximum": 100,
+              "description": "Alert when the matching gRPC-status percentage among gRPC\ntransactions is at least this value. Plain HTTP samples do not\nenter the denominator.\n"
+            },
+            "min_request_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "description": "Minimum gRPC transactions in the window before the percentage can alert."
+            }
+          }
+        }
+      ]
+    },
+    "ProxyAlertsHttpUrl": {
+      "type": "string",
+      "minLength": 1,
+      "format": "uri",
+      "pattern": "^[hH][tT][tT][pP][sS]?://(?![^/?#]*@)(?:\\[[^\\]\\s]+\\]|[^/?#:\\s]+)(?::[0-9]+)?(?:[/?#]\\S*)?$",
+      "description": "HTTP or HTTPS URL with a host and no `user:pass@` userinfo. Empty\nstrings are rejected. `format: uri` is a Draft 2020-12 annotation;\nthis pattern is the enforceable constructor approximation\n(constructor also parses the URL and rejects a missing host).\n"
+    },
+    "ProxyAlertsLatencyPercentileRule": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsRuleCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "type",
+            "metric",
+            "percentile",
+            "threshold_ms",
+            "channels"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "latency_percentile"
+              ]
+            },
+            "metric": {
+              "type": "string",
+              "enum": [
+                "backend_total_ms",
+                "backend_ttfb_ms",
+                "total_ms",
+                "stream_duration_ms"
+              ],
+              "description": "Latency metric to observe. `stream_duration_ms` applies to TCP/UDP/DTLS/WebSocket sessions and is measured on a process-monotonic clock (not UTC wall time); connect/disconnect timestamps remain civil-clock values for rendering. The other metrics apply to HTTP-family summaries."
+            },
+            "percentile": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99
+            },
+            "threshold_ms": {
+              "type": "number",
+              "format": "double",
+              "exclusiveMinimum": 0,
+              "maximum": 300000,
+              "description": "Alert when the bucket upper-bound estimate for the percentile is strictly greater than this threshold."
+            },
+            "min_request_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "description": "Minimum observations in the window before the percentile can alert."
+            }
+          }
+        }
+      ]
+    },
+    "ProxyAlertsQuietHourWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+          "description": "UTC start time in strict HH:MM form."
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+          "description": "UTC end time in strict HH:MM form. Values earlier than `from` wrap past midnight."
+        },
+        "weekdays": {
+          "type": "array",
+          "default": [],
+          "description": "Days the window applies to (`0 = Sunday` ... `6 = Saturday`). Omit or use `[]` for every day.",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          }
+        }
+      }
+    },
+    "ProxyAlertsRecovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resolved_window_seconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 5,
+          "maximum": 86400,
+          "default": 300,
+          "description": "How long the rule must stay below threshold before a Resolve notification is sent."
+        }
+      }
+    },
+    "ProxyAlertsRule": {
+      "description": "Active rules are discriminator-selected closed variants. An explicit\n`enabled: false` draft object is also accepted and may contain\nincomplete or unknown fields; runtime skips drafts before validation.\nActive variants reject `enabled: false` so a complete disabled rule\ncannot satisfy more than one `oneOf` branch.\n",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsDisabledDraftRule"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsErrorRateRule"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsStatusCodeCountRule"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsLatencyPercentileRule"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsErrorClassRule"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsStreamDisconnectCauseRule"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsGrpcStatusCountRule"
+        },
+        {
+          "$ref": "#/$defs/ProxyAlertsGrpcStatusRateRule"
+        }
+      ],
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "error_rate": "#/$defs/ProxyAlertsErrorRateRule",
+          "status_code_count": "#/$defs/ProxyAlertsStatusCodeCountRule",
+          "latency_percentile": "#/$defs/ProxyAlertsLatencyPercentileRule",
+          "error_class": "#/$defs/ProxyAlertsErrorClassRule",
+          "stream_disconnect_cause": "#/$defs/ProxyAlertsStreamDisconnectCauseRule",
+          "grpc_status_count": "#/$defs/ProxyAlertsGrpcStatusCountRule",
+          "grpc_status_rate": "#/$defs/ProxyAlertsGrpcStatusRateRule"
+        }
+      }
+    },
+    "ProxyAlertsRuleCommon": {
+      "type": "object",
+      "description": "Shared rule fields. Closed-object enforcement lives on each selected rule variant via `unevaluatedProperties: false` so common and type-specific keys compose correctly.\n",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique rule name within this plugin config."
+        },
+        "enabled": {
+          "type": "boolean",
+          "enum": [
+            true
+          ],
+          "default": true,
+          "description": "Active rules are enabled when this field is omitted or `true`. Use `ProxyAlertsDisabledDraftRule` (`enabled: false`) for incomplete drafts.\n"
+        },
+        "window_seconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 5,
+          "maximum": 3600,
+          "description": "Sliding-window length for this rule."
+        },
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "description": "Channel names from the top-level `channels` map."
+        },
+        "cooldown_seconds": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 86400,
+          "description": "Per-rule cooldown override."
+        },
+        "recovery": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ProxyAlertsRecovery"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional resolved notification settings."
+        },
+        "severity": {
+          "$ref": "#/$defs/ProxyAlertsSeverity"
+        }
+      }
+    },
+    "ProxyAlertsSeverity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "ProxyAlertsSlackChannel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "webhook_url"
+          ]
+        },
+        {
+          "required": [
+            "webhook_url_env"
+          ]
+        }
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "slack"
+          ]
+        },
+        "webhook_url": {
+          "$ref": "#/$defs/ProxyAlertsHttpUrl",
+          "description": "Slack incoming webhook URL. Prefer `webhook_url_env` for secrets."
+        },
+        "webhook_url_env": {
+          "$ref": "#/$defs/ProxyAlertsEnvName",
+          "description": "Environment variable containing the Slack incoming webhook URL."
+        },
+        "channel_override": {
+          "type": "string",
+          "description": "Optional Slack channel override, e.g. `#alerts-prod`."
+        },
+        "username": {
+          "type": "string",
+          "description": "Optional bot username override."
+        },
+        "icon_emoji": {
+          "type": "string",
+          "description": "Optional bot icon emoji, e.g. `:rotating_light:`."
+        }
+      }
+    },
+    "ProxyAlertsStatusCodeCountRule": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsRuleCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "type",
+            "status_codes",
+            "threshold_count",
+            "channels"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "status_code_count"
+              ]
+            },
+            "status_codes": {
+              "$ref": "#/$defs/ProxyAlertsStatusCodeList"
+            },
+            "threshold_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "description": "Alert when at least this many matching responses occur in the window."
+            }
+          }
+        }
+      ]
+    },
+    "ProxyAlertsStatusCodeList": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "integer",
+        "minimum": 100,
+        "maximum": 599
+      }
+    },
+    "ProxyAlertsStreamDisconnectCauseRule": {
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/$defs/ProxyAlertsRuleCommon"
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "type",
+            "causes",
+            "threshold_count",
+            "channels"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "stream_disconnect_cause"
+              ]
+            },
+            "causes": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/DisconnectCause"
+              },
+              "description": "Stream disconnect causes counted by this rule."
+            },
+            "threshold_count": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "description": "Alert when at least this many matching disconnects occur in the window."
+            }
+          }
+        }
+      ]
+    },
+    "ProxyAlertsTeamsChannel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "webhook_url"
+          ]
+        },
+        {
+          "required": [
+            "webhook_url_env"
+          ]
+        }
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "teams"
+          ]
+        },
+        "webhook_url": {
+          "$ref": "#/$defs/ProxyAlertsHttpUrl",
+          "description": "Microsoft Teams incoming webhook URL. Prefer `webhook_url_env` for secrets."
+        },
+        "webhook_url_env": {
+          "$ref": "#/$defs/ProxyAlertsEnvName",
+          "description": "Environment variable containing the Teams incoming webhook URL."
+        }
+      }
+    },
+    "ProxyAlertsWebhookChannel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "body_template"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "url"
+          ]
+        },
+        {
+          "required": [
+            "url_env"
+          ]
+        }
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "webhook"
+          ]
+        },
+        "url": {
+          "$ref": "#/$defs/ProxyAlertsHttpUrl",
+          "description": "HTTP(S) endpoint URL. Prefer `url_env` for secrets."
+        },
+        "url_env": {
+          "$ref": "#/$defs/ProxyAlertsEnvName",
+          "description": "Environment variable containing the HTTP(S) endpoint URL."
+        },
+        "method": {
+          "type": "string",
+          "pattern": "^[Pp][Oo][Ss][Tt]$|^[Pp][Uu][Tt]$|^[Pp][Aa][Tt][Cc][Hh]$",
+          "default": "POST",
+          "description": "HTTP method. Case-insensitive; the constructor normalizes to POST,\nPUT, or PATCH. Spellings such as `post` and `pAtCh` are accepted.\n"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {
+            "Content-Type": "application/json"
+          },
+          "description": "Headers sent with the webhook request. JSON content types JSON-escape template substitutions."
+        },
+        "body_template": {
+          "type": "string",
+          "description": "Template body. Supports generic notification variables plus\nproxy_alerts variables such as `${rule_name}`, `${proxy_name}`,\n`${incident_key}` (stable per plugin config + namespace + proxy +\nrule; use it as the receiver's correlation key, e.g. PagerDuty\n`dedup_key`),\n`${observed}`, `${threshold}`, `${sample_count}` (total samples in\nthe rule window), `${window_seconds}`, and `${reason}`. Empty\nstrings are allowed. Unbalanced `${`\nplaceholders are rejected at construction; JSON Schema cannot\nexpress balanced-placeholder syntax.\n"
+        }
+      }
+    }
+  }
+}

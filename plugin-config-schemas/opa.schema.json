@@ -1,0 +1,327 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/opa.schema.json",
+  "title": "opa plugin config",
+  "description": "The `config` object of an enabled `opa` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component OpaPluginConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "opa",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/OpaPluginConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/OpaPluginConfig",
+  "$defs": {
+    "OpaPluginConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "opa_host",
+        "policy_path"
+      ],
+      "not": {
+        "required": [
+          "fail_open",
+          "fail_closed"
+        ]
+      },
+      "if": {
+        "required": [
+          "opa_host"
+        ],
+        "properties": {
+          "opa_host": {
+            "pattern": "^[hH][tT][tT][pP]:",
+            "not": {
+              "pattern": "^[hH][tT][tT][pP]://(?:127(?:\\.[0-9]{1,3}){3}|\\[::1\\])(?::[0-9]*)?(?:[/?#]|$)"
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "allow_plaintext"
+        ],
+        "properties": {
+          "allow_plaintext": {
+            "const": true
+          }
+        }
+      },
+      "description": "Plugin: opa — Delegates HTTP request authorization to Open Policy\nAgent's Data API in the `authorize` phase. The gateway POSTs\n`{ \"input\": ... }` to `{opa_host}/v1/data/{policy_path}` and allows\nonly `true` decisions or objects with `allow: true` at\n`decision_pointer`. Fails closed by default; `fail_open: true` is the\nopt-in availability mode. Unknown configuration keys are rejected.\nRequest headers and query-located credentials are redacted before\nbeing sent to OPA. The decision binds the request as of the authorize\nphase; later request transforms are outside it. Each decision records\nopa.decision and opa.reason transaction metadata.\n",
+      "properties": {
+        "opa_host": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1,
+          "pattern": "^[hH][tT][tT][pP][sS]?://[^@/?#\\s]+(/[^?#\\s]*)?$",
+          "description": "Base OPA URL using http:// or https://. URL credentials are not allowed; use `headers` for OPA authentication. A query string or fragment is rejected; a base path is accepted and is prepended to /v1/data/{policy_path}. Operational diagnostics record only the endpoint origin (scheme, host, port), never the configured path. An http:// URL is admitted only to a loopback IP literal written as a dotted-quad 127.d.d.d or [::1] unless allow_plaintext is true, because the decision and any `headers` credential travel on this call.",
+          "example": "https://opa.opa-system.svc.cluster.local:8181"
+        },
+        "allow_plaintext": {
+          "type": "boolean",
+          "default": false,
+          "description": "Admit an http:// opa_host whose host is not a loopback IP literal. The authorization input, the decision, and any `headers` credential then cross the network in clear."
+        },
+        "policy_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!(\\.|\\.\\.)(/|$))[^/?#%\\\\\\u0000-\\u0020\\u007F]+(/(?!(\\.|\\.\\.)(/|$))[^/?#%\\\\\\u0000-\\u0020\\u007F]+)*$",
+          "description": "OPA data path appended under /v1/data/. Must be non-empty, must not start with '/', must not contain percent-encoding, a query, a fragment, a backslash, a space, or an ASCII control character, and must not contain empty, '.', or '..' segments. The normalized decision URL must still address the path under {opa_host}/v1/data/; a value the URL parser would rewrite out of that prefix is rejected at config load.",
+          "example": "ferrum/authz/allow"
+        },
+        "headers": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+            "not": {
+              "anyOf": [
+                {
+                  "pattern": "^[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Tt][Yy][Pp][Ee]$"
+                },
+                {
+                  "pattern": "^[Xx][-_][Ff][Ee][Rr][Rr][Uu][Mm][-_][Hh][Oo][Pp][Ss]$"
+                }
+              ]
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[^\\u0000-\\u0008\\u000A-\\u001F\\u007F]*$"
+          },
+          "default": {},
+          "description": "Static HTTP headers sent to OPA on every decision request. Names use HTTP token syntax. Values must be valid HTTP field values: visible ASCII, space, horizontal tab, and UTF-8 (HeaderValue obs-text) are accepted; NUL, CR, LF, DEL, and other C0 controls are rejected. The `content-type` header is managed by the plugin and cannot be configured here, case-insensitively. Neither can the gateway-owned `X-Ferrum-Hops` proxy hop count (any case, `_` or `-`), which the decision request carries itself.",
+          "example": {
+            "Authorization": "Bearer opa-client-token"
+          }
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "default": 1000,
+          "description": "Requested per-decision timeout in milliseconds. Every positive value is accepted; the effective runtime timeout is capped at 30000 milliseconds."
+        },
+        "max_response_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "default": 262144,
+          "description": "Maximum decoded OPA response size. Oversized declared or streamed responses use the configured fail-open/fail-closed posture. An explicit null selects the default, exactly like omitting the key."
+        },
+        "fail_open": {
+          "type": "boolean",
+          "default": false,
+          "description": "Continue when OPA is unavailable, times out, returns non-2xx, returns malformed JSON, or exceeds max_response_bytes."
+        },
+        "fail_closed": {
+          "type": "boolean",
+          "default": true,
+          "description": "Inverse of `fail_open`. Configuring both fields is rejected at config load, even when the two values agree."
+        },
+        "deny_status": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 400,
+          "maximum": 599,
+          "default": 403,
+          "description": "HTTP status returned when OPA returns a policy denial."
+        },
+        "deny_body": {
+          "type": "string",
+          "default": "{\"error\":\"forbidden by policy\"}",
+          "description": "Response body returned on policy denial."
+        },
+        "deny_headers": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+            "not": {
+              "pattern": "^([Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ll][Ee][Nn][Gg][Tt][Hh]|[Kk][Ee][Ee][Pp]-[Aa][Ll][Ii][Vv][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Tt][Ee]|[Tt][Rr][Aa][Ii][Ll][Ee][Rr]|[Tt][Rr][Aa][Nn][Ss][Ff][Ee][Rr]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Uu][Pp][Gg][Rr][Aa][Dd][Ee])$"
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[^\\u0000-\\u0008\\u000A-\\u001F\\u007F]*$"
+          },
+          "default": {},
+          "description": "Headers added to the policy-denial response. Names and values are validated at config load: names use HTTP token syntax and values accept visible ASCII, space, horizontal tab, and UTF-8 (HeaderValue obs-text) while NUL, CR, LF, DEL, and other C0 controls are rejected. Protocol-managed hop-by-hop and framing destinations (`connection`, `content-length`, `keep-alive`, `proxy-authenticate`, `proxy-connection`, `te`, `trailer`, `transfer-encoding`, `upgrade`, case-insensitive) are rejected: the gateway derives Content-Length from the reject body and strips connection/framing fields at the final H1/H2/H3 response boundary."
+        },
+        "fail_closed_status": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 400,
+          "maximum": 599,
+          "default": 503,
+          "description": "HTTP status returned when fail-closed handles OPA unavailability, timeouts, non-2xx responses, malformed JSON, or oversized responses."
+        },
+        "fail_closed_body": {
+          "type": "string",
+          "default": "{\"error\":\"authorization service unavailable\"}",
+          "description": "Response body returned on fail-closed OPA errors."
+        },
+        "fail_closed_headers": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+            "not": {
+              "pattern": "^([Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Ll][Ee][Nn][Gg][Tt][Hh]|[Kk][Ee][Ee][Pp]-[Aa][Ll][Ii][Vv][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Aa][Uu][Tt][Hh][Ee][Nn][Tt][Ii][Cc][Aa][Tt][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Tt][Ee]|[Tt][Rr][Aa][Ii][Ll][Ee][Rr]|[Tt][Rr][Aa][Nn][Ss][Ff][Ee][Rr]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Uu][Pp][Gg][Rr][Aa][Dd][Ee])$"
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[^\\u0000-\\u0008\\u000A-\\u001F\\u007F]*$"
+          },
+          "default": {},
+          "description": "Headers added to fail-closed OPA error responses. Same name/value validation and protocol-managed hop-by-hop / framing destination rejection as deny_headers."
+        },
+        "decision_pointer": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "result"
+          ],
+          "description": "JSON object-key path to the decision value in OPA's response."
+        },
+        "include_method": {
+          "type": "boolean",
+          "default": true
+        },
+        "include_path": {
+          "type": "boolean",
+          "default": true
+        },
+        "include_query": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include the backend-bound request query as input.query (a flat decoded map, emitted only when unambiguous), input.query_pairs (an ordered, occurrence-complete pair list), and input.query_ambiguity (fixed-cardinality ambiguity classifications). Present query parameters configured as authentication credential locations are omitted by default."
+        },
+        "include_query_credentials": {
+          "type": "boolean",
+          "default": false,
+          "description": "Unsafe opt-in to include built-in, classifier-recognized, and authentication-plugin-marked query credentials in input.query and input.query_pairs. Keys listed in redact_query_keys remain redacted from both views."
+        },
+        "include_headers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include request headers as input.headers (one folded value per lowercase name), input.header_pairs (every field line the backend may receive, as {name, value}, grouped by name in sorted order with repeated lines in wire order), and input.header_ambiguity. Built-in and redact_headers names, active authentication credential headers, and names the shared sensitive-name classifier recognizes as credentials are omitted from all three."
+        },
+        "include_body": {
+          "type": "boolean",
+          "default": false,
+          "description": "After authentication succeeds, buffer and forward the request body. UTF-8 bodies use `body`; non-UTF-8 raw bytes use `body_base64`. A transport-proven empty body is `body: \"\"` on every frontend protocol; `body: null` means no body representation was collected (for example a WebSocket handshake). The body is read only from the gateway-owned buffered bytes, never from plugin metadata."
+        },
+        "max_body_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "default": 1048576,
+          "description": "Plugin-local request body ceiling when include_body is enabled. The strictest of this value and the positive global request body limit is enforced; this value remains active when the global limit is unlimited (0). An explicit null selects the default, exactly like omitting the key."
+        },
+        "include_consumer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include input.consumer: the mapped Consumer (id, username, acl_groups, custom_id) or, for an external identity, identity, auth_method, and realm. realm is {mechanism, authority}, where authority is the opaque, stable lowercase-hex digest of the verifying authority (null for a single-authority mechanism), and realm itself is null when the identity was not committed by the authentication boundary. Equal identity strings from different realms are different principals."
+        },
+        "include_client_ip": {
+          "type": "boolean",
+          "default": true
+        },
+        "include_service": {
+          "type": "boolean",
+          "default": true
+        },
+        "query_ambiguity_policy": {
+          "type": "string",
+          "enum": [
+            "reject",
+            "delegate"
+          ],
+          "default": "reject",
+          "description": "When include_query is enabled, controls what happens to a request whose query cannot be decoded to one value OPA and the backend are guaranteed to read identically: a duplicate decoded parameter name (including a percent-encoded alias such as a=1&%61=2 or a bare/valued pair such as flag&flag=1), a literal '+' (RFC 3986 plus vs form-urlencoded space), an unencoded ';' (a pair separator for backends that also split on ';'; reported as semicolon_separator, while '%3B' is unambiguous), malformed percent-encoding, or a non-UTF-8 decoding. 'reject' denies the request with the configured deny_status and deny_body before calling OPA. 'delegate' calls OPA anyway and lets the policy decide from the ordered, occurrence-complete input.query_pairs array and the input.query_ambiguity classifications; non-UTF-8 components are replacement-decoded and explicitly classified. input.query is omitted in that case so no rule can read from the flat map a value the backend does not execute. Omission is not itself a denial: an undefined input.query makes a deny-style Rego rule undefined rather than true, so a 'delegate' policy must deny on any input.query_ambiguity classification it does not handle."
+        },
+        "header_ambiguity_policy": {
+          "type": "string",
+          "enum": [
+            "reject",
+            "delegate"
+          ],
+          "default": "reject",
+          "description": "When include_headers is enabled, controls what happens to a request that repeats a header whose grammar is not a list (for example two X-Role field lines, or two map keys differing only in case): the backend may read the first line, the last, or the fold, while the folded input.headers value matches none of them. 'reject' denies with the configured deny_status and deny_body before calling OPA. 'delegate' calls OPA with input.header_ambiguity set to [\"duplicate_field_lines\"], every line in input.header_pairs, and the ambiguous names omitted from input.headers; the policy must then deny on any classification it does not handle. List-valued fields (Accept*, Cache-Control, Cookie, Forwarded, Via, X-Forwarded-*, and the other RFC 9110 lists) are never ambiguous."
+        },
+        "max_concurrent_decisions": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Optional per-instance bound on in-flight OPA decision calls. A request over the bound is not queued: it takes the configured failure posture immediately (fail_closed_status by default, continue under fail_open) and records opa.reason opa_concurrency_limit. Omit for no bound."
+        },
+        "decision_request_headers": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+          },
+          "default": [],
+          "description": "Opt-in allow obligations. Upstream request headers an allow decision object ({\"allow\": true, \"headers\": {...}} at decision_pointer) may set. Every listed name becomes gateway-owned for requests this instance lets through: client copies (any ASCII case, `_` or `-`) are removed, and only a policy-supplied value is forwarded. A decision whose headers name an unlisted header, repeat a name, or carry a non-string, invalid, or over-8192-byte value is refused as a policy denial. Names must be distinct (ASCII case and `_`/`-` folded). The constructor also refuses gateway-owned (x-consumer-*, x-ferrum-*, x-forwarded-*, x-geo-country, path-param assertions), hop-by-hop, framing, representation (content-type, content-encoding, content-range), and credential-bearing names (the built-in redact_headers list and the shared sensitive-name classifier). Effective-chain admission also refuses a destination any plugin on the same chain and an overlapping protocol publishes as a credential location (ASCII case and `_`/`-` folded), including WAF exemption, OpenAPI bypass, and MCP session headers. A request whose route's active credential headers include a destination is refused fail closed before the decision call, even under fail_open. Empty disables allow obligations."
+        },
+        "decision_deny_response": {
+          "type": "boolean",
+          "default": false,
+          "description": "Opt-in deny obligations. A deny decision object at decision_pointer may set `status` (400-599), `body` (string, at most 65536 bytes), and `headers` (at most 16 string values, merged over deny_headers; protocol-managed and gateway-owned diagnostic names refused). Absent members fall back to deny_status, deny_body, and deny_headers. A malformed obligation still denies, with the static response."
+        },
+        "redact_headers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+          },
+          "default": [
+            "authorization",
+            "proxy-authorization",
+            "cookie",
+            "api-key",
+            "x-api-key",
+            "x-goog-api-key",
+            "x-auth-token",
+            "x-csrf-token",
+            "x-xsrf-token",
+            "x-forwarded-authorization",
+            "x-loadtesting-key",
+            "x-loadtesting-fanout"
+          ],
+          "description": "Additional request headers to redact from `input.headers` and `input.header_pairs`. Built-in sensitive headers, active authentication credential headers, and names the shared sensitive-name classifier recognizes as credentials are always omitted."
+        },
+        "redact_query_keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": [],
+          "description": "Additional query parameter names to omit from input.query and input.query_pairs, matched case-insensitively. Built-in credential names, names the shared sensitive-name classifier recognizes as credentials (for example refresh_token, client_secret, password, X-Amz-Signature), and query locations marked by authentication plugins are already omitted unless include_query_credentials is explicitly enabled."
+        }
+      }
+    }
+  }
+}
