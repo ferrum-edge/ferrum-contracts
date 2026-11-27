@@ -22,16 +22,27 @@ allowed:
 - a new optional property;
 - a new value in an enumeration that the schema already declares open (for
   example Alloy's `anyOf` enumerations, which accept unknown strings);
-- a clearer `description`, or a tighter pattern that every existing
-  producer already meets and every fixture still passes;
+- a clearer `description`, or a tighter pattern or bound that every existing
+  producer already meets and every fixture still passes; from
+  `contracts-edge-1.0.0` on, a tightening must also refuse only values that
+  the owner already refused at or before the owner release (or recorded owner
+  revision) the major was first published against, and has refused ever
+  since. A rejection the owner introduces later is an incompatible change
+  and needs a new major (see
+  [Stability promise](#stability-promise-for-contracts-edge-1));
 - a new value in a closed enumeration that mirrors an Edge-owned
   vocabulary, under the rule in [Closed enumerations](#closed-enumerations).
 
 Anything else is breaking and needs `v<N+1>.schema.json` next to the old
 file: removing or renaming a property or a value, making an optional
 property required, adding a value to any other closed enumeration, or
-changing the meaning of a value. The old major stays in the repository
-until every consumer in [adoption.md](adoption.md) has moved.
+changing the meaning of a value. The old major stays in the repository: no
+schema major has been removed from any `contracts-edge-0.9.*` tag, and within
+the `contracts-edge-1.*` line no major is removed at all (see
+[Stability promise](#stability-promise-for-contracts-edge-1)). Retention does
+not depend on [adoption.md](adoption.md): that file lists the Ferrum products
+that pin this repository, but anyone may pin a tag, so a major is kept for
+readers this repository does not know about.
 
 ## Closed enumerations
 
@@ -44,7 +55,8 @@ On Edge's side a new token is additive: Edge v0.9.8 added `request_timeout`
 without changing anything else. Contracts follow the same rule:
 
 - **A token or class Edge adds is not a new major.** It is added to the
-  vocabulary and to every schema enumeration that copies it, in the release
+  vocabulary and to every schema enumeration that copies it (the newest
+  implemented major, once a schema has several), in the release
   tag for the Edge version that ships it, and listed under "Added" in
   `CHANGELOG.md`. The tag is what binds a consumer to an Edge release, so a
   consumer pinned to `contracts-edge-0.9.8` keeps validating exactly what
@@ -213,5 +225,125 @@ A non-Edge contract change, such as the Alloy-owned `[agents]` addition to
 Edge tag. Under the revision rule above, #8 is released as
 `contracts-edge-0.9.9-r2`; it retains the Edge v0.9.9 mapping (and so also
 v0.9.10) and does not claim that the change shipped in Edge.
+
+## Edge release candidates
+
+Contracts never tags an Edge prerelease or release candidate. Tag names stay
+`contracts-edge-X.Y.Z`, with an optional `-rN` revision, and every
+`edge_release` names a published `vX.Y.Z` Edge tag. The vocabulary schemas
+and `ci/validate.py` accept only that form, and so does every consumer's
+`PIN` parser ([consumer-pins.md](consumer-pins.md#format)). There is no
+`-rc.N`, `-beta` or other suffixed contracts tag or `edge_release` value.
+
+An Edge release candidate is a prepared commit on Edge `main` (for 1.0, the
+commit that carries version `1.0.0`) that is validated before Edge tags it.
+While it is validated:
+
+- Consumers stay on the newest published pair: the newest published Edge tag
+  and its `contracts-edge-*` tag (for 1.0, Edge `v0.9.21` and
+  `contracts-edge-0.9.21`). The candidate gets no contracts tag, and no
+  contracts file presents it as released.
+- This repository's `main` records the candidate in the `main_branch_delta`
+  of `vocabularies/plugin-catalog.json`, `vocabularies/gateway-headers.json`
+  and `vocabularies/gateway-errors.json`: `commit` names the candidate commit
+  and `summary` lists every contract-visible change between the published
+  release that `edge_release` names and the candidate. Entries that only the
+  candidate has keep their unreleased markers (`availability: unreleased`,
+  `x-contract.edge_availability`). The consumers' scheduled Edge `main`
+  checks read that `commit` as their anchor
+  ([consumer-pins.md](consumer-pins.md#checking-against-edge-main)).
+- If a later `main` commit replaces the candidate, the delta is synced again
+  to that commit.
+
+`contracts-edge-1.0.0` is cut when Edge `v1.0.0` is published, from that
+published tag, by the [release process](release-process.md#after-an-edge-release),
+like every other Edge release. The release PR reads the published tag, not
+the candidate record; if Edge publishes `v1.0.0` at a different commit, the
+published commit wins.
+
+## Stability promise for contracts-edge-1.*
+
+From `contracts-edge-1.0.0` until a `contracts-edge-2.0.0`, every
+`contracts-edge-1.*` tag, `-rN` revisions included, keeps these promises:
+
+1. **Majors stay.** Every schema major present at `contracts-edge-1.0.0`
+   (`schemas/<name>/v<N>.schema.json`, with the same `$id`), and every major a
+   later `1.*` tag adds, is present in every later `1.*` tag. No schema major
+   is removed before a `contracts-edge-2.0.0`.
+2. **A major keeps accepting what it accepted.** Within a major only the
+   changes listed in [Schema versions](#schema-versions) are made. A document
+   that a major accepts in one `1.*` tag is accepted by the same major in
+   every later `1.*` tag. The only exception is a document that the owner
+   already refused at or before the owner release (or recorded owner
+   revision) the major was first published against, and has refused in
+   every release since: a tightening may catch such a document earlier. A
+   rejection that a later owner release introduces never justifies
+   tightening an existing major; it is an incompatible change and ships
+   under rule 3. A valid fixture of a major stays valid.
+3. **Breaking changes ship side by side.** An incompatible change is a new
+   `v<N+1>.schema.json` next to the existing major, which keeps working for
+   readers that have not moved. Payload version fields follow the contract
+   major.
+4. **Vocabularies.** A vocabulary's shape follows rules 1 to 3 through its
+   `vocabulary-<name>` schema major. Its values describe the Edge release
+   that `edge_release` names: a value Edge adds follows the
+   [closed-enumeration rule](#closed-enumerations), and readers stay open (an
+   unknown value is "unknown", never an error and never a known value).
+   Removing, renaming or re-meaning a value that a schema copies needs a new
+   major of that schema. Once a schema has several majors, only its newest
+   `implemented` major copies the current vocabulary (and receives values
+   Edge adds); an older major keeps the values it was published with, and CI
+   checks it against its own fixtures only. A value that no schema copies
+   changes only when the Edge release it describes changes it.
+5. **Referenced owner configuration is separate.** The plugin catalog points
+   into Edge's `openapi.yaml` (`config_schema_document`, each plugin's
+   `config_schema` pointer and the transcribed `PluginConfigBase`
+   conditionals) and pins that file by SHA-256. The vocabulary's JSON shape
+   is covered by rules 1 to 4; the configuration schemas it points to are
+   Edge's own API and are governed by Edge's support policy for its 1.x
+   line, not by this promise. A `1.*` release re-pins `openapi.yaml` only
+   after the compatibility check in
+   [release-process.md](release-process.md#after-an-edge-release), and
+   records any incompatible owner configuration change it finds in its
+   release record instead of passing it off as compatible.
+6. **Tags are signed and immutable.** Every `1.*` tag is an SSH-signed
+   annotated tag ([release-signing.md](release-signing.md)) that is never
+   moved, deleted or re-created; a correction is a new `-rN` tag.
+
+Outside the promise:
+
+- `main_branch_delta`. It is informational: it describes unreleased Edge
+  `main` and changes in any commit. Consumers read its `commit` as a drift
+  anchor; its `summary` is for review and is not parsed.
+- Anything marked `availability: unreleased` or described by an
+  `x-contract.edge_availability` statement about Edge `main`.
+- A schema whose `x-contract.status` is `proposed`, until it is
+  `implemented`.
+- `x-contract` annotations other than `name` and `version` (provenance,
+  notes, shared status). They record where content came from and may be
+  corrected.
+- This repository's `main` branch between tags, and its tooling (`ci/`,
+  `.agents/`, `.claude/`). Consumers pin tags.
+
+A `contracts-edge-2.0.0` exists only for an Edge `v2.0.0`. It may remove
+majors; its release record and `CHANGELOG.md` section list every removed
+major, and the promise above then applies to the `contracts-edge-2.*` line.
+
+### Legacy majors
+
+Three majors present at `contracts-edge-1.0.0` describe only Edge releases
+before v0.9.13:
+
+| Major | Describes | Current major |
+|---|---|---|
+| `backend-egress-policy` v1 | Responses with `schema_version: 1`, emitted by Edge v0.9.11 and v0.9.12 | v2, from Edge v0.9.13 |
+| `vocabulary-backend-egress-policy` v1 | The egress vocabulary shape for Edge v0.9.11 and v0.9.12 | v2, from Edge v0.9.13 |
+| `admin-deployment-snapshot` v1 | Deployment snapshots emitted by Edge v0.9.12 | v2, from Edge v0.9.13 |
+
+They are legacy. They stay present under rule 1 and keep accepting what they
+accept under rule 2, so a reader of a recorded v0.9.11 or v0.9.12 payload can
+still validate it, but no Edge release from v0.9.13 on emits them. New
+consumers must not adopt them, and they receive no new properties or values,
+only description corrections. A `contracts-edge-2.0.0` may remove them.
 
 See [release-process.md](release-process.md) for the release steps.

@@ -39,6 +39,7 @@ completed).
   bounded `--fetch-openapi` download and offline tests of the schema
   provenance check, the gateway-headers availability and unpublished Edge
   tag checks, the vocabulary `x-contract.instance` check, the
+  `main_branch_delta` presence check, the
   `diagnostic-ref` values copied from `gateway-errors`, the
   `PluginConfigBase` parser and catalog parity check, and the
   cross-contract fixture check. `ci/test_release_signing.py`: offline
@@ -90,7 +91,8 @@ completed).
   invalid fail with the expected path and keyword, formats asserted), vocabularies against their schemas plus cross-reference
   checks and the gateway-headers `availability` rule (a published Edge
   release no later than `edge_release`, and no unpublished Edge tag in any
-  Edge release field), the diagnostic-finding to diagnostic-report cross-check,
+  Edge release field), a `main_branch_delta` on Edge `main` in the
+  plugin-catalog, gateway-headers and gateway-errors vocabularies, the diagnostic-finding to diagnostic-report cross-check,
   qualification cases (each `instance` passes its schema exactly when
   `schema_valid` says so, and recorded producer outcomes match the producer
   rule CI transcribes), and the

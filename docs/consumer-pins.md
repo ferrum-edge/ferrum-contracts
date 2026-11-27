@@ -87,7 +87,16 @@ following:
    equals its row.
 
 A consumer may add its own checks. Examples are a list of files it must pin,
-or parity between a vendored vocabulary and its source code.
+or parity between a vendored vocabulary and its source code. Such a check
+must tolerate the informational `main_branch_delta` block: from the release
+after `contracts-edge-0.9.21` on, the vendored `plugin-catalog.json`,
+`gateway-headers.json` and `gateway-errors.json` carry it (see
+[Checking against Edge main](#checking-against-edge-main)). A check may read
+it, but must not require it to be absent, and must not treat its `summary`
+as released content. A consumer whose test asserts that the block is absent
+changes that assertion in the PR that first re-pins to such a release;
+ferrum-foundry's `scripts/ferrum-contracts.test.mjs` does so for the plugin
+catalog (verified on 2026-11-27).
 
 Some properties cannot be checked offline. The author of the pin/copy/checksum
 PR establishes them before writing the `PIN`, from a clean clone of this
@@ -153,6 +162,16 @@ this repository's `main`:
   `commit`: removed or renamed plugin config keys, changed plugin conditionals,
   the new `openapi.yaml` sha256, and header or error changes. It is for review;
   do not parse it.
+
+The object is always present on `main`, release commits included: a release
+resets it to the Edge `main` commit it read instead of removing it, and when
+Edge `main` has no contract-visible changes beyond the release, `summary` says
+so ([release-process.md](release-process.md#after-an-edge-release); CI fails
+if the object is missing). While an Edge release candidate is validated,
+`commit` names the candidate commit
+([versioning.md](versioning.md#edge-release-candidates)). The delta is
+informational and outside the
+[stability promise](versioning.md#stability-promise-for-contracts-edge-1).
 
 A vendored copy holds the delta as of its tag. To read the current delta, fetch
 the vocabulary from this repository's `main` at a resolved commit.

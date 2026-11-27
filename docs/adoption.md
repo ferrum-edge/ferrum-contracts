@@ -1,30 +1,36 @@
 # Adoption
 
-All five consumer repositories pin selected contracts releases. The snapshot
-below records each consumer's `main` commit on 2026-11-17, the commits in
-[PIN format convergence](#pin-format-convergence); PIN files were inspected at
-the full immutable commits listed, and every vendored file each lists (228
-rows across five PIN files) hash-matches `contracts-edge-0.9.20`. Consumer
-qualification is scoped to the files and behavior actually checked.
+All five consumer repositories pin published contracts releases. The table
+below records the `PIN` on each consumer's `main` as verified on 2026-11-27,
+at the full commit listed: every `PIN` names a signed annotated
+`contracts-edge-*` tag and that tag's commit, and every vendored file each
+lists (259 rows across five `PIN` files) hash-matches the pinned tag. A
+consumer's re-pin PR changes only its own `PIN`; this table is re-verified at
+the next contracts release or adoption review rather than edited for each
+consumer PR, so between verifications the consumer's
+`contracts/ferrum-contracts/PIN` on `main` is authoritative.
+Consumer qualification is scoped to the files and behavior actually checked.
 The proposal and adoption work tracked by
 [ferrum-edge/.github#4](https://github.com/ferrum-edge/.github/issues/4) is
 complete; that issue is closed. The later Alloy consumer work tracked by
 [ferrum-alloy#27](https://github.com/ferrum-edge/ferrum-alloy/issues/27) is
 complete; that issue closed on 2026-10-06.
 
-| Repository | Commit read (consumers: `main` on 2026-11-17; Edge: `v0.9.21` tag) | Pinned tag on `main` |
+| Repository | Commit read (consumers: `main`, verified 2026-11-27; Edge: `v0.9.21` tag) | Pinned tag on that commit |
 |---|---|---|
 | ferrum-edge | `f9915358c8032214f4034a17c28cdf72d14006c3` | producer: released `v0.9.21` source; maps to `contracts-edge-0.9.21`; `v0.9.20` (`e4a606a00352674daaef08636e3e359e6c48ba18`) maps to `contracts-edge-0.9.20` at `39da322083044c2e92617209e62983c92387f0ad`; `v0.9.19` (`510ce7121c3d9754110d330a30a3bd9b7a7b278e`) maps to `contracts-edge-0.9.19` at `d96b0292a0f87647f7552f25e0e5ce1b4ae30f8b`; `v0.9.18` was tagged but never published (no matching Contracts release); `v0.9.17` maps to `contracts-edge-0.9.17`; `v0.9.15` maps to `contracts-edge-0.9.15` at `6fb64c5dc2e014204c17609fc717d976f3b4589e`; `v0.9.14` (`9bd4d5f9caa4ebe8f0ea13e76d8a6e2172eaca7d`) maps to `contracts-edge-0.9.14` at `ddbdd845733b7046c4393ac951011dafb774db33`; `v0.9.13` (`9b83115de7ec23ab51ec4feae6bed65e596db425`) maps to `contracts-edge-0.9.13`; `v0.9.12` (`0d917701b63ef38210c49df830f48cf0457cbc7d`) maps to published `contracts-edge-0.9.12` at `31f0a21d707795be293d15837c2f77c3d84219d8`; historical `v0.9.11` mapping is `contracts-edge-0.9.11` |
-| ferrum-anvil | `a1d1ce62508cb2162ea624bc8ece8aa9f7c92945` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/a1d1ce62508cb2162ea624bc8ece8aa9f7c92945/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
-| ferrum-alloy | `1a4cb58b68ceec00e048a711684887217a3c8211` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/1a4cb58b68ceec00e048a711684887217a3c8211/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
-| ferrum-nexus | `ed9e4eb8b63bcf1e8820010bd27243477ba2e631` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/ed9e4eb8b63bcf1e8820010bd27243477ba2e631/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20`, the service-manifest set included |
-| ferrum-foundry | `7d574c19074492612aef3a92f200613792180079` | [`PIN`](https://github.com/ferrum-edge/ferrum-foundry/blob/7d574c19074492612aef3a92f200613792180079/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` |
-| ferrum-edge-git-forge-ops | `e1766731c428517a64040cc8af36042dc56449a1` | [`PIN`](https://github.com/ferrum-edge/ferrum-edge-git-forge-ops/blob/e1766731c428517a64040cc8af36042dc56449a1/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20`, `edge_version=v0.9.20` |
+| ferrum-anvil | `134cbf375f6d66431a01a63780a841809b5eab0f` | [`PIN`](https://github.com/ferrum-edge/ferrum-anvil/blob/134cbf375f6d66431a01a63780a841809b5eab0f/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` (45 rows) |
+| ferrum-alloy | `d54999f86b2c7f69ea826dc60d0baff7519860b8` | [`PIN`](https://github.com/ferrum-edge/ferrum-alloy/blob/d54999f86b2c7f69ea826dc60d0baff7519860b8/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.21` (28 files; ferrum-alloy#334) |
+| ferrum-nexus | `0ebd7590d132878d67c5fb3b23fa2eb9a6787015` | [`PIN`](https://github.com/ferrum-edge/ferrum-nexus/blob/0ebd7590d132878d67c5fb3b23fa2eb9a6787015/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` (136 rows), the service-manifest set included |
+| ferrum-foundry | `60cbfa770974ad4254d47471d81d7192814f795d` | [`PIN`](https://github.com/ferrum-edge/ferrum-foundry/blob/60cbfa770974ad4254d47471d81d7192814f795d/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.21` (37 rows; ferrum-foundry#749) |
+| ferrum-edge-git-forge-ops | `a1de5903b0bd7c3cd97b67fee4a295b2012262d3` | [`PIN`](https://github.com/ferrum-edge/ferrum-edge-git-forge-ops/blob/a1de5903b0bd7c3cd97b67fee4a295b2012262d3/contracts/ferrum-contracts/PIN): `contracts-edge-0.9.20` (13 rows), `edge_version=v0.9.20` |
 
-Every consumer pins `contracts-edge-0.9.20`, checked at commit
-`39da322083044c2e92617209e62983c92387f0ad` (a signed annotated tag). A tag
-pin does not imply consumption of every file in that tagged release, nor a
-qualified admin or publisher integration.
+On 2026-11-27 Alloy and Foundry pin `contracts-edge-0.9.21` (tag commit
+`92d8da5be93ea1ece9f47729b1f7aa10ae8a7c3f`), and Anvil, Nexus and GitForgeOps
+pin `contracts-edge-0.9.20` (tag commit
+`39da322083044c2e92617209e62983c92387f0ad`). A tag pin does not imply
+consumption of every file in that tagged release, nor a qualified admin or
+publisher integration.
 
 An earlier snapshot inspected Edge main
 `66f25f5f89f1dbd4f7d523f3c57e2ace7f59d017` and published
@@ -278,27 +284,28 @@ claims.
 
 | Consumer | Contract | Consumer source and pinned copy | Status |
 |---|---|---|---|
-| ferrum-anvil | Gateway error vocabulary | Local release catalogs, finding labels, token mappings and `TOKENS` list; pinned copy at `contracts/ferrum-contracts/vocabularies/gateway-errors.json` | adopted: 0.9.20 pin; `contracts_adoption` checks hashes and local token/class parity |
+| ferrum-anvil | Gateway error vocabulary | Local release catalogs, finding labels, token mappings and `TOKENS` list; pinned copy at `contracts/ferrum-contracts/vocabularies/gateway-errors.json` | adopted: `contracts_adoption` checks hashes and local token/class parity |
 | ferrum-anvil | Gateway-owned headers | `catalog/ferrum/ferrum-edge-*/outcomes.json`; pinned copy at `contracts/ferrum-contracts/vocabularies/gateway-headers.json` | adopted: CI checks released diagnostic headers against the pin; `X-Ferrum-Diagnostic-Ref` is released in Edge v0.9.9 |
 | ferrum-anvil | `DiagnosticFinding` (owner) | `contracts/schemas/DiagnosticFinding.schema.json` remains the generated schema; pinned schema and valid/invalid fixtures are under `contracts/ferrum-contracts/` | adopted: CI checks schema parity (excluding `$id` and `x-contract`) and validates the pinned fixtures |
 | ferrum-anvil | `diagnostic_ref` | `docs/g01-gateway-diagnostic-contract.md`; shared schema at `schemas/diagnostic-ref/v1.schema.json` | adopted: pinned at `contracts/ferrum-contracts/schemas/diagnostic-ref/v1.schema.json` (ferrum-anvil#271); `contracts_adoption` checks the reference pattern and lookup vocabularies against Anvil's reader (ferrum-anvil#274) |
-| ferrum-anvil | `diagnostic_report` | `crates/anvil-diagnostics/src/import.rs`, dedicated desktop command and preview; pinned report schema and all report fixtures under `contracts/ferrum-contracts/` | consumer implemented and qualified in #312: bounded, unverified, read-only import; shared v1 is **EXISTING** in published 0.9.11; now pins 0.9.20 |
+| ferrum-anvil | `diagnostic_report` | `crates/anvil-diagnostics/src/import.rs`, dedicated desktop command and preview; pinned report schema and all report fixtures under `contracts/ferrum-contracts/` | consumer implemented and qualified in #312: bounded, unverified, read-only import; shared v1 is **EXISTING** in published 0.9.11 |
 | ferrum-alloy | Gateway error vocabulary | Local token explanations in `crates/ferrum-alloy-diagnostics/src/catalog.rs` and `rules.rs`, plus `crates/ferrum-alloy-edge/src/contract.rs`; pinned vocabulary under `contracts/ferrum-contracts/` | adopted: the pin hashes the vocabulary; pairing CI checks local tokens and recorded meanings |
 | ferrum-alloy | Gateway-owned headers | `crates/ferrum-alloy-edge/src/contract.rs`; pinned vocabulary at `contracts/ferrum-contracts/vocabularies/gateway-headers.json` | adopted: pairing CI checks the released diagnostic headers against the pin |
-| ferrum-alloy | `diagnostic_report` (owner) | Local schema `contracts/diagnostics/diagnostic-report.v1.schema.json`; pinned schema and Finding fixtures under `contracts/ferrum-contracts/` | adopted: CI checks schema parity and pinned Finding fixtures; Anvil now qualifies import of shared fixtures and an immutable real exporter report; shared v1 is **EXISTING** in published 0.9.11; now pins 0.9.20 |
+| ferrum-alloy | `diagnostic_report` (owner) | Local schema `contracts/diagnostics/diagnostic-report.v1.schema.json`; pinned schema and Finding fixtures under `contracts/ferrum-contracts/` | adopted: CI checks schema parity and pinned Finding fixtures; Anvil now qualifies import of shared fixtures and an immutable real exporter report; shared v1 is **EXISTING** in published 0.9.11 |
 | ferrum-alloy | `service_manifest` (owner) | `crates/ferrum-alloy-edge/src/manifest.rs`; fixtures `contracts/fixtures/manifests/*.toml` | owner parser/exporter implemented; shared v1 is **EXISTING** in published 0.9.11; historical r2 includes `[agents]`, and Alloy does not vendor the manifest schema; Nexus and Foundry qualify JSON preview consumption |
 | ferrum-alloy | `diagnostic_ref` | `docs/edge-contract-inventory.md`; shared schema at `schemas/diagnostic-ref/v1.schema.json` | adopted in ferrum-alloy#117: pinned at `contracts/ferrum-contracts/schemas/diagnostic-ref/v1.schema.json`; pairing CI checks `EDGE_DIAGNOSTIC_REF_PATTERN` against the schema |
 | ferrum-alloy | GitForgeOps envelope | `crates/ferrum-alloy-edge/src/export.rs` `gitforgeops_files` output | consumer qualified in GitForgeOps #461: CI generates two trees from an immutable Alloy CLI and validates them through the actual consumer loader, assembler and CLIs |
 | ferrum-edge-git-forge-ops | Plugin catalog | `src/plugin_catalog.rs`; pinned copy at `contracts/ferrum-contracts/vocabularies/plugin-catalog.json` | adopted: `PIN` hashes the vocabulary and CI compares local names, priorities, retired names and reserved names |
 | ferrum-edge-git-forge-ops | `provisioned-by` | `src/config/assembler.rs`; pinned copy at `contracts/ferrum-contracts/vocabularies/provisioned-by.json` | adopted: CI compares the local label and its usages with the pinned vocabulary |
-| ferrum-edge-git-forge-ops | GitForgeOps envelope (owner) | Local `src/config/schema.rs` `Resource`; schema and valid/invalid envelope fixtures under `contracts/ferrum-contracts/` | adopted: 0.9.20 pin hashes the shared envelope schema and fixtures; CI checks the top-level envelope against `Resource` and qualifies actual Alloy-generated trees |
+| ferrum-edge-git-forge-ops | GitForgeOps envelope (owner) | Local `src/config/schema.rs` `Resource`; schema and valid/invalid envelope fixtures under `contracts/ferrum-contracts/` | adopted: the `PIN` hashes the shared envelope schema and fixtures; CI checks the top-level envelope against `Resource` and qualifies actual Alloy-generated trees |
 | ferrum-nexus | Plugin catalog | `shared/src/plugins.ts`; pinned copy at `contracts/ferrum-contracts/vocabularies/plugin-catalog.json` | adopted: `PIN` hashes the vocabulary and CI checks local plugin names against it |
 | ferrum-nexus | `provisioned-by` | `server/src/ferrum-admin/client.ts` and test double; pinned vocabulary at `contracts/ferrum-contracts/vocabularies/provisioned-by.json` | adopted: CI checks the header and value against the pin |
-| ferrum-nexus | `service_manifest` | `server/src/service-manifest/`, authenticated route; pinned schema, all shared manifest fixtures and invalid expectations under `contracts/ferrum-contracts/` | consumer implemented and qualified in #519: bounded, namespace-authorized, redacted JSON preview; shared v1 is **EXISTING** in published 0.9.11; the single `PIN` pins the 0.9.20 manifest set (ferrum-nexus#731 merged `SERVICE-MANIFEST-PIN` into it) |
+| ferrum-nexus | `service_manifest` | `server/src/service-manifest/`, authenticated route; pinned schema, all shared manifest fixtures and invalid expectations under `contracts/ferrum-contracts/` | consumer implemented and qualified in #519: bounded, namespace-authorized, redacted JSON preview; shared v1 is **EXISTING** in published 0.9.11; the single `PIN` pins the manifest set (ferrum-nexus#731 merged `SERVICE-MANIFEST-PIN` into it) |
 | ferrum-foundry | Plugin catalog | `src/lib/pluginConfigDefaults.ts`; pinned copy at `contracts/ferrum-contracts/vocabularies/plugin-catalog.json` | adopted: `PIN` hashes the vocabulary and CI checks local metadata and defaults against it |
 | ferrum-foundry | `provisioned-by` | `server/proxy.ts`, `src/components/shared/ResourceLabels.tsx`, `scripts/mock-admin-gateway.mjs`; pinned vocabulary under `contracts/ferrum-contracts/` | adopted: CI checks header, value and label usage against the pin |
-| ferrum-foundry | `service_manifest` | `server/service-manifest.ts`, authenticated route and preview card; pinned schema and all shared manifest fixtures under `contracts/ferrum-contracts/` | consumer implemented and qualified in #540: bounded, namespace-authorized, redacted JSON preview; shared v1 is **EXISTING** in published 0.9.11; now pins 0.9.20 |
+| ferrum-foundry | `service_manifest` | `server/service-manifest.ts`, authenticated route and preview card; pinned schema and all shared manifest fixtures under `contracts/ferrum-contracts/` | consumer implemented and qualified in #540: bounded, namespace-authorized, redacted JSON preview; shared v1 is **EXISTING** in published 0.9.11 |
 
+Each consumer's pinned tag is in the table at the top of this page.
 A contract copy is **adopted** when the consumer pins an immutable
 `contracts-edge-*` tag or its commit and CI fails when its local copy differs.
 The Alloy consumer qualifications below additionally exercise actual reader
@@ -476,25 +483,27 @@ claim that human acceptance in GitForgeOps #266 passed.
 [consumer-pins.md](consumer-pins.md) defines one `PIN` format and the checks
 every consumer drift test makes. Consumers move to it at their next
 pin/copy/checksum PR; there is no flag day. Each consumer's test changes in
-its own repository. The table records each consumer's `PIN` on `main` on
-2026-11-17 and what it still differs in. A row's status changes only when the
-consumer's own PR merges. The Nexus and Foundry re-pins to
+its own repository. The table records each consumer's `PIN` on `main` as
+verified on 2026-11-27 and what it still differs in. A row's status changes
+only when the consumer's own PR merges. The Nexus and Foundry re-pins to
 `contracts-edge-0.9.20` (ferrum-nexus#706, merged in #716 as
 `c3fc0373b5cdf50a09404471a6cad98dbb0896fc`; ferrum-foundry#686, merged in
 #695 as `c20bd90b1bb548749f956076ab38ee0130674269`) kept their legacy `PIN`
 formats and checks, so neither converged at that PR. Foundry converged
-afterwards in ferrum-foundry#711, and Nexus in ferrum-nexus#731.
+afterwards in ferrum-foundry#711, Nexus in ferrum-nexus#731, and Anvil in
+ferrum-anvil#598.
 
 | Consumer (`main` read) | Current `PIN` | Differences from the canonical format and checks | Status |
 |---|---|---|---|
-| ferrum-anvil (`a1d1ce62508cb2162ea624bc8ece8aa9f7c92945`) | `tag X` / `commit X` / `sha256 <hash> <path>`, `contracts-edge-0.9.20` | Checksum rows carry a `sha256 ` prefix and one space; rows are not sorted; a duplicate row silently overwrites the earlier one (`crates/anvil-diagnostics/tests/contracts_adoption.rs`). | not converged |
-| ferrum-nexus (`ed9e4eb8b63bcf1e8820010bd27243477ba2e631`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.20`, one `PIN` (136 rows) | None. `SERVICE-MANIFEST-PIN` is merged into the one `PIN`. `shared/src/ferrum-contracts.test.ts` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory (refusing a symbolic link), and checks each hash; `.gitattributes` marks the directory `-text`. | converged in ferrum-nexus#731 (`ed9e4eb8b63bcf1e8820010bd27243477ba2e631`) |
-| ferrum-foundry (`7d574c19074492612aef3a92f200613792180079`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.20` | None. `scripts/ferrum-contracts.test.mjs` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory, and checks each hash. | converged in ferrum-foundry#711 (`7d574c19074492612aef3a92f200613792180079`) |
-| ferrum-alloy (`1a4cb58b68ceec00e048a711684887217a3c8211`) | JSON `{"tag", "commit", "files": {path: hash}}`, `contracts-edge-0.9.20` | JSON instead of text; paths are repository-relative (`contracts/ferrum-contracts/...`) instead of relative to the vendored directory; duplicate JSON keys collapse silently when parsed (`crates/ferrum-alloy-edge/tests/pairing.rs`). | not converged |
-| ferrum-edge-git-forge-ops (`e1766731c428517a64040cc8af36042dc56449a1`) | `tag=X` / `commit=X` / `edge_version=X` / `sha256 <path> <hash>`, `contracts-edge-0.9.20` | Key syntax `key=value`; checksum rows put the path before the hash. Its test already refuses unknown and duplicate rows; `edge_version` is the canonical optional header. | not converged |
+| ferrum-anvil (`134cbf375f6d66431a01a63780a841809b5eab0f`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.20` (45 rows) | None. `crates/anvil-diagnostics/tests/contracts_adoption.rs` parses the canonical lines, refuses a carriage return, a byte order mark, a blank line, a missing final newline, unsorted or duplicate rows and a row naming `PIN`, refuses a symbolic link, and compares the rows with the files under the vendored directory. | converged in ferrum-anvil#598 (`3d9aa529c1d82ec2b2ffa951bb8d370c55a72020`) |
+| ferrum-nexus (`0ebd7590d132878d67c5fb3b23fa2eb9a6787015`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.20`, one `PIN` (136 rows) | None. `SERVICE-MANIFEST-PIN` is merged into the one `PIN`. `shared/src/ferrum-contracts.test.ts` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory (refusing a symbolic link), and checks each hash; `.gitattributes` marks the directory `-text`. | converged in ferrum-nexus#731 (`ed9e4eb8b63bcf1e8820010bd27243477ba2e631`) |
+| ferrum-foundry (`60cbfa770974ad4254d47471d81d7192814f795d`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.21` (37 rows) | None. `scripts/ferrum-contracts.test.mjs` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory, and checks each hash. | converged in ferrum-foundry#711 (`7d574c19074492612aef3a92f200613792180079`) |
+| ferrum-alloy (`d54999f86b2c7f69ea826dc60d0baff7519860b8`) | JSON `{"tag", "commit", "files": {path: hash}}`, `contracts-edge-0.9.21` (28 files) | JSON instead of text; paths are repository-relative (`contracts/ferrum-contracts/...`) instead of relative to the vendored directory; duplicate JSON keys collapse silently when parsed (`crates/ferrum-alloy-edge/tests/pairing.rs`). | not converged |
+| ferrum-edge-git-forge-ops (`a1de5903b0bd7c3cd97b67fee4a295b2012262d3`) | `tag=X` / `commit=X` / `edge_version=X` / `sha256 <path> <hash>`, `contracts-edge-0.9.20` (13 rows) | Key syntax `key=value`; checksum rows put the path before the hash. Its test already refuses unknown and duplicate rows; `edge_version` is the canonical optional header. | not converged |
 
 Ferrum Edge is the producer and vendors nothing. Every `commit` above is its
-tag's commit (`contracts-edge-0.9.20` at
+tag's commit (`contracts-edge-0.9.21` at
+`92d8da5be93ea1ece9f47729b1f7aa10ae8a7c3f`, `contracts-edge-0.9.20` at
 `39da322083044c2e92617209e62983c92387f0ad`).
 
 ## Remaining follow-ups

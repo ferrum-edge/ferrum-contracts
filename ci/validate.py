@@ -27,10 +27,13 @@ Checks, in order:
    values, cross-references between vocabularies, required cardinality
    surfaces, a gateway-headers availability that is a published Edge
    release no later than edge_release, no `edge_release`,
-   `available_since` or Edge source `ref` naming an unpublished Edge tag),
-   and values copied from a vocabulary into a schema (the diagnostic-ref
-   gateway_error enum, detail.rejection_phase enum and ref / replica_id
-   patterns).
+   `available_since` or Edge source `ref` naming an unpublished Edge tag,
+   and a `main_branch_delta` on Edge `main` in plugin-catalog,
+   gateway-headers and gateway-errors), and values copied from a vocabulary
+   into a schema (the gateway_error enum, detail.rejection_phase enum and
+   ref / replica_id patterns of the newest implemented diagnostic-ref major;
+   an older major is retained for earlier Edge releases and is checked only
+   against its own fixtures).
 6. Cross-contract fixture checks (for example: every valid Anvil
    DiagnosticFinding fixture is also a valid Alloy diagnostic_report Finding).
    The valid fixtures of every major are checked, wherever the layout of
@@ -108,6 +111,10 @@ EDGE_REPO = "ferrum-edge/ferrum-edge"
 # read at (a `ref` inside an object naming another `repo` is that repo's tag).
 # A gateway-headers `availability` is checked by check_header_availability.
 EDGE_TAG_KEYS = frozenset({"edge_release", "available_since", "ref"})
+# Vocabularies whose `main_branch_delta` the consumers' scheduled Edge `main`
+# checks read as their anchor (docs/consumer-pins.md). A release keeps the
+# block and resets it (docs/release-process.md); it is never removed.
+DELTA_VOCABULARIES = ("plugin-catalog", "gateway-headers", "gateway-errors")
 _EDGE_TAG_RE = re.compile(r"v[0-9]+\.[0-9]+\.[0-9]+")
 # Schemas this repository owns (the vocabulary shapes) transcribe no other
 # repository; every other schema records where its content was read.
@@ -959,14 +966,70 @@ def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) 
         report.ok()
 
 
+def check_main_branch_delta(vocabularies: dict[str, dict], report: Report) -> None:
+    """Each DELTA_VOCABULARIES file keeps a `main_branch_delta` on Edge `main`.
+
+    The vocabulary schemas leave the block optional (making it required would
+    be a breaking change within the major), so this check holds it in place:
+    a release resets the delta to the Edge `main` commit it read and never
+    drops it. The schemas already check the commit and summary forms.
+    """
+    for name in DELTA_VOCABULARIES:
+        where = f"vocabularies/{name}.json"
+        doc = vocabularies.get(name)
+        if doc is None:
+            report.fail(where, "missing or invalid, so its main_branch_delta cannot be checked")
+            continue
+        delta = doc.get("main_branch_delta")
+        if not isinstance(delta, dict):
+            report.fail(
+                where,
+                "main_branch_delta is required: consumers' Edge main checks read its commit "
+                "(reset it to the Edge main commit read, never remove it)",
+            )
+            continue
+        if delta.get("repo") != EDGE_REPO or delta.get("ref") != "main":
+            report.fail(
+                where,
+                f"main_branch_delta must name {EDGE_REPO} and ref main, "
+                f"not {delta.get('repo')!r} and {delta.get('ref')!r}",
+            )
+            continue
+        report.ok()
+
+
+def mirroring_major(versions: dict[int, dict]) -> int | None:
+    """The major of a schema that copies the current vocabularies.
+
+    That is the newest `implemented` major. An older major is retained side by
+    side for readers of earlier Edge releases (docs/versioning.md): it keeps
+    the values it was published with, is checked against its own fixtures, and
+    is not compared with the current vocabularies.
+    """
+    implemented = [
+        major
+        for major, schema in versions.items()
+        if schema.get("x-contract", {}).get("status") == "implemented"
+    ]
+    return max(implemented) if implemented else None
+
+
 def check_copied_values(schemas, vocabularies: dict[str, dict], report: Report) -> None:
-    """Values a schema copies from a vocabulary must match it exactly."""
-    ref_schema = schemas.get("diagnostic-ref", {}).get(1)
+    """Values a schema copies from a vocabulary must match it exactly.
+
+    Only the diagnostic-ref major that mirrors the current Edge release (see
+    mirroring_major) is compared with gateway-errors and gateway-headers.
+    """
+    major = mirroring_major(schemas.get("diagnostic-ref", {}))
+    ref_schema = schemas["diagnostic-ref"][major] if major is not None else None
     errors = vocabularies.get("gateway-errors")
     headers = vocabularies.get("gateway-headers")
-    where = "schemas/diagnostic-ref/v1.schema.json"
+    where = f"schemas/diagnostic-ref/v{major if major is not None else 1}.schema.json"
     if not (ref_schema and errors and headers):
-        report.fail(where, "diagnostic-ref v1, gateway-errors or gateway-headers is missing")
+        report.fail(
+            where,
+            "an implemented diagnostic-ref major, gateway-errors or gateway-headers is missing",
+        )
         return
     props = ref_schema["properties"]
     tokens = [t["token"] for t in errors["x_gateway_error_tokens"]]
@@ -1348,6 +1411,7 @@ def main() -> int:
     print("vocabularies")
     vocabularies = check_vocabularies(root, schemas, registry, report)
     check_vocabulary_consistency(vocabularies, report)
+    check_main_branch_delta(vocabularies, report)
     check_copied_values(schemas, vocabularies, report)
     print("qualification cases")
     check_qualifications(root, schemas, registry, report)
