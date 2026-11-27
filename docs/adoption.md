@@ -567,6 +567,13 @@ whether another repository reads the data across a repository boundary today
   `vocabularies/reserved-header-names.json` (set
   `correlation_id.header_name`) from Edge `v0.9.21`. Nexus adds a parity test
   against the pinned vocabulary when it next re-pins.
+- **MCP OpenAPI bridge admission: now a contract** (found by the same
+  sweep). Alloy's agent-tool export (`crates/ferrum-alloy-edge/src/agents.rs`)
+  copies Edge's `x-ferrum-mcp` key sets, bounds, annotation keys and reserved
+  bridge request headers (`src/admin/api_specs/extractor.rs`,
+  `src/plugins/mcp_openapi_bridge.rs`). They are published as
+  `vocabularies/mcp-openapi-bridge.json` from Edge `v0.9.21`. Alloy adds a
+  parity test against the pinned vocabulary when it next re-pins.
 - **Alloy's `gateway-diagnostic-ref` report fixture: not a contract.** It is
   an Alloy-owned diagnostic report (`contracts/fixtures/reports/gateway-diagnostic-ref.json`)
   read only by Alloy's own tests; no other repository reads it (Anvil's

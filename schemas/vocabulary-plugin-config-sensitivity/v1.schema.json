@@ -19,8 +19,11 @@
     "description",
     "provenance",
     "path_matching",
+    "path_examples",
     "sensitivities",
+    "placeholders",
     "plugins",
+    "kafka_matching",
     "kafka_safe_producer_properties"
   ],
   "additionalProperties": false,
@@ -58,6 +61,53 @@
       "minLength": 1,
       "description": "How Edge compares a rule path with a config key."
     },
+    "path_examples": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Executable cases of path_matching: every value the rule reaches in config, with the class applied (pointers are RFC 6901 JSON Pointers into config).",
+      "items": {
+        "type": "object",
+        "required": [
+          "description",
+          "rule",
+          "config",
+          "applied"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rule": {
+            "$ref": "#/$defs/Rule"
+          },
+          "config": {
+            "type": "object"
+          },
+          "applied": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "pointer",
+                "sensitivity"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "pointer": {
+                  "type": "string",
+                  "pattern": "^(/[^/]*)+(?![\\s\\S])"
+                },
+                "sensitivity": {
+                  "$ref": "#/$defs/Sensitivity"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "sensitivities": {
       "type": "array",
       "minItems": 1,
@@ -80,6 +130,45 @@
         }
       }
     },
+    "placeholders": {
+      "type": "object",
+      "required": [
+        "redacted",
+        "userinfo",
+        "path",
+        "query",
+        "fragment",
+        "recognition"
+      ],
+      "additionalProperties": false,
+      "description": "The strings Edge writes in place of withheld values, and how it recognizes one sent back.",
+      "properties": {
+        "redacted": {
+          "type": "string",
+          "minLength": 1
+        },
+        "userinfo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fragment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recognition": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "plugins": {
       "type": "array",
       "minItems": 1,
@@ -94,7 +183,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "pattern": "^[a-z_][a-z0-9_]*$",
+            "pattern": "^[a-z_][a-z0-9_]*(?![\\s\\S])",
             "maxLength": 255
           },
           "rules": {
@@ -106,6 +195,11 @@
         }
       }
     },
+    "kafka_matching": {
+      "type": "string",
+      "minLength": 1,
+      "description": "How a producer_config key is compared with kafka_safe_producer_properties."
+    },
     "kafka_safe_producer_properties": {
       "type": "array",
       "minItems": 1,
@@ -113,7 +207,7 @@
       "description": "librdkafka producer_config properties that carry no credential material and stay visible; every other property is redacted.",
       "items": {
         "type": "string",
-        "pattern": "^[a-z][a-z0-9.]*[a-z0-9]$"
+        "pattern": "^[a-z][a-z0-9.]*[a-z0-9](?![\\s\\S])"
       }
     }
   },
@@ -194,7 +288,7 @@
           "minItems": 1,
           "items": {
             "type": "string",
-            "pattern": "^(\\*|[A-Za-z0-9_.-]+)$"
+            "pattern": "^(\\*|[A-Za-z0-9_.-]+)(?![\\s\\S])"
           }
         },
         "sensitivity": {

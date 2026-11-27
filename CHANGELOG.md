@@ -13,16 +13,35 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   Edge's per-plugin credential-bearing config paths and their projection
   class (`PLUGIN_SENSITIVITY_SCHEMAS`, 82 built-ins, 125 rules, shared rule
   sets expanded) and the visible librdkafka producer properties
-  (`KAFKA_SAFE_PRODUCER_PROPERTIES`, 32), transcribed from Edge `v0.9.21`
-  `src/admin/plugin_config_projection.rs`. Foundry and GitForgeOps read these
-  tables. CI requires an entry for exactly the catalog's plugins, listed
-  classes and no repeated rule path.
+  (`KAFKA_SAFE_PRODUCER_PROPERTIES`, 32), with the placeholders Edge writes
+  (`[REDACTED]`, `redacted` userinfo, `[REDACTED_PATH]`, `[REDACTED_QUERY]`,
+  `[REDACTED_FRAGMENT]`) and how it recognizes them, transcribed from Edge
+  `v0.9.21` `src/admin/plugin_config_projection.rs` and
+  `src/plugins/utils/metadata_redaction.rs`. `path_matching` states the rule
+  path grammar normatively (a `*` consumes one object key or array element; a
+  named segment matches by `normalize_config_key` and continues into array
+  elements), `path_examples` are executable cases of it that CI runs through
+  a transcription of Edge's `apply_rule`, and `kafka_matching` states the
+  trim-and-lowercase comparison for producer properties. Foundry and
+  GitForgeOps read the tables; Nexus and Alloy also recognize the
+  placeholders. CI requires an entry for exactly the catalog's plugins,
+  listed classes, and no two rule paths with the same normalized spelling.
 - `vocabularies/reserved-header-names.json` (shape
   `schemas/vocabulary-reserved-header-names/v1.schema.json`): the 45
   header names Edge refuses as a `correlation_id` `header_name`
   (`RESERVED_HEADER_NAMES`, Edge `v0.9.21` `src/plugins/correlation_id.rs`),
-  which Nexus reads. CI requires each set to be named `<plugin>.<field>` for a
-  catalog plugin.
+  which Nexus reads; names are compared after trimming and lowercasing. CI
+  requires each set to be named `<plugin>.<field>` for a catalog plugin, and
+  name patterns end with `(?![\s\S])` so a trailing newline is refused.
+- `vocabularies/mcp-openapi-bridge.json` (shape
+  `schemas/vocabulary-mcp-openapi-bridge/v1.schema.json`): Edge's
+  `x-ferrum-mcp` admission rules from `v0.9.21`: the closed document,
+  endpoint, selector, limits, operation and annotation key sets, the bounds
+  (256 operations, 64-byte namespace, 128-byte tool name, 8 KiB text, 16 MiB
+  body limit, 64 KiB error excerpt limit, 32 forwarded headers), the bridged
+  methods, and the 38 reserved bridge request header names and 12 prefixes.
+  Alloy's agent-tool export reads them. CI refuses a reserved name already
+  covered by a reserved prefix.
 - Valid and invalid fixtures for both vocabularies, with
   `ci/test_validate.py` coverage.
 

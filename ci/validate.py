@@ -27,7 +27,8 @@ Checks, in order:
    values, cross-references between vocabularies, required cardinality
    surfaces, plugin-config-sensitivity entries for exactly the catalog's
    plugins with listed classes and no repeated rule path, reserved-header-names
-   sets named <plugin>.<field> for a catalog plugin, a gateway-headers
+   sets named <plugin>.<field> for a catalog plugin, mcp-openapi-bridge
+   reserved names not covered by a reserved prefix, a gateway-headers
    availability that is a published Edge
    release no later than edge_release, no `edge_release`,
    `available_since` or Edge source `ref` naming an unpublished Edge tag,
@@ -970,6 +971,7 @@ def check_vocabulary_consistency(vocabularies: dict[str, dict], report: Report) 
         report.ok()
     check_plugin_config_sensitivity(vocabularies, report)
     check_reserved_header_names(vocabularies, report)
+    check_mcp_openapi_bridge(vocabularies, report)
 
 
 def check_plugin_config_sensitivity(vocabularies: dict[str, dict], report: Report) -> None:
@@ -1000,10 +1002,78 @@ def check_plugin_config_sensitivity(vocabularies: dict[str, dict], report: Repor
         for rule in plugin["rules"]:
             if rule["sensitivity"] not in classes:
                 report.fail(where, f"{plugin['name']} uses unlisted sensitivity {rule['sensitivity']!r}")
-            key = tuple(rule["path"])
+            # Edge matches named segments by normalize_config_key, so two
+            # spellings of one path reach the same values.
+            key = tuple(normalize_config_key(segment) for segment in rule["path"])
             if key in paths:
-                report.fail(where, f"{plugin['name']} repeats rule path {'.'.join(key)!r}")
+                report.fail(where, f"{plugin['name']} repeats rule path {'.'.join(rule['path'])!r}")
             paths.add(key)
+    for index, example in enumerate(doc.get("path_examples", [])):
+        rule = example["rule"]
+        got = sorted(sensitivity_rule_reach(example["config"], rule["path"], rule["sensitivity"]))
+        want = sorted((a["pointer"], a["sensitivity"]) for a in example["applied"])
+        if got != want:
+            report.fail(where, f"path_examples[{index}] applied {want} but the path grammar reaches {got}")
+    report.ok()
+
+
+def normalize_config_key(key: str) -> str:
+    """Edge's normalize_config_key: drop '-', '.' and '_', ASCII-lowercase; '*' stays."""
+    if key == "*":
+        return key
+    return "".join(c for c in key if c not in "-._").translate(
+        {code: code + 32 for code in range(ord("A"), ord("Z") + 1)}
+    )
+
+
+def sensitivity_rule_reach(value, path: list[str], sensitivity: str, pointer: str = ""):
+    """Every (JSON Pointer, class) a sensitivity rule reaches, per path_matching.
+
+    A transcription of Edge's Projector::apply_rule
+    (src/admin/plugin_config_projection.rs): '*' selects every object key or
+    array element (consumed at an array), a named segment matches object keys
+    by normalize_config_key and continues into array elements without being
+    consumed, an exhausted path applies the class (null excepted), and a
+    scalar met while segments remain is withheld as Secret.
+    """
+    def child(key) -> str:
+        return pointer + "/" + str(key).replace("~", "~0").replace("/", "~1")
+
+    if not path:
+        if value is not None:
+            yield pointer, sensitivity
+        return
+    head, rest = path[0], path[1:]
+    if isinstance(value, dict):
+        wanted = None if head == "*" else normalize_config_key(head)
+        for key, item in value.items():
+            if wanted is None or normalize_config_key(key) == wanted:
+                yield from sensitivity_rule_reach(item, rest, sensitivity, child(key))
+    elif isinstance(value, list):
+        following = rest if head == "*" else path
+        for index, item in enumerate(value):
+            yield from sensitivity_rule_reach(item, following, sensitivity, child(index))
+    elif value is not None:
+        yield pointer, "Secret"
+
+
+def check_mcp_openapi_bridge(vocabularies: dict[str, dict], report: Report) -> None:
+    """mcp-openapi-bridge: no reserved name is already covered by a reserved
+    prefix (Edge's lists are disjoint), and the document-level key set names
+    the endpoint, selector and limits objects the other key sets describe."""
+    doc = vocabularies.get("mcp-openapi-bridge")
+    if not doc:
+        return
+    where = "vocabularies/mcp-openapi-bridge.json"
+    reserved = doc["reserved_request_headers"]
+    for name in reserved["names"]:
+        covering = [p for p in reserved["prefixes"] if name.startswith(p)]
+        if covering:
+            report.fail(where, f"reserved name {name!r} is already covered by prefix {covering[0]!r}")
+    document = set(doc["keys"]["document"])
+    for key in ("endpoint", "limits", "include", "exclude"):
+        if key not in document:
+            report.fail(where, f"keys.document lacks {key!r}, which keys.endpoint/selector/limits describe")
     report.ok()
 
 

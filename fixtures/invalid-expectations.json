@@ -636,6 +636,14 @@
     "instance_path": "/headers/1/role",
     "keyword": "enum"
   },
+  "vocabulary-mcp-openapi-bridge/invalid/prefix-without-trailing-dash.json": {
+    "instance_path": "/reserved_request_headers/prefixes/0",
+    "keyword": "pattern"
+  },
+  "vocabulary-mcp-openapi-bridge/invalid/zero-bound.json": {
+    "instance_path": "/bounds/max_operations",
+    "keyword": "minimum"
+  },
   "vocabulary-plugin-catalog/invalid/bad-schema-pointer.json": {
     "instance_path": "/plugins/0/config_schema/pointer",
     "keyword": "pattern"
@@ -679,6 +687,10 @@
   "vocabulary-reserved-header-names/invalid/missing-also-refused.json": {
     "instance_path": "/sets/0",
     "keyword": "required"
+  },
+  "vocabulary-reserved-header-names/invalid/trailing-newline.json": {
+    "instance_path": "/sets/0/names/2",
+    "keyword": "pattern"
   },
   "vocabulary-reserved-header-names/invalid/uppercase-name.json": {
     "instance_path": "/sets/0/names/2",

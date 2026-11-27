@@ -23,7 +23,7 @@
       "plugin": "correlation_id",
       "field": "header_name",
       "symbol": "RESERVED_HEADER_NAMES",
-      "matching": "The configured name is compared in ASCII lowercase against the exact names.",
+      "matching": "The configured name is trimmed with Rust str::trim (leading and trailing Unicode White_Space), lowercased (Edge parses it as an HTTP field name, which lowercases it), and compared exactly with names.",
       "names": [
         "api-key",
         "authentication-info",

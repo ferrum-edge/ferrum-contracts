@@ -1,0 +1,157 @@
+{
+  "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-mcp-openapi-bridge/v1.schema.json",
+  "vocabulary": "mcp-openapi-bridge",
+  "version": 1,
+  "edge_release": "v0.9.21",
+  "description": "Admission rules Ferrum Edge applies to the x-ferrum-mcp OpenAPI extension (POST/PUT /api-specs) and to the OpenAPI bridge it generates (mcp_openapi_bridge): the closed key sets, the bounds, the bridged methods, and the request headers a bridged call never forwards. A product that writes x-ferrum-mcp (Alloy's agent-tool export) uses them to refuse what Edge refuses before submitting a spec.",
+  "provenance": [
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/admin/api_specs/extractor.rs",
+      "symbols": [
+        "X_FERRUM_MCP_KEYS",
+        "X_FERRUM_MCP_ENDPOINT_KEYS",
+        "X_FERRUM_MCP_SELECTOR_KEYS",
+        "X_FERRUM_MCP_LIMIT_KEYS",
+        "X_FERRUM_MCP_OPERATION_KEYS",
+        "MAX_MCP_BRIDGE_NAMESPACE_BYTES",
+        "MAX_MCP_BRIDGE_TOOL_NAME_BYTES",
+        "MAX_MCP_BRIDGE_TEXT_BYTES"
+      ]
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/plugins/mcp_openapi_bridge.rs",
+      "symbols": [
+        "MAX_BRIDGE_OPERATIONS",
+        "MAX_BRIDGE_TEXT_BYTES",
+        "MAX_BRIDGE_BODY_LIMIT",
+        "MAX_BRIDGE_ERROR_EXCERPT_LIMIT",
+        "MAX_FORWARDED_REQUEST_HEADERS",
+        "ANNOTATION_KEYS",
+        "BridgeMethod::parse",
+        "RESERVED_BRIDGE_HEADER_NAMES",
+        "RESERVED_BRIDGE_HEADER_PREFIXES",
+        "bridge_header_name_is_reserved"
+      ],
+      "note": "Transcribed verbatim from the constants at the tag, in source order."
+    }
+  ],
+  "extension_key": "x-ferrum-mcp",
+  "keys": {
+    "document": [
+      "enabled",
+      "endpoint",
+      "exclude",
+      "forward_request_headers",
+      "include",
+      "limits",
+      "namespace"
+    ],
+    "endpoint": [
+      "path"
+    ],
+    "selector": [
+      "operations",
+      "tags"
+    ],
+    "limits": [
+      "max_error_excerpt_bytes",
+      "max_request_body_bytes",
+      "max_response_body_bytes",
+      "max_structured_content_bytes"
+    ],
+    "operation": [
+      "annotations",
+      "description",
+      "expose",
+      "name",
+      "title"
+    ],
+    "annotation": [
+      "destructiveHint",
+      "idempotentHint",
+      "openWorldHint",
+      "readOnlyHint",
+      "title"
+    ]
+  },
+  "bounds": {
+    "max_operations": 256,
+    "max_namespace_bytes": 64,
+    "max_tool_name_bytes": 128,
+    "max_text_bytes": 8192,
+    "max_body_limit_bytes": 16777216,
+    "max_error_excerpt_limit_bytes": 65536,
+    "max_forwarded_request_headers": 32
+  },
+  "bridged_methods": [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE"
+  ],
+  "reserved_request_headers": {
+    "matching": "ASCII case-insensitive, with _ folded to -: a name is reserved when it equals one of names or starts with one of prefixes.",
+    "names": [
+      "accept",
+      "accept-encoding",
+      "authorization",
+      "baggage",
+      "cf-connecting-ip",
+      "connection",
+      "content-encoding",
+      "content-length",
+      "content-type",
+      "cookie",
+      "cookie2",
+      "early-data",
+      "expect",
+      "forwarded",
+      "host",
+      "http2-settings",
+      "if-range",
+      "keep-alive",
+      "last-event-id",
+      "max-forwards",
+      "range",
+      "set-cookie",
+      "te",
+      "traceparent",
+      "tracestate",
+      "trailer",
+      "transfer-encoding",
+      "true-client-ip",
+      "upgrade",
+      "via",
+      "x-client-ip",
+      "x-http-method",
+      "x-http-method-override",
+      "x-method-override",
+      "x-original-uri",
+      "x-original-url",
+      "x-real-ip",
+      "x-rewrite-url"
+    ],
+    "prefixes": [
+      "proxy-",
+      "x-forwarded-",
+      "x-ferrum-",
+      "ferrum-",
+      "x-gateway-",
+      "x-consumer-",
+      "x-path-param-",
+      "mcp-",
+      "sec-",
+      "x-envoy-",
+      "x-istio-",
+      "l5d-"
+    ],
+    "also_refused": "bridge_header_name_is_reserved also refuses every gateway assertion header (vocabularies/gateway-headers.json) and every name in Edge's backend request strip set (is_backend_request_strip_header in src/proxy/headers.rs, for example proxy-connection, x-ferrum-original-content-encoding and x-grpc-web-mode). The plugin additionally refuses the deployment's FERRUM_REAL_IP_HEADER, the MCP session headers and the request's correlation_id headers."
+  }
+}

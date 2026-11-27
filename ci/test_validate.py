@@ -471,6 +471,30 @@ class SensitivityAndReservedHeaderTests(unittest.TestCase):
         self.assertEqual(len(errors), 1, errors)
         self.assertIn("'zz_unknown' is not a plugin", errors[0])
 
+    def test_a_differently_spelled_repeated_path_fails(self) -> None:
+        plugin = next(p for p in self.sensitivity["plugins"] if p["name"] == "otel_tracing")
+        plugin["rules"].append({"path": ["end_point"], "sensitivity": "Secret"})
+        errors = self.check()
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("otel_tracing repeats rule path 'end_point'", errors[0])
+
+    def test_path_examples_follow_the_grammar(self) -> None:
+        reach = validate.sensitivity_rule_reach
+        config = {"providers": [{"name": "p", "base_url": "https://a/v1"}]}
+        self.assertEqual(
+            list(reach(config, ["providers", "*", "base_url"], "EndpointUrl")),
+            [("/providers/0/base_url", "EndpointUrl")],
+        )
+        # Carrying '*' into the element instead would reach name and base_url.
+        self.assertEqual(list(reach({"a": [{"b": "x"}]}, ["a", "b"], "Secret")), [("/a/0/b", "Secret")])
+        self.assertEqual(list(reach({"a": "scalar"}, ["a", "*"], "EndpointUrl")), [("/a", "Secret")])
+        self.assertEqual(list(reach({"a/b": {"~": 1}}, ["a/b", "*"], "Secret")), [("/a~1b/~0", "Secret")])
+        example = self.sensitivity["path_examples"][0]
+        example["applied"] = []
+        errors = self.check()
+        self.assertEqual(len(errors), 1, errors)
+        self.assertIn("path_examples[0]", errors[0])
+
     def test_an_unlisted_class_and_a_repeated_path_fail(self) -> None:
         plugin = next(p for p in self.sensitivity["plugins"] if p["rules"])
         self.sensitivity["sensitivities"] = [
@@ -480,6 +504,20 @@ class SensitivityAndReservedHeaderTests(unittest.TestCase):
         errors = self.check()
         self.assertTrue(any("uses unlisted sensitivity" in e for e in errors), errors)
         self.assertTrue(any("repeats rule path" in e for e in errors), errors)
+
+    def test_the_mcp_bridge_vocabulary_passes_and_overlaps_fail(self) -> None:
+        bridge = json.loads((ROOT / "vocabularies" / "mcp-openapi-bridge.json").read_text(encoding="utf-8"))
+        report = validate.Report()
+        validate.check_mcp_openapi_bridge({"mcp-openapi-bridge": bridge}, report)
+        self.assertEqual(report.errors, [])
+        self.assertIn("x-real-ip", bridge["reserved_request_headers"]["names"])
+        bridge["reserved_request_headers"]["names"].append("x-ferrum-anything")
+        bridge["keys"]["document"].remove("limits")
+        report = validate.Report()
+        validate.check_mcp_openapi_bridge({"mcp-openapi-bridge": bridge}, report)
+        self.assertEqual(len(report.errors), 2, report.errors)
+        self.assertTrue(any("covered by prefix 'x-ferrum-'" in e for e in report.errors))
+        self.assertTrue(any("lacks 'limits'" in e for e in report.errors))
 
     def test_a_misnamed_or_unknown_reserved_set_fails(self) -> None:
         self.reserved["sets"][0]["name"] = "correlation_id.header"

@@ -24,7 +24,7 @@ complete; the issue is closed and remains as project history.
 | [`CHANGELOG.md`](CHANGELOG.md) | Changes recorded by contracts release |
 | [`.agents/skills/`](.agents/skills) | Agent dispatch skills (Claude entrypoints in [`.claude/skills/`](.claude/skills)); repository tooling, not contract content |
 | [`ci/`](ci) | Validator (`validate.py`), its tests and hash-pinned requirements; the workflow is [`.github/workflows/validate.yml`](.github/workflows/validate.yml) |
-| [`vocabularies/`](vocabularies) | Edge-owned vocabularies: `ErrorClass` and `X-Gateway-Error` tokens, gateway-owned headers, `provisioned-by` values, the plugin catalog index, plugin config sensitivity, and reserved header names |
+| [`vocabularies/`](vocabularies) | Edge-owned vocabularies: `ErrorClass` and `X-Gateway-Error` tokens, gateway-owned headers, `provisioned-by` values, the plugin catalog index, plugin config sensitivity, reserved header names, and `x-ferrum-mcp` bridge admission |
 | [`schemas/`](schemas) | JSON Schemas (2020-12), one directory per contract, one file per major version |
 | [`fixtures/`](fixtures) | Payloads producers must emit and consumers must accept (`valid/`) or reject (`invalid/`); one `v<N>/` directory per major when a schema has several |
 | [`qualification/`](qualification) | Producer outcomes for payloads the schema accepts but the producer may refuse (rules applied after defaults); not fixtures |

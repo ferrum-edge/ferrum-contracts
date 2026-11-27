@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-mcp-openapi-bridge/v1.schema.json",
+  "title": "MCP OpenAPI bridge admission v1",
+  "description": "Shape of vocabularies/mcp-openapi-bridge.json: the closed key sets, bounds, bridged methods and reserved request headers Ferrum Edge applies to the x-ferrum-mcp OpenAPI extension and its generated OpenAPI bridge.",
+  "x-contract": {
+    "name": "vocabulary-mcp-openapi-bridge",
+    "version": 1,
+    "status": "implemented",
+    "owner": "ferrum-edge/ferrum-contracts",
+    "instance": "vocabularies/mcp-openapi-bridge.json"
+  },
+  "type": "object",
+  "required": [
+    "$schema",
+    "vocabulary",
+    "version",
+    "edge_release",
+    "description",
+    "provenance",
+    "extension_key",
+    "keys",
+    "bounds",
+    "bridged_methods",
+    "reserved_request_headers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-mcp-openapi-bridge/v1.schema.json"
+    },
+    "vocabulary": {
+      "type": "string",
+      "const": "mcp-openapi-bridge"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "edge_release": {
+      "type": "string",
+      "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Edge release tag the vocabulary was read from."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Provenance"
+      }
+    },
+    "extension_key": {
+      "const": "x-ferrum-mcp"
+    },
+    "keys": {
+      "type": "object",
+      "required": [
+        "document",
+        "endpoint",
+        "selector",
+        "limits",
+        "operation",
+        "annotation"
+      ],
+      "additionalProperties": false,
+      "description": "Closed key sets: Edge refuses any other key at each level.",
+      "properties": {
+        "document": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*(?![\\s\\S])"
+          }
+        },
+        "endpoint": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*(?![\\s\\S])"
+          }
+        },
+        "selector": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*(?![\\s\\S])"
+          }
+        },
+        "limits": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*(?![\\s\\S])"
+          }
+        },
+        "operation": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*(?![\\s\\S])"
+          }
+        },
+        "annotation": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*(?![\\s\\S])"
+          }
+        }
+      }
+    },
+    "bounds": {
+      "type": "object",
+      "required": [
+        "max_operations",
+        "max_namespace_bytes",
+        "max_tool_name_bytes",
+        "max_text_bytes",
+        "max_body_limit_bytes",
+        "max_error_excerpt_limit_bytes",
+        "max_forwarded_request_headers"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "max_operations": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Most operations one document may publish as tools."
+        },
+        "max_namespace_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Most bytes in the tool namespace."
+        },
+        "max_tool_name_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Most bytes in a tool name."
+        },
+        "max_text_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Most bytes of a title or description Edge keeps (it truncates longer text)."
+        },
+        "max_body_limit_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Largest max_request_body_bytes, max_response_body_bytes and max_structured_content_bytes."
+        },
+        "max_error_excerpt_limit_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Largest max_error_excerpt_bytes."
+        },
+        "max_forwarded_request_headers": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Most names forward_request_headers may list."
+        }
+      }
+    },
+    "bridged_methods": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "GET",
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE",
+          "HEAD",
+          "OPTIONS",
+          "TRACE"
+        ]
+      },
+      "description": "HTTP methods Edge bridges as tools; other OpenAPI operations are never published."
+    },
+    "reserved_request_headers": {
+      "type": "object",
+      "required": [
+        "matching",
+        "names",
+        "prefixes",
+        "also_refused"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "matching": {
+          "type": "string",
+          "minLength": 1
+        },
+        "names": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]+(?![\\s\\S])"
+          }
+        },
+        "prefixes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]*-(?![\\s\\S])"
+          }
+        },
+        "also_refused": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Provenance": {
+      "type": "object",
+      "required": [
+        "repo",
+        "commit",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "pattern": "^ferrum-edge/[A-Za-z0-9._-]+$"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Tag or branch the commit was read from."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -68,12 +68,12 @@
         "properties": {
           "name": {
             "type": "string",
-            "pattern": "^[a-z_][a-z0-9_]*\\.[a-z_][a-z0-9_.]*$",
+            "pattern": "^[a-z_][a-z0-9_]*\\.[a-z_][a-z0-9_.]*(?![\\s\\S])",
             "description": "<plugin>.<config field>."
           },
           "plugin": {
             "type": "string",
-            "pattern": "^[a-z_][a-z0-9_]*$"
+            "pattern": "^[a-z_][a-z0-9_]*(?![\\s\\S])"
           },
           "field": {
             "type": "string",
@@ -94,7 +94,7 @@
             "uniqueItems": true,
             "items": {
               "type": "string",
-              "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]+$",
+              "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]+(?![\\s\\S])",
               "description": "An HTTP field name in lowercase."
             }
           },
