@@ -28,13 +28,36 @@ When Ferrum Edge publishes `vX.Y.Z`:
      of `PluginConfigBase` in `openapi.yaml`. Re-transcribe registration
      failure policies, parity phases/priorities/protocols and every
      `PluginConfigBase` conditional; do not refresh only their pins. Record the
-     new `openapi.yaml` sha256 (`git show vX.Y.Z:openapi.yaml | shasum -a 256`).
+     new `openapi.yaml` sha256 (`git show vX.Y.Z:openapi.yaml | shasum -a 256`)
+     only after the owner configuration compatibility check below.
    - `vocabularies/backend-egress-policy.json`: `openapi.yaml`,
      `src/admin/backend_egress_policy.rs`,
      `src/grpc/backend_egress_attestation.rs`, `src/config/env_config.rs`, and
      the owner admin docs. A new response `schema_version` or a changed
      classifier, label or guarantee meaning needs a new major of the response
      and vocabulary schemas (Edge v0.9.13 moved both to v2).
+
+   **Owner configuration compatibility check (from `contracts-edge-1.0.0`
+   on).** The plugin catalog's JSON shape is versioned here, but the
+   configuration schemas it points to are Edge's own API, governed by Edge's
+   support policy ([versioning.md](versioning.md#stability-promise-for-contracts-edge-1),
+   rule 5). Before re-pinning, compare the previously pinned file with the
+   new one (`git diff <config_schema_document.commit> vX.Y.Z -- openapi.yaml`
+   in a clean Edge clone) for `PluginConfigBase`, every component a plugin's
+   `config_schema` pointer names and everything those components reach
+   through `$ref`. Breaking for an existing configuration: a removed or
+   renamed property, a property that becomes required, a removed enum
+   value, a narrowed type, pattern, bound or length, an object closed with
+   `additionalProperties: false`, a pointer that no longer resolves, a plugin
+   whose `config_required_when_enabled` becomes true or that gains a
+   `scope_constraint`, and a plugin moved to `removed_plugins`. Compatible: a
+   new optional property, a new enum value, a widened bound, a new plugin. A
+   breaking change is never re-pinned silently: the release PR names each one
+   and the Edge release that made it, asks the Edge owner to confirm it is
+   allowed by Edge's support policy (with an Edge upgrade note), and the
+   release record and `CHANGELOG.md` list it under "Changed". For
+   `contracts-edge-1.0.0` itself the comparison with `v0.9.21` is recorded in
+   the same way; pre-1.0 changes are allowed, but are still listed.
 2. Set `edge_release` to `vX.Y.Z` and every `provenance` commit to the tag's
    commit. Keep the `main_branch_delta` block in `plugin-catalog.json`,
    `gateway-headers.json` and `gateway-errors.json`; never remove it. Promote
@@ -61,6 +84,16 @@ When Ferrum Edge publishes `vX.Y.Z`:
    those checks without an anchor until #89 restored them; `ci/validate.py`
    now fails if any of the three vocabularies lacks the block or names a
    repository or branch other than Edge `main`.
+
+   No tag through `contracts-edge-0.9.21` carries the block (since
+   `contracts-edge-0.9.9`, each release removed it), so the first release
+   that keeps it changes what consumers vendor. Prerequisite: consumers'
+   tests tolerate the block
+   ([consumer-pins.md](consumer-pins.md#required-checks)). The release PR
+   names, in its body, every consumer test that asserts the block is absent,
+   so that consumer changes the assertion in its re-pin PR; on 2026-11-27
+   that was ferrum-foundry's `scripts/ferrum-contracts.test.mjs` (plugin
+   catalog).
 3. Re-check Edge-owned schemas (`diagnostic-ref`, conditional backup metadata,
    backend egress policy, deployment snapshot and mutation acknowledgement)
    against the release, reading the owner sources listed in
@@ -180,10 +213,13 @@ provenance correction.
 ## Consumers
 
 Each consumer then opens a PR in its own repository that moves its pin to the
-new tag and updates its local copy, and records the change in
-[adoption.md](adoption.md) here. The `PIN` file and the checks its drift test
-makes are defined in [consumer-pins.md](consumer-pins.md); a consumer that has
-not converged yet moves to that format in the same PR.
+new tag and updates its local copy. That consumer's
+`contracts/ferrum-contracts/PIN` on its `main` is the authoritative record of
+its pin; no PR here is needed for a consumer re-pin. The dated snapshot in
+[adoption.md](adoption.md) is re-verified from those `PIN` files at the next
+contracts release PR or adoption review. The `PIN` file and the checks its
+drift test makes are defined in [consumer-pins.md](consumer-pins.md); a
+consumer that has not converged yet moves to that format in the same PR.
 
 ## Maintaining the validation workflow
 

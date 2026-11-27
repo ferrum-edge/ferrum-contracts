@@ -29,9 +29,11 @@ Checks, in order:
    release no later than edge_release, no `edge_release`,
    `available_since` or Edge source `ref` naming an unpublished Edge tag,
    and a `main_branch_delta` on Edge `main` in plugin-catalog,
-   gateway-headers and gateway-errors), and values copied from a vocabulary into a schema (the diagnostic-ref
-   gateway_error enum, detail.rejection_phase enum and ref / replica_id
-   patterns).
+   gateway-headers and gateway-errors), and values copied from a vocabulary
+   into a schema (the gateway_error enum, detail.rejection_phase enum and
+   ref / replica_id patterns of the newest implemented diagnostic-ref major;
+   an older major is retained for earlier Edge releases and is checked only
+   against its own fixtures).
 6. Cross-contract fixture checks (for example: every valid Anvil
    DiagnosticFinding fixture is also a valid Alloy diagnostic_report Finding).
    The valid fixtures of every major are checked, wherever the layout of
@@ -996,14 +998,38 @@ def check_main_branch_delta(vocabularies: dict[str, dict], report: Report) -> No
         report.ok()
 
 
+def mirroring_major(versions: dict[int, dict]) -> int | None:
+    """The major of a schema that copies the current vocabularies.
+
+    That is the newest `implemented` major. An older major is retained side by
+    side for readers of earlier Edge releases (docs/versioning.md): it keeps
+    the values it was published with, is checked against its own fixtures, and
+    is not compared with the current vocabularies.
+    """
+    implemented = [
+        major
+        for major, schema in versions.items()
+        if schema.get("x-contract", {}).get("status") == "implemented"
+    ]
+    return max(implemented) if implemented else None
+
+
 def check_copied_values(schemas, vocabularies: dict[str, dict], report: Report) -> None:
-    """Values a schema copies from a vocabulary must match it exactly."""
-    ref_schema = schemas.get("diagnostic-ref", {}).get(1)
+    """Values a schema copies from a vocabulary must match it exactly.
+
+    Only the diagnostic-ref major that mirrors the current Edge release (see
+    mirroring_major) is compared with gateway-errors and gateway-headers.
+    """
+    major = mirroring_major(schemas.get("diagnostic-ref", {}))
+    ref_schema = schemas["diagnostic-ref"][major] if major is not None else None
     errors = vocabularies.get("gateway-errors")
     headers = vocabularies.get("gateway-headers")
-    where = "schemas/diagnostic-ref/v1.schema.json"
+    where = f"schemas/diagnostic-ref/v{major if major is not None else 1}.schema.json"
     if not (ref_schema and errors and headers):
-        report.fail(where, "diagnostic-ref v1, gateway-errors or gateway-headers is missing")
+        report.fail(
+            where,
+            "an implemented diagnostic-ref major, gateway-errors or gateway-headers is missing",
+        )
         return
     props = ref_schema["properties"]
     tokens = [t["token"] for t in errors["x_gateway_error_tokens"]]

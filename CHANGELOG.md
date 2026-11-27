@@ -22,10 +22,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `contracts-edge-1.0.0` is cut when Edge `v1.0.0` is published. Within
   `contracts-edge-1.*` every schema major stays present and keeps accepting
   what it accepted (a tightening may refuse only what the owner already
-  refuses), breaking changes ship as a new `v<N+1>` side by side, no major is
-  removed before a `contracts-edge-2.0.0`, vocabulary additions follow the
-  closed-enumeration rule with open readers, and tags are signed and
-  immutable; `main_branch_delta` is informational and outside the promise.
+  refused at or before the owner release the major was first published
+  against; a later owner rejection needs a new major), breaking changes ship
+  as a new `v<N+1>` side by side, no major is removed before a
+  `contracts-edge-2.0.0`, vocabulary additions follow the closed-enumeration
+  rule with open readers (only the newest implemented major of a schema
+  mirrors the current vocabulary), the Edge configuration schemas the plugin
+  catalog points to follow Edge's own support policy, and tags are signed
+  and immutable; `main_branch_delta` is informational and outside the
+  promise.
   `backend-egress-policy` v1, `vocabulary-backend-egress-policy` v1 and
   `admin-deployment-snapshot` v1, used only by Edge v0.9.11 and v0.9.12, are
   marked legacy: they stay present, take no new consumers and receive only
@@ -35,6 +40,10 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   lacks a `main_branch_delta` naming `ferrum-edge/ferrum-edge` `main`, with
   tests in `ci/test_validate.py`. The vocabulary schemas are unchanged (the
   block stays optional there).
+- `ci/validate.py` compares `gateway-errors` and `gateway-headers` with the
+  newest implemented `diagnostic-ref` major instead of hard-coding v1, so an
+  incompatible change can ship as a side-by-side v2 while v1 keeps its values
+  and fixtures; `ci/test_validate.py` covers the two-major case.
 
 ### Changed
 
@@ -43,7 +52,17 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   no contract-visible changes beyond the release) instead of removing it, as
   #88 did before #89 restored it; `docs/release-process.md` also describes
   the delta sync PR between releases, and `docs/consumer-pins.md` says the
-  block is always present on `main`.
+  block is always present on `main`. Because released vocabularies now carry
+  the block, consumer tests must tolerate it; ferrum-foundry's contract test
+  asserts its absence and changes at Foundry's next re-pin.
+- From `contracts-edge-1.0.0` on, the release process compares the
+  previously pinned Edge `openapi.yaml` with the new one for every
+  configuration schema the plugin catalog points to before re-pinning, and
+  lists breaking owner configuration changes instead of re-pinning them
+  silently.
+- Consumer re-pins no longer need a PR here: each consumer's `PIN` on its
+  `main` is authoritative, and `docs/adoption.md` is re-verified at the next
+  release or adoption review.
 - The old-major retention rule in `docs/versioning.md` no longer depends on
   the consumers listed in `docs/adoption.md`.
 - `schemas/service-manifest/v1.schema.json` and

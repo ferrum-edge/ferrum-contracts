@@ -25,8 +25,11 @@ allowed:
 - a clearer `description`, or a tighter pattern or bound that every existing
   producer already meets and every fixture still passes; from
   `contracts-edge-1.0.0` on, a tightening must also refuse only values that
-  the owning implementation already refuses at the release the tag names
-  (see [Stability promise](#stability-promise-for-contracts-edge-1));
+  the owner already refused at or before the owner release (or recorded owner
+  revision) the major was first published against, and has refused ever
+  since. A rejection the owner introduces later is an incompatible change
+  and needs a new major (see
+  [Stability promise](#stability-promise-for-contracts-edge-1));
 - a new value in a closed enumeration that mirrors an Edge-owned
   vocabulary, under the rule in [Closed enumerations](#closed-enumerations).
 
@@ -52,7 +55,8 @@ On Edge's side a new token is additive: Edge v0.9.8 added `request_timeout`
 without changing anything else. Contracts follow the same rule:
 
 - **A token or class Edge adds is not a new major.** It is added to the
-  vocabulary and to every schema enumeration that copies it, in the release
+  vocabulary and to every schema enumeration that copies it (the newest
+  implemented major, once a schema has several), in the release
   tag for the Edge version that ships it, and listed under "Added" in
   `CHANGELOG.md`. The tag is what binds a consumer to an Edge release, so a
   consumer pinned to `contracts-edge-0.9.8` keeps validating exactly what
@@ -269,10 +273,13 @@ From `contracts-edge-1.0.0` until a `contracts-edge-2.0.0`, every
 2. **A major keeps accepting what it accepted.** Within a major only the
    changes listed in [Schema versions](#schema-versions) are made. A document
    that a major accepts in one `1.*` tag is accepted by the same major in
-   every later `1.*` tag, unless the owning implementation already refuses it
-   at the release that later tag names: a tightening may catch such a
-   document earlier, never one the owner accepts. A valid fixture of a major
-   stays valid.
+   every later `1.*` tag. The only exception is a document that the owner
+   already refused at or before the owner release (or recorded owner
+   revision) the major was first published against, and has refused in
+   every release since: a tightening may catch such a document earlier. A
+   rejection that a later owner release introduces never justifies
+   tightening an existing major; it is an incompatible change and ships
+   under rule 3. A valid fixture of a major stays valid.
 3. **Breaking changes ship side by side.** An incompatible change is a new
    `v<N+1>.schema.json` next to the existing major, which keeps working for
    readers that have not moved. Payload version fields follow the contract
@@ -283,9 +290,23 @@ From `contracts-edge-1.0.0` until a `contracts-edge-2.0.0`, every
    [closed-enumeration rule](#closed-enumerations), and readers stay open (an
    unknown value is "unknown", never an error and never a known value).
    Removing, renaming or re-meaning a value that a schema copies needs a new
-   major of that schema. A value that no schema copies changes only when the
-   Edge release it describes changes it.
-5. **Tags are signed and immutable.** Every `1.*` tag is an SSH-signed
+   major of that schema. Once a schema has several majors, only its newest
+   `implemented` major copies the current vocabulary (and receives values
+   Edge adds); an older major keeps the values it was published with, and CI
+   checks it against its own fixtures only. A value that no schema copies
+   changes only when the Edge release it describes changes it.
+5. **Referenced owner configuration is separate.** The plugin catalog points
+   into Edge's `openapi.yaml` (`config_schema_document`, each plugin's
+   `config_schema` pointer and the transcribed `PluginConfigBase`
+   conditionals) and pins that file by SHA-256. The vocabulary's JSON shape
+   is covered by rules 1 to 4; the configuration schemas it points to are
+   Edge's own API and are governed by Edge's support policy for its 1.x
+   line, not by this promise. A `1.*` release re-pins `openapi.yaml` only
+   after the compatibility check in
+   [release-process.md](release-process.md#after-an-edge-release), and
+   records any incompatible owner configuration change it finds in its
+   release record instead of passing it off as compatible.
+6. **Tags are signed and immutable.** Every `1.*` tag is an SSH-signed
    annotated tag ([release-signing.md](release-signing.md)) that is never
    moved, deleted or re-created; a correction is a new `-rN` tag.
 

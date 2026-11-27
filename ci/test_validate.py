@@ -520,6 +520,86 @@ class CopiedValueTests(unittest.TestCase):
         )
 
 
+class CopiedValueMajorTests(unittest.TestCase):
+    """With a second diagnostic-ref major side by side, only the newest
+    implemented major mirrors the current vocabulary; the retained major keeps
+    the values it was published with."""
+
+    def setUp(self) -> None:
+        def read(path: str):
+            return json.loads((ROOT / path).read_text(encoding="utf-8"))
+
+        self.v1 = read("schemas/diagnostic-ref/v1.schema.json")
+        self.errors = read("vocabularies/gateway-errors.json")
+        self.headers = read("vocabularies/gateway-headers.json")
+        # The scenario a v2 exists for: Edge retires a token. The current
+        # vocabulary drops it, v2 drops it, and v1 keeps accepting it.
+        self.retired = "loop_detected"
+        self.errors["x_gateway_error_tokens"] = [
+            t for t in self.errors["x_gateway_error_tokens"] if t["token"] != self.retired
+        ]
+        self.v2 = json.loads(json.dumps(self.v1))
+        self.v2["$id"] = self.v1["$id"].replace("/v1.schema.json", "/v2.schema.json")
+        self.v2["x-contract"]["version"] = 2
+        for enum in (self.enum(self.v2), self.phase_enum(self.v2)):
+            enum.remove(self.retired)
+
+    @staticmethod
+    def enum(schema: dict) -> list:
+        return schema["properties"]["gateway_error"]["enum"]
+
+    @staticmethod
+    def phase_enum(schema: dict) -> list:
+        return schema["$defs"]["Detail"]["properties"]["rejection_phase"]["enum"]
+
+    def check(self, versions: dict[int, dict]) -> list[str]:
+        report = validate.Report()
+        validate.check_copied_values(
+            {"diagnostic-ref": versions},
+            {"gateway-errors": self.errors, "gateway-headers": self.headers},
+            report,
+        )
+        return report.errors
+
+    def test_the_retained_major_keeps_a_retired_token(self) -> None:
+        self.assertIn(self.retired, self.enum(self.v1))
+        self.assertIn(self.retired, self.phase_enum(self.v1))
+        self.assertEqual(self.check({1: self.v1, 2: self.v2}), [])
+
+    def test_the_newest_major_must_match_the_vocabulary(self) -> None:
+        self.enum(self.v2).append(self.retired)
+        errors = self.check({1: self.v1, 2: self.v2})
+        self.assertEqual(len(errors), 1, errors)
+        self.assertTrue(errors[0].startswith("schemas/diagnostic-ref/v2.schema.json: gateway_error enum"))
+
+    def test_a_single_major_is_still_compared(self) -> None:
+        errors = self.check({1: self.v1})
+        self.assertEqual(len(errors), 2, errors)
+        self.assertTrue(all(e.startswith("schemas/diagnostic-ref/v1.schema.json: ") for e in errors))
+
+    def test_a_proposed_newer_major_does_not_mirror_yet(self) -> None:
+        self.v2["x-contract"]["status"] = "proposed"
+        errors = self.check({1: self.v1, 2: self.v2})
+        self.assertEqual(len(errors), 2, errors)
+        self.assertTrue(all(e.startswith("schemas/diagnostic-ref/v1.schema.json: ") for e in errors))
+
+    def test_no_implemented_major_fails(self) -> None:
+        self.v1["x-contract"]["status"] = "proposed"
+        self.assertEqual(
+            self.check({1: self.v1}),
+            [
+                "schemas/diagnostic-ref/v1.schema.json: an implemented diagnostic-ref major, "
+                "gateway-errors or gateway-headers is missing"
+            ],
+        )
+
+    def test_the_mirroring_major_is_the_newest_implemented(self) -> None:
+        self.assertEqual(validate.mirroring_major({1: self.v1, 2: self.v2}), 2)
+        self.v2["x-contract"]["status"] = "proposed"
+        self.assertEqual(validate.mirroring_major({1: self.v1, 2: self.v2}), 1)
+        self.assertIsNone(validate.mirroring_major({}))
+
+
 def _gated_item(
     name: str,
     ref: str,
