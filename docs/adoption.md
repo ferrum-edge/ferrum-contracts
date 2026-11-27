@@ -508,14 +508,15 @@ only when the consumer's own PR merges. The Nexus and Foundry re-pins to
 #695 as `c20bd90b1bb548749f956076ab38ee0130674269`) kept their legacy `PIN`
 formats and checks, so neither converged at that PR. Foundry converged
 afterwards in ferrum-foundry#711, Nexus in ferrum-nexus#731, Anvil in
-ferrum-anvil#598, and GitForgeOps in ferrum-edge-git-forge-ops#782.
+ferrum-anvil#598, GitForgeOps in ferrum-edge-git-forge-ops#782, and Alloy in
+ferrum-alloy#345.
 
 | Consumer (`main` read) | Current `PIN` | Differences from the canonical format and checks | Status |
 |---|---|---|---|
 | ferrum-anvil (`134cbf375f6d66431a01a63780a841809b5eab0f`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.20` (45 rows) | None. `crates/anvil-diagnostics/tests/contracts_adoption.rs` parses the canonical lines, refuses a carriage return, a byte order mark, a blank line, a missing final newline, unsorted or duplicate rows and a row naming `PIN`, refuses a symbolic link, and compares the rows with the files under the vendored directory. | converged in ferrum-anvil#598 (`3d9aa529c1d82ec2b2ffa951bb8d370c55a72020`) |
 | ferrum-nexus (`0ebd7590d132878d67c5fb3b23fa2eb9a6787015`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.20`, one `PIN` (136 rows) | None. `SERVICE-MANIFEST-PIN` is merged into the one `PIN`. `shared/src/ferrum-contracts.test.ts` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory (refusing a symbolic link), and checks each hash; `.gitattributes` marks the directory `-text`. | converged in ferrum-nexus#731 (`ed9e4eb8b63bcf1e8820010bd27243477ba2e631`) |
 | ferrum-foundry (`60cbfa770974ad4254d47471d81d7192814f795d`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.21` (37 rows) | None. `scripts/ferrum-contracts.test.mjs` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory, and checks each hash. | converged in ferrum-foundry#711 (`7d574c19074492612aef3a92f200613792180079`) |
-| ferrum-alloy (`d54999f86b2c7f69ea826dc60d0baff7519860b8`) | JSON `{"tag", "commit", "files": {path: hash}}`, `contracts-edge-0.9.21` (28 files) | JSON instead of text; paths are repository-relative (`contracts/ferrum-contracts/...`) instead of relative to the vendored directory; duplicate JSON keys collapse silently when parsed (`crates/ferrum-alloy-edge/tests/pairing.rs`). | not converged |
+| ferrum-alloy (`5de30bb2825f877edb3ccc8aa7fcaa2c1aeff431`) | canonical `tag X` / `commit X` / `edge_version X` / `<hash>  <path>`, `contracts-edge-0.9.21` (29 rows, the service-manifest v1 set included) | None. `crates/ferrum-alloy-edge/tests/pairing.rs` parses the canonical `PIN`, compares its rows, sorted by path and relative to the vendored directory, with the files under that directory (refusing a symbolic link and a row naming `PIN`), and checks each hash. | converged in ferrum-alloy#345 (`5de30bb2825f877edb3ccc8aa7fcaa2c1aeff431`) |
 | ferrum-edge-git-forge-ops (`ee8f71417e8cfc6d5991cbf678a96ce78066bffb`) | canonical `tag X` / `commit X` / `edge_version X` / `<hash>  <path>`, `contracts-edge-0.9.21` (16 rows) | None. `tests/unit/contracts_tests.rs` parses the canonical lines strictly, refuses a missing final newline, unsorted or duplicate rows and a row naming `PIN`, and compares the rows with the files under the vendored directory. | converged in ferrum-edge-git-forge-ops#782 (`ee8f71417e8cfc6d5991cbf678a96ce78066bffb`) |
 
 Ferrum Edge is the producer and vendors nothing. Every `commit` above is its
@@ -549,14 +550,38 @@ GitForgeOps, Alloy and Anvil each run the weekly check that
 (ferrum-foundry#716, ferrum-nexus#733, ferrum-edge-git-forge-ops#737,
 ferrum-alloy#314, ferrum-anvil#578).
 
-## Candidate contracts
+## Candidate contracts (decided 2026-11-27)
 
-These contract-like copies were identified by the 2026-10-01 audit. They are
-candidates for future adoption; this list does not add them to the shared
-contract set.
+The 2026-10-01 audit listed three contract-like copies. Each was decided by
+whether another repository reads the data across a repository boundary today
+(owner repositories read at their `main` on 2026-11-27):
 
-- Nexus copies Edge's reserved `correlation_id` header names.
-- Foundry copies Edge's plugin configuration sensitivity metadata from
-  `pluginSensitivity.ts`.
-- Alloy has a `gateway-diagnostic-ref` report fixture that is not yet part of
-  the shared fixtures.
+- **Plugin config sensitivity: now a contract.** Edge's
+  `PLUGIN_SENSITIVITY_SCHEMAS` and `KAFKA_SAFE_PRODUCER_PROPERTIES`
+  (`src/admin/plugin_config_projection.rs`) are transcribed by two other
+  repositories: Foundry (`src/api/pluginSensitivity.ts`, checked against Edge
+  source by `scripts/plugin-sensitivity-drift.mjs`) and GitForgeOps
+  (`src/secrets/plugin_config.rs`). They are published as
+  `vocabularies/plugin-config-sensitivity.json` from Edge `v0.9.21`. Each
+  consumer adds a parity test of its table against the pinned vocabulary when
+  it next re-pins.
+- **Correlation ID reserved header names: now a contract.** Nexus copies
+  Edge's closed `RESERVED_HEADER_NAMES` (`src/plugins/correlation_id.rs`) in
+  `shared/src/plugins.ts` and pins it against Edge source in
+  `shared/src/plugins.test.ts`. It is published as
+  `vocabularies/reserved-header-names.json` (set
+  `correlation_id.header_name`) from Edge `v0.9.21`. Nexus adds a parity test
+  against the pinned vocabulary when it next re-pins.
+- **MCP OpenAPI bridge admission: now a contract** (found by the same
+  sweep). Alloy's agent-tool export (`crates/ferrum-alloy-edge/src/agents.rs`)
+  copies Edge's `x-ferrum-mcp` key sets, bounds, annotation keys and reserved
+  bridge request headers (`src/admin/api_specs/extractor.rs`,
+  `src/plugins/mcp_openapi_bridge.rs`). They are published as
+  `vocabularies/mcp-openapi-bridge.json` from Edge `v0.9.21`. Alloy adds a
+  parity test against the pinned vocabulary when it next re-pins.
+- **Alloy's `gateway-diagnostic-ref` report fixture: not a contract.** It is
+  an Alloy-owned diagnostic report (`contracts/fixtures/reports/gateway-diagnostic-ref.json`)
+  read only by Alloy's own tests; no other repository reads it (Anvil's
+  diagnostic import reads the shared `diagnostic-report` fixtures here, and its
+  documents mention the gateway reference only in prose). The shared
+  `diagnostic-report` v1 schema and fixtures already carry the contract.

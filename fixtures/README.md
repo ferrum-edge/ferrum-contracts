@@ -292,6 +292,14 @@ traffic. Both fixtures represent `all`-mode references with no gateway token.
 | `vocabulary-gateway-headers/invalid/availability-without-v.json` | From `valid/authenticated-identity.json`: change only the `X-Authenticated-Identity` `availability` to `0.9.15`; availability names an Edge tag (`v0.9.15`) or `unreleased` |
 | `vocabulary-provisioned-by/invalid/untrimmed-value.json` | a value with leading whitespace; Edge trims the header |
 | `vocabulary-provisioned-by/invalid/wrong-label-key.json` | label key `provisioned_by` |
+| `vocabulary-mcp-openapi-bridge/invalid/prefix-without-trailing-dash.json` | From `valid/edge-0.9.21.json`: the reserved prefix `proxy-` spelled `proxy`, which would also reserve names such as `proxyname` |
+| `vocabulary-mcp-openapi-bridge/invalid/uppercase-predicate-name.json` | From `valid/edge-0.9.21.json`: the backend strip set's `x-grpc-web-mode` spelled `X-Grpc-Web-Mode`; every listed name is lowercase, as Edge compares them |
+| `vocabulary-mcp-openapi-bridge/invalid/zero-bound.json` | From `valid/edge-0.9.21.json`: `bounds.max_operations` is `0`; every Edge bound is a positive count |
+| `vocabulary-plugin-config-sensitivity/invalid/unknown-sensitivity.json` | From `valid/edge-0.9.21-subset.json`: the first `otel_tracing` rule's `sensitivity` is `Hidden`, which is not an Edge `FieldSensitivity` variant |
+| `vocabulary-plugin-config-sensitivity/invalid/empty-rule-path.json` | From `valid/edge-0.9.21-subset.json`: the `rate_limiting` `redis_url` rule's `path` is empty, so it addresses no config value |
+| `vocabulary-reserved-header-names/invalid/uppercase-name.json` | From `valid/correlation-id.json`: `authorization` spelled `Authorization`; the set holds lowercase names, as Edge compares them |
+| `vocabulary-reserved-header-names/invalid/trailing-newline.json` | From `valid/correlation-id.json`: `authorization` followed by a newline, which is not an HTTP field name; a `$`-anchored pattern would accept it |
+| `vocabulary-reserved-header-names/invalid/missing-also-refused.json` | From `valid/correlation-id.json`: the set drops `also_refused`, which says which gateway-owned names the same Edge check refuses outside the set |
 | `vocabulary-plugin-catalog/invalid/unknown-protocol.json` | protocol `http2`; the catalog uses Edge's five protocol families |
 | `vocabulary-plugin-catalog/invalid/unknown-websocket-framing-plugin.json` | `websocket_framing_plugins` contains a name not declared by Edge |
 | `vocabulary-plugin-catalog/invalid/unknown-failure-policy.json` | failure policy `fail_open` |
