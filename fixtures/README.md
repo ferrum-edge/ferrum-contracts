@@ -81,8 +81,9 @@ fixtures alone do not establish consumer adoption. Their schemas
 check JSON conformance only: token authenticity, authorization, authoritative
 state/coherence, audit admission and serving-DP policy are runtime requirements.
 Existing Alloy fixtures are unchanged and retain their historical source
-provenance; Alloy schema/manifest provenance is re-read at qualified owner
-`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` without altering fixture semantics.
+provenance; Alloy schema/manifest provenance was re-read at qualified owner
+`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` and now names Alloy `v0.1.0`
+(`c949978d7e90be33bac6a16e23744bcdd4ee3924`), without altering fixture semantics.
 All fixture bytes are retained. The egress vocabulary fixtures include the initial
 candidate description from before upstream publication; that historical fixture
 text is not current availability metadata. Current availability is recorded above

@@ -44,15 +44,19 @@ reviewed, versioned form that every other product pins.
 | Deployment snapshot | `schemas/admin-deployment-snapshot/v1.schema.json`, `v2.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentSnapshot`, `StoredContentDigest`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs`, `db_backend.rs`, `db_loader.rs`, `mongo_store.rs` | v1 emitted by Edge v0.9.12, [legacy](versioning.md#legacy-majors); v2 released in Edge v0.9.13; v0.9.17 derives inspection lists from canonical evidence; shape retained through v0.9.21 |
 | Deployment mutation acknowledgement | `schemas/admin-deployment-mutation-acknowledgement/v1.schema.json` | ferrum-edge | `openapi.yaml` (`DeploymentMutationAcknowledgement`, `NamespaceSnapshotTooLarge`), `src/admin/deployment_mutations.rs`, `src/config/deployment_mutation.rs` | released in Edge v0.9.12; shape unchanged through v0.9.21; v0.9.14 narrows the `durable: unknown` outcome |
 | `DiagnosticFinding` | `schemas/diagnostic-finding/v1.schema.json` | ferrum-anvil | `contracts/schemas/DiagnosticFinding.schema.json` (generated from Rust) | implemented |
-| `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
-| `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | implemented; EXISTING shared v1 in published contracts-edge-0.9.11, owner unreleased |
+| `ferrum.diagnostic_report` v1 | `schemas/diagnostic-report/v1.schema.json` | ferrum-alloy | `contracts/diagnostics/diagnostic-report.v1.schema.json` | implemented in Alloy; EXISTING shared v1 in published contracts-edge-0.9.11; owner released in Alloy `v0.1.0` |
+| `ferrum.service_manifest` v1 | `schemas/service-manifest/v1.schema.json` | ferrum-alloy | `crates/ferrum-alloy-edge/src/manifest.rs` | implemented; EXISTING shared v1 in published contracts-edge-0.9.11; owner released in Alloy `v0.1.0` |
 | GitForgeOps resource file envelope (`kind` + `spec`) | `schemas/gitforgeops-resource/v1.schema.json` | ferrum-edge-git-forge-ops | `src/config/schema.rs` (`Resource`) | implemented |
 
 Owner implementation, shared freeze and publication are separate facts. Both
 Alloy contracts have `x-contract.status: implemented` and **EXISTING** shared v1
 status from [contracts-edge-0.9.11](releases/contracts-edge-0.9.11.md). That
-status does not release Alloy: its owner availability remains `unreleased`
-(`publish = false`), and no separate crate publishing approval is implied.
+status did not release Alloy. Alloy released both owner sources from Git in
+`v0.1.0` (a lightweight tag on `c949978d7e90be33bac6a16e23744bcdd4ee3924`), so their provenance reads
+`ref: v0.1.0`, `availability: released`, with the qualified owner commit
+`81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` kept in
+`x-contract.coordinated_release`; `publish = false` keeps Alloy off crates.io,
+and no separate crate publishing approval is implied.
 Diagnostic-report pairing covers every description outside `$id`/`x-contract`,
 so the copy keeps the owner's historical PROPOSED wording; current shared status
 is recorded in `x-contract`. The manifest schema is a transcription of owner
