@@ -47,6 +47,23 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Sync `main_branch_delta` in `vocabularies/plugin-catalog.json`,
+  `vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json`
+  to Ferrum Edge `main` `f1b4d3739dab704494a3caa68eb5bfff0b5db99c` (through
+  Edge PR #7531, which prepares version `1.0.0`; not tagged), and extend the
+  unreleased Edge `main` note in `docs/admin-contracts.md`. Since the previous
+  sync at `e837270d4b6c1c9756b80400d2a8e2e14b176ce4`: `openapi.yaml` moves to
+  SHA-256 `145067e5b04161ad2bd8145856139a609744c4d804c2501fdc94cdb3f3cd5370`
+  (`info.version: 1.0.0`); `PluginConfigBase` and the nested proxy, upstream,
+  trust and Admin request objects are marked `additionalProperties: false`
+  and Edge refuses unknown nested keys (Edge #7520, #7524);
+  `health_checks.passive` drops `gateway_error_codes` and
+  `split_external_local_origin_errors` (Edge #7520); ConfigSync moves to
+  revision 8 (Edge #7520, #7524); a `1.0.0` binary needs a rebuilt database
+  (Edge #7523). No plugin registration, plugin config conditional, header,
+  error class or token changes. `edge_release`, `provenance` and
+  `config_schema_document` stay pinned to published `v0.9.21`; no schema or
+  fixture changes.
 - The release process keeps `main_branch_delta` in a release PR and resets
   it to the Edge `main` commit read (the empty-delta form when Edge `main` has
   no contract-visible changes beyond the release) instead of removing it, as

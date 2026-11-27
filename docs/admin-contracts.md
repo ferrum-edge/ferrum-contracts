@@ -154,9 +154,14 @@ From Edge `v0.9.21`, these admin rules also apply:
   manual recovery.
 
 **Unreleased on Edge `main`** (checked at
-[`e837270d4b6c1c9756b80400d2a8e2e14b176ce4`](https://github.com/ferrum-edge/ferrum-edge/commit/e837270d4b6c1c9756b80400d2a8e2e14b176ce4),
-through Edge PR [#7491](https://github.com/ferrum-edge/ferrum-edge/pull/7491);
-not in published `v0.9.21`; the versioned schemas in this repository —
+[`f1b4d3739dab704494a3caa68eb5bfff0b5db99c`](https://github.com/ferrum-edge/ferrum-edge/commit/f1b4d3739dab704494a3caa68eb5bfff0b5db99c),
+through Edge PR [#7531](https://github.com/ferrum-edge/ferrum-edge/pull/7531),
+which prepares version `1.0.0` and is not tagged; the items below were first
+recorded at
+[`e837270d4b6c1c9756b80400d2a8e2e14b176ce4`](https://github.com/ferrum-edge/ferrum-edge/commit/e837270d4b6c1c9756b80400d2a8e2e14b176ce4)
+through Edge PR [#7491](https://github.com/ferrum-edge/ferrum-edge/pull/7491)
+unless they name a later PR; not in published `v0.9.21`; the versioned schemas
+in this repository —
 `admin-conditional-snapshot` v1, `admin-deployment-snapshot` v2,
 `admin-deployment-mutation-acknowledgement` v1 and `backend-egress-policy` v2 —
 keep unchanged wire shapes):
@@ -280,6 +285,44 @@ keep unchanged wire shapes):
   instead of `500`, and `listen_path` uniqueness is scoped by `listen_port`
   (affecting `409` route-conflict checks on proxies, API specs and batch
   writes).
+- **Closed nested objects and JSON-object request bodies** (Edge PRs
+  [#7520](https://github.com/ferrum-edge/ferrum-edge/pull/7520) and
+  [#7524](https://github.com/ferrum-edge/ferrum-edge/pull/7524)). Edge
+  `v0.9.21` refused unknown keys only on top-level resources and dropped them
+  silently in nested objects. Edge `main` refuses them in every nested proxy
+  and upstream object (`health_checks` and its `active`/`passive` blocks,
+  `targets[]`, `service_discovery` and its provider objects, `subsets[]` and
+  their `traffic_policy`, `port_overrides`, `locality_lb_setting`,
+  `hash_on_cookie_config`, backend TLS and TCP keepalive settings,
+  `circuit_breaker`, `retry` and its `backoff` variants, and `plugins[]`
+  associations), in every native mesh resource object, and in the managed TLS,
+  ACME, namespace, `/admin/tls/validate` and `/mesh/egress-scope/test` request
+  bodies, which must also be JSON objects (a positional array is refused).
+  Admin `POST`/`PUT` and `/batch` return `400` naming the key, `POST /restore`
+  refuses a backup carrying one, `POST`/`PUT /api-specs` refuse one in
+  `x-ferrum-proxy`/`x-ferrum-upstream`, and in database and CP mode a stored
+  row carrying one fails to load (MongoDB projects stored `plugins[]`
+  associations onto `plugin_config_id` first). `health_checks.passive`
+  drops `gateway_error_codes` and `split_external_local_origin_errors`
+  (#7520). `labels`, plugin `config` and consumer `credentials` stay open.
+  `openapi.yaml` marks the closed objects `additionalProperties: false`. The
+  `admin-deployment-snapshot` v2 schema here keeps its resource objects open
+  (`additionalProperties: true`) and `admin-conditional-snapshot` v1 carries
+  only ETags, so neither changes; the owner's admission rules decide.
+- **ConfigSync protocol revision 8** (Edge PRs #7520 and #7524). The build
+  identity becomes `1.0.0+configsync.r8`: revision 7 removes the two
+  passive-health fields and closes the passive object, revision 8 closes the
+  other nested proxy, upstream and mesh objects. A `v0.9.21` peer
+  (`0.9.21+configsync.r6`) is refused at `Subscribe`, and a `0.9.x` mesh data
+  plane is refused at `MeshSubscribe`, so control planes and data planes must
+  run the same build.
+- **Database rebuild for `1.0.0`** (Edge PR
+  [#7523](https://github.com/ferrum-edge/ferrum-edge/pull/7523)). The SQL
+  `V001` baseline gets a new frozen identity, so a `1.0.0` binary refuses every
+  SQL database created by a `0.9.x` release; the supported upgrade, also for
+  MongoDB, is a fresh database populated with `POST /restore` from
+  per-namespace `GET /backup` exports. Backup and restore wire shapes do not
+  change.
 
 ## Owner sources and artifact scope
 
