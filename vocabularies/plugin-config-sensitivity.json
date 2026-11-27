@@ -1,0 +1,1672 @@
+{
+  "$schema": "https://github.com/ferrum-edge/ferrum-contracts/schemas/vocabulary-plugin-config-sensitivity/v1.schema.json",
+  "vocabulary": "plugin-config-sensitivity",
+  "version": 1,
+  "edge_release": "v0.9.21",
+  "description": "Which built-in plugin config paths Ferrum Edge treats as credential-bearing, and how it projects each one in a read that withholds secrets (PLUGIN_SENSITIVITY_SCHEMAS), the placeholders it writes in place of withheld values, plus the librdkafka producer properties that stay visible (KAFKA_SAFE_PRODUCER_PROPERTIES). Products that echo or display plugin configs (Foundry, GitForgeOps) use the tables to withhold the same values Edge withholds, and products that read projected configs (Foundry, GitForgeOps, Nexus, Alloy) recognize the placeholders. These schema rules are one layer of Edge's projection: Edge also masks keys by a name heuristic and sweeps URLs and TLS material structurally, which this vocabulary does not transcribe; a custom plugin has no schema rules and Edge withholds every scalar of its config.",
+  "provenance": [
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/admin/plugin_config_projection.rs",
+      "symbols": [
+        "FieldSensitivity",
+        "SensitivityRule",
+        "normalize_config_key",
+        "PLUGIN_SENSITIVITY_SCHEMAS",
+        "KAFKA_SAFE_PRODUCER_PROPERTIES",
+        "REDACTED_PATH_PLACEHOLDER",
+        "is_redaction_placeholder",
+        "redact_endpoint_url"
+      ],
+      "note": "Transcribed from the Rust tables at the tag, in source order, with each rule constructor (secret, endpoint_url, redis_url, private_key_source, endpoint_path, certificate_source, or an inline SensitivityRule) resolved to its FieldSensitivity variant and each shared rule set (NONE, REDIS_BACKED, MESH_AUTHZ) expanded in place. Edge's plugin_config_projection_tests require an entry for every built-in in BUILTIN_PLUGIN_PARITY_META."
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/plugins/utils/metadata_redaction.rs",
+      "symbols": [
+        "REDACTED_PLACEHOLDER",
+        "REDACTED_USERINFO_PLACEHOLDER",
+        "REDACTED_QUERY_PLACEHOLDER",
+        "REDACTED_FRAGMENT_PLACEHOLDER"
+      ]
+    },
+    {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "src/admin/crud.rs",
+      "symbols": [
+        "masked_placeholder_sites"
+      ]
+    }
+  ],
+  "path_matching": "A rule path is applied from the plugin's config object, one segment at a time. At an object, '*' selects every key, and a named segment selects every key whose normalize_config_key spelling equals the segment's (remove '-', '.' and '_', then ASCII-lowercase, on both sides: customHeaders, custom-headers, custom.headers, custom_headers and customheaders are one segment); the rest of the path continues in each selected value. At an array, '*' selects every element and is consumed; a named segment is not consumed and continues into every element, so one rule covers both an object-keyed and an array-shaped container. When the path is exhausted, the rule's sensitivity applies to that value, whatever its type; a null value is left as is. A string, number or boolean met while segments remain cannot be classified and is withheld as Secret (fail closed). path_examples are executable cases of this grammar: each lists every value a rule reaches and the class applied to it. Whether a reached value is then shown depends on its class (an EndpointPath of '' or '/', or a certificate or key reference, stays visible).",
+  "path_examples": [
+    {
+      "description": "A wildcard consumes one array element; sibling fields are not reached.",
+      "rule": {
+        "path": [
+          "providers",
+          "*",
+          "base_url"
+        ],
+        "sensitivity": "EndpointUrl"
+      },
+      "config": {
+        "providers": [
+          {
+            "name": "primary",
+            "base_url": "https://api.example.com/v1"
+          }
+        ]
+      },
+      "applied": [
+        {
+          "pointer": "/providers/0/base_url",
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "description": "A wildcard selects every key of an object.",
+      "rule": {
+        "path": [
+          "headers",
+          "*"
+        ],
+        "sensitivity": "Secret"
+      },
+      "config": {
+        "headers": {
+          "x-honeycomb-team": "team-key",
+          "Dd-Api-Key": "dd-key"
+        }
+      },
+      "applied": [
+        {
+          "pointer": "/headers/x-honeycomb-team",
+          "sensitivity": "Secret"
+        },
+        {
+          "pointer": "/headers/Dd-Api-Key",
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "description": "A named segment matches any spelling with the same normalize_config_key form.",
+      "rule": {
+        "path": [
+          "custom_headers",
+          "*"
+        ],
+        "sensitivity": "Secret"
+      },
+      "config": {
+        "customHeaders": {
+          "X-Token": "t"
+        },
+        "custom-headers": {
+          "X-Other": "o"
+        }
+      },
+      "applied": [
+        {
+          "pointer": "/customHeaders/X-Token",
+          "sensitivity": "Secret"
+        },
+        {
+          "pointer": "/custom-headers/X-Other",
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "description": "A named segment continues into every array element without being consumed.",
+      "rule": {
+        "path": [
+          "channels",
+          "url"
+        ],
+        "sensitivity": "EndpointUrl"
+      },
+      "config": {
+        "channels": [
+          {
+            "url": "https://a.example/p",
+            "name": "a"
+          },
+          {
+            "url": "https://b.example/q",
+            "name": "b"
+          }
+        ]
+      },
+      "applied": [
+        {
+          "pointer": "/channels/0/url",
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "pointer": "/channels/1/url",
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "description": "A scalar met while segments remain is withheld as Secret.",
+      "rule": {
+        "path": [
+          "providers",
+          "*",
+          "base_url"
+        ],
+        "sensitivity": "EndpointUrl"
+      },
+      "config": {
+        "providers": "https://api.example.com/v1"
+      },
+      "applied": [
+        {
+          "pointer": "/providers",
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "description": "An exhausted path applies to the whole value, whatever its type.",
+      "rule": {
+        "path": [
+          "authorization"
+        ],
+        "sensitivity": "Secret"
+      },
+      "config": {
+        "Authorization": {
+          "scheme": "Bearer",
+          "token": "t"
+        }
+      },
+      "applied": [
+        {
+          "pointer": "/Authorization",
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "description": "A null value is left as is, and keys the path does not name are not reached.",
+      "rule": {
+        "path": [
+          "redis_url"
+        ],
+        "sensitivity": "RedisUrl"
+      },
+      "config": {
+        "redis_url": null,
+        "redis_db": 0
+      },
+      "applied": []
+    }
+  ],
+  "sensitivities": [
+    {
+      "value": "Secret",
+      "meaning": "Replaced wholesale by the redaction placeholder: credential literals, vendor authentication header values and operator-authored templates."
+    },
+    {
+      "value": "EndpointUrl",
+      "meaning": "Projected to scheme://host[:port], with userinfo shown only as the userinfo placeholder, a path marker (/ + placeholders.path) only for a path that is not empty and not /, and query and fragment markers when a query or fragment is present; an unparseable value or one without a host is replaced by the placeholder."
+    },
+    {
+      "value": "RedisUrl",
+      "meaning": "Projected through Edge's Redis URL projection (redis://redacted@host:port/db), which keeps the database number."
+    },
+    {
+      "value": "KafkaProducerProperties",
+      "meaning": "A librdkafka producer_config map: every value is redacted except the properties in kafka_safe_producer_properties."
+    },
+    {
+      "value": "PrivateKeySource",
+      "meaning": "A TLS private-key source: inline key material is replaced by the placeholder, a reference (path, file://, k8s://, vault://, managed://) stays visible, a non-string is withheld."
+    },
+    {
+      "value": "CertificateSource",
+      "meaning": "A certificate or CA-bundle source: certificate-only PEM and references stay visible; a value carrying a PEM private-key block, or a non-string, is replaced by the placeholder."
+    },
+    {
+      "value": "EndpointPath",
+      "meaning": "An outbound path configured apart from its host and port: an empty path or / stays visible, anything else is replaced by the placeholder, a non-string is withheld."
+    }
+  ],
+  "placeholders": {
+    "redacted": "[REDACTED]",
+    "userinfo": "redacted",
+    "path": "[REDACTED_PATH]",
+    "query": "[REDACTED_QUERY]",
+    "fragment": "[REDACTED_FRAGMENT]",
+    "recognition": "Edge treats a value as its own placeholder (is_redaction_placeholder) only when it is exactly redacted, or parses as a URL whose path is exactly / + path, whose query is exactly query, whose fragment is exactly fragment, or whose username is exactly userinfo with no password. A write is refused when it carries a recognized placeholder at a field the caller's role-specific read projection withholds (masked_placeholder_sites); the same string at a field that projection leaves visible is stored as written."
+  },
+  "plugins": [
+    {
+      "name": "otel_tracing",
+      "rules": [
+        {
+          "path": [
+            "endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "authorization"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "correlation_id",
+      "rules": []
+    },
+    {
+      "name": "cors",
+      "rules": []
+    },
+    {
+      "name": "request_termination",
+      "rules": [
+        {
+          "path": [
+            "trigger",
+            "header_value"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "mesh_outbound_registry",
+      "rules": []
+    },
+    {
+      "name": "ip_restriction",
+      "rules": []
+    },
+    {
+      "name": "geo_restriction",
+      "rules": []
+    },
+    {
+      "name": "bot_detection",
+      "rules": []
+    },
+    {
+      "name": "spec_expose",
+      "rules": [
+        {
+          "path": [
+            "spec_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "name": "sse",
+      "rules": []
+    },
+    {
+      "name": "grpc_web",
+      "rules": []
+    },
+    {
+      "name": "grpc_method_router",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "spiffe_identity",
+      "rules": []
+    },
+    {
+      "name": "mtls_auth",
+      "rules": [
+        {
+          "path": [
+            "allowed_issuers",
+            "*",
+            "ca_certificate_pem"
+          ],
+          "sensitivity": "CertificateSource"
+        }
+      ]
+    },
+    {
+      "name": "jwks_auth",
+      "rules": [
+        {
+          "path": [
+            "providers",
+            "*",
+            "discovery_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "providers",
+            "*",
+            "jwks_uri"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "discovery_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "jwks_uri"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "oauth2_introspection",
+      "rules": [
+        {
+          "path": [
+            "providers",
+            "*",
+            "discovery_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "providers",
+            "*",
+            "introspection_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "discovery_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "introspection_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "name": "oidc_relying_party",
+      "rules": [
+        {
+          "path": [
+            "providers",
+            "*",
+            "discovery_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "providers",
+            "*",
+            "jwks_uri"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "providers",
+            "*",
+            "token_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "providers",
+            "*",
+            "authorization_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "providers",
+            "*",
+            "userinfo_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "providers",
+            "*",
+            "end_session_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "discovery_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "jwks_uri"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "token_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "authorization_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "userinfo_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "end_session_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "name": "jwt_auth",
+      "rules": []
+    },
+    {
+      "name": "key_auth",
+      "rules": []
+    },
+    {
+      "name": "ldap_auth",
+      "rules": [
+        {
+          "path": [
+            "ldap_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "failover_ldap_urls"
+          ],
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "name": "basic_auth",
+      "rules": []
+    },
+    {
+      "name": "hmac_auth",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "soap_ws_security",
+      "rules": [
+        {
+          "path": [
+            "x509_signature",
+            "trusted_certs",
+            "*"
+          ],
+          "sensitivity": "CertificateSource"
+        },
+        {
+          "path": [
+            "saml",
+            "trusted_signing_certs",
+            "*"
+          ],
+          "sensitivity": "CertificateSource"
+        },
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "access_control",
+      "rules": []
+    },
+    {
+      "name": "tcp_connection_throttle",
+      "rules": []
+    },
+    {
+      "name": "mesh_authz",
+      "rules": [
+        {
+          "path": [
+            "mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "to",
+            "*",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "when",
+            "*",
+            "values",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "when",
+            "*",
+            "not_values",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "to",
+            "*",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "when",
+            "*",
+            "values",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "when",
+            "*",
+            "not_values",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "node_waypoint_capture_mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "to",
+            "*",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "node_waypoint_capture_mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "when",
+            "*",
+            "values",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "node_waypoint_capture_mesh_policies",
+            "*",
+            "rules",
+            "*",
+            "when",
+            "*",
+            "not_values",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "ext_authz_providers",
+            "*",
+            "include_additional_headers_in_check",
+            "*",
+            "value"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "ext_authz_providers",
+            "*",
+            "path_prefix"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "proxy_configs",
+            "*",
+            "environment",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "extension_configs",
+            "*",
+            "value"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "telemetry_resources",
+            "*",
+            "config",
+            "tracing",
+            "providers",
+            "*",
+            "config",
+            "url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "telemetry_resources",
+            "*",
+            "config",
+            "tracing",
+            "providers",
+            "*",
+            "config",
+            "agent_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "telemetry_resources",
+            "*",
+            "config",
+            "tracing",
+            "providers",
+            "*",
+            "config",
+            "collector_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "telemetry_resources",
+            "*",
+            "config",
+            "tracing",
+            "providers",
+            "*",
+            "config",
+            "endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "request_authentications",
+            "*",
+            "jwt_rules",
+            "*",
+            "jwks_uri"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "multi_cluster",
+            "federation_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "multi_cluster",
+            "remote_clusters",
+            "*",
+            "control_plane_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "mesh_slice",
+            "multi_cluster",
+            "remote_clusters",
+            "*",
+            "federation_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "name": "opa",
+      "rules": [
+        {
+          "path": [
+            "opa_host"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "adaptive_concurrency",
+      "rules": []
+    },
+    {
+      "name": "request_deduplication",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "request_size_limiting",
+      "rules": []
+    },
+    {
+      "name": "ws_message_size_limiting",
+      "rules": []
+    },
+    {
+      "name": "graphql",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "rate_limiting",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "ws_rate_limiting",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "udp_rate_limiting",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "ai_transcript_audit",
+      "rules": [
+        {
+          "path": [
+            "sink",
+            "endpoint_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "sink",
+            "custom_headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "endpoint_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "custom_headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "ai_prompt_shield",
+      "rules": []
+    },
+    {
+      "name": "waf",
+      "rules": [
+        {
+          "path": [
+            "global_exemptions",
+            "header_present",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "custom_rules",
+            "*",
+            "conditions",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "rule_overrides",
+            "*",
+            "conditions",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "fault_injection",
+      "rules": [
+        {
+          "path": [
+            "match",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "body_validator",
+      "rules": []
+    },
+    {
+      "name": "openapi_validator",
+      "rules": [
+        {
+          "path": [
+            "bypass",
+            "header_present",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "ai_semantic_firewall",
+      "rules": [
+        {
+          "path": [
+            "provider",
+            "endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "privacy",
+            "snippet_hash_salt"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "ai_request_guard",
+      "rules": []
+    },
+    {
+      "name": "ai_tool_governor",
+      "rules": [
+        {
+          "path": [
+            "endpoint_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "approval",
+            "endpoint_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "approval",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "ai_stream_router",
+      "rules": [
+        {
+          "path": [
+            "providers",
+            "*",
+            "endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "name": "mcp_gateway",
+      "rules": [
+        {
+          "path": [
+            "servers",
+            "*",
+            "upstream_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "upstream_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "servers",
+            "*",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "a2a_gateway",
+      "rules": []
+    },
+    {
+      "name": "mesh_route_dispatch",
+      "rules": [
+        {
+          "path": [
+            "rules",
+            "*",
+            "request_transform",
+            "*",
+            "value"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "rules",
+            "*",
+            "match",
+            "headers",
+            "*",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "rules",
+            "*",
+            "match",
+            "without_headers",
+            "*",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "rules",
+            "*",
+            "match",
+            "query_params",
+            "*",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "rules",
+            "*",
+            "rewrite",
+            "uri"
+          ],
+          "sensitivity": "EndpointPath"
+        }
+      ]
+    },
+    {
+      "name": "ai_semantic_cache",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        },
+        {
+          "path": [
+            "semantic_embedding_endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "semantic_embedding_auth_header"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "request_transformer",
+      "rules": [
+        {
+          "path": [
+            "rules",
+            "*",
+            "value"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "serverless_function",
+      "rules": [
+        {
+          "path": [
+            "function_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "aws_endpoint_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "azure_function_key"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "response_mock",
+      "rules": [
+        {
+          "path": [
+            "rules",
+            "*",
+            "match",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "rules",
+            "*",
+            "match",
+            "query_params",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "grpc_deadline",
+      "rules": []
+    },
+    {
+      "name": "load_testing",
+      "rules": []
+    },
+    {
+      "name": "request_mirror",
+      "rules": [
+        {
+          "path": [
+            "mirror_path"
+          ],
+          "sensitivity": "EndpointPath"
+        }
+      ]
+    },
+    {
+      "name": "response_size_limiting",
+      "rules": []
+    },
+    {
+      "name": "response_caching",
+      "rules": []
+    },
+    {
+      "name": "response_transformer",
+      "rules": []
+    },
+    {
+      "name": "compression",
+      "rules": []
+    },
+    {
+      "name": "ai_prompt_compressor",
+      "rules": []
+    },
+    {
+      "name": "ai_federation",
+      "rules": [
+        {
+          "path": [
+            "base_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "providers",
+            "*",
+            "base_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "name": "ai_response_guard",
+      "rules": []
+    },
+    {
+      "name": "security_headers",
+      "rules": []
+    },
+    {
+      "name": "ai_token_metrics",
+      "rules": []
+    },
+    {
+      "name": "ai_rate_limiter",
+      "rules": [
+        {
+          "path": [
+            "redis_url"
+          ],
+          "sensitivity": "RedisUrl"
+        }
+      ]
+    },
+    {
+      "name": "stdout_logging",
+      "rules": []
+    },
+    {
+      "name": "ws_frame_logging",
+      "rules": []
+    },
+    {
+      "name": "statsd_logging",
+      "rules": []
+    },
+    {
+      "name": "http_logging",
+      "rules": [
+        {
+          "path": [
+            "endpoint_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "custom_headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "tcp_logging",
+      "rules": []
+    },
+    {
+      "name": "kafka_logging",
+      "rules": [
+        {
+          "path": [
+            "producer_config"
+          ],
+          "sensitivity": "KafkaProducerProperties"
+        }
+      ]
+    },
+    {
+      "name": "loki_logging",
+      "rules": [
+        {
+          "path": [
+            "endpoint_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "authorization_header"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "custom_headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "udp_logging",
+      "rules": [
+        {
+          "path": [
+            "dtls_key_path"
+          ],
+          "sensitivity": "PrivateKeySource"
+        },
+        {
+          "path": [
+            "dtls_cert_path"
+          ],
+          "sensitivity": "CertificateSource"
+        },
+        {
+          "path": [
+            "dtls_ca_cert_path"
+          ],
+          "sensitivity": "CertificateSource"
+        }
+      ]
+    },
+    {
+      "name": "ws_logging",
+      "rules": [
+        {
+          "path": [
+            "endpoint_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "custom_headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "transaction_debugger",
+      "rules": [
+        {
+          "path": [
+            "capture_request_header_value"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "proxy_alerts",
+      "rules": [
+        {
+          "path": [
+            "channels",
+            "*",
+            "webhook_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "channels",
+            "*",
+            "url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "channels",
+            "*",
+            "headers",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        },
+        {
+          "path": [
+            "channels",
+            "*",
+            "body_template"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "prometheus_metrics",
+      "rules": []
+    },
+    {
+      "name": "api_chargeback",
+      "rules": []
+    },
+    {
+      "name": "api_chargeback_sink",
+      "rules": [
+        {
+          "path": [
+            "clickhouse",
+            "url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "clickhouse",
+            "insert_query_params",
+            "*"
+          ],
+          "sensitivity": "Secret"
+        }
+      ]
+    },
+    {
+      "name": "workload_metrics",
+      "rules": [
+        {
+          "path": [
+            "tracing_provider",
+            "config",
+            "url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "tracing_provider",
+            "config",
+            "agent_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "tracing_provider",
+            "config",
+            "collector_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "tracing_provider",
+            "config",
+            "endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "tracing_providers",
+            "*",
+            "config",
+            "url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "tracing_providers",
+            "*",
+            "config",
+            "agent_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "tracing_providers",
+            "*",
+            "config",
+            "collector_url"
+          ],
+          "sensitivity": "EndpointUrl"
+        },
+        {
+          "path": [
+            "tracing_providers",
+            "*",
+            "config",
+            "endpoint"
+          ],
+          "sensitivity": "EndpointUrl"
+        }
+      ]
+    },
+    {
+      "name": "__mesh_bpf_metrics",
+      "rules": []
+    },
+    {
+      "name": "transaction_log_schema",
+      "rules": []
+    }
+  ],
+  "kafka_matching": "A producer_config key is safe when the key, trimmed with Rust str::trim (leading and trailing Unicode White_Space) and ASCII-lowercased, equals one of kafka_safe_producer_properties exactly. Dots are kept and normalize_config_key does not apply: ' LINGER.MS ' is safe, linger_ms is not.",
+  "kafka_safe_producer_properties": [
+    "acks",
+    "batch.num.messages",
+    "batch.size",
+    "client.id",
+    "compression.codec",
+    "compression.level",
+    "compression.type",
+    "delivery.timeout.ms",
+    "enable.idempotence",
+    "linger.ms",
+    "max.in.flight",
+    "max.in.flight.requests.per.connection",
+    "message.max.bytes",
+    "message.send.max.retries",
+    "message.timeout.ms",
+    "metadata.max.age.ms",
+    "partitioner",
+    "queue.buffering.max.kbytes",
+    "queue.buffering.max.messages",
+    "queue.buffering.max.ms",
+    "reconnect.backoff.max.ms",
+    "reconnect.backoff.ms",
+    "request.required.acks",
+    "request.timeout.ms",
+    "retries",
+    "retry.backoff.max.ms",
+    "retry.backoff.ms",
+    "socket.keepalive.enable",
+    "socket.nagle.disable",
+    "socket.timeout.ms",
+    "sticky.partitioning.linger.ms",
+    "topic.metadata.refresh.interval.ms"
+  ]
+}

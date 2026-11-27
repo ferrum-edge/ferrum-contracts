@@ -549,14 +549,38 @@ GitForgeOps, Alloy and Anvil each run the weekly check that
 (ferrum-foundry#716, ferrum-nexus#733, ferrum-edge-git-forge-ops#737,
 ferrum-alloy#314, ferrum-anvil#578).
 
-## Candidate contracts
+## Candidate contracts (decided 2026-11-27)
 
-These contract-like copies were identified by the 2026-10-01 audit. They are
-candidates for future adoption; this list does not add them to the shared
-contract set.
+The 2026-10-01 audit listed three contract-like copies. Each was decided by
+whether another repository reads the data across a repository boundary today
+(owner repositories read at their `main` on 2026-11-27):
 
-- Nexus copies Edge's reserved `correlation_id` header names.
-- Foundry copies Edge's plugin configuration sensitivity metadata from
-  `pluginSensitivity.ts`.
-- Alloy has a `gateway-diagnostic-ref` report fixture that is not yet part of
-  the shared fixtures.
+- **Plugin config sensitivity: now a contract.** Edge's
+  `PLUGIN_SENSITIVITY_SCHEMAS` and `KAFKA_SAFE_PRODUCER_PROPERTIES`
+  (`src/admin/plugin_config_projection.rs`) are transcribed by two other
+  repositories: Foundry (`src/api/pluginSensitivity.ts`, checked against Edge
+  source by `scripts/plugin-sensitivity-drift.mjs`) and GitForgeOps
+  (`src/secrets/plugin_config.rs`). They are published as
+  `vocabularies/plugin-config-sensitivity.json` from Edge `v0.9.21`. Each
+  consumer adds a parity test of its table against the pinned vocabulary when
+  it next re-pins.
+- **Correlation ID reserved header names: now a contract.** Nexus copies
+  Edge's closed `RESERVED_HEADER_NAMES` (`src/plugins/correlation_id.rs`) in
+  `shared/src/plugins.ts` and pins it against Edge source in
+  `shared/src/plugins.test.ts`. It is published as
+  `vocabularies/reserved-header-names.json` (set
+  `correlation_id.header_name`) from Edge `v0.9.21`. Nexus adds a parity test
+  against the pinned vocabulary when it next re-pins.
+- **MCP OpenAPI bridge admission: now a contract** (found by the same
+  sweep). Alloy's agent-tool export (`crates/ferrum-alloy-edge/src/agents.rs`)
+  copies Edge's `x-ferrum-mcp` key sets, bounds, annotation keys and reserved
+  bridge request headers (`src/admin/api_specs/extractor.rs`,
+  `src/plugins/mcp_openapi_bridge.rs`). They are published as
+  `vocabularies/mcp-openapi-bridge.json` from Edge `v0.9.21`. Alloy adds a
+  parity test against the pinned vocabulary when it next re-pins.
+- **Alloy's `gateway-diagnostic-ref` report fixture: not a contract.** It is
+  an Alloy-owned diagnostic report (`contracts/fixtures/reports/gateway-diagnostic-ref.json`)
+  read only by Alloy's own tests; no other repository reads it (Anvil's
+  diagnostic import reads the shared `diagnostic-report` fixtures here, and its
+  documents mention the gateway reference only in prose). The shared
+  `diagnostic-report` v1 schema and fixtures already carry the contract.
