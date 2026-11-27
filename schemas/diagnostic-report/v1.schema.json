@@ -14,11 +14,11 @@
     "provenance": [
       {
         "repo": "ferrum-edge/ferrum-alloy",
-        "ref": "main",
-        "commit": "81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e",
+        "ref": "v0.1.0",
+        "commit": "c949978d7e90be33bac6a16e23744bcdd4ee3924",
         "path": "contracts/diagnostics/diagnostic-report.v1.schema.json",
-        "note": "Copied verbatim; $id was replaced (the original is kept in x-contract.upstream_id) and x-contract was added. Alloy keeps it in sync with its Rust enums through crates/ferrum-alloy-diagnostics/tests/schema_parity.rs.",
-        "availability": "unreleased"
+        "note": "Copied verbatim from Alloy v0.1.0 (a lightweight tag on c949978d7e90be33bac6a16e23744bcdd4ee3924, the merge of ferrum-alloy#331); $id was replaced (the original is kept in x-contract.upstream_id) and x-contract was added. Outside $id and x-contract the owner file is identical at the qualified owner commit 81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e (x-contract.coordinated_release.qualified_owner_commit), at v0.1.0 and on Alloy main at dc36f78cb39edd3da58649a0bed7aa6f1f4263e8. Alloy keeps it in sync with its Rust enums through crates/ferrum-alloy-diagnostics/tests/schema_parity.rs.",
+        "availability": "released"
       }
     ],
     "coordinated_release": {

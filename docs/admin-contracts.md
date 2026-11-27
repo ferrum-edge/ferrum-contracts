@@ -290,6 +290,16 @@ keep unchanged wire shapes):
   instead of `500`, and `listen_path` uniqueness is scoped by `listen_port`
   (affecting `409` route-conflict checks on proxies, API specs and batch
   writes).
+- **Query flags, serialization failures, ACME errors and trust-bundle IDs**
+  (Edge PR [#7491](https://github.com/ferrum-edge/ferrum-edge/pull/7491)).
+  `confirm` and `confirm_api_spec_deletion` are read with form-urlencoded
+  decoding and fail closed when any repeated occurrence is not `true` (for
+  example `?confirm=true&confirm=false`), where `v0.9.21` accepted the flag if
+  any occurrence was `true`. `GET /metrics`, `GET /metrics/runtime` and backup
+  serialization return `500` on a serialization failure instead of `200` with
+  an empty object. ACME order creation and renewal return `502` for an
+  upstream CA or DNS failure. Gateway trust-bundle IDs follow the shared
+  resource-ID limit (`MAX_ID_LENGTH`, 254 bytes; `v0.9.21` allowed 255).
 - **Closed nested objects and JSON-object request bodies** (Edge PRs
   [#7520](https://github.com/ferrum-edge/ferrum-edge/pull/7520) and
   [#7524](https://github.com/ferrum-edge/ferrum-edge/pull/7524)). Edge

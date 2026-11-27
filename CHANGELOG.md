@@ -47,6 +47,29 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- Alloy-owned schema provenance names the released owner: the
+  `diagnostic-report` v1 and `service-manifest` v1 `x-contract.provenance`
+  entries for ferrum-alloy, and the producer of
+  `qualification/service-manifest/v1/derived-id-limit.json`, now read
+  `ref: v0.1.0`, `commit: c949978d7e90be33bac6a16e23744bcdd4ee3924`,
+  `availability: released` (Alloy `v0.1.0`, a lightweight tag on the merge
+  of ferrum-alloy#331). The diagnostic-report schema is identical outside
+  `$id` and `x-contract` at the qualified owner commit `81cbb410`, at
+  `v0.1.0` and on Alloy main; `81cbb410` stays the qualified owner commit in
+  `x-contract.coordinated_release`. The service-manifest note no longer says
+  ferrum-alloy#319 tracks aligning Alloy's `gateway.otel_endpoint` check
+  (ferrum-alloy#327 did so and closed it) and records two spellings Alloy
+  `v0.1.0` accepts that v1 refuses (an upper-case scheme, and an `@` in a
+  query or fragment before the first `/`). Annotations only: no constraint,
+  fixture or qualification case changes. `docs/ownership.md`,
+  `docs/adoption.md`, `fixtures/README.md` and `qualification/README.md`
+  follow.
+- `docs/admin-contracts.md` records the verified Edge #7491 changes the
+  earlier sync left out: `confirm` / `confirm_api_spec_deletion` fail closed
+  on a repeated non-`true` value, metrics and backup serialization failures
+  return `500`, ACME upstream failures return `502`, and gateway trust-bundle
+  IDs are limited to 254 bytes.
+
 - Sync `main_branch_delta` in `vocabularies/plugin-catalog.json`,
   `vocabularies/gateway-headers.json` and `vocabularies/gateway-errors.json`
   to Ferrum Edge `main` `e333ba3fe51ffed19ce3b0a53140ba4340707589` (through

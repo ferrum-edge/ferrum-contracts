@@ -259,7 +259,9 @@ freeze of the unchanged report and manifest shared v1 contracts. Published
 metadata now marks both **EXISTING**/implemented, retaining owner-unreleased
 availability. This records root's authorized metadata choice; it does not invent
 prior separate human approval or grant separate Alloy crate publishing approval.
-Alloy remains unpublished (`publish = false`).
+Alloy was unpublished at that time. Alloy has since been released from Git as `v0.1.0` (a lightweight tag on `c949978d7e90be33bac6a16e23744bcdd4ee3924`, the merge of ferrum-alloy#331, 2026-11-21); `publish = false` still keeps it off crates.io. Both schemas' provenance now
+reads `ref: v0.1.0`, `availability: released`, with `81cbb410` kept as the
+qualified owner commit.
 
 Every wire field, bound and fixture is retained. Report pairing preserves every
 description outside `$id`/`x-contract`, including the owner's historical PROPOSED
@@ -357,8 +359,8 @@ checked separately from the passed PR head.
 Final Alloy owner main `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e` passed
 all 18 checks and all 18 jobs in its sole applicable PUSH workflow,
 [CI 37238543236](https://github.com/ferrum-edge/ferrum-alloy/actions/runs/37238543236).
-Its first diagnostic producer exists, but Alloy remains pre-release and
-unpublished (`publish = false`). Qualification below binds to the specific
+Its first diagnostic producer existed, but Alloy was then pre-release and
+unpublished. Alloy has since been released from Git as `v0.1.0` (a lightweight tag on `c949978d7e90be33bac6a16e23744bcdd4ee3924`, the merge of ferrum-alloy#331, 2026-11-21); `publish = false` still keeps it off crates.io. Qualification below binds to the specific
 producer commits exercised, not arbitrary newer owner sources.
 
 ### Anvil diagnostic import boundary
@@ -413,8 +415,9 @@ production deployment semantics for every manifest field.
 
 [`qualification/service-manifest/v1/derived-id-limit.json`](../qualification/service-manifest/v1/derived-id-limit.json)
 records four schema-valid manifests and Alloy's outcome for each, read from
-producer `db412da37564ffbe869e2b40530dbebf5afe7ac8` (Alloy main, unreleased;
-unchanged at `0e8a96a24c149432f0c3583732d8a3875db756ce`). Alloy always
+producer `db412da37564ffbe869e2b40530dbebf5afe7ac8` (ferrum-alloy#313), now
+recorded at Alloy `v0.1.0` (`c949978d7e90be33bac6a16e23744bcdd4ee3924`), where the rule is unchanged, and
+unchanged on Alloy main at `dc36f78cb39edd3da58649a0bed7aa6f1f4263e8`. Alloy always
 generates the `<proxy_id>-otel-tracing` plugin, so with no health check and
 correlation disabled a 241-character proxy ID exports and a 242-character one
 does not, with or without `gateway.otel_endpoint` (#80). Passing the schema
