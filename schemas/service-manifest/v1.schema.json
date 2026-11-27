@@ -164,7 +164,7 @@
             }
           ],
           "maxLength": 2049,
-          "description": "Backend path prefix ending in /. Exported, without its trailing /, as the Edge proxy backend_path, which Edge limits to 2048 UTF-8 bytes (MAX_BACKEND_PATH_LENGTH): at most 2049 characters with the /. This Edge-derived boundary is the v1 bound (ferrum-contracts#82), and Alloy (since ferrum-alloy#327, in v0.1.0) and Foundry accept exactly it. Nexus currently refuses more than 2048 characters, which is stricter and inside v1. maxLength counts characters; Edge enforces the bytes. No C0 control character or DEL, as Alloy's valid_path refuses them."
+          "description": "Backend path prefix ending in /. Exported, without its trailing /, as the Edge proxy backend_path, which Edge limits to 2048 UTF-8 bytes (MAX_BACKEND_PATH_LENGTH): at most 2049 characters with the /. This Edge-derived boundary is the v1 bound (ferrum-contracts#82), and Alloy (since ferrum-alloy#327, in v0.1.0), Foundry and Nexus accept exactly it: 2049 characters with the trailing /, and not 2050. maxLength counts characters; Edge enforces the bytes. No C0 control character or DEL, as Alloy's valid_path refuses them."
         },
         "strip_public_path": {
           "type": "boolean",

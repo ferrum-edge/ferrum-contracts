@@ -73,6 +73,15 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
 
 ### Changed
 
+- `docs/adoption.md` records GitForgeOps' canonical `PIN`
+  (ferrum-edge-git-forge-ops#782), and `docs/consumer-pins.md` its Edge
+  `main` check, now in `.github/workflows/edge-main-drift.yml`
+  (ferrum-edge-git-forge-ops#783), which also compares Edge `main`'s
+  `openapi.yaml` with its mirrored resource fields and fails a pull-request
+  run on drift. The `service-manifest` v1 `api.service_base_path`
+  description says Nexus, like Alloy and Foundry, accepts exactly the
+  2049-character bound (annotation only).
+
 - `docs/adoption.md` closes both remaining follow-ups: the standalone plugin
   config schemas above, and generated types, which this repository does not
   ship (decided on the owner's behalf for 1.0: the repository stays
