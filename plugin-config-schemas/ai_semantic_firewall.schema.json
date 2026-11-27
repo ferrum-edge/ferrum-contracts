@@ -1,0 +1,1377 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/ai_semantic_firewall.schema.json",
+  "title": "ai_semantic_firewall plugin config",
+  "description": "The `config` object of an enabled `ai_semantic_firewall` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component AiSemanticFirewallConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "ai_semantic_firewall",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/AiSemanticFirewallConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/AiSemanticFirewallConfig",
+  "$defs": {
+    "AiSemanticFirewallActivePolicy": {
+      "description": "At least one ai_semantic_firewall rule source is active: any built-in pack (omitting builtins enables all seven), an allow topic, a deny topic, or a custom rule. An enabled instance with no active rule source is rejected by the constructor.",
+      "anyOf": [
+        {
+          "not": {
+            "required": [
+              "builtins"
+            ]
+          }
+        },
+        {
+          "required": [
+            "builtins"
+          ],
+          "properties": {
+            "builtins": {
+              "anyOf": [
+                {
+                  "required": [
+                    "prompt_injection"
+                  ],
+                  "properties": {
+                    "prompt_injection": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "jailbreak"
+                  ],
+                  "properties": {
+                    "jailbreak": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "system_prompt_exfiltration"
+                  ],
+                  "properties": {
+                    "system_prompt_exfiltration": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "data_exfiltration"
+                  ],
+                  "properties": {
+                    "data_exfiltration": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "indirect_prompt_injection"
+                  ],
+                  "properties": {
+                    "indirect_prompt_injection": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "tool_abuse"
+                  ],
+                  "properties": {
+                    "tool_abuse": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "response_leakage"
+                  ],
+                  "properties": {
+                    "response_leakage": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "required": [
+            "allow_topics"
+          ],
+          "properties": {
+            "allow_topics": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "deny_topics"
+          ],
+          "properties": {
+            "deny_topics": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "custom_rules"
+          ],
+          "properties": {
+            "custom_rules": {
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "AiSemanticFirewallActiveRequestPolicy": {
+      "description": "At least one REQUEST-direction ai_semantic_firewall rule is active: any built-in pack except the response-only response_leakage (omitting builtins enables all of them), an allow topic (request-side only), a deny topic (bidirectional), or a custom rule whose direction is not response.",
+      "anyOf": [
+        {
+          "not": {
+            "required": [
+              "builtins"
+            ]
+          }
+        },
+        {
+          "required": [
+            "builtins"
+          ],
+          "properties": {
+            "builtins": {
+              "anyOf": [
+                {
+                  "required": [
+                    "prompt_injection"
+                  ],
+                  "properties": {
+                    "prompt_injection": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "jailbreak"
+                  ],
+                  "properties": {
+                    "jailbreak": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "system_prompt_exfiltration"
+                  ],
+                  "properties": {
+                    "system_prompt_exfiltration": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "data_exfiltration"
+                  ],
+                  "properties": {
+                    "data_exfiltration": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "indirect_prompt_injection"
+                  ],
+                  "properties": {
+                    "indirect_prompt_injection": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "tool_abuse"
+                  ],
+                  "properties": {
+                    "tool_abuse": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "required": [
+            "allow_topics"
+          ],
+          "properties": {
+            "allow_topics": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "deny_topics"
+          ],
+          "properties": {
+            "deny_topics": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "custom_rules"
+          ],
+          "properties": {
+            "custom_rules": {
+              "contains": {
+                "not": {
+                  "required": [
+                    "direction"
+                  ],
+                  "properties": {
+                    "direction": {
+                      "const": "response"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AiSemanticFirewallActiveResponsePolicy": {
+      "description": "At least one RESPONSE-direction ai_semantic_firewall rule is active: the bidirectional built-ins system_prompt_exfiltration / tool_abuse, the response-direction built-in response_leakage (omitting builtins enables all three), a deny topic (bidirectional), or a custom rule whose direction is not request. Allow topics are request-side only and never satisfy this.",
+      "anyOf": [
+        {
+          "not": {
+            "required": [
+              "builtins"
+            ]
+          }
+        },
+        {
+          "required": [
+            "builtins"
+          ],
+          "properties": {
+            "builtins": {
+              "anyOf": [
+                {
+                  "required": [
+                    "system_prompt_exfiltration"
+                  ],
+                  "properties": {
+                    "system_prompt_exfiltration": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "tool_abuse"
+                  ],
+                  "properties": {
+                    "tool_abuse": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "response_leakage"
+                  ],
+                  "properties": {
+                    "response_leakage": {
+                      "$ref": "#/$defs/AiSemanticFirewallEnabledBuiltinPack"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "required": [
+            "deny_topics"
+          ],
+          "properties": {
+            "deny_topics": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "custom_rules"
+          ],
+          "properties": {
+            "custom_rules": {
+              "contains": {
+                "not": {
+                  "required": [
+                    "direction"
+                  ],
+                  "properties": {
+                    "direction": {
+                      "const": "request"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AiSemanticFirewallBuiltinPackConfig": {
+      "oneOf": [
+        {
+          "type": "boolean",
+          "description": "Boolean shorthand. true enables the pack with Ferrum defaults; false disables it."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "if": {
+            "required": [
+              "examples_mode"
+            ],
+            "properties": {
+              "examples_mode": {
+                "const": "replace"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "examples"
+            ]
+          },
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable or disable this built-in pack."
+            },
+            "examples_mode": {
+              "type": "string",
+              "enum": [
+                "append",
+                "replace"
+              ],
+              "default": "append",
+              "description": "Append customer examples to Ferrum defaults or replace the semantic example set for this pack. replace requires examples."
+            },
+            "examples": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 64,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048,
+                "pattern": "\\S"
+              },
+              "description": "Customer semantic examples for this built-in pack (at most 64, each at most 2048 characters). Each entry must contain a non-whitespace character; surrounding whitespace is trimmed. Required when examples_mode is replace."
+            }
+          },
+          "description": "Object form for tuning a built-in AI semantic firewall pack. The pack keeps its built-in rule id, pack metadata, and compiled-in matching behavior either way."
+        }
+      ],
+      "description": "Built-in pack toggle or tuning object."
+    },
+    "AiSemanticFirewallConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: ai_semantic_firewall — Semantic LLM guardrails for prompt injection, jailbreaks, system/developer prompt exfiltration, data exfiltration intent, indirect prompt injection, tool abuse, business-topic allow/deny policy, response leakage, dry-run rollout, and audit metadata. An enabled instance must carry a provider, at least one active rule source, and rules that apply to the enabled inspection directions; a disabled instance (enabled: false) is exempt from those cross-field requirements but every block it DOES carry is still validated, matching the constructor. Three relationships standard JSON Schema cannot express and ferrum-edge validate still rejects with a field-specific error: streaming.overlap_bytes must be strictly less than streaming.max_window_bytes; streaming.overlap_tokens must be strictly less than streaming.max_window_tokens; and every allow_topics/deny_topics/custom_rules id must be unique across those three lists AND against the ids of the ACTIVE built-in packs (prompt_injection, jailbreak, system_prompt_exfiltration, data_exfiltration, indirect_prompt_injection, tool_abuse, response_leakage). A rule id is an operator-facing label only — naming a custom or deny-topic rule after a disabled built-in pack does not give it that built-in's matching behavior. A fourth constructor-only bound: the ACTIVE rule material (built-in packs, allow_topics, deny_topics, custom_rules) may carry at most 512 examples in total, because every example is embedded when the rule index is built.",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "enabled"
+            ],
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            }
+          },
+          "then": {},
+          "else": {
+            "allOf": [
+              {
+                "required": [
+                  "provider"
+                ]
+              },
+              {
+                "$ref": "#/$defs/AiSemanticFirewallActivePolicy"
+              },
+              {
+                "not": {
+                  "required": [
+                    "inspect"
+                  ],
+                  "properties": {
+                    "inspect": {
+                      "required": [
+                        "request",
+                        "response"
+                      ],
+                      "properties": {
+                        "request": {
+                          "const": false
+                        },
+                        "response": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "inspect"
+                  ],
+                  "properties": {
+                    "inspect": {
+                      "required": [
+                        "request"
+                      ],
+                      "properties": {
+                        "request": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "$ref": "#/$defs/AiSemanticFirewallActiveResponsePolicy"
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "inspect"
+                  ],
+                  "properties": {
+                    "inspect": {
+                      "required": [
+                        "response"
+                      ],
+                      "properties": {
+                        "response": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "$ref": "#/$defs/AiSemanticFirewallActiveRequestPolicy"
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "extraction"
+                  ],
+                  "properties": {
+                    "extraction": {
+                      "required": [
+                        "request_json_paths"
+                      ],
+                      "properties": {
+                        "request_json_paths": {
+                          "maxItems": 0
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "inspect"
+                      ],
+                      "properties": {
+                        "inspect": {
+                          "required": [
+                            "request"
+                          ],
+                          "properties": {
+                            "request": {
+                              "const": false
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/AiSemanticFirewallActiveRequestPolicy"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "extraction"
+                  ],
+                  "properties": {
+                    "extraction": {
+                      "required": [
+                        "response_json_paths"
+                      ],
+                      "properties": {
+                        "response_json_paths": {
+                          "maxItems": 0
+                        }
+                      }
+                    }
+                  }
+                },
+                "then": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "inspect"
+                      ],
+                      "properties": {
+                        "inspect": {
+                          "required": [
+                            "response"
+                          ],
+                          "properties": {
+                            "response": {
+                              "const": false
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/AiSemanticFirewallActiveResponsePolicy"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "streaming"
+            ]
+          },
+          "then": {
+            "required": [
+              "streaming_response"
+            ],
+            "properties": {
+              "streaming_response": {
+                "const": "inspect"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "inspect": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "request": {
+              "type": "boolean",
+              "default": true
+            },
+            "response": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "description": "Request and response inspection toggles."
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "enforce",
+            "dry_run"
+          ],
+          "default": "enforce",
+          "description": "Dry-run mode never rejects or cuts traffic and emits would_action metadata. This covers every disposition on both the buffered and the windowed streaming paths: a matched rule, an uninspectable body/window, an unmapped governed provider stream, an exhausted streaming.max_inspections budget, a provider error under on_error=reject, and an expired streaming.max_hold_ms hold (including on_hold_timeout=cut) are all recorded and released."
+        },
+        "on_error": {
+          "type": "string",
+          "enum": [
+            "warn",
+            "allow",
+            "reject"
+          ],
+          "description": "Behavior when embedding/evaluation fails. The default is conditional and is NOT advertised as a static schema default on purpose: when omitted, enforce mode defaults to reject (required semantic evaluation fails closed) while dry_run defaults to warn (provider outages are audited as would_warn, not would_reject). Tooling that materializes OpenAPI defaults must therefore leave this field unset to inherit the mode-appropriate default; sending an explicit reject for a dry_run config would skew rollout/audit telemetry."
+        },
+        "default_action": {
+          "type": "string",
+          "enum": [
+            "reject",
+            "warn"
+          ],
+          "default": "reject",
+          "description": "Default action for built-in semantic rules."
+        },
+        "fail_on_uninspectable_body": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, missing, empty, malformed, encoded, oversized (above the 10 MiB inspection ceiling), governed LLM JSON with no extractable content, or a body yielding more than 1024 segments is handled through on_error (rejecting by default in enforce mode). In enforce mode with on_error=reject this also caps buffered governed request bodies at 10 MiB, refused at collection. Set false only as an explicit compatibility opt-out on a generic shared JSON proxy that intentionally forwards such bodies uninspected."
+        },
+        "streaming_response": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "reject",
+            "buffer",
+            "inspect"
+          ],
+          "description": "Behavior for stream:true requests when response-side inspection is active. The default is conditional and is NOT advertised as a static schema default on purpose: when omitted, enforce mode with response-side rules active defaults to reject (clients cannot bypass response inspection by streaming) while dry_run or request-only configurations default to skip. Tooling that materializes OpenAPI defaults must leave this field unset to inherit the correct default — sending an explicit reject for a dry_run/request-only config would flip request-body buffering on (requires_request_body_before_before_proxy) and buffer every JSON POST just to read the stream flag, unlike the omitted-field behavior. skip is an explicit fail-open opt-out that allows the streamed response uninspected and records ai_semantic_firewall.response_inspection_skipped when the request body is available; reject fails closed and rejects the request so a client cannot disable response inspection by streaming — clients retry with stream:false to receive an inspectable buffered response; buffer forces the streamed response onto the buffered path, reassembles its SSE deltas into coherent text, and runs the full response engine before anything reaches the client (most accurate, highest time-to-first-byte; an oversized stream fails closed via FERRUM_MAX_RESPONSE_BODY_SIZE_BYTES); inspect inspects the stream progressively in windows (reassemble to a sentence/paragraph or byte-cap boundary, inspect, release if clean) and cuts the stream mid-flight on a violation with a terminal SSE error event — preserves streaming UX (low time-to-first-byte) at the cost of windowed granularity plus a per-window inspection. inspect records ai_semantic_firewall.response_inspection=streaming_windowed. Production enforcement should use reject, buffer, or inspect with on_error=reject. A stream is DECLARED by a body stream:true or by a streaming request target (Gemini/Vertex :streamGenerateContent, Bedrock converse-stream / invoke-with-response-stream). A governed AI request that did not declare one but receives a text/event-stream response anyway (a backend that streams by default) is still governed: buffer and reject keep it buffered and inspect it whole, inspect windows it; an NDJSON stream (Ollama application/x-ndjson) is buffered and reassembled under every non-skip policy, and a Bedrock application/vnd.amazon.eventstream body fails closed through on_error."
+        },
+        "streaming": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Windowed-inspection tuning. Only valid when streaming_response is inspect. window=tokens requires an explicit tokenizer, and tokenizer / max_window_tokens / overlap_tokens are rejected for every other window kind. on_hold_timeout requires max_hold_ms, and its cut value is rejected with enforcement=detect. Two ordering relationships are not expressible here and are enforced by the constructor: overlap_bytes < max_window_bytes and overlap_tokens < max_window_tokens.",
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "window"
+                ],
+                "properties": {
+                  "window": {
+                    "const": "tokens"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "tokenizer"
+                ]
+              },
+              "else": {
+                "allOf": [
+                  {
+                    "not": {
+                      "required": [
+                        "tokenizer"
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "required": [
+                        "max_window_tokens"
+                      ]
+                    }
+                  },
+                  {
+                    "not": {
+                      "required": [
+                        "overlap_tokens"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "on_hold_timeout"
+                ]
+              },
+              "then": {
+                "required": [
+                  "max_hold_ms"
+                ]
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "enforcement"
+                ],
+                "properties": {
+                  "enforcement": {
+                    "const": "detect"
+                  }
+                }
+              },
+              "then": {
+                "not": {
+                  "required": [
+                    "on_hold_timeout"
+                  ],
+                  "properties": {
+                    "on_hold_timeout": {
+                      "const": "cut"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "window": {
+              "type": "string",
+              "enum": [
+                "sentence",
+                "paragraph",
+                "bytes",
+                "tokens"
+              ],
+              "default": "sentence",
+              "description": "Window boundary detector. `tokens` requires an explicit `streaming.tokenizer` (`chars4`, `whitespace`, or `unicode_words`) plus optional `max_window_tokens` / `overlap_tokens`; these are bounded deterministic estimators, not provider BPE models. Soft token budgets still honor `max_window_bytes` as the hard memory/CPU cap."
+            },
+            "tokenizer": {
+              "type": "string",
+              "enum": [
+                "chars4",
+                "whitespace",
+                "unicode_words"
+              ],
+              "description": "Required when window=tokens. Explicit bounded tokenizer selection — `chars4` (~4 Unicode scalars per token, matching ai_rate_limiter / ai_prompt_compressor), `whitespace` (Unicode whitespace-delimited runs), or `unicode_words` (alphanumeric runs; each non-whitespace non-alphanumeric scalar is its own token, and CJK ideographs, kana, and Hangul syllables are one token per character rather than a joined run). Rejected when window is not tokens."
+            },
+            "max_window_bytes": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 1,
+              "maximum": 1048576,
+              "default": 4096,
+              "description": "Hard aggregate cap for the current window's input and retained raw/frame/reassembled state. Coalesced chunks are expanded event-by-event: only one complete event's bytes are taken at a time and a ready window is inspected and released before more events are absorbed, so transport batching never changes a clean completion's disposition. Only an event that cannot fit with nothing else retained is uninspectable (fails closed under on_error=reject, forwarded under warn/allow). The start of an event kept after a fail-open hold timeout forwarded it (see on_hold_timeout) counts toward the cap together with the rest of that event; when the two do not fit together, the rest of that event is uninspectable."
+            },
+            "overlap_bytes": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "default": 256,
+              "description": "Bytes of already-cleared text re-inspected with the next window so a violation phrase split across a boundary is still caught. Prose and tool-call tails split this aggregate budget with a reserved tool-state share. Must be less than max_window_bytes and is included within that aggregate retained-state cap. For window=tokens this remains the hard memory ceiling on retained overlap while overlap_tokens selects the prose token budget."
+            },
+            "max_window_tokens": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 1,
+              "maximum": 65536,
+              "description": "Only valid when window=tokens; NO static default is advertised because materializing one on any other window kind turns a valid configuration into one the gateway rejects. Soft window size in complete tokens under the selected tokenizer. Omit to inherit 256. Values above 65536 or 0 are rejected. The hard max_window_bytes cap still forces a window (preferring a complete-token cut) when retained state fills first."
+            },
+            "overlap_tokens": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "Only valid when window=tokens; NO static default is advertised because the effective default is CONDITIONAL — min(32, max_window_tokens-1) — so materializing a fixed 32 invalidates every small token window. Complete tokens of already-cleared prose re-inspected with the next window; retained overlap tokens count against the next window's max_window_tokens, so a window closes once retained + new tokens reach the budget (at least one new token is always required). Must be strictly less than max_window_tokens. Still subject to the overlap_bytes memory ceiling."
+            },
+            "max_inspections": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 64,
+              "description": "Safety cap on provider inspections per response (at most 10000). Once reached, further inspectable windows honor on_error (reject cuts/fail-closed; warn/allow forward best-effort)."
+            },
+            "on_violation": {
+              "type": "string",
+              "enum": [
+                "cut_with_error_event",
+                "cut_silent"
+              ],
+              "default": "cut_with_error_event",
+              "description": "Whether a cut emits an OpenAI-compatible terminal SSE error event or ends the stream silently. Applies to enforcement=block only (detect never cuts)."
+            },
+            "max_hold_ms": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 1,
+              "maximum": 300000,
+              "description": "Absolute deadline, in milliseconds, on how long response content may be held awaiting a semantic verdict. Independent of max_window_bytes, provider.request_timeout_ms, and any transport timeout: the budget covers the time the bytes have already been held plus the semantic round-trip (including queueing for a detect-mode admission permit). The clock is anchored when un-released content first enters the hold and is never refreshed by further chunks or by a partial release that leaves older bytes held, so a drip-feeding backend cannot extend it. It clears only when the current hold is fully released, so the next hold receives a fresh budget. On expiry the in-flight evaluation is cancelled and streaming.on_hold_timeout decides. Omit the field to leave the hold unbounded (the historic behavior); 0 and values above 300000 are rejected."
+            },
+            "on_hold_timeout": {
+              "type": "string",
+              "enum": [
+                "on_error",
+                "cut",
+                "forward"
+              ],
+              "description": "The effective default is on_error, but NO static schema default is advertised: the field is rejected outright unless streaming.max_hold_ms is also set, so tooling that materializes defaults must leave it unset. Policy when streaming.max_hold_ms expires before a verdict. on_error inherits the plugin's on_error policy (reject fails closed by cutting, warn/allow fail open by forwarding every byte that caused the hold uninspected — complete events and any un-terminated partial SSE event — then, when that partial event already carries data, passing its remainder through until the next event boundary, while a partial event with no data yet is kept to inspect the rest of that event with), matching how a provider error or an exhausted inspection budget is handled. cut always fails closed (discards all held/partial bytes) in mode=enforce and degrades to forward in mode=dry_run, which never cuts; forward always fails open. Requires streaming.max_hold_ms to be set. cut is rejected with enforcement=detect, whose bytes were already forwarded before the evaluation began — an expired detect hold can only abandon the evaluation and release its admission permit. A cut is client-indistinguishable from a policy cut (same terminal error event), and every expiry folds into the fixed-cardinality ai_semantic_firewall.stream_hold_timeouts count (saturating-summed across active instances) and ai_semantic_firewall.stream_hold_timeout_action (most restrictive of cut > forward > detect_abandoned) transaction metadata; a zero-expiry instance neither synthesizes nor erases those keys."
+            },
+            "enforcement": {
+              "type": "string",
+              "enum": [
+                "block",
+                "detect"
+              ],
+              "default": "block",
+              "description": "block holds each window until it passes inspection, then releases it (or cuts the stream on a violation) — no un-inspected bytes reach the client, at the cost of windowing latency. detect is release-then-detect — bytes stream through immediately and a violation is only logged (to the structured log, never the client or metrics), never cut; use it to observe what would be blocked without affecting traffic."
+            }
+          }
+        },
+        "provider": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "endpoint"
+          ],
+          "if": {
+            "required": [
+              "endpoint"
+            ],
+            "properties": {
+              "endpoint": {
+                "pattern": "^[hH][tT][tT][pP]:",
+                "not": {
+                  "pattern": "^[hH][tT][tT][pP]://(?:127(?:\\.[0-9]{1,3}){3}|\\[::1\\])(?::[0-9]*)?(?:[/?#]|$)"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "allow_plaintext"
+            ],
+            "properties": {
+              "allow_plaintext": {
+                "const": true
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "auth_header"
+                ]
+              },
+              "then": {
+                "required": [
+                  "api_key_env"
+                ],
+                "properties": {
+                  "api_key_env": {
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "auth_scheme"
+                ]
+              },
+              "then": {
+                "required": [
+                  "api_key_env"
+                ],
+                "properties": {
+                  "api_key_env": {
+                    "pattern": "\\S"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "openai_compatible_embeddings"
+              ],
+              "description": "OpenAI-compatible embeddings provider. Exact spelling only — no aliases and no surrounding whitespace."
+            },
+            "endpoint": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f\\ufeff]+$",
+              "description": "Embeddings endpoint URL, with no whitespace or control characters anywhere. Literal IP hosts are checked against FERRUM_BACKEND_ALLOW_IPS; hostname resolution is checked by the shared plugin HTTP client at request time. A cleartext http:// URL is admitted only to a loopback IP literal written as a dotted-quad 127.d.d.d or [::1] (other spellings and the name localhost do not qualify) unless provider.allow_plaintext is true."
+            },
+            "allow_plaintext": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": false,
+              "description": "Admit a cleartext http:// endpoint whose host is not a loopback IP literal. The provider API key then crosses the network in clear. Omit or null means false."
+            },
+            "model": {
+              "type": "string",
+              "description": "Embedding model sent in the request body."
+            },
+            "api_key_env": {
+              "type": "string",
+              "maxLength": 256,
+              "pattern": "^\\s*(?!\\S*_(?:FILE|VAULT|AWS|AZURE|GCP)\\s*$)FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*\\s*$|^\\s*$",
+              "description": "Name of the `FERRUM_PLUGIN_SECRET_<NAME>` environment variable holding the provider API key (`<NAME>` uppercase `[A-Z_][A-Z0-9_]*`; surrounding whitespace is trimmed and an empty value means unset). Any other process environment variable, including every other `FERRUM_*` setting, is refused at admission with a 400. The variable must exist after Ferrum startup secret resolution (`FERRUM_PLUGIN_SECRET_<NAME>_FILE` / `_VAULT` / `_AWS` / `_AZURE` / `_GCP` work) and is sent in provider.auth_header (default Authorization) prefixed by provider.auth_scheme (default Bearer); an unset or empty value fails the first embedding call."
+            },
+            "auth_header": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+              "not": {
+                "pattern": "^(?:[hH][oO][sS][tT]|[cC][oO][nN][tT][eE][nN][tT]-[lL][eE][nN][gG][tT][hH]|[cC][oO][nN][tT][eE][nN][tT]-[tT][yY][pP][eE]|[tT][rR][aA][nN][sS][fF][eE][rR]-[eE][nN][cC][oO][dD][iI][nN][gG]|[cC][oO][nN][nN][eE][cC][tT][iI][oO][nN]|[xX]-[fF][eE][rR][rR][uU][mM]-[hH][oO][pP][sS])$"
+              },
+              "description": "Header the provider credential is sent in. Omit for Authorization. Azure OpenAI deployments use api-key (with auth_scheme set to the empty string). An HTTP token of at most 64 characters, taken verbatim; Host, Content-Length, Content-Type, Transfer-Encoding, Connection, and X-Ferrum-Hops (any casing) are refused. Requires api_key_env."
+            },
+            "auth_scheme": {
+              "type": "string",
+              "maxLength": 32,
+              "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]*$",
+              "description": "Scheme prefixed to the credential with one space. Omit for Bearer; the empty string sends the raw key (Azure OpenAI api-key). An HTTP token of at most 32 characters. Requires api_key_env."
+            },
+            "request_timeout_ms": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "maximum": 60000,
+              "default": 5000,
+              "description": "Per-request embedding provider timeout in milliseconds (at most 60000). Also bounds how long a request waits for a provider.max_concurrent_requests admission permit before following on_error."
+            },
+            "max_concurrent_requests": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 1,
+              "maximum": 1024,
+              "default": 32,
+              "description": "Outbound embedding calls this plugin instance may have in flight at once. A governed request that cannot obtain a slot within provider.request_timeout_ms follows on_error instead of queueing, so a stalled provider cannot pin an unbounded number of buffered requests."
+            }
+          },
+          "description": "Required when the plugin has active rules."
+        },
+        "builtins": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "prompt_injection": {
+              "$ref": "#/$defs/AiSemanticFirewallBuiltinPackConfig"
+            },
+            "jailbreak": {
+              "$ref": "#/$defs/AiSemanticFirewallBuiltinPackConfig"
+            },
+            "system_prompt_exfiltration": {
+              "$ref": "#/$defs/AiSemanticFirewallBuiltinPackConfig"
+            },
+            "data_exfiltration": {
+              "$ref": "#/$defs/AiSemanticFirewallBuiltinPackConfig"
+            },
+            "indirect_prompt_injection": {
+              "$ref": "#/$defs/AiSemanticFirewallBuiltinPackConfig"
+            },
+            "tool_abuse": {
+              "$ref": "#/$defs/AiSemanticFirewallBuiltinPackConfig"
+            },
+            "response_leakage": {
+              "$ref": "#/$defs/AiSemanticFirewallBuiltinPackConfig"
+            }
+          },
+          "description": "Built-in rule packs. When omitted, all built-ins are enabled; when provided, omitted packs are disabled. Object form can append or replace semantic examples per pack while keeping the built-in rule ID and pack metadata."
+        },
+        "extraction": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "request_json_paths": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "$.messages[*].content",
+                  "$.messages[*].function_call.name",
+                  "$.messages[*].function_call.arguments",
+                  "$.messages[*].tool_calls[*].function.name",
+                  "$.messages[*].tool_calls[*].function.arguments",
+                  "$.prompt",
+                  "$.input",
+                  "$.instructions",
+                  "$.tools[*].function.name",
+                  "$.tools[*].function.description",
+                  "$.tools[*].function.parameters",
+                  "$.context",
+                  "$.documents[*].text",
+                  "$.retrieved_context[*].content",
+                  "$.tool_results[*].content",
+                  "$.system",
+                  "$.contents[*].parts[*].text",
+                  "$.systemInstruction.parts[*].text",
+                  "$.inputText",
+                  "$.data_sources[*].parameters.role_information",
+                  "$.message",
+                  "$.preamble",
+                  "$.chat_history[*].message",
+                  "$.inputs",
+                  "$.content",
+                  "$.instances[*].prompt",
+                  "$.requests[*].params"
+                ]
+              },
+              "default": [
+                "$.messages[*].content",
+                "$.messages[*].function_call.name",
+                "$.messages[*].function_call.arguments",
+                "$.messages[*].tool_calls[*].function.name",
+                "$.messages[*].tool_calls[*].function.arguments",
+                "$.prompt",
+                "$.input",
+                "$.instructions",
+                "$.tools[*].function.name",
+                "$.tools[*].function.description",
+                "$.tools[*].function.parameters",
+                "$.context",
+                "$.documents[*].text",
+                "$.retrieved_context[*].content",
+                "$.tool_results[*].content",
+                "$.system",
+                "$.contents[*].parts[*].text",
+                "$.systemInstruction.parts[*].text",
+                "$.inputText",
+                "$.data_sources[*].parameters.role_information",
+                "$.message",
+                "$.preamble",
+                "$.chat_history[*].message",
+                "$.inputs",
+                "$.content",
+                "$.instances[*].prompt",
+                "$.requests[*].params"
+              ],
+              "description": "Supported simple request extraction paths. When configured, this list replaces the defaults."
+            },
+            "response_json_paths": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "$.choices[*].text",
+                  "$.choices[*].message.content",
+                  "$.choices[*].message.tool_calls[*].function.name",
+                  "$.choices[*].message.tool_calls[*].function.arguments",
+                  "$.choices[*].message.function_call.name",
+                  "$.choices[*].message.function_call.arguments",
+                  "$.choices[*].delta.content",
+                  "$.choices[*].delta.tool_calls[*].function.name",
+                  "$.choices[*].delta.tool_calls[*].function.arguments",
+                  "$.choices[*].delta.function_call.name",
+                  "$.choices[*].delta.function_call.arguments",
+                  "$.output_text",
+                  "$.output[*].content[*].text",
+                  "$.output[*].arguments",
+                  "$.candidates[*].content.parts[*].text",
+                  "$.candidates[*].content.parts[*].functionCall.name",
+                  "$.candidates[*].content.parts[*].functionCall.args",
+                  "$.content[*].text",
+                  "$.content[*].name",
+                  "$.content[*].input",
+                  "$.output.message.content[*].text",
+                  "$.content_block_delta.delta.text",
+                  "$.results[*].outputText",
+                  "$.text",
+                  "$.chat_history[*].message",
+                  "$.response",
+                  "$[*].generated_text",
+                  "$.message.content",
+                  "$.message.tool_plan",
+                  "$.message.tool_calls[*].function.name",
+                  "$.message.tool_calls[*].function.arguments",
+                  "$.message.citations[*].sources",
+                  "$.message.thinking",
+                  "$.thinking"
+                ]
+              },
+              "default": [
+                "$.choices[*].text",
+                "$.choices[*].message.content",
+                "$.choices[*].message.tool_calls[*].function.name",
+                "$.choices[*].message.tool_calls[*].function.arguments",
+                "$.choices[*].message.function_call.name",
+                "$.choices[*].message.function_call.arguments",
+                "$.choices[*].delta.content",
+                "$.choices[*].delta.tool_calls[*].function.name",
+                "$.choices[*].delta.tool_calls[*].function.arguments",
+                "$.choices[*].delta.function_call.name",
+                "$.choices[*].delta.function_call.arguments",
+                "$.output_text",
+                "$.output[*].content[*].text",
+                "$.output[*].arguments",
+                "$.candidates[*].content.parts[*].text",
+                "$.candidates[*].content.parts[*].functionCall.name",
+                "$.candidates[*].content.parts[*].functionCall.args",
+                "$.content[*].text",
+                "$.content[*].name",
+                "$.content[*].input",
+                "$.output.message.content[*].text",
+                "$.content_block_delta.delta.text",
+                "$.results[*].outputText",
+                "$.text",
+                "$.chat_history[*].message",
+                "$.response",
+                "$[*].generated_text",
+                "$.message.content",
+                "$.message.tool_plan",
+                "$.message.tool_calls[*].function.name",
+                "$.message.tool_calls[*].function.arguments",
+                "$.message.citations[*].sources",
+                "$.message.thinking",
+                "$.thinking"
+              ],
+              "description": "Supported simple response extraction paths. When configured, this list replaces the defaults."
+            }
+          }
+        },
+        "allow_topics": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "examples"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Rule identifier. Must contain a non-whitespace character; surrounding whitespace is trimmed. Ids must be unique across allow_topics, deny_topics, custom_rules, and the ACTIVE built-in pack names."
+              },
+              "description": {
+                "type": "string"
+              },
+              "examples": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048,
+                  "pattern": "\\S"
+                }
+              },
+              "threshold": {
+                "type": "number",
+                "format": "float",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.74
+              },
+              "action_on_no_match": {
+                "type": "string",
+                "enum": [
+                  "reject",
+                  "warn"
+                ],
+                "default": "reject"
+              }
+            }
+          },
+          "description": "Mandatory request-side semantic allow topics."
+        },
+        "deny_topics": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "examples"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Rule identifier. Must contain a non-whitespace character; surrounding whitespace is trimmed. Ids must be unique across allow_topics, deny_topics, custom_rules, and the ACTIVE built-in pack names."
+              },
+              "description": {
+                "type": "string"
+              },
+              "examples": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048,
+                  "pattern": "\\S"
+                }
+              },
+              "threshold": {
+                "type": "number",
+                "format": "float",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.78
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "reject",
+                  "warn"
+                ],
+                "description": "Omit to INHERIT the plugin's default_action (reject unless default_action is warn); no static default is advertised because materializing reject would turn an inherited warn into a rejection. allow is not accepted here — use allow_topics for allowlist semantics."
+              }
+            }
+          },
+          "description": "Customer-defined request/response semantic deny topics. Deny topics are bidirectional and apply to both inspection directions."
+        },
+        "custom_rules": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "examples"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S",
+                "description": "Rule identifier. Must contain a non-whitespace character; surrounding whitespace is trimmed. Ids must be unique across allow_topics, deny_topics, custom_rules, and the ACTIVE built-in pack names."
+              },
+              "description": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "request",
+                  "response",
+                  "both"
+                ],
+                "default": "both"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "critical"
+                ],
+                "default": "high"
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "warn",
+                  "reject"
+                ],
+                "description": "Custom rules can warn or reject; use allow_topics for allowlist semantics. Omit to INHERIT the plugin's default_action (reject unless default_action is warn); no static default is advertised because materializing reject would turn an inherited warn into a rejection."
+              },
+              "examples": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048,
+                  "pattern": "\\S"
+                }
+              },
+              "threshold": {
+                "type": "number",
+                "format": "float",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.8
+              }
+            }
+          },
+          "description": "Customer-defined semantic rules."
+        },
+        "privacy": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "include_snippet_hash": {
+              "type": "boolean",
+              "default": true
+            },
+            "snippet_hash_salt": {
+              "type": "string",
+              "description": "Optional salt mixed into snippet_hash digests so short/low-entropy matched segments written to logs cannot be reversed by brute force/rainbow tables. Keep consistent across a fleet for correlation and out of the same logs. Unsalted (default) is reversible for short segments."
+            }
+          },
+          "description": "Raw prompt/response text is not written by default; hashes are for correlation only."
+        },
+        "expose_rule_id_to_client": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include matched rule IDs in reject responses."
+        }
+      }
+    },
+    "AiSemanticFirewallEnabledBuiltinPack": {
+      "description": "Matches a builtins.<pack> value that leaves the pack ACTIVE: the boolean shorthand true, or the object form without enabled: false. Used only by the ai_semantic_firewall active-policy conditionals.",
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "type": "object",
+          "not": {
+            "required": [
+              "enabled"
+            ],
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,378 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/request_transformer.schema.json",
+  "title": "request_transformer plugin config",
+  "description": "The `config` object of an enabled `request_transformer` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component RequestTransformerConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "request_transformer",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/RequestTransformerConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/RequestTransformerConfig",
+  "$defs": {
+    "RequestTransformerBodyRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "target",
+        "key"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/TransformerOperationFieldExactness"
+        },
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "const": "rename"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/TransformerBodyRenamePath"
+              },
+              "new_key": {
+                "$ref": "#/$defs/TransformerBodyRenamePath"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "add",
+            "remove",
+            "update",
+            "rename"
+          ],
+          "description": "add: insert if absent (does not overwrite).\nupdate: write, creating intermediate objects as needed.\nremove: delete the field.\nrename: move old → new, with rollback if the destination is unreachable.\nOperation-incompatible extras are rejected: only add/update\nmay set `value`; only rename may set `new_key`; remove may\nset neither.\n"
+        },
+        "target": {
+          "type": "string",
+          "const": "body"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "^\\.|(^|[^\\\\])(\\\\\\\\)*\\.(\\.|$)"
+          },
+          "description": "Dot-notation body path. Supports nested objects\n('user.address.city'), array indexing via numeric segments\n('items.0.name'), and backslash-escaped literal dots\n('meta.weird\\\\.key'). Empty segments (an empty path, or a\nleading, trailing, or doubled unescaped `.`) are rejected.\n`rename` additionally rejects unescaped numeric segments here\nand in `new_key`.\n"
+        },
+        "value": {
+          "description": "Required for add/update; must not be set for remove/rename.\nAccepts any JSON value — strings, numbers, booleans, objects,\narrays, and explicit null.\nStrings that parse as JSON (e.g., \"42\", \"true\", '{\"a\":1}')\nare inserted as the parsed type at runtime; otherwise kept\nas a JSON string.\n"
+        },
+        "new_key": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "^\\.|(^|[^\\\\])(\\\\\\\\)*\\.(\\.|$)"
+          },
+          "description": "Required for rename; must not be set for add/update/remove.\nArray indices and empty dot-segments are rejected in a rename\n`key` / `new_key`.\n"
+        }
+      }
+    },
+    "RequestTransformerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: request_transformer — Modifies request headers, query params,\nand JSON body. Configuration is fail-closed: unknown top-level keys\nand unknown per-rule keys are rejected at plugin load time. Header\nand query rules enforce operation-exact fields (only add/update\naccept `value`; only rename accepts `new_key`; remove accepts\nneither). Every configured header `value` must be a valid HTTP\n`HeaderValue` (same complete syntax accepted at H1/H2/H3 emission),\nincluding rejection of CR/LF and other forbidden control bytes.\nUnknown operations / targets and missing required fields are also\nrejected. Every rule must set an explicit `target` (`header`,\n`query`, or `body`); there is no default.\n\nWhen `apply_route_overrides: true`, the plugin accepts an empty `rules`\narray so it can participate in the chain-level route-header final\nphase for per-rule transforms published by `mesh_route_dispatch` onto\n`RequestContext.route_override_request_transform`. Every enabled\ninstance applies only its static `rules` first; proxy core then applies\nthe matched route list exactly once after the last eligible instance —\nroute-level header writes win under multiple same-type instances and\npriority overrides. The Istio VirtualService translator auto-emits a\nproxy-scoped instance with `rules: []` + `apply_route_overrides: true`\non routes that carry `headers.request.{set,add,remove}` and have no\noperator-configured `request_transformer`. That exact translator-owned\nconsumer — generated id, proxy scope and ownership, empty `rules`, and\n`apply_route_overrides: true` — is ADDITIVE: a same-name global\ntransformer keeps its operator-authored header / query / body rules, so\na VS-translated route does not silently lose them and no shadowing\nwarning is emitted for it. An ordinary operator-configured proxy-scoped\ninstance keeps the normal proxy-replaces-global contract.\n\nAt least one of a non-empty `rules` array or `apply_route_overrides:\ntrue` is required: a config with no effect is rejected at plugin load\ntime. Per-operation required and forbidden properties are modelled in\nthe target-specific rule schemas below. Operation-incompatible extras\nare rejected by PRESENCE, so an explicit `null` fails exactly as a\nstring would; explicit `null` on an optional top-level field is\naccepted and treated as absent.\n",
+      "anyOf": [
+        {
+          "required": [
+            "rules"
+          ],
+          "properties": {
+            "rules": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": [
+            "apply_route_overrides"
+          ],
+          "properties": {
+            "apply_route_overrides": {
+              "const": true
+            }
+          }
+        }
+      ],
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RequestTransformerHeaderRule"
+              },
+              {
+                "$ref": "#/$defs/RequestTransformerQueryRule"
+              },
+              {
+                "$ref": "#/$defs/RequestTransformerBodyRule"
+              }
+            ],
+            "discriminator": {
+              "propertyName": "target",
+              "mapping": {
+                "header": "#/components/schemas/RequestTransformerHeaderRule",
+                "query": "#/components/schemas/RequestTransformerQueryRule",
+                "body": "#/components/schemas/RequestTransformerBodyRule"
+              }
+            }
+          }
+        },
+        "apply_route_overrides": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "When `true`, this instance accepts an empty `rules` array and\nparticipates in the chain-level request route-header finalization\nphase for transforms published by `mesh_route_dispatch`. The plugin\ndeclares `modifies_request_headers() == true` so the dispatcher\nallocates a separate cloned header map for route-level writes\n(preserving the gateway invariant that `ctx.headers` carries the\noriginal inbound headers during `before_proxy`). Auto-emitted by the\nIstio VirtualService translator. Explicit `null` is accepted and\ntreated as `false`.\n"
+        },
+        "runtime_overlay_scope": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Optional RTDS boolean key controlling whether the transformer runs. Must contain at least one non-whitespace character; surrounding whitespace is trimmed at runtime. Explicit `null` is accepted and treated as absent."
+        },
+        "default_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "Fallback when `runtime_overlay_scope` is configured but the accepted RTDS overlay has no boolean value for that key. Explicit `null` is accepted and treated as absent (so the `true` default applies)."
+        },
+        "runtime_overlay_resolved_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Reserved, mesh-managed. Mesh slice preparation writes the accepted RTDS overlay's value for `runtime_overlay_scope` here, so the gate is validated, built, and published in the same request generation as the rules it gates (GHSA-83rc-23c9-3g9x). The plugin resolves one immutable decision at construction and every request phase reads it, so the gate is never re-evaluated mid-request. Ignored without `runtime_overlay_scope`, and rewritten authoritatively on every mesh apply — operators should not set it by hand; an explicitly authored value simply acts as a static pin outside mesh mode."
+        }
+      }
+    },
+    "RequestTransformerHeaderRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "target",
+        "key"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/TransformerOperationFieldExactness"
+        }
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "add",
+            "remove",
+            "update",
+            "rename"
+          ],
+          "description": "add: insert if absent (does not overwrite). Note: this is\nthe historical Ferrum semantics, not Istio's \"append to\nmulti-value\" semantics — use `update` to overwrite.\nupdate: write the header value.\nremove: delete the header.\nrename: move old → new header name.\nOperation-incompatible extras are rejected: only add/update\nmay set `value`; only rename may set `new_key`; remove may\nset neither.\n"
+        },
+        "target": {
+          "type": "string",
+          "const": "header"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "[^-!#$%&'*+.^_`|~0-9A-Za-z]"
+          },
+          "description": "HTTP header name; must be a complete HTTP field-name token (the\nsame grammar `HeaderName` accepts). Add/update destinations and\nrename destinations\nreject gateway-owned names (case-insensitive, with `_` treated as\n`-`, so `X_Forwarded_For` and `content_length` are refused too):\nhost, content-length,\nconnection, transfer-encoding, keep-alive, proxy-authorization,\nproxy-connection, te, trailer, upgrade, expect, x-forwarded-for,\nx-forwarded-proto, x-forwarded-host,\nx-ferrum-original-content-encoding, and x-grpc-web-mode. They also\nreject every name in the gateway-owned `x-consumer-*` consumer\nassertion namespace (including x-consumer-username and\nx-consumer-custom-id) and in the router's `x-path-param-*`\nroute-capture namespace (either spelling); the error names the\nrule.\nRemoval and rename sources remain allowed, except for the\ngateway-owned x-ferrum-hops proxy hop count (either spelling):\nevery rule that names it, as key or new_key, is rejected.\nUse preserve_host_header for Host or trusted-proxy configuration\nfor forwarding identity.\n"
+        },
+        "value": {
+          "type": "string",
+          "not": {
+            "pattern": "[\\x00-\\x08\\x0a-\\x1f\\x7f]"
+          },
+          "description": "Required for add/update; must not be set for remove/rename.\nMust be a valid HTTP HeaderValue (HTAB, visible ASCII, and\nobs-text are accepted; CR, LF, DEL, and other C0 controls are\nrejected).\nMay reference up to 8 request variables, compiled at load time:\n`$(consumer.username)`, `$(client_ip)`, `$(request_id)`,\n`$(header.<name>)` and `$(query.<name>)` (both read from the\nORIGINAL client request, so a rename cannot relabel a\ncredential). `$$(` writes a literal `$(`; an unknown variable, an\nunterminated `$(`, or a credential-bearing source name (the\nbuilt-in credential headers in any `_` / `-` spelling, or any\nname the shared sensitive-name classifier flags: `*token*`,\n`*secret*`, `password`, `api_key`, …) is rejected. When a\nvariable is unavailable for a request — or names a credential\nlocation an auth plugin marked — or the resolved text is not a\nvalid HeaderValue, the rule is skipped for that request and\n`request_transformer.rule_skipped` transaction metadata records\n`template_unresolved` / `template_invalid_header_value`.\n"
+        },
+        "new_key": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "[^-!#$%&'*+.^_`|~0-9A-Za-z]"
+          },
+          "description": "Required for rename; must not be set for add/update/remove.\nMust be a complete HTTP field-name token and must not be a\ngateway-owned destination listed under key.\n"
+        }
+      }
+    },
+    "RequestTransformerQueryRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation",
+        "target",
+        "key"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/TransformerOperationFieldExactness"
+        }
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "add",
+            "remove",
+            "update",
+            "rename"
+          ],
+          "description": "add: append if the decoded name is absent (does not overwrite;\nexisting duplicates are left untouched).\nupdate: rewrite every matching decoded-name pair's value, or\nappend when absent.\nremove: delete every matching decoded-name pair.\nrename: rename every matching pair, preserving value encoding\nand key-without-equals shape; existing destination names stay.\nMutations apply to an ordered, duplicate-aware representation of\nthe retained raw query after authentication-owned credential\npairs (`auth.strip_query_param.*`) are removed from that input,\nand are published as the outbound query for every primary\nbackend URL builder and request_mirror. The proxy still applies\na final strip pass as defense in depth. A rename/update of a\nmarked credential name therefore cannot relocate the secret.\nOperation-incompatible extras are rejected: only add/update\nmay set `value`; only rename may set `new_key`; remove may\nset neither.\n"
+        },
+        "target": {
+          "type": "string",
+          "const": "query"
+        },
+        "key": {
+          "type": "string",
+          "not": {
+            "pattern": "[\\r\\n]"
+          },
+          "description": "Query parameter name matched after percent-decoding. Must not\ncontain CR or LF.\n"
+        },
+        "value": {
+          "type": "string",
+          "not": {
+            "pattern": "[\\r\\n]"
+          },
+          "description": "Required for add/update; must not be set for remove/rename.\nMust not contain CR or LF. Authored onto the outbound query with\nRFC 3986 percent-encoding (`%20` for spaces, never `+`). Accepts\nthe same `$(...)` request variables as a header `value`; the\nresolved text is percent-encoded like any authored value.\n"
+        },
+        "new_key": {
+          "type": "string",
+          "not": {
+            "pattern": "[\\r\\n]"
+          },
+          "description": "Required for rename; must not be set for add/update/remove.\nMust not contain CR or LF.\n"
+        }
+      }
+    },
+    "TransformerBodyRenamePath": {
+      "type": "string",
+      "description": "A dot-notation body path usable as a `rename` source or destination.\nArray indices are rejected at plugin load time: rename over an array is\nambiguous (move? swap? overwrite?) and `Vec::remove`'s leftward shift\nwould silently drop a trailing element. Use `remove` + `add` to relocate\nan array element. An ESCAPED numeric segment (`counts\\.0` — a literal\nkey named `counts.0`) remains valid, so the exclusion applies only to an\nunescaped path whose dot-delimited segments contain a plain integer.\n",
+      "anyOf": [
+        {
+          "pattern": "\\\\"
+        },
+        {
+          "not": {
+            "pattern": "(^|\\.)\\+?[0-9]{1,19}($|\\.)"
+          }
+        }
+      ]
+    },
+    "TransformerOperationFieldExactness": {
+      "description": "The operation-exact field contract both transformers enforce at plugin\nload time, shared by every header / query / body rule schema: `add` and\n`update` require `value` and forbid `new_key`; `rename` requires\n`new_key` and forbids `value`; `remove` forbids both. Forbidden\nproperties are rejected by PRESENCE, so an explicit `null` fails exactly\nas a string would. A body `value` may itself be `null` on `add` /\n`update` — that sets the target field to JSON null.\n",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "enum": [
+                  "add",
+                  "update"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "value"
+            ],
+            "not": {
+              "required": [
+                "new_key"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "const": "rename"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "new_key"
+            ],
+            "not": {
+              "required": [
+                "value"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "operation"
+            ],
+            "properties": {
+              "operation": {
+                "const": "remove"
+              }
+            }
+          },
+          "then": {
+            "allOf": [
+              {
+                "not": {
+                  "required": [
+                    "value"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "new_key"
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

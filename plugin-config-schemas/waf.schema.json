@@ -1,0 +1,1212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/waf.schema.json",
+  "title": "waf plugin config",
+  "description": "The `config` object of an enabled `waf` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component WafPluginConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "waf",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/WafPluginConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/WafPluginConfig",
+  "$defs": {
+    "WafExemptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "Paths that short-circuit the entire WAF. Each entry matches from the start of the path: a plain string is an exact full-path match, `prefix*` is a prefix match, and `~regex` is a start-anchored regex (implicit `^(?:...)` wrapper so every alternation branch is anchored). Use `~.*pattern` for a floating substring match. Keep entries tight — an over-broad pattern silently disables the WAF on unintended routes. Exact and `prefix*` entries are matched against the canonical request path, so one that is not itself canonical (a percent escape, a backslash, a dot segment, or `//`) is rejected at construction; `~regex` entries are not checked this way.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "methods": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "consumers": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "Mapped Consumer usernames. An unmapped external identity never matches, even one that spells a listed username.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "ips": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "match": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "all",
+            "any",
+            null
+          ],
+          "default": "all",
+          "description": "How paths, methods, ips, and consumers combine. all (default) short-circuits the WAF only when every configured criterion matches, so adding a criterion narrows the exemption; any short-circuits on the first matching criterion. An exemption with no criterion configured exempts nothing."
+        },
+        "header_present": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Header name to shared-secret value. When a request carries one of these headers with exactly the configured value (compared in constant time), every rule is suppressed for that request, and so are the fail_closed and block dispositions of on_body_too_large, on_unlisted_content_type, on_unlisted_response_content_type, and on_scan_timeout. Clients choose their own headers, so presence-only (null) entries are not admitted and each value must be a secret of at least 16 characters that only a trusted hop in front of the gateway injects. Header names are matched case-insensitively; case-equivalent duplicates are rejected.",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 16
+          }
+        },
+        "fp_capture_filters": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "WafPluginConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: waf — OWASP-style content-pattern threat detection for HTTP-family requests and optional responses. Fixed-shape objects reject unknown keys; intentionally open maps are rule_modes / rule_overrides (rule-id keys), category_modes (built-in category keys, validated against the rule pack), conditions.headers, and global_exemptions.header_present. On an upgraded WebSocket session the same body rule sets govern complete application messages: client-to-backend messages use the request body rules (request_inspection + request_body_inspection), backend-to-client messages use the response body rules (response_inspection + response_body_inspection). Text and Binary messages are both inspected — the HTTP media-type selectors (body_methods, body_content_types, inspect_multipart, inspect_binary_body) do not apply because a WebSocket message carries no Content-Type — control frames are never scanned, and max_scan_bytes / on_body_too_large / on_scan_timeout close the connection with RFC 6455 code 1008 on the same terms as the HTTP body path, which for their fail_closed dispositions means only when that direction carries an enforcing body policy.",
+      "properties": {
+        "mode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "enforce",
+            "monitor",
+            "disabled",
+            null
+          ],
+          "default": "enforce",
+          "description": "Global WAF mode. enforce is rejected at construction when no reachable enforcement path remains after default_rule_action, rule_modes, rule_overrides, disabled rules, paranoia filtering, and inspection-surface toggles. Built-in rules are monitor-only unless opted in. Anomaly scoring, stream.tcp_require_tls, enforce-action stream.signatures that some runtime hook can apply (inspect_tcp or inspect_udp), on_body_too_large: block (when a body inspection hook can run), and on_unlisted_content_type: block (when some HTTP request body can be unlisted; see that property) each satisfy admission without per-rule action: enforce. monitor with zero enforcing rules remains valid. Every optional property of this schema also accepts an explicit null, which the runtime treats exactly as an omitted key and replaces with the documented default."
+        },
+        "default_rule_action": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "enforce",
+            "block",
+            "reject",
+            "monitor",
+            "log",
+            "warn",
+            "disabled",
+            "disable",
+            "off",
+            null
+          ],
+          "description": "Bulk action applied to built-in rules that inherit it. Unset leaves the pack monitor-only; per-rule rule_modes entries still take precedence. Encoding-evasion heuristics (FE-ENCODING-001 and FE-ENCODING-002) stay monitor under bulk enforce until an explicit rule_modes or rule_overrides.action entry promotes them. Combine with paranoia_level to enforce only the low-false-positive core of the rule pack. block/reject are accepted aliases of enforce, log/warn of monitor, and disable/off of disabled."
+        },
+        "paranoia_level": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 4,
+          "default": 1
+        },
+        "detection_paranoia_level": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 4,
+          "description": "Detection-only paranoia band. Defaults to paranoia_level (no band) and must be at least paranoia_level. Rules whose paranoia_min is above paranoia_level but within this level are compiled and scanned as detection-only: always monitor whatever default_rule_action or category_modes say, zero anomaly-score contribution, never an enforcing body policy, and never an admission enforcement path. Only an explicit rule_modes enforce entry promotes a band rule to a normal enforcing rule, exactly as it force-compiles a rule above this level; rule_overrides.<id>.action: enforce does not. A band body rule still turns on inspection of its body direction, so the configuration-level on_body_too_large: block and on_unlisted_content_type: block dispositions then apply to that direction (deliberately fail-closed). Their hits are reported in waf.detection_rule_hits and waf.detection_paranoia instead of waf.rule_hits, and a request with only detection hits keeps waf.action=clean."
+        },
+        "category_modes": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "enforce",
+              "block",
+              "reject",
+              "monitor",
+              "log",
+              "warn",
+              "disabled",
+              "disable",
+              "off"
+            ]
+          },
+          "description": "Per-category action for built-in rules, keyed by rule-pack category (for example sqli, xss, encoding_evasion). Precedence, lowest first: default_rule_action, category_modes, rule_overrides.action, rule_modes. Naming an opt-in category such as encoding_evasion promotes its rules. Custom rules keep their own action. A category no built-in rule carries is rejected. Values accept the same aliases as default_rule_action."
+        },
+        "request_inspection": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true
+        },
+        "request_body_inspection": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true
+        },
+        "response_inspection": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "response_body_inspection": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "log_to_metadata": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "Write waf.* decision metadata into transaction logs, including waf.matched_fields: the query:, header:, cookie:, and response_header: field NAMES matched hits came from (percent-encoded, at most 16 per scan, each cut at 128 bytes) — never a matched value. Detection-only (paranoia band) hits list theirs in waf.detection_matched_fields."
+        },
+        "log_to_stdout": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "Emit structured WAF hit diagnostics. Warnings are sampled once per source site per 10 seconds across instances, with suppressed-event counts. Every hit remains available at debug level; transaction metadata is controlled separately by log_to_metadata."
+        },
+        "scan_budget_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0,
+          "maximum": 18446744073709551615,
+          "default": 50,
+          "description": "Post-hoc scan deadline in milliseconds; 0 disables the timeout wrapper. Parsed as an unsigned 64-bit integer, so a negative or above-u64 value is rejected at construction. The deadline is post-hoc only on every surface, including bodies and WebSocket messages: the scan always runs and its hits always decide first, so an enforcing rule that matched still rejects even when the scan finished over budget. on_scan_timeout governs only a scan that completed clean but late. The budget bounds the scan itself: the clock starts after the body path's fairness yield, so scheduler re-poll delay is never counted. Size it against active_rules x max_scan_bytes, the only term that is under the operator's control."
+        },
+        "max_scan_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 1048576,
+          "description": "Maximum bytes scanned from each governed body. Must be greater than zero — construction rejects 0."
+        },
+        "on_scan_timeout": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "allow",
+            "block",
+            "fail_closed",
+            "log_and_allow",
+            null
+          ],
+          "default": "log_and_allow",
+          "description": "Outcome for a scan that completed CLEAN but over scan_budget_ms. Because the scan always runs and its hits always decide first, this names a body the WAF inspected end to end and found nothing in, so it is a latency control rather than a coverage control. log_and_allow (default) forwards with a sampled warning and waf.scan_timed_out metadata; allow forwards silently. fail_closed is the opt-in strict-latency posture: it rejects when the governed body direction carries an enforcing body policy, resolved through request_body_policy_enforces / response_body_policy_enforces, which ask the same question as on_body_too_large: fail_closed and additionally count an on_body_too_large: block size cap while globally enforcing; monitor mode and monitor-only rule sets without that cap never start blocking. block rejects every over-budget scan on every surface, independently of global mode. Request metadata, header, query, and path scans are not disposition-aware under fail_closed: they are bounded by the frontend header limits rather than by max_scan_bytes, so only block applies the strict deadline to them. A rejection sets waf.action=blocked with waf.block_reason=scan_timeout; the timeout block itself contributes no waf.rule_hits, though an earlier monitor-only phase may already have recorded some. On a WebSocket session the same table decides the message, with the RFC 6455 code 1008 Close taking the place of the HTTP rejection, and a missed deadline is recorded with a sampled warning independently of log_to_stdout because messages carry no waf.* metadata."
+        },
+        "on_body_too_large": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "fail_closed",
+            "scan_truncated",
+            "skip",
+            "block",
+            null
+          ],
+          "default": "fail_closed",
+          "description": "Behavior when a governed body exceeds max_scan_bytes. fail_closed (default) rejects when that direction has an applicable enforcing body rule or anomaly scoring with an applicable body rule, and otherwise scans the prefix and records truncation, so monitor-only or conditionally out-of-scope policy never starts blocking. scan_truncated is the explicit compatibility opt-out that always scans only the prefix and forwards the complete body — prefix-only inspection lets a padded suffix carry blocked content past an enforcing rule. skip scans nothing. block rejects every oversize governed body while mode is enforce, otherwise scans the prefix. Under mode: enforce, block is itself a reachable admission enforcement path when a body inspection hook can run (HTTP bodies and WebSocket application messages share this setting), and it is a blocking disposition for the buffered-representation claim on BOTH directions, so an origin-encoded body is decoded before the cap is measured. fail_closed, scan_truncated, and skip do not satisfy that admission gate."
+        },
+        "on_unlisted_content_type": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "allow",
+            "fail_closed",
+            "block",
+            null
+          ],
+          "default": "fail_closed",
+          "description": "Disposition for a non-empty request body whose Content-Type is outside the scan scope (not in body_content_types including the +json/+xml suffix mapping, multipart while inspect_multipart is off, or missing/unknown while inspect_binary_body is off). The declared type is attacker-controlled and many backends parse a body without consulting it. allow forwards it uninspected; fail_closed (default) rejects it when an enforcing request-body policy applies to the request, and records it otherwise; block rejects every such body while mode is enforce. Scope: HTTP request bodies only (HTTP/1.1, HTTP/2, HTTP/3, native gRPC, and gRPC-Web), on every method once the request declares a body (see body_methods), on requests no global exemption short-circuits, and when this instance's request-body hook runs (request_inspection and request_body_inspection on, with an active request-body rule or FE-ENCODING-001/002). Response bodies and WebSocket messages are never governed by it. gRPC and gRPC-Web bodies are unlisted by default, except the +json codecs (application/grpc+json, application/grpc-web+json), which the suffix mapping scans as JSON, one length-prefixed message at a time; a grpc-encoding-compressed message is refused when an enforcing request-body policy applies (waf.block_reason=grpc_message_uninspectable) and recorded as waf.body_uninspected=grpc_compressed otherwise. A refusing configuration buffers the body and decides over the finalized headers and actual bytes, so an empty body always passes and the rejection (reject_status_code) arrives at end of stream. Rejections set waf.block_reason=content_type and waf.body_uninspected=content_type; recorded-but-allowed bodies set waf.body_uninspected=content_type. Under mode enforce, block is a reachable admission enforcement path when the request-body hook can run (as above) and at least one content type is left unscanned (not both inspect_multipart and inspect_binary_body); fail_closed is not."
+        },
+        "on_unlisted_response_content_type": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "allow",
+            "fail_closed",
+            "block",
+            null
+          ],
+          "default": "fail_closed",
+          "description": "Response-side counterpart of on_unlisted_content_type, for a non-empty response body whose Content-Type is outside the same scan scope while this instance inspects response bodies. allow forwards it uninspected and records waf.body_uninspected=content_type with waf.body_uninspected_target=response_body when the body was buffered; fail_closed (default) rejects it when an enforcing response-body policy applies to the request, so monitor-only response policy never blocks; block rejects every such body while mode is enforce. Refusing values buffer the unlisted body and decide over the exact bytes, so an empty body passes. text/event-stream responses, bodiless responses (HEAD, 1xx, 204, 304), and exempt requests are never governed. Routes that serve opaque media under enforcing response-body rules list or exempt it, enable inspect_binary_body, or set allow. Neither value satisfies mode enforce admission on its own."
+        },
+        "include_default_rules": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true
+        },
+        "disabled_default_rules": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
+        },
+        "rule_modes": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "enforce",
+              "block",
+              "reject",
+              "monitor",
+              "log",
+              "warn",
+              "disabled",
+              "disable",
+              "off"
+            ]
+          },
+          "description": "Per-rule action overrides keyed by rule id. Values accept the same aliases as default_rule_action. Highest action precedence. An enforce entry force-compiles the rule even above paranoia_level, and promotes a detection-band rule to a normal enforcing rule."
+        },
+        "rule_overrides": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Per-rule tuning by rule id (built-in or custom): attach fp_filters, scope via conditions, raise/lower paranoia_min, change severity, or set action without forking the rule pack. Unknown rule ids and unsupported fields are rejected. action sits below rule_modes and above category_modes. rule_overrides.<id>.action sets the action of a rule that is already enforced by level; only rule_modes: enforce promotes a rule above paranoia_level (including a detection-band rule), so an override's enforce leaves a band rule monitor-only and a rule above detection_paranoia_level compiled out.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "action": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "enforce",
+                  "block",
+                  "reject",
+                  "monitor",
+                  "log",
+                  "warn",
+                  "disabled",
+                  "disable",
+                  "off",
+                  null
+                ]
+              },
+              "paranoia_min": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 4
+              },
+              "severity": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "info",
+                  "low",
+                  "medium",
+                  "high",
+                  "critical",
+                  null
+                ]
+              },
+              "score": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "fp_filters": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "exclude": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Field exclusions: stop this one rule inspecting the named fields while it keeps inspecting every other field, and every other rule keeps inspecting these. query_params names are compared after one percent-decode (case-sensitive) and apply to query_keys, query_values, and full_url rules; a full_url match is re-verified against the URL rebuilt without the excluded pairs, and FE-HPP-001 drops them before comparing duplicates. headers are case-insensitive and apply to header_names, header_values, and response_headers rules. cookies are cookie names and apply to cookies rules. An exclusion that does not fit the rule's target, or one that names no field (an empty object, or only null or empty lists), is rejected. Query pairs are split on & only and cookies on ; only, so a backend that also splits on ; (query) or , (cookie) can read an excluded pair's value as a further field the excluding rule does not inspect.",
+                "properties": {
+                  "query_params": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "headers": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "cookies": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "anyOf": [
+                  {
+                    "required": [
+                      "query_params"
+                    ],
+                    "properties": {
+                      "query_params": {
+                        "type": "array",
+                        "minItems": 1
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "headers"
+                    ],
+                    "properties": {
+                      "headers": {
+                        "type": "array",
+                        "minItems": 1
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "cookies"
+                    ],
+                    "properties": {
+                      "cookies": {
+                        "type": "array",
+                        "minItems": 1
+                      }
+                    }
+                  }
+                ]
+              },
+              "conditions": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "paths": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "description": "Exact paths by default. A trailing `*` means prefix match, and a leading `~` means an operator-authored regex matched with regex `is_match`; regex conditions may match anywhere in the path unless the pattern itself is anchored.",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "methods": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "headers": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "consumers": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "description": "Mapped Consumer usernames. An unmapped external identity never matches, even one that spells a listed username.",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "custom_rules": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/WafRule"
+          },
+          "default": []
+        },
+        "scoring": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "description": "Anomaly scoring. When enabled, every matched rule contributes its severity weight (or per-rule score) to this WAF instance's cumulative score; the request is rejected when that instance's score reaches its block_threshold and mode is enforce, even when no individual rule is set to enforce. Sibling WAF instances on the same proxy accumulate and threshold independently. Per-instance totals are exposed as waf.instances.<plugin-config-id>.score; waf.score is emitted only when a single scoring instance contributed, otherwise waf.instance_scores carries a deterministic sorted id=score list. enabled: false short-circuits parsing, so the remaining members are not validated in that case — block_threshold must be at least 1 only when scoring is actually enabled.",
+          "properties": {
+            "enabled": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "default": true
+            },
+            "block_threshold": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0,
+              "maximum": 4294967295,
+              "default": 7
+            },
+            "weights": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "description": "Per-severity weights; defaults info=0 low=2 medium=3 high=5 critical=10.",
+              "additionalProperties": false,
+              "properties": {
+                "info": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "low": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "medium": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "high": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "critical": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                }
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "const": false
+                  }
+                },
+                "required": [
+                  "enabled"
+                ]
+              },
+              "else": {
+                "properties": {
+                  "block_threshold": {
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "global_exemptions": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/WafExemptions"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "body_methods": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": [
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ],
+          "description": "HTTP methods whose request bodies are always buffered and scanned. Body governance is not a method allowlist: a request on any other method (except CONNECT) is buffered, scanned, and governed by on_unlisted_content_type whenever a body may follow its head — it carries a Content-Type, declares HTTP/1.1 framing (Content-Length greater than zero or Transfer-Encoding), is an HTTP/2 request whose HEADERS frame lacked END_STREAM, or is any HTTP/3 request — and any non-empty finalized body is decided whatever the method. DELETE is included by default because it may carry content that backends parse. WebSocket messages ignore it. An empty list therefore does not turn off request-body scanning for requests that may carry a body."
+        },
+        "body_content_types": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Base media types whose request/response bodies are eligible for inspection. Matching is on the lowercased base type with parameters stripped. RFC 6839 structured-syntax suffixes map onto their base family and re-check this list: a type ending in `+json` (for example `application/vnd.api+json` or `application/ld+json`) is inspected when `application/json` is listed, and one ending in `+xml` (for example `application/atom+xml`) when either `application/xml` or `text/xml` is listed. The suffix rule reuses this allowlist rather than adding hidden types, so removing `application/json` also excludes `+json` types. `multipart/*` is governed by `inspect_multipart`; anything else by `inspect_binary_body`.",
+          "default": [
+            "application/json",
+            "text/json",
+            "application/x-www-form-urlencoded",
+            "application/xml",
+            "text/xml",
+            "text/plain",
+            "text/html"
+          ]
+        },
+        "inspect_multipart": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "inspect_binary_body": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false
+        },
+        "disallowed_methods": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
+        },
+        "reject_status_code": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 400,
+          "maximum": 599,
+          "default": 403
+        },
+        "reject_content_type": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "default": "application/json"
+        },
+        "reject_body": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "default": "{\"error\":\"Forbidden\"}"
+        },
+        "stream": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/WafStreamConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "WafRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "target"
+      ],
+      "description": "A custom WAF rule. `pattern` is required for every match_kind except `luhn`, and `luhn` is only supported on body targets (`body_text` / `request_body`, `body_json_path`, `response_body`); both conditions are modeled below and enforced at construction. Optional properties also accept an explicit null, treated as an omitted key.",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "match_kind"
+            ],
+            "properties": {
+              "match_kind": {
+                "const": "luhn"
+              }
+            }
+          },
+          "else": {
+            "required": [
+              "pattern"
+            ],
+            "properties": {
+              "pattern": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "match_kind"
+            ],
+            "properties": {
+              "match_kind": {
+                "const": "luhn"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "target": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "body_text",
+                      "request_body",
+                      "response_body"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "body_text",
+                          "request_body",
+                          "body_json_path",
+                          "response_body"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "example": "FE-SQLI-001"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "example": "sqli"
+        },
+        "severity": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "info",
+            "low",
+            "medium",
+            "high",
+            "critical",
+            null
+          ],
+          "default": "medium"
+        },
+        "target": {
+          "description": "Scan target. A string selects a target that needs no extra fields (`body_json_path` is object-only). Object form uses `type` plus target-specific fields: optional non-empty `names` only for `header_values`/`request_headers`, and required non-empty `path` only for `body_json_path`. Aliases `request_headers`, `request_query`, `request_path`, `request_url`, `request_method`, and `request_body` match runtime parsing.",
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "header_names",
+                "header_values",
+                "request_headers",
+                "query_keys",
+                "query_values",
+                "request_query",
+                "cookies",
+                "url_path",
+                "request_path",
+                "full_url",
+                "request_url",
+                "method",
+                "request_method",
+                "body_text",
+                "request_body",
+                "response_headers",
+                "response_body"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type"
+              ],
+              "not": {
+                "required": [
+                  "path"
+                ]
+              },
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "header_values",
+                    "request_headers"
+                  ]
+                },
+                "names": {
+                  "type": "array",
+                  "description": "Optional header-name filter for header_values/request_headers; must be non-empty when provided.",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "path"
+              ],
+              "not": {
+                "required": [
+                  "names"
+                ]
+              },
+              "properties": {
+                "type": {
+                  "const": "body_json_path"
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Required dotted JSON path for body_json_path targets."
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type"
+              ],
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "names"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "path"
+                    ]
+                  }
+                ]
+              },
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "header_names",
+                    "query_keys",
+                    "query_values",
+                    "request_query",
+                    "cookies",
+                    "url_path",
+                    "request_path",
+                    "full_url",
+                    "request_url",
+                    "method",
+                    "request_method",
+                    "body_text",
+                    "request_body",
+                    "response_headers",
+                    "response_body"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "match_kind": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "regex",
+            "literal",
+            "contains",
+            "equals",
+            "luhn",
+            "cidr",
+            null
+          ],
+          "default": "regex"
+        },
+        "pattern": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "description": "Pattern text; a CIDR rule accepts an IP or CIDR range. Required and non-empty for every match_kind except `luhn`."
+        },
+        "action": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "enforce",
+            "block",
+            "reject",
+            "monitor",
+            "log",
+            "warn",
+            "disabled",
+            "disable",
+            "off",
+            null
+          ],
+          "description": "Per-rule action. Unset (or null) INHERITS the global mode's default: `enforce` under `mode: enforce`, `monitor` under `monitor` and `disabled`. block/reject alias enforce, log/warn alias monitor, and disable/off alias disabled."
+        },
+        "fp_filters": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
+        },
+        "paranoia_min": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 4,
+          "default": 1
+        },
+        "score": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0,
+          "maximum": 4294967295,
+          "description": "Anomaly-score contribution when scoring is enabled; defaults to the per-severity weight."
+        },
+        "conditions": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "paths": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "description": "Exact paths by default. A trailing `*` means prefix match, and a leading `~` means an operator-authored regex matched with regex `is_match`; regex conditions may match anywhere in the path unless the pattern itself is anchored.",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "methods": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "headers": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "consumers": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "description": "Mapped Consumer usernames. An unmapped external identity never matches, even one that spells a listed username.",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "WafStreamConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional raw TCP/UDP inspection. When present the WAF also attaches to stream proxies. L7 signature scanning runs over plaintext application bytes (plain TCP opening segment, decrypted TLS/DTLS payloads); encrypted passthrough traffic is never L7-scanned. Governed by the global `mode`. A block carrying neither signatures nor tcp_require_tls is treated as absent, and the plugin stays HTTP-family only. Every optional property also accepts an explicit null, treated as an omitted key.\n",
+      "properties": {
+        "tcp_require_tls": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "Reject a TCP connection whose opening bytes are not a TLS/DTLS ClientHello. Applies to plain/passthrough proxies; a no-op once TLS is terminated.\n"
+        },
+        "inspect_tcp": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "Run signatures over the opening bytes of TCP streams. TCP frontends only: a UDP or DTLS session carries no TCP first bytes and is never judged by this switch.\n"
+        },
+        "inspect_udp": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": true,
+          "description": "Run signatures over UDP/DTLS datagram payloads."
+        },
+        "inspect_response": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": false,
+          "description": "Also scan backend→client datagrams (client→backend only by default). A direction switch INSIDE UDP inspection, read after inspect_udp has admitted the datagram hook — it is not an independent surface, so it inspects nothing while inspect_udp is false and does not by itself satisfy mode: enforce admission.\n"
+        },
+        "signatures": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/WafStreamSignature"
+          },
+          "default": []
+        }
+      }
+    },
+    "WafStreamSignature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "pattern"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identifier, surfaced in logs and `waf.rule_hits`. Must be unique within this stream block."
+        },
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Byte regex matched against the stream/datagram payload."
+        },
+        "severity": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "info",
+            "low",
+            "medium",
+            "high",
+            "critical",
+            null
+          ],
+          "default": "medium"
+        },
+        "action": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "enforce",
+            "block",
+            "reject",
+            "monitor",
+            "log",
+            "warn",
+            "disabled",
+            "disable",
+            "off",
+            null
+          ],
+          "default": "enforce",
+          "description": "Signature action; block/reject alias enforce, log/warn alias monitor, and disable/off alias disabled. A disabled signature is dropped from the active set entirely."
+        }
+      }
+    }
+  }
+}

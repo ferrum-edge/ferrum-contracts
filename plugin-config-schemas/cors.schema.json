@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/cors.schema.json",
+  "title": "cors plugin config",
+  "description": "The `config` object of an enabled `cors` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component CorsConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "cors",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/CorsConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/CorsConfig",
+  "$defs": {
+    "CorsAllowedOriginString": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/CorsExactOrigin"
+        },
+        {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 512,
+          "pattern": "^\\*\\.[^*/:\\\\?#@%\\s.]+(?:\\.[^*/:\\\\?#@%\\s.]+)*\\.?$",
+          "description": "Native wildcard-subdomain matcher such as `*.example.com`. The suffix is a DNS hostname, normalized to IDNA ASCII at config load; Unicode `*.bücher.example` matches `shop.xn--bcher-kva.example`. URL delimiters, percent-encoding, whitespace, control characters, IP literals, and empty labels are rejected. After IDNA conversion, labels must contain only ASCII letters, digits, or interior hyphens, at most 63 bytes each and 253 bytes total excluding an optional trailing root dot. A root dot is preserved for matching. The bare domain does not match. Runtime also enforces 512 UTF-8 bytes per matcher; JSON Schema maxLength counts characters."
+        }
+      ]
+    },
+    "CorsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_origins"
+      ],
+      "description": "Plugin: cors — Cross-Origin Resource Sharing. Unknown keys, null values,\nnon-object configs, and an omitted origin policy are rejected. Actual\nrequests evaluate origin/credentials/exposure behavior; method/header\nallow-lists and max age govern preflight only. Denials return a JSON\nobject with a fixed error message, without reflecting method/header\nvalues. Successful preflight bodies remain empty. Participating CORS\npolicies merge Origin into Vary even for originless and unmatched\nresponses, preserving existing Vary tokens and Vary: *.\n",
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "required": [
+                "unmatched_preflights"
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "allowed_methods": {
+                "minItems": 1,
+                "default": [
+                  "GET",
+                  "HEAD",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "OPTIONS"
+                ]
+              },
+              "allowed_headers": {
+                "minItems": 1,
+                "default": [
+                  "Accept",
+                  "Authorization",
+                  "Content-Type",
+                  "Origin",
+                  "X-Requested-With"
+                ]
+              },
+              "max_age": {
+                "default": 86400
+              }
+            }
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "preflight_continue",
+              "unmatched_preflights"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "allowed_origins": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/CorsAllowedOriginString"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "maxProperties": 1,
+                "description": "Istio StringMatch-shaped origin matcher: EXACTLY ONE of exact / prefix / regex (no extra or unknown keys). Empty or multi-key objects are rejected at config time.",
+                "properties": {
+                  "exact": {
+                    "$ref": "#/$defs/CorsLiteralExactOrigin"
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512,
+                    "description": "Literal byte-prefix of the request Origin header (case-sensitive), e.g. \"https://app.\". Matching is an unbounded starts_with with no origin parse, so a prefix constrains the host ONLY when it terminates at an origin boundary — the form \"scheme://host:\" (trailing port separator, any port). Every other shape, including a bare \"https://app.example.com\" (which also matches \"https://app.example.com.evil.net\"), \"https://app.\", \"https://app.example.com:8443\", \"https://\" and \"h\", is effectively universal: admitted without credentials, but it cannot be combined with allow_credentials."
+                  },
+                  "regex": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512,
+                    "description": "RE2 pattern that must FULLY match the request Origin header. Compiled once at config construction/reload (never per request) under explicit bounds — 512 pattern bytes, a 64 KiB compiled-program limit, a 64 KiB lazy-DFA limit, and an AST nesting limit of 24. An invalid or over-budget pattern is rejected with a field-specific error. A regex that admits the opaque `null` origin or every origin of a scheme (for example `.*` or `https://.*`) cannot be combined with allow_credentials."
+                  }
+                }
+              }
+            ]
+          },
+          "description": "Required permitted-origin policy, bounded at 64 entries. Each entry is either a string — NATIVE syntax: `\"*\"` for intentional allow-all, an exact `scheme://host[:port]` origin canonicalized on the cold config path, or a `*.suffix.com` wildcard-subdomain pattern — or an Istio `StringMatch`-shaped object carrying exactly one of `exact` / `prefix` / `regex`. The two families are SEPARATE matcher semantics: object `exact`, `prefix`, and `regex` all retain literal Istio semantics and are never broadened by the native form's canonicalization or wildcard interpretation, so `{\"exact\": \"*.example.com\"}` matches only that literal string while the plain string `\"*.example.com\"` matches every subdomain."
+        },
+        "allowed_methods": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+          },
+          "description": "Preflight-only allowed methods returned in Access-Control-Allow-Methods. Method tokens are case-sensitive. With credentials disabled, `*` allows any valid method; with credentials enabled, it is a literal token. Multiple policies intersect these permissions without widening a sibling's policy. This list is not evaluated against the actual request method. Omission uses the native direct-plugin default; with `unmatched_preflights`, omission/empty preserves Istio's empty list."
+        },
+        "allowed_headers": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+          },
+          "description": "Preflight-only allowed request headers returned in Access-Control-Allow-Headers. Header names are case-insensitive. With credentials disabled, `*` permits every header except Authorization, which must be listed explicitly by every policy. With credentials enabled, `*` is a literal token. Multiple policies intersect these permissions; a literal `*` is omitted if dropping credentials would give it wildcard meaning in the final response. The same literal-token rule applies to allowed_methods. This list is not evaluated against headers on the actual request. Omission uses the native direct-plugin default; with `unmatched_preflights`, omission/empty preserves Istio's empty list."
+        },
+        "exposed_headers": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+          },
+          "default": [],
+          "description": "Response headers exposed to browser JavaScript, returned in Access-Control-Expose-Headers. Header names are case-insensitive. With credentials disabled, `*` exposes every response header; with credentials enabled, it is a literal token. Multiple policies intersect exposure: an uncredentialed `*` intersected with an explicit list keeps that list, and a credentialed policy's literal `*` is omitted rather than widened when the aggregate disables credentials. Bounded at 128 entries of at most 256 bytes each, like allowed_methods and allowed_headers."
+        },
+        "allow_credentials": {
+          "type": "boolean",
+          "default": false,
+          "description": "Send Access-Control-Allow-Credentials: true. Incompatible with wildcard origins (native `\"*\"` / `{exact: \"*\"}` logs a warning and disables credentials), opaque exact `null`, and an effectively universal prefix or regex (refused at config load rather than silently weakened). A prefix must terminate at an origin boundary — only the `scheme://host:` form pins the host, because prefix matching is an unbounded starts_with; a regex must not match `null` or every origin of a scheme (universality is probed against reserved DNS-shaped origins, so a hostname-character-class pattern such as `https://[\\w.-]+` is effectively universal), and must provably pin the host: every literal suffix of the pattern must be a complete origin, contain the literal authority, or end in a fixed non-public domain after its first dot (optionally with a literal port, after a trailing :[0-9]+ or optional (?::[0-9]+)? port is set aside), or every match must start with a literal scheme://host:. Numeric (IP-literal) suffixes never count. A native `*.suffix` wildcard is refused with credentials when the suffix is a single label, a public suffix, or has a Public Suffix List rule beneath it (`*.com`, `*.co.uk`, `*.github.io`, `*.run.app`, `*.amazonaws.com`)."
+        },
+        "allow_private_network": {
+          "type": "boolean",
+          "default": false,
+          "description": "Private Network Access opt-in. When true, a preflight from an allowed origin that carries `Access-Control-Request-Private-Network: true` is answered with `Access-Control-Allow-Private-Network: true` (locally or, with preflight_continue, on the forwarded response). The field is never sent on actual responses or on preflights that did not ask, and a backend's own value is always stripped. With multiple policies, every matching policy must opt in."
+        },
+        "max_age": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0,
+          "maximum": 18446744073709551615,
+          "description": "Preflight cache duration in seconds, from 0 through 18446744073709551615. Native direct-plugin omission defaults to 86400; translated Istio omission remains absent."
+        },
+        "preflight_continue": {
+          "type": "boolean",
+          "default": false,
+          "description": "Pass allowed preflights to the backend. Backend status/body are retained, but every Access-Control response field is replaced by the complete gateway-authoritative policy."
+        },
+        "unmatched_preflights": {
+          "type": "string",
+          "enum": [
+            "forward",
+            "ignore"
+          ],
+          "description": "Istio projection marker. `forward` preserves omitted, `UNSPECIFIED`, and `FORWARD` behavior; `ignore` returns a local 200 without CORS authorization fields. Its presence also preserves omitted/empty method and header lists and omitted max age instead of applying native direct-plugin defaults. It is mutually exclusive with `preflight_continue`."
+        }
+      }
+    },
+    "CorsExactOrigin": {
+      "maxLength": 512,
+      "oneOf": [
+        {
+          "type": "string",
+          "const": "*"
+        },
+        {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://(?:\\[[0-9A-Fa-f:.]+\\]|[^:/?#@\\s]+)(?::[0-9]+)?$"
+        }
+      ],
+      "description": "Exact HTTP(S) origin. The runtime URL parser additionally validates the host and port and canonicalizes scheme/host case, default ports, IDNA, IPv4, and IPv6. Exact `*` is Istio's allow-all value. JSON Schema maxLength counts characters; runtime admission additionally enforces the 512-byte UTF-8 matcher budget."
+    },
+    "CorsLiteralExactOrigin": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "\\S",
+      "description": "Istio `StringMatch.exact` origin matcher. LITERAL semantics: compared byte-for-byte and case-sensitively against the request `Origin` header with NO canonicalization and NO wildcard interpretation, so a value such as `*.example.com` stays the exact string upstream assigns it instead of becoming the native wildcard-subdomain matcher. The single exception is `*`, which Istio itself defines as allow-all. Whitespace-only values are rejected; the value is bounded at 512 bytes."
+    }
+  }
+}

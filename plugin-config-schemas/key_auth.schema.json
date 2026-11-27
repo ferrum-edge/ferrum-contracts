@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/key_auth.schema.json",
+  "title": "key_auth plugin config",
+  "description": "The `config` object of an enabled `key_auth` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component KeyAuthConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "key_auth",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/KeyAuthConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/KeyAuthConfig",
+  "$defs": {
+    "KeyAuthConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: key_auth — API key authentication.",
+      "properties": {
+        "key_location": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^(header:[!#$%&'*+.^_`|~0-9A-Za-z-]+|query:\\S+)$"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "pattern": "^(header:[!#$%&'*+.^_`|~0-9A-Za-z-]+|query:\\S+)$"
+              }
+            }
+          ],
+          "default": "header:X-API-Key",
+          "description": "Exact credential location (header:<name> or query:<name>), or an ordered array of 1 to 8 such locations. Locations are evaluated in order; credentials present in two different configured locations are refused with 401 as ambiguous, even when their values match. Repeated locations count once (header names are case-insensitive; query names are case-sensitive). Whitespace is not trimmed; header names must be valid HTTP tokens, and query names must be non-empty and contain no whitespace. A query name that also appears as a `;`-separated sub-parameter (`carrier=;api_key=k`, raw or percent/form-decoded) is ambiguous: the request is refused with 401 and the alias never authenticates. Every configured header name is always removed from client request trailers."
+        },
+        "hide_credentials": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remove every configured API-key header and query parameter before forwarding an authenticated request upstream, including when another mechanism wins a multi-auth chain. For each query location this also removes a `;`-separated sub-parameter alias. Disable only when a legacy backend explicitly requires the reusable credential."
+        }
+      }
+    }
+  }
+}

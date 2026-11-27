@@ -1,0 +1,479 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/ai_federation.schema.json",
+  "title": "ai_federation plugin config",
+  "description": "The `config` object of an enabled `ai_federation` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component AiFederationConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "ai_federation",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/AiFederationConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/AiFederationConfig",
+  "$defs": {
+    "AiFederationConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: ai_federation — HTTP-family OpenAI Chat Completions gateway. Dispatches from the finalized-request-egress phase after request-body transforms and the complete final request-policy hook pass, so priority_override cannot move provider I/O ahead of WAF/OpenAPI/body/size policy. Translates final request bodies to provider-native JSON with a 64 MiB serialization cap and normalizes bounded, non-streaming responses back to OpenAI format. Native gRPC is not supported or advertised. Provider and OAuth redirects are never followed. Configuration is strict: unknown root, provider, and circuit fields are rejected. Streaming Chat Completions (`stream: true`) are served by a separate non-buffering path that is OFF by default: with the root `streaming` block enabled, before_proxy commits exactly ONE provider before any downstream-visible byte and rewrites the routing decision through route_override_* so the ordinary dispatch path relays provider SSE incrementally. Provider fallback for a stream happens only during that pre-commit selection (open circuit, ineligible provider, unusable endpoint); after the commit no second provider is ever spliced into the same logical stream, and a post-commit failure truncates with one gateway-authored terminal SSE `error` event. Streaming eligibility is narrow: only providers whose native streaming wire format already is the OpenAI Chat Completions SSE contract (openai, mistral, xai, deepseek, meta_llama, hugging_face, azure_openai) with a static header credential. anthropic, google_gemini, google_vertex, aws_bedrock, and cohere, and any provider using AWS SigV4 or Google OAuth2, fail closed with a field-specific 501 — use ai_stream_router for Anthropic/Gemini streaming translation. With `streaming.enabled` the plugin declares a backend-boundary header policy plus request header/destination mutation, so it can no longer be composed with request_deduplication or response_caching on the same proxy. A claimed stream consumes one `max_concurrent_requests` permit and one real provider-circuit admission for the whole life of the response, and both are released exactly once on completion, client disconnect, downstream policy cut, backend error, or cancellation; a 2xx stream is scored a circuit success only after a valid terminal `data: [DONE]`. The selected provider's `multimodal_mode` is applied to a streamed request exactly as to a buffered one: a reject-mode provider declines the request during pre-commit selection and the next matching provider is considered, a text_only_with_warning provider has the non-text content parts removed from the provider-visible body, and the finalized body is re-checked before egress so a later transform cannot reintroduce content the committed provider forbids. The provider-visible top-level `model` is rewritten to the value `model_mapping` / `default_model` resolved, and the committed provider's `connect_timeout_seconds` / `read_timeout_seconds` become the streaming route's dispatch budgets instead of the matched proxy's. Provider response headers on a claimed stream are reduced to the same bounded safe allowlist the buffered path publishes plus a gateway-authored `Content-Type: text/event-stream` — provider cookies, redirects, auth challenges, validators/digests, and unknown metadata never reach the client. Streaming is disabled by default and `stream: true` then returns 501 as before. Priority fallback is allowed for configured statuses and proven pre-wire transport failures; a completed 2xx that cannot be normalized is TERMINAL and returns 502 (response_normalization_failed) without calling another provider, because that generation has already been performed. Ambiguous POST outcomes are not replayed by default. Fails closed by default when a JSON POST cannot be inspected, lacks a string `model`, or has no matching provider. Outbound calls use the shared PluginHttpClient and global TLS settings (FERRUM_TLS_CA_BUNDLE_PATH, FERRUM_TLS_NO_VERIFY); per-proxy backend TLS overrides do not apply. On the buffered path a provider non-2xx response body is never relayed: the client receives a fixed OpenAI-shaped envelope (`error.type`/`error.code` `upstream_error`, message naming only the status) plus the bounded safe provider headers, so provider error codes such as context_length_exceeded do not reach the client (a claimed stream relays the provider's own error envelope instead). Translating providers (anthropic, google_gemini, google_vertex, aws_bedrock) map messages, max_tokens/max_completion_tokens, temperature, top_p, stop, tools, and tool_choice; google_gemini/google_vertex additionally map response_format json_object/json_schema (responseMimeType application/json plus responseJsonSchema; a json_schema needs a schema object, and a strict one may only use the Gemini-enforced keyword subset listed in docs/plugins.md), n > 1 (candidateCount), seed, and non-zero presence/frequency penalties, and anthropic maps parallel_tool_calls false. Any other semantic control that a translating provider cannot represent (response_format JSON modes, n > 1, seed, or non-zero penalties on anthropic/aws_bedrock; parallel_tool_calls false on google_*/aws_bedrock; logprobs true, top_logprobs, a non-empty logit_bias, tools[].function.strict true, reasoning_effort, reasoning, verbosity, audio, prediction, web_search_options, legacy functions/function_call, or non-text modalities on all three) is refused before provider I/O; the next matching provider is tried and otherwise the request fails 400 provider_translation_failed. Gemini/Vertex function-call thought signatures are exported on the tool call as `extra_content.google.thought_signature` (Google's OpenAI-compatibility convention, at most 64 KiB) and restored on the native functionCall part when the client sends that assistant message back.",
+      "required": [
+        "providers"
+      ],
+      "properties": {
+        "providers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 128,
+          "description": "One or more provider definitions. Tried in priority order (lower number = first).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "provider_type"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9._-]+$",
+                "description": "Unique provider name used in logs and metadata (e.g. ai_federation_provider field)."
+              },
+              "provider_type": {
+                "type": "string",
+                "enum": [
+                  "openai",
+                  "anthropic",
+                  "google_gemini",
+                  "google_vertex",
+                  "azure_openai",
+                  "aws_bedrock",
+                  "mistral",
+                  "cohere",
+                  "xai",
+                  "deepseek",
+                  "meta_llama",
+                  "hugging_face"
+                ],
+                "description": "AI provider format / wire protocol."
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295,
+                "description": "Lower = tried first. Defaults to provider's index + 1. Providers with equal priority keep configuration order unless one of them sets `weight`."
+              },
+              "weight": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1000,
+                "description": "Optional weighted-selection share. When any provider in the leading equal-`priority` group of a request's matching providers sets `weight`, the FIRST attempt is chosen at random in proportion to the weights (an unset weight counts as 1; a provider whose circuit cannot currently admit, whose multimodal_mode refuses the request's content parts, or on the streaming path a streaming-ineligible provider, gets no share); the remaining attempts keep the deterministic priority/configuration order. A random value is drawn only when at least two providers of the group can take the first attempt. Applies to buffered and streaming selection alike. When no provider sets `weight`, selection is fully deterministic."
+              },
+              "api_key": {
+                "type": "string",
+                "minLength": 1,
+                "description": "API key for the provider. Required for all providers except aws_bedrock (uses SigV4) and google_vertex (uses service account JWT). An empty value is treated as absent and fails configuration admission; the resolved value must also be a valid HTTP header value (no newlines or control characters). A whole-value `${FERRUM_PLUGIN_SECRET_<NAME>}` reference (uppercase `[A-Z_][A-Z0-9_]*`) is resolved from the gateway process environment at construction, so the secret need not be stored in plugin configuration (the namespace is materializable from Vault/AWS/Azure/GCP/file at startup); a `${...}` reference to any other variable, or to an unset/empty one, is refused at admission without echoing it."
+              },
+              "model_patterns": {
+                "type": "array",
+                "maxItems": 128,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256,
+                  "pattern": "^[A-Za-z0-9._:/+*-]+$",
+                  "not": {
+                    "pattern": "\\.\\."
+                  }
+                },
+                "default": [],
+                "description": "Glob patterns to match the request's `model` field (e.g. ['claude-*', 'gpt-4*']). Empty = catch-all."
+              },
+              "model_mapping": {
+                "type": "object",
+                "maxProperties": 1024,
+                "propertyNames": {
+                  "minLength": 1,
+                  "maxLength": 256,
+                  "pattern": "^[A-Za-z0-9._:/+-]+$",
+                  "not": {
+                    "pattern": "\\.\\."
+                  }
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256,
+                  "pattern": "^[A-Za-z0-9._:/+-]+$",
+                  "not": {
+                    "pattern": "\\.\\."
+                  }
+                },
+                "default": {},
+                "description": "Map client-facing model names to provider-native names (e.g. {claude-4-sonnet: 'claude-sonnet-4-20250514'})."
+              },
+              "default_model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:/+-]+$",
+                "not": {
+                  "pattern": "\\.\\."
+                },
+                "description": "Model to send to the provider when no mapping matches."
+              },
+              "multimodal_mode": {
+                "type": "string",
+                "enum": [
+                  "reject",
+                  "translate",
+                  "text_only_with_warning"
+                ],
+                "description": "How this provider handles OpenAI Chat Completions content parts that are not text. Translated providers default to reject; OpenAI-compatible providers and Cohere default to translate. text_only_with_warning intentionally drops non-text parts and records ai_federation_multimodal_* metadata."
+              },
+              "connect_timeout_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 86400,
+                "default": 5,
+                "description": "Per-provider TCP + TLS handshake timeout for outbound provider calls."
+              },
+              "read_timeout_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 86400,
+                "default": 60,
+                "description": "Overall per-request deadline for outbound provider calls."
+              },
+              "max_response_body_bytes": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 67108864,
+                "default": 8388608,
+                "description": "Maximum provider response bytes collected and maximum normalized JSON bytes emitted. Collection/serialization aborts as soon as this bound is exceeded."
+              },
+              "base_url": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https?://[^/?#@]+(?:/[^?#]*)?$",
+                "description": "Override the provider endpoint. Userinfo, query strings, and fragments are rejected. HTTPS is required unless allow_plaintext is explicitly true; literal and resolved IPs remain subject to FERRUM_BACKEND_ALLOW_IPS."
+              },
+              "allow_plaintext": {
+                "type": "boolean",
+                "default": false,
+                "description": "Permit an explicit http:// base_url. This weakens credential transport security and never permits provider-generated redirects."
+              },
+              "azure_resource": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 64,
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$",
+                "description": "Azure OpenAI resource name (the {resource} in {resource}.openai.azure.com). Required for azure_openai."
+              },
+              "azure_deployment": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "not": {
+                  "pattern": "\\.\\."
+                },
+                "description": "Azure OpenAI deployment name. Required for azure_openai. Interpolated into the provider endpoint path, so the traversal sequence `..` is rejected."
+              },
+              "azure_api_version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "not": {
+                  "pattern": "\\.\\."
+                },
+                "default": "2024-06-01",
+                "description": "Azure OpenAI api-version query parameter. Interpolated into the provider endpoint, so the traversal sequence `..` is rejected."
+              },
+              "google_project_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "not": {
+                  "pattern": "\\.\\."
+                },
+                "description": "Google Cloud project ID. Required for google_vertex. Interpolated into the provider endpoint path, so the traversal sequence `..` is rejected."
+              },
+              "google_region": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 63,
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$",
+                "description": "Google Vertex AI region (e.g. us-central1). Required for google_vertex."
+              },
+              "google_service_account_json": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Google service account JSON contents (the file body, not the path). Required for google_vertex; used to mint OAuth2 access tokens via JWT bearer flow. An empty value is treated as absent and fails configuration admission. A whole-value `${FERRUM_PLUGIN_SECRET_<NAME>}` reference (uppercase `[A-Z_][A-Z0-9_]*`) is resolved from the gateway process environment at construction, so the secret need not be stored in plugin configuration (the namespace is materializable from Vault/AWS/Azure/GCP/file at startup); a `${...}` reference to any other variable, or to an unset/empty one, is refused at admission without echoing it."
+              },
+              "aws_region": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 63,
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$",
+                "description": "AWS region for Bedrock (e.g. us-east-1). Required for aws_bedrock unless AWS_DEFAULT_REGION/AWS_REGION env var is set. The default endpoint is partition-aware: cn-* regions derive bedrock-runtime.<region>.amazonaws.com.cn and every other region derives bedrock-runtime.<region>.amazonaws.com. When the key id or secret resolves from the process environment, the region must be a lowercase commercial, GovCloud, or China region (see allow_custom_endpoint_with_ambient_credentials)."
+              },
+              "aws_access_key_id": {
+                "type": "string",
+                "description": "AWS access key ID for Bedrock SigV4 signing. Falls back to AWS_ACCESS_KEY_ID env var. A process-environment credential may only be signed for an official Bedrock Runtime endpoint (see allow_custom_endpoint_with_ambient_credentials). A whole-value `${FERRUM_PLUGIN_SECRET_<NAME>}` reference (uppercase `[A-Z_][A-Z0-9_]*`) is resolved from the gateway process environment at construction, so the secret need not be stored in plugin configuration (the namespace is materializable from Vault/AWS/Azure/GCP/file at startup); a `${...}` reference to any other variable, or to an unset/empty one, is refused at admission without echoing it. A referenced value counts as provider-config credentials, not ambient ones."
+              },
+              "aws_secret_access_key": {
+                "type": "string",
+                "description": "AWS secret access key for Bedrock SigV4 signing. Falls back to AWS_SECRET_ACCESS_KEY env var. A process-environment credential may only be signed for an official Bedrock Runtime endpoint (see allow_custom_endpoint_with_ambient_credentials). A whole-value `${FERRUM_PLUGIN_SECRET_<NAME>}` reference (uppercase `[A-Z_][A-Z0-9_]*`) is resolved from the gateway process environment at construction, so the secret need not be stored in plugin configuration (the namespace is materializable from Vault/AWS/Azure/GCP/file at startup); a `${...}` reference to any other variable, or to an unset/empty one, is refused at admission without echoing it. A referenced value counts as provider-config credentials, not ambient ones."
+              },
+              "aws_session_token": {
+                "type": "string",
+                "description": "Optional AWS STS session token for temporary credentials. Falls back to AWS_SESSION_TOKEN env var only when aws_access_key_id and aws_secret_access_key also resolve from the environment; the environment token is never paired with a config key pair. A process-environment token may only be sent to an official Bedrock Runtime endpoint (see allow_custom_endpoint_with_ambient_credentials). A whole-value `${FERRUM_PLUGIN_SECRET_<NAME>}` reference (uppercase `[A-Z_][A-Z0-9_]*`) is resolved from the gateway process environment at construction, so the secret need not be stored in plugin configuration (the namespace is materializable from Vault/AWS/Azure/GCP/file at startup); a `${...}` reference to any other variable, or to an unset/empty one, is refused at admission without echoing it."
+              },
+              "allow_custom_endpoint_with_ambient_credentials": {
+                "type": "boolean",
+                "default": false,
+                "description": "aws_bedrock only. When aws_access_key_id or aws_secret_access_key is omitted here and resolves from the gateway process environment (AWS_SESSION_TOKEN is then used too; it never completes a config key pair), the region must be a lowercase commercial, GovCloud, or China region, and the provider endpoint (base_url, or the host derived from aws_region) must be an official Amazon Bedrock Runtime endpoint for that region over HTTPS on the default port: bedrock-runtime[-fips].<region>.amazonaws.com, bedrock-runtime[-fips].<region>.api.aws, or an interface VPC endpoint vpce-<id>[-<az>].bedrock-runtime[-fips].<region>.vpce.amazonaws.com, where <region> is a commercial or GovCloud region; a cn-* region uses amazonaws.com.cn and the dual-stack api.amazonwebservices.com.cn instead. Anything else is refused at configuration admission, and every provider call re-checks the rendered endpoint fail closed. Credentials written into the provider config are not scoped. Set true only to deliberately sign requests for a private endpoint (for example LocalStack), an air-gapped ISO partition, or the AWS European Sovereign Cloud with the process credentials; anyone who can write this plugin config can then direct those credentials to that endpoint."
+              },
+              "circuit_breaker": {
+                "type": "object",
+                "additionalProperties": false,
+                "description": "Optional passive circuit. State belongs to this resolved provider instance and is discarded on configuration reload. Transitions are exported both in the aggregate ferrum_ai_federation_circuits_* series and per configured provider name in ferrum_ai_federation_provider_circuits_open / _opened_total / _closed_total (label `provider`). On a claimed stream, a provider transport fault (a dispatch timeout/reset/refusal answered by a gateway-authored 502/504 before any provider header, or a body that dies on a read timeout/reset after headers) scores a circuit failure regardless of fallback_on_status_codes (body-phase classes match proxy core's post-wire backend-failure set); client disconnects, authorization-lifetime terminations, and gateway-local refusals stay neutral, and route deadlines are settled exactly as proxy core settles them (a body cut by the route deadline is neutral; a pre-header expiry is charged only when the provider held the attempt).",
+                "properties": {
+                  "failure_threshold": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 3,
+                    "description": "Consecutive configured transport, status, or protocol failures before opening."
+                  },
+                  "cooldown_seconds": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 86400,
+                    "default": 30,
+                    "description": "Time to skip an open provider before permitting one half-open probe."
+                  },
+                  "success_threshold": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 1,
+                    "description": "Successful half-open probes required to close the circuit."
+                  }
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "provider_type": {
+                      "enum": [
+                        "openai",
+                        "anthropic",
+                        "google_gemini",
+                        "azure_openai",
+                        "mistral",
+                        "cohere",
+                        "xai",
+                        "deepseek",
+                        "meta_llama",
+                        "hugging_face"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "provider_type"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "api_key"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "provider_type": {
+                      "const": "azure_openai"
+                    }
+                  },
+                  "required": [
+                    "provider_type"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "azure_resource",
+                    "azure_deployment"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "provider_type": {
+                      "const": "google_vertex"
+                    }
+                  },
+                  "required": [
+                    "provider_type"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "google_project_id",
+                    "google_region",
+                    "google_service_account_json"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "base_url": {
+                      "pattern": "^http://"
+                    }
+                  },
+                  "required": [
+                    "base_url"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "allow_plaintext": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "allow_plaintext"
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "provider_type"
+                  ],
+                  "properties": {
+                    "provider_type": {
+                      "enum": [
+                        "google_gemini",
+                        "google_vertex",
+                        "aws_bedrock"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "default_model": {
+                      "pattern": "^[A-Za-z0-9._:-]+$"
+                    },
+                    "model_mapping": {
+                      "additionalProperties": {
+                        "pattern": "^[A-Za-z0-9._:-]+$"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "fallback_enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Try the next provider when one fails (network error or matching status code)."
+        },
+        "fallback_on_status_codes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 599,
+            "not": {
+              "minimum": 200,
+              "maximum": 299
+            }
+          },
+          "default": [
+            429,
+            500,
+            502,
+            503
+          ],
+          "description": "Non-2xx HTTP status codes from a provider that trigger fallback to the next provider. Success codes are rejected because the generation has already committed."
+        },
+        "fallback_on_network_errors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Trigger fallback only for transport failures proven to occur before the non-idempotent provider POST reached the wire."
+        },
+        "fallback_on_protocol_errors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Try the next provider when a redirect is returned. A completed 2xx that cannot be normalized returns 502 without replay, even when ambiguous-outcome fallback is enabled."
+        },
+        "fallback_on_ambiguous_errors": {
+          "type": "boolean",
+          "default": false,
+          "description": "Permit replay on the next provider after a POST may have reached the prior provider. Enabling this can duplicate model calls and charges; leave false unless the provider contract supplies replay safety."
+        },
+        "fail_on_missing_model": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reject JSON POST requests whose body cannot be inspected as JSON or lacks a top-level string `model` field. Set to false only to explicitly pass such requests through to the normal backend."
+        },
+        "fail_on_no_matching_provider": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reject requests whose `model` does not match any configured provider. Set to false only to explicitly pass unsupported models through to the normal backend."
+        },
+        "max_concurrent_requests": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096,
+          "default": 64,
+          "description": "Maximum simultaneous federation provider chains, including fallback and OAuth work, and including claimed streaming chains — a stream holds its permit for the whole life of the response and returns it on completion, client disconnect, downstream policy cut, backend error, or cancellation. Excess requests fail with 503 without queueing."
+        },
+        "streaming": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Incremental provider response streaming for OpenAI Chat Completions requests with `stream: true`. Disabled by default; when absent, streaming requests keep returning 501 and non-streaming federation behavior is unchanged.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Claim streaming requests in before_proxy and commit one eligible provider before any downstream-visible byte. Enabling this makes the plugin declare a backend-boundary header policy and request header/destination mutation, so it can no longer be composed with request_deduplication or response_caching on the same proxy."
+            },
+            "max_event_bytes": {
+              "type": "integer",
+              "minimum": 4096,
+              "maximum": 1048576,
+              "default": 262144,
+              "description": "Ceiling on one retained server-sent event. This is the whole retained state of a claimed stream — at most one event is held at a time (the partial event being assembled, or the terminal `data: [DONE]` event once the provider frames its completion) and there is no queue — so retention grows with neither stream length nor transport chunk size: the ceiling is enforced on every complete AND partial event before any of its bytes are retained or released. An event that exceeds it fails closed with a fixed-cardinality terminal SSE error event that never echoes provider bytes. The terminal event is held until the provider's body ends, because a client may stop reading at `[DONE]`; any provider byte after it fails the stream closed and the marker is dropped rather than released."
+            },
+            "read_timeout_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 86400,
+              "description": "Streaming-only override for the provider whole-exchange budget. When omitted, a claimed stream uses the SELECTED provider's own `read_timeout_seconds`. On the reqwest dispatch path this budget covers connect through the last response body byte — it is a whole-exchange bound, not a per-chunk inactivity bound — so a generation that legitimately runs longer than the provider's per-call budget needs this override. `0` removes the gateway-imposed whole-exchange bound entirely. The provider's `connect_timeout_seconds` is always applied to the committed streaming destination and is not overridable here."
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,598 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/transaction_debugger.schema.json",
+  "title": "transaction_debugger plugin config",
+  "description": "The `config` object of an enabled `transaction_debugger` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component TransactionDebuggerConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "transaction_debugger",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/TransactionDebuggerConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/TransactionDebuggerConfig",
+  "$defs": {
+    "SummaryLogSchema": {
+      "type": "object",
+      "description": "Customizable output schema for transaction-log JSON / line protocol. Rename keys, drop fields, reorder, inject static stamping, emit derived fields, flatten metadata. Metadata redaction always applies on every code path — sensitive substrings (`authorization`, `cookie`, `password`, `token`, …) cannot be introduced via `static_fields` or `derived_fields` (rejected at construction). This object, each `derived_fields` entry, and `metadata` are strict fixed shapes: unknown keys are rejected with a nested path. HTTP summaries include the normalized terminal `grpc_status` field (separate from `response_status_code`) when the request is gRPC. It can be renamed, omitted, or ordered like every other native field. `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reuse this same shape against their own record families; whatever a family cannot express (`summary_type`, `timestamp_format`, `metadata`, `order`, or a derived kind with no source field) is rejected at construction with a plugin- and field-specific diagnostic. Constraints this document cannot express are still enforced at construction and are NOT relaxations of the runtime contract: `omit` / `rename` / `order` names must resolve against the record family's field inventory for the selected `summary_type`; a field may not be both omitted and renamed; the combined native, static, and derived output keys must be unique; `order` must list every non-extension output key unless it contains `\"*\"`; and `rename` targets, `static_fields` keys (including nested keys) and `derived_fields` names may not match a sensitive-data substring or a credential-class name (for example `session_id`, `client_assertion`, `gpg_passphrase`, `private_rsa_key`; see docs/log_schema.md), while a `static_fields` string value that looks like a literal HTTP auth credential is refused. Under `metadata.mode: flatten`, `omit` may not list `metadata` and `rename` may not rename it; under `metadata.mode: omit`, `rename` may not rename it (those directives would otherwise be silently ignored). The whole `static_fields` object serialized as JSON (escaped keys and values, quotes, separators, braces) must be at most 16384 bytes and a static value may nest at most 8 objects/arrays deep. `transforms` keys must be fields of the selected `summary_type`, may not also be omitted, `ip_prefix` applies only to `client_ip` / `backend_resolved_ip`, and a `hash` `secret_ref` must resolve to a set `FERRUM_PLUGIN_SECRET_<NAME>` value of at least 32 bytes. See docs/log_schema.md.",
+      "additionalProperties": false,
+      "properties": {
+        "summary_type": {
+          "type": "string",
+          "enum": [
+            "http",
+            "stream",
+            "both"
+          ],
+          "default": "both",
+          "description": "Which summary type(s) this schema applies to. Summaries of the other type fall back to native serialization (the schema only customizes types it claims to handle)."
+        },
+        "omit": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Native field names to drop from output."
+        },
+        "rename": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Map of native field name -> output key (at most 128 bytes)."
+        },
+        "order": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Explicit output order, by output key. May contain `\"*\"` once as a wildcard for \"every unlisted entry in natural order.\" Without `\"*\"`, every field must be listed. Entries are unique — a repeated output key (or a second `\"*\"`) is rejected."
+        },
+        "static_fields": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "description": "Literal JSON values injected at top level. Keys / nested keys matching sensitive substrings or credential-class names (for example `session_id`) are rejected at compile time. A `null` value is rejected — use `omit` to drop a field. At most 64 entries; keys are at most 128 bytes; the whole object serialized as JSON (escaped keys and values included) is at most 16384 bytes; a value nests at most 8 objects/arrays deep. Static fields are stamped into every record, so these bounds are a per-record cost cap."
+        },
+        "derived_fields": {
+          "type": "array",
+          "maxItems": 32,
+          "description": "Computed values; emitted alongside native fields.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Output key for the derived value."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "status_class",
+                  "backend_host",
+                  "summary_kind",
+                  "outcome"
+                ],
+                "description": "`status_class`: `\"1xx\"`–`\"5xx\"` from `response_status_code` (stream: `\"none\"`). `backend_host`: hostname from `backend_target` (port stripped, IPv6 brackets honored). `summary_kind`: `\"http\"`, `\"stream\"`, or `\"websocket_disconnect\"` (the last only for `ws_logging` WebSocket disconnect entries). `outcome`: `\"ok\"` / `\"error\"`."
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "How to render the `metadata` map.",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "nested",
+                "omit",
+                "flatten"
+              ],
+              "default": "nested"
+            },
+            "prefix": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[^\\x00-\\x1F\\x7F-\\x9F]*$",
+              "description": "Prepended to each metadata key when promoted to top-level (e.g. `\"meta_\"`); only `flatten` reads it. Control characters are rejected. The type and the control-character restriction are validated in every mode, so a `nested` or `omit` schema cannot carry a value that would only start failing once the mode is switched to `flatten`."
+            },
+            "on_collision": {
+              "type": "string",
+              "enum": [
+                "skip",
+                "overwrite"
+              ],
+              "default": "skip",
+              "description": "Behavior when a metadata key collides with an already-emitted field; only `flatten` reads it. `skip` keeps the existing value; `overwrite` replaces the colliding field's value in place with the (redacted) metadata value, so every key appears exactly once in the record. Validated in every mode, like `prefix`."
+            }
+          }
+        },
+        "timestamp_format": {
+          "type": "string",
+          "enum": [
+            "rfc3339",
+            "epoch_ms",
+            "epoch_s"
+          ],
+          "default": "rfc3339",
+          "description": "Conversion applied to timestamp string fields (`timestamp_received`, `timestamp_connected`, `timestamp_disconnected`). Parse failures fall back to the raw RFC3339 string."
+        },
+        "transforms": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "client_ip",
+              "consumer_username",
+              "request_path",
+              "request_user_agent",
+              "backend_target",
+              "backend_resolved_ip",
+              "sni_hostname"
+            ]
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "max_bytes"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "truncate"
+                  },
+                  "max_bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65536
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "ip_prefix"
+                  },
+                  "ipv4_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32,
+                    "default": 24
+                  },
+                  "ipv6_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 128,
+                    "default": 48
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "secret_ref"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "hash"
+                  },
+                  "secret_ref": {
+                    "type": "string",
+                    "pattern": "^\\$\\{FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*\\}$"
+                  }
+                }
+              }
+            ]
+          },
+          "description": "Per-field value transforms, keyed by native source field name (before `rename`), applied when the field is emitted: `truncate` keeps at most `max_bytes` bytes (cut on a UTF-8 boundary); `ip_prefix` keeps the network prefix of an IP address (`ipv4_bits` default 24, `ipv6_bits` default 48; IPv4-mapped IPv6 is masked as IPv4; a value that is not an address is emitted as `null`); `hash` replaces the value with the lowercase-hex keyed HMAC-SHA-256 under the secret named by `secret_ref`, which must be a `${FERRUM_PLUGIN_SECRET_<NAME>}` reference resolved at construction (literal secrets are refused; the value must be at least 32 bytes). Only the transaction-summary loggers support `transforms`; `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reject the key, and statsd ignores it. Kafka partition keys and Loki labels read typed fields and are not transformed."
+        }
+      }
+    },
+    "TransactionDebuggerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: transaction_debugger — Emits verbose request/response and terminal diagnostics via tracing::debug on the transaction_debug target. Requires FERRUM_LOG_LEVEL=debug to see output. Unsupported keys are rejected. Body capture is opt-in and default off. It never forces an ineligible message to buffer: a body is sampled only when the message declares an identity Content-Encoding, a Content-Length that fits inside the configured cap (or, with the explicit capture_body_prefix opt-in, a text/plain or form Content-Length up to 1048576 bytes), and a capturable textual Content-Type (application/json, +json, text/json, application/x-www-form-urlencoded, text/plain). gRPC (application/grpc*), SSE (text/event-stream), WebSocket upgrades (including H2/H3 Extended CONNECT, excluded by typed request provenance rather than headers), XML, GraphQL, multipart, text/html, binary media types, chunked/unknown-length, and encoded messages keep streaming and are reported as omitted with a stable reason. XML and GraphQL are excluded because Ferrum has no bounded structure-aware redactor for them. Request samples are taken after all request transforms (backend-visible bytes) and response samples after all response transforms (client-visible bytes). Content-Length is only an admission screen: both final body hooks re-check the actual body length against the configured cap before any scan and fail closed with a content-free over_capture_limit omission, and an actually empty body (a HEAD or 304 response declares a length it never sends) is reported with the fixed empty_body reason rather than as a malformed structured body. Samples are redacted before rendering (JSON/form per field, text/plain per line as a coarse operator opt-in, plus credential-shaped values anywhere). In text/plain bodies every `name=value` / `name: value` line is dropped unless each field name parses cleanly and is declared in safe_text_fields (fail closed), a malformed JSON body renders as a fixed content-free marker instead of a partial rendering, control and bidi characters are escaped, non-UTF-8 bodies (including an incomplete multibyte tail) render as a fixed marker, and every capture reports whether it was captured, truncated, binary, or omitted. When the transaction_debug DEBUG target is disabled no body is buffered for capture. Captured bytes go only to the transaction_debug tracing target and are never written into transaction-log metadata. Values are also screened by shape regardless of field or header name: compact JWS/JWE tokens (recognized from the base64url-decoded JSON protected header, so whitespace inside the header does not evade it), well-known provider API keys, AWS access key ids, and PEM private-key blocks are redacted in captured bodies and in header dumps. Exactly one capture record is emitted per enabled direction even when a transform flips the decision between the header phase and the final body hook. Capture can be targeted with capture_request_header (plus an optional exact capture_request_header_value), capture_sample_rate, and capture_expires_at; a request outside the target never buffers and is reported as omitted with reason not_selected or capture_expired. capture_body_prefix opts text/plain and form bodies whose declared Content-Length exceeds the cap (up to 1048576 bytes) into buffering and renders a redacted prefix of complete lines or pairs marked truncated; JSON, chunked/unknown-length, and larger bodies are unchanged.",
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "max_request_body_bytes"
+            ]
+          },
+          "then": {
+            "required": [
+              "log_request_body"
+            ],
+            "properties": {
+              "log_request_body": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "max_response_body_bytes"
+            ]
+          },
+          "then": {
+            "required": [
+              "log_response_body"
+            ],
+            "properties": {
+              "log_response_body": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "redacted_body_fields"
+            ],
+            "properties": {
+              "redacted_body_fields": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "log_request_body"
+                ],
+                "properties": {
+                  "log_request_body": {
+                    "const": true
+                  }
+                }
+              },
+              {
+                "required": [
+                  "log_response_body"
+                ],
+                "properties": {
+                  "log_response_body": {
+                    "const": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "safe_text_fields"
+            ],
+            "properties": {
+              "safe_text_fields": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "log_request_body"
+                ],
+                "properties": {
+                  "log_request_body": {
+                    "const": true
+                  }
+                }
+              },
+              {
+                "required": [
+                  "log_response_body"
+                ],
+                "properties": {
+                  "log_response_body": {
+                    "const": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "capture_body_prefix"
+            ],
+            "properties": {
+              "capture_body_prefix": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "log_request_body"
+                ],
+                "properties": {
+                  "log_request_body": {
+                    "const": true
+                  }
+                }
+              },
+              {
+                "required": [
+                  "log_response_body"
+                ],
+                "properties": {
+                  "log_response_body": {
+                    "const": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "capture_sample_rate"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "log_request_body"
+                ],
+                "properties": {
+                  "log_request_body": {
+                    "const": true
+                  }
+                }
+              },
+              {
+                "required": [
+                  "log_response_body"
+                ],
+                "properties": {
+                  "log_response_body": {
+                    "const": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "capture_request_header"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "log_request_body"
+                ],
+                "properties": {
+                  "log_request_body": {
+                    "const": true
+                  }
+                }
+              },
+              {
+                "required": [
+                  "log_response_body"
+                ],
+                "properties": {
+                  "log_response_body": {
+                    "const": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "capture_expires_at"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "log_request_body"
+                ],
+                "properties": {
+                  "log_request_body": {
+                    "const": true
+                  }
+                }
+              },
+              {
+                "required": [
+                  "log_response_body"
+                ],
+                "properties": {
+                  "log_response_body": {
+                    "const": true
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "capture_request_header_value"
+            ]
+          },
+          "then": {
+            "required": [
+              "capture_request_header"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "schema",
+              "schema_ref"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "capture_body_prefix": {
+          "type": "boolean",
+          "default": false,
+          "description": "Admit text/plain and application/x-www-form-urlencoded bodies whose declared Content-Length exceeds the capture cap (up to 1048576 bytes) and render a redacted prefix of the complete lines / pairs that fit inside the cap, marked truncated. JSON bodies, which need the whole document for field redaction, and chunked/unknown-length bodies are unchanged. True requires log_request_body or log_response_body true. Null is rejected."
+        },
+        "capture_sample_rate": {
+          "type": "number",
+          "default": 1,
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "Fraction of requests whose bodies are captured, chosen deterministically per request so both directions agree. Requests that are not sampled never buffer and report reason not_selected. Requires log_request_body or log_response_body true."
+        },
+        "capture_request_header": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$",
+          "description": "Capture only requests that carry this request header (an HTTP header token, compared case-insensitively). Other requests never buffer and report reason not_selected. Requires log_request_body or log_response_body true."
+        },
+        "capture_request_header_value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[!-~](?:[ -~]*[!-~])?$",
+          "description": "Exact value capture_request_header must carry (compared after trimming the received value). 1-256 visible ASCII characters without surrounding spaces. When set, the selector header is redacted from header dumps. Requires capture_request_header."
+        },
+        "capture_expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 3339 instant after which capture stops: requests received at or after it never buffer and report reason capture_expired. A past instant is accepted. Requires log_request_body or log_response_body true."
+        },
+        "redacted_headers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+          },
+          "description": "Additional header names to redact beyond the built-in sensitive list. Each entry must be a nonempty HTTP header token (RFC 9110 tchar). Empty strings and names with spaces are rejected."
+        },
+        "log_request_body": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable bounded, redacted capture of the backend-visible request body. Null is rejected."
+        },
+        "log_response_body": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable bounded, redacted capture of the client-visible response body. Null is rejected."
+        },
+        "max_request_body_bytes": {
+          "type": "integer",
+          "default": 1024,
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "Per-request capture budget in bytes. Requires log_request_body true; out-of-range values are rejected, never clamped."
+        },
+        "max_response_body_bytes": {
+          "type": "integer",
+          "default": 1024,
+          "minimum": 1,
+          "maximum": 8192,
+          "description": "Per-response capture budget in bytes. Requires log_response_body true; out-of-range values are rejected, never clamped."
+        },
+        "redacted_body_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\s*\\S(?:[\\s\\S]{0,126}\\S)?\\s*$"
+          },
+          "description": "Additional body field names (compared case-insensitively) to redact beyond the built-in credential markers. Surrounding whitespace is trimmed before the 128-character maximum is applied. Requires log_request_body or log_response_body true when the array is nonempty. An empty array is valid without a capture switch. Independently of this list, everything under an Azure \"On Your Data\" `parameters` object inside a `data_sources` / `dataSources` / `data-sources` container is replaced wholesale. Recognizing that container name never short-circuits the ordinary visitor: a captured body is arbitrary JSON, so a value under that name which is not the provider's conventional array (an object, string, number, boolean, or null) is still traversed with the same member-name and credential-shaped-string rules as the rest of the body."
+        },
+        "safe_text_fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\s*[A-Za-z0-9_.-]{1,128}\\s*$"
+          },
+          "description": "Field names (compared case-insensitively) whose `name=value` / `name: value` lines may be rendered in captured text/plain bodies. A line containing `=` or `:` is kept only when every delimiter follows a declared name; a line with a missing, empty, quoted, undeclared, or non-ASCII-identifier name is dropped. Entries that the credential classifier or the sensitive body-field rules match are rejected: a credential-shaped name cannot be declared safe. Requires log_request_body or log_response_body true when the array is nonempty."
+        },
+        "schema": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SummaryLogSchema"
+            },
+            {
+              "properties": {
+                "transforms": false
+              }
+            }
+          ]
+        },
+        "schema_ref": {
+          "type": "string",
+          "description": "Name of a schema registered by a `transaction_log_schema` plugin. Mutually exclusive with `schema`. Projects the terminal diagnostic records (HTTP, stream, WebSocket disconnect) emitted on the `transaction_debug` target; the diagnostic field inventory is the plugin's own (`outcome`, `method`, `path`, `status`, `rejection_phase`, `latency_plugin_ms`, …), not the transaction summary's. A portable named schema can only reference names shared with the summary registry, so use an inline `schema:` for diagnostic-only fields. See docs/log_schema.md."
+        }
+      }
+    }
+  }
+}

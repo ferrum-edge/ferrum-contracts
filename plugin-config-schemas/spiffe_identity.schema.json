@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/spiffe_identity.schema.json",
+  "title": "spiffe_identity plugin config",
+  "description": "The `config` object of an enabled `spiffe_identity` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component SpiffeIdentityConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "spiffe_identity",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/SpiffeIdentityConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/SpiffeIdentityConfig",
+  "$defs": {
+    "SpiffeIdentityConfig": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Plugin: spiffe_identity — Extracts the SPIFFE ID from the peer\ncertificate's URI SAN and populates `ctx.peer_spiffe_id` /\n`StreamConnectionContext` metadata for downstream auth and rate-limit\nplugins (notably `mesh_authz` and `rate_limiting` with\n`limit_by: spiffe_identity`).\n\nAuto-injected by mesh mode on every applicable topology; reserved\nplugin id `__mesh_spiffe_identity`. Standalone usage is supported on\nnon-mesh gateways that still terminate mTLS and want to surface the\nSPIFFE identity to other plugins.\n\nThe trust domain is admitted exactly as SPIFFE-ID section 2.1 defines\nit: non-empty, at most 255 bytes, lowercase, and composed only of\n`[a-z0-9.-_]` — including at the first and last byte. Userinfo, ports,\npercent-encoding, and the SPIFFE ID's own 2048-byte total bound are\nstill enforced.\n\nA certificate-derived peer identity is admitted as an authenticated\nprincipal carrying the leaf certificate's `notAfter` as its\nauthorization deadline, so SPIFFE-only policy chains (this plugin plus\n`mesh_authz`, with no `mtls_auth`) are bounded by SVID expiry on the\nrequest, WebSocket, streaming-body, TCP+TLS, and UDP+DTLS paths. Every\nrequest re-checks the leaf validity window, and an expired or\nnot-yet-valid SVID is refused with the same fixed `403`\n`{\"error\":\"invalid SPIFFE identity certificate\"}` body as a malformed\none. A pre-stamped kernel-attested or HBONE-asserted `peer_spiffe_id`\ncarries no validity window and is not treated as certificate-bounded.\n\n`null` and `{}` select the default extraction-only behavior: no\nidentity is required, every trust domain the listener's verifier\naccepted is admitted, and nothing is forwarded to the backend. Every\nfield below is an opt-in tightening of that default.\n\nRejections never echo the peer certificate: a malformed SPIFFE URI SAN\nis the fixed `403` `{\"error\":\"invalid SPIFFE identity certificate\"}`,\nand its debug diagnostic names only a fixed reason, never the URI or\nany credential its userinfo or query carried.\n\nA proxy- or proxy-group-scoped instance on a stream proxy is refused at\nadmission unless that proxy sets `frontend_tls: true` and\n`passthrough: false`, exactly as for `mtls_auth`. Global instances are\nexempt and remain no-ops on plaintext listeners.\n",
+      "additionalProperties": false,
+      "properties": {
+        "require_identity": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, a request or stream that reaches this plugin without a\nusable SPIFFE identity (no client certificate, a certificate with\nno SPIFFE URI SAN, or certificate DER that does not parse) is\nrefused with a fixed `403` `{\"error\":\"SPIFFE identity required\"}`.\nA pre-stamped kernel-attested or HBONE-asserted identity counts as\npresent.\n"
+        },
+        "allowed_trust_domains": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "description": "When set, only identities whose trust domain is listed are\nadmitted; any other identity — certificate-derived or pre-stamped —\nis refused with a fixed `403`\n`{\"error\":\"SPIFFE trust domain not allowed\"}`. Entries are bare\nSPIFFE trust domains (SPIFFE-ID section 2.1 grammar, no\n`spiffe://` scheme), matched exactly. Omit the field to admit every\ntrust domain; an explicit empty list is rejected.\n",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^[a-z0-9._-]+$"
+          }
+        },
+        "forward_identity": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the admitted SPIFFE ID is forwarded to the backend in\nthe fixed gateway-owned request header `x-ferrum-peer-spiffe-id`\n(HTTP family only). Every client-supplied copy — compared ASCII\ncase-insensitively with `_` read as `-` — is removed from the\ninitial header block before the gateway's value is set, including\non requests that carry no identity; client request-trailer copies\nare dropped by the gateway's request-trailer boundary, which owns\nthe whole `x-ferrum-*` namespace.\n"
+        }
+      }
+    }
+  }
+}

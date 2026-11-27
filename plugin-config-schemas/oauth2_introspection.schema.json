@@ -1,0 +1,400 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/oauth2_introspection.schema.json",
+  "title": "oauth2_introspection plugin config",
+  "description": "The `config` object of an enabled `oauth2_introspection` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component Oauth2IntrospectionConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "oauth2_introspection",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/Oauth2IntrospectionConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/Oauth2IntrospectionConfig",
+  "$defs": {
+    "Oauth2IntrospectionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: oauth2_introspection — RFC 7662 bearer token introspection with bounded, explicit multi-provider routing. Both ends of a returned validity window are enforced independently of the active member, as defense in depth against a contradictory provider response: exp, active_until, and expires_in close it, and nbf (RFC 7662 section 2.2) opens it. An active:true response whose nbf is still in the future is rejected with a bearer 401 and is not cached in either direction; a present non-integer nbf is a dependency-response error and returns 503, like malformed expiry data. An omitted nbf, exp, active_until, or expires_in remains supported, including a JSON null, which is treated as absent. Both bounds are absolute instants resolved once at the provider-response boundary and re-checked on every cache hit. Both are compared against the gateway clock with no leeway: this plugin deliberately has no clock-skew knob, matching its long-standing exp behaviour, so an authorization server whose clock runs ahead of the gateway can have a freshly issued token rejected for the first second(s) of its life, and each such request costs a provider round trip because that rejection is never cached. Keep the authorization server and the gateway clocks synchronized (NTP).",
+      "required": [
+        "providers"
+      ],
+      "properties": {
+        "providers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "client_auth"
+            ],
+            "oneOf": [
+              {
+                "required": [
+                  "introspection_endpoint"
+                ]
+              },
+              {
+                "required": [
+                  "discovery_url"
+                ]
+              }
+            ],
+            "dependentRequired": {
+              "discovery_refresh_interval_secs": [
+                "discovery_url"
+              ]
+            },
+            "properties": {
+              "introspection_endpoint": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^\\s*[hH][tT][tT][pP][sS]?://[^/?#\\s]+([/?#][^\\s]*)?\\s*$",
+                "description": "Direct token introspection endpoint URL. Exactly one of introspection_endpoint or discovery_url must be configured. Must use https when client_auth.method is credentialed (client_secret_basic, client_secret_post, or private_key_jwt) and the host is not a loopback IP literal; http is only permitted for a loopback IP literal (127.0.0.0/8 or ::1), never for the name localhost. Surrounding whitespace is trimmed. A path or query is accepted, but operational diagnostics record only the endpoint origin (scheme, host, port)."
+              },
+              "discovery_url": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^\\s*[hH][tT][tT][pP][sS]?://[^/?#\\s]+([/?#][^\\s]*)?\\s*$",
+                "description": "OIDC discovery URL used to resolve introspection_endpoint. Exactly one of introspection_endpoint or discovery_url must be configured. Must use https when client_auth.method is credentialed and the host is not a loopback IP literal; http is only permitted for a loopback IP literal, never for the name localhost. The discovered endpoint must preserve the discovery URL's scheme, normalized host, and effective port."
+              },
+              "issuer": {
+                "type": "string",
+                "pattern": "\\S",
+                "description": "Expected iss claim in active introspection responses. Trimmed; a blank value is rejected. Independent of the private_key_jwt assertion audience (see client_auth.client_assertion_audience). When omitted, each active response's string iss joins the external identity realm, so equal subjects asserted for different issuers are different principals."
+              },
+              "audiences": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S"
+                },
+                "description": "Accepted aud claims; OR matched. Entries are trimmed and must not be blank."
+              },
+              "client_auth": {
+                "type": "object",
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "if": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "required": [
+                              "method"
+                            ]
+                          }
+                        },
+                        {
+                          "required": [
+                            "method"
+                          ],
+                          "properties": {
+                            "method": {
+                              "enum": [
+                                "client_secret_basic",
+                                "client_secret_post"
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "then": {
+                      "required": [
+                        "client_id",
+                        "client_secret"
+                      ],
+                      "properties": {
+                        "client_id": {
+                          "pattern": "\\S"
+                        },
+                        "client_secret": {
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "method"
+                      ],
+                      "properties": {
+                        "method": {
+                          "const": "private_key_jwt"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "client_id",
+                        "private_key_pem"
+                      ],
+                      "properties": {
+                        "client_id": {
+                          "pattern": "\\S"
+                        },
+                        "private_key_pem": {
+                          "minLength": 1
+                        }
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "client_secret_basic",
+                      "client_secret_post",
+                      "private_key_jwt",
+                      "none"
+                    ],
+                    "default": "client_secret_basic",
+                    "description": "Client authentication method against the introspection endpoint. Surrounding whitespace is trimmed before matching. Credentialed methods (client_secret_basic, client_secret_post, private_key_jwt) require an https endpoint for non-loopback hosts; http is only accepted for a loopback IP-literal host. The 'none' method is loopback-IP-literal-only regardless of scheme; the name localhost qualifies for neither. client_secret_basic and client_secret_post require client_id and client_secret; private_key_jwt requires client_id and private_key_pem."
+                  },
+                  "client_id": {
+                    "type": "string"
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "Literal client secret. Plugin config is never environment-expanded; a value containing a `${NAME}` placeholder is refused at admission."
+                  },
+                  "private_key_pem": {
+                    "type": "string",
+                    "format": "password",
+                    "description": "PEM private key for private_key_jwt. The key must be usable with private_key_jwt_alg: an EC key's curve must match the selected ES algorithm (P-256 for ES256, P-384 for ES384) and an RSA key must meet the signing backend's minimum modulus size. A mismatch is rejected at config load, not at request time."
+                  },
+                  "private_key_jwt_alg": {
+                    "type": "string",
+                    "enum": [
+                      "RS256",
+                      "RS384",
+                      "RS512",
+                      "ES256",
+                      "ES384",
+                      "EdDSA"
+                    ],
+                    "default": "RS256"
+                  },
+                  "private_key_jwt_kid": {
+                    "type": "string"
+                  },
+                  "client_assertion_audience": {
+                    "type": "string",
+                    "pattern": "\\S",
+                    "description": "aud of private_key_jwt client assertions. Trimmed; a blank value is rejected. Defaults to the resolved introspection endpoint URL (the configured introspection_endpoint, or the endpoint discovery resolved). Independent of issuer: set it when the authorization server requires another audience, such as its issuer identifier."
+                  }
+                }
+              },
+              "from_headers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "pattern": "^\\s*[!#$%&'*+.^_`|~0-9A-Za-z-]+\\s*$",
+                      "description": "Header carrying the token. Trimmed and lowercased; must be a valid HTTP header name."
+                    },
+                    "prefix": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "Scheme prefix stripped from the header value. Null and the empty string both mean \"no prefix\"."
+                    }
+                  }
+                }
+              },
+              "from_params": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S"
+                }
+              },
+              "forward_original_token": {
+                "type": "boolean",
+                "default": true
+              },
+              "positive_cache_ttl_secs": {
+                "type": "integer",
+                "format": "uint64",
+                "default": 60,
+                "minimum": 0,
+                "maximum": 86400,
+                "description": "Active-token cache TTL cap, in seconds. 0 disables positive caching."
+              },
+              "negative_cache_ttl_secs": {
+                "type": "integer",
+                "format": "uint64",
+                "default": 10,
+                "minimum": 0,
+                "maximum": 300,
+                "description": "Inactive-token cache TTL, in seconds. 0 disables negative caching."
+              },
+              "request_timeout_ms": {
+                "type": "integer",
+                "format": "uint64",
+                "default": 5000,
+                "minimum": 100,
+                "maximum": 30000,
+                "description": "Per-introspection-request timeout, in milliseconds."
+              },
+              "max_concurrent_introspections": {
+                "type": "integer",
+                "format": "uint64",
+                "default": 32,
+                "minimum": 1,
+                "maximum": 1024,
+                "description": "Uncached introspection calls this provider may have in flight. Non-queuing: a lookup that finds the limit exhausted fails fast with 503. Also bounded by the plugin-level max_concurrent_introspections and a fixed process-wide ceiling of 1024."
+              },
+              "discovery_refresh_interval_secs": {
+                "type": "integer",
+                "format": "uint64",
+                "default": 900,
+                "minimum": 1,
+                "maximum": 86400,
+                "description": "Seconds between discovery document re-fetches after a successful resolution. A failed refresh keeps serving the last known endpoint and retries with capped exponential backoff. Only valid with discovery_url."
+              },
+              "accept_mtls_bound_tokens": {
+                "type": "boolean",
+                "default": false,
+                "description": "Admit RFC 8705 certificate-bound tokens whose cnf is exactly one non-empty x5t#S256 member, only when the request's frontend client certificate has that base64url SHA-256 thumbprint; a missing or different certificate is a bearer 401. Re-verified on every request, including cache hits. Any other cnf (DPoP jkt, jwk, extra members) and any non-Bearer token_type still fail closed. A null cnf or token_type is treated as absent."
+              },
+              "max_cache_entries": {
+                "type": "integer",
+                "format": "uint64",
+                "default": 10000,
+                "minimum": 100,
+                "maximum": 100000,
+                "description": "Per-provider hard entry ceiling. Active and negative entries receive independent 75/25 count partitions, so one result class cannot evict the other class."
+              },
+              "max_cache_entry_bytes": {
+                "type": "integer",
+                "format": "uint64",
+                "default": 16384,
+                "minimum": 256,
+                "maximum": 65536,
+                "description": "Maximum normalized active authorization-result bytes retained for one token. A larger valid result is used for the current request but is not cached."
+              },
+              "max_cache_total_bytes": {
+                "type": "integer",
+                "format": "uint64",
+                "default": 16777216,
+                "minimum": 1048576,
+                "maximum": 67108864,
+                "description": "Per-provider hard retained-byte ceiling covering fixed eviction indexes, token digests, entry state, and normalized authorization data. Must be at least the constructor-reported minimum footprint for max_cache_entries plus one max_cache_entry_bytes result."
+              },
+              "token_hint_param": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "\\S",
+                "description": "Value sent as RFC 7662 `token_type_hint` on every introspection request (for example `access_token`). Null and an omitted key both send no hint; a blank string is rejected."
+              },
+              "required_scopes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S"
+                }
+              },
+              "required_roles": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "\\S"
+                }
+              },
+              "scope_claim": {
+                "type": "string",
+                "pattern": "^[^.]+(\\.[^.]+)*$",
+                "description": "Per-provider override of the global scope claim path."
+              },
+              "role_claim": {
+                "type": "string",
+                "pattern": "^[^.]+(\\.[^.]+)*$",
+                "description": "Per-provider override of the global role claim path."
+              },
+              "consumer_identity_claim": {
+                "type": "string",
+                "pattern": "^[^.]+(\\.[^.]+)*$",
+                "description": "Per-provider override of the global consumer-lookup claim path."
+              },
+              "consumer_header_claim": {
+                "type": "string",
+                "pattern": "^[^.]+(\\.[^.]+)*$",
+                "description": "Per-provider X-Authenticated-Identity display claim path. The display claim is resolved in this order: this provider's consumer_header_claim, then the plugin-level consumer_header_claim, then this provider's effective consumer_identity_claim (its own consumer_identity_claim, else the plugin-level consumer_identity_claim). When the selected display claim is absent or not a string, the header carries the authenticated identity value instead."
+              },
+              "claim_headers": {
+                "type": "object",
+                "maxProperties": 16,
+                "propertyNames": {
+                  "pattern": "^[^.]+(\\.[^.]+)*$"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "pattern": "^\\s*[!#$%&'*+.^_`|~0-9A-Za-z-]+\\s*$",
+                  "not": {
+                    "pattern": "^\\s*([Xx][-_][Cc][Oo][Nn][Ss][Uu][Mm][Ee][Rr][-_]\\S*|[Hh][Oo][Ss][Tt]|[Cc][Oo][Nn][Nn][Ee][Cc][Tt][Ii][Oo][Nn]|[Tt][Ee]|[Kk][Ee][Ee][Pp]-[Aa][Ll][Ii][Vv][Ee]|[Tt][Rr][Aa][Nn][Ss][Ff][Ee][Rr]-[Ee][Nn][Cc][Oo][Dd][Ii][Nn][Gg]|[Uu][Pp][Gg][Rr][Aa][Dd][Ee]|[Pp][Rr][Oo][Xx][Yy]-[Aa][Uu][Tt][Hh][Oo][Rr][Ii][Zz][Aa][Tt][Ii][Oo][Nn]|[Aa][Uu][Tt][Hh][Oo][Rr][Ii][Zz][Aa][Tt][Ii][Oo][Nn])\\s*$"
+                  }
+                },
+                "description": "Claim path to upstream header mappings. Destination headers are gateway-owned and always sanitized: every configured destination is removed from the client request (case-insensitively) before verified claim values are installed, so an absent, null, empty, or wrong-type claim leaves the header absent instead of forwarding client-supplied input. Destinations in the gateway-owned `x-consumer-*` consumer assertion namespace and `x-authenticated-identity` are rejected at config load. At most 16 mappings; claim paths are at most 256 bytes with no whitespace or control characters, header names at most 128 bytes, and two mappings may not name the same header. Framing, provenance, credential-bearing and gateway-reserved destinations (including cookie, content-length, forwarded, via, x-real-ip, x-forwarded-* and x-ferrum-*) are rejected, as for output_claim_headers. In both forms reserved names and duplicates are matched case-insensitively with _ treated as - (X_Real_IP is reserved, X_Tenant_Id duplicates X-Tenant-Id, including across jwks_auth claim_headers and output_claim_headers). A claim value that is not a valid header value (for example one containing CR or LF) or that renders to more than 8192 bytes, including a joined array, leaves the destination absent."
+              }
+            }
+          }
+        },
+        "max_concurrent_introspections": {
+          "type": "integer",
+          "format": "uint64",
+          "default": 128,
+          "minimum": 1,
+          "maximum": 1024,
+          "description": "Uncached introspection calls this plugin instance may have in flight across all of its providers. Non-queuing: a lookup that finds the limit exhausted fails fast with 503. A fixed process-wide ceiling of 1024 applies across every instance."
+        },
+        "allow_provider_fanout": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow one Authorization bearer token to be submitted sequentially to multiple providers. Enable only when every provider shares one credential trust boundary. By default, multi-provider configs must use distinct from_headers/from_params routing hints or have exactly one provider that uses the Authorization location."
+        },
+        "scope_claim": {
+          "type": "string",
+          "pattern": "^[^.]+(\\.[^.]+)*$",
+          "default": "scope"
+        },
+        "role_claim": {
+          "type": "string",
+          "pattern": "^[^.]+(\\.[^.]+)*$",
+          "default": "roles"
+        },
+        "consumer_identity_claim": {
+          "type": "string",
+          "pattern": "^[^.]+(\\.[^.]+)*$",
+          "default": "username"
+        },
+        "consumer_header_claim": {
+          "type": "string",
+          "pattern": "^[^.]+(\\.[^.]+)*$",
+          "description": "Claim used for X-Authenticated-Identity when no Consumer maps. Defaults to the effective consumer_identity_claim."
+        }
+      }
+    }
+  }
+}

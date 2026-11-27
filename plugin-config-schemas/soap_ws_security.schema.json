@@ -1,0 +1,1038 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/soap_ws_security.schema.json",
+  "title": "soap_ws_security plugin config",
+  "description": "The `config` object of an enabled `soap_ws_security` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component SoapWsSecurityConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "soap_ws_security",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/SoapWsSecurityConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/SoapWsSecurityConfig",
+  "$defs": {
+    "SoapWsSecurityConfig": {
+      "type": "object",
+      "description": "Plugin: soap_ws_security — Validates WS-Security headers in SOAP envelopes. Malformed XML returns HTTP 400 with a fixed parser category; document names, positions, and raw parser details are never returned or logged. A document type (or any other markup) declaration in the prolog is refused with 400; the same characters inside CDATA, comments, or character data are ordinary text, and a declaration after the prolog is malformed XML. Supports UsernameToken (PasswordText/PasswordDigest), X.509 signature verification, SAML 2.0 assertion validation, timestamp freshness, and nonce/assertion replay protection. Media types are parsed STRUCTURALLY (type/subtype plus parameters) and matched by exact essence, never substring-matched; content_type.mode defaults to 'strict', under which every request on the proxy is governed and a missing/unsupported/malformed representation is rejected (415/415/400) before backend dispatch, while 'mixed_route' is the explicit pass-through opt-out. Recognized representations are text/xml, application/soap+xml, application/xml, application/xop+xml, and MTOM/XOP multipart/related (root part validated, attachments never decoded). MTOM package framing is strict and line-anchored: delimiter lines only at body start or immediately after CRLF with exact CRLF framing, exactly one close-delimiter with a boundary-free epilogue, strict US-ASCII unfolded part headers with unique Content-Type/Content-ID/Content-Transfer-Encoding, package-unique nonblank Content-IDs, exactly one part matching `start`, and root selection only after the whole package is framed — every other shape fails closed under bounded part/header/candidate ceilings. Because Ferrum implements no WS-Security attachment-signature transform, an enabled x509_signature refuses both MTOM multipart/related and bare application/xop+xml with 415 (and an explicit content_type.allow_mtom=true alongside it is refused at admission); username_token and saml keep accepting MTOM/XOP because they authenticate identity and never claimed attachment integrity. Buffers governed bodies as raw bytes and decodes UTF-8 / UTF-16LE / UTF-16BE from BOM and Content-Type charset before validation; charset/BOM/XML-declaration conflicts and malformed encodings fail closed (415/400) without logging bodies. Original wire bytes are preserved for the backend. A configuration that establishes a principal (username_token, x509_signature, or saml) is an AUTH PLUGIN: it buffers the body before the authenticate phase, validates there, and publishes the SOAP principal as an EXTERNAL authenticated_identity (backend header X-Authenticated-Identity). It never sets identified_consumer: a same-named Consumer is not bound (issue #6082), so Consumer ACL groups and Consumer-specific policy do not apply and access_control admits a SOAP principal only through allow_authenticated_identity; identity-keyed rate limiting, logging, retries, and chargeback observe the one SOAP identity. require_mechanisms (default 'all') selects whether every enabled identity mechanism must be presented and verify, or ('any', at least two enabled) whether they are alternatives of which at least one must be presented and every presented one must verify. A timestamp-only configuration establishes no principal and keeps validating in before_proxy; the two phases never both run. Composition admission requires an identity-establishing instance to be the proxy's sole authentication mechanism in either auth mode, rejects it alongside compression decompress_request, and rejects an explicit content_type.allow_mtom=true alongside an enabled x509_signature; for that identity-establishing form on_final_request_body refuses to dispatch a message whose bytes changed after validation (a timestamp-only policy authenticates nobody, claims no integrity over the Body, and therefore does not bind the representation). Because an identity-establishing instance is the proxy's sole authentication mechanism, a request the SOAP policy passes through — a non-SOAP media type under mixed_route, or a governed envelope with no wsse:Security header under reject_missing_security_header=false — reaches the authentication chain with no identity and is answered 401 rather than forwarded anonymously; pair those options with a timestamp-only instance or separate the proxies. At least one security feature must be enabled. Every evaluated xsd:dateTime (Timestamp Created/Expires, PasswordDigest Created, SAML Conditions and SubjectConfirmationData bounds) must carry a Z or ±hh:mm zone designator; a zoneless value is rejected rather than read as UTC. Both signature paths settle TRUST FIRST: certificate fingerprint match (plus the matched certificate's notBefore/notAfter window) and SignatureValue-over-SignedInfo verify before any attacker-selected Reference is resolved, canonicalized, or digested. Duplicate Reference URIs are rejected, the X.509 Reference ceiling is 8, one bounded id index is built per message, and every canonicalization is charged against an aggregate per-message byte budget plus a separate namespace-resolution allowance charged scanned entries x compared prefix bytes plus the length of every compared namespace URI (32 x decoded body length, floor 4194304) so inherited namespace declarations, long prefixes, long inherited URIs, and canonical attribute ordering cannot multiply pre-verification CPU. Fixed raw-markup ceilings are enforced before parsing: a start tag with more than 64 attributes (namespace declarations included), an attribute name over 128 bytes, a namespace declaration name over 70 bytes, a namespace URI over 2048 bytes, more than 256 namespace declarations in scope at one element (scope tracked with nesting, so sibling redeclarations do not accumulate), more than 256 distinct (prefix, URI) bindings per envelope, or accumulated parser comparison work (duplicate-attribute, prefix-resolution, and inherited-scope merge) beyond 32 x envelope length (floor 1048576) is refused with 400. Structural selection is namespace-qualified and positional: one SOAP Envelope, at most one Header and exactly one Body as its direct children in the same envelope namespace, and one wsse:Security header targeting this receiver as a direct child of that Header; duplicates or misplaced elements fail closed. X.509 success additionally requires a Reference resolving uniquely to the backend-visible Body; References may resolve inside any block of the namespace-correct SOAP Header (the Security header or, e.g., WS-Addressing blocks) or the Body, never the Header element itself or anything outside them; and require_signed_timestamp rejects a missing Timestamp (pairing it with timestamp.require=false is refused at admission). SAML requires a mandatory bounded Conditions window, the configured service audience on every AudienceRestriction, no Conditions child other than AudienceRestriction and at most one each of OneTimeUse and ProxyRestriction, each in its standard shape (an xsi:type must resolve to that element's own standard SAML type, and no extension attribute or non-Audience child is admitted; an unsupported, derived, or extended condition makes the assertion indeterminate and is rejected, SAML Core 2.0 sections 2.5.1.1 and 7.1), exactly one qualifying SubjectConfirmation (a confirmation that does not name the configured recipient with its own bounded NotOnOrAfter and no InResponseTo is skipped, not fatal), exactly one namespace-correct nonblank Subject NameID resolved BEFORE the single-use claim (so an assertion that authenticates nobody fails closed with 401 without consuming replay state), and a single-use claim on the assertion id — so nonce.replay_scope is required when saml is enabled. Both signature paths apply Exclusive XML Canonicalization (xml-exc-c14n#) to SignedInfo and referenced elements, including InclusiveNamespaces PrefixList. Reference transform chains may contain the enveloped-signature transform followed by exclusive c14n; unsupported canonicalization or transform algorithms fail closed (inclusive c14n, comments, XPath, XSLT, and other XMLDSIG transforms are not supported). On a governed representation, malformed XML, unsupported/ambiguous envelope structure, and XML parsing-budget failures reject with 400 regardless of reject_missing_security_header, which governs an absent header only. Configuration admission is strict and fail-closed: the root object and every nested fixed-shape object reject unknown keys and wrong-typed values (including explicit JSON null — omit a field to use its default) before defaults apply, malformed credential / cert / issuer / algorithm entries are rejected rather than silently dropped, and every duration and cache control must fall inside its documented inclusive range. Invalid password_type and algorithm-enum diagnostics name only the field and accepted choices, never the rejected value. Fixed-shape properties are non-nullable in this schema. There is no nonce_replay_protection alias — nonce.* is the only canonical shape. Nonce replay entry/byte caps are exact under concurrent PasswordDigest claims. PasswordDigest additionally validates the UsernameToken's own wsu:Created against a bounded freshness window and binds it to the independently validated outer wsu:Timestamp, and requires an explicit nonce.replay_scope ('process' for a declared single-replica deployment, or 'shared' with sync_mode=redis for cross-replica atomic claims). A shared-backend outage fails closed, and every shared-replay connection must prove a non-evicting Redis memory policy (maxmemory 0 or maxmemory_policy noeviction) before it carries a claim. Every element value the gateway acts on is read once and returned UNCHANGED: only xsd:dateTime instants and xsd:base64Binary payloads are whitespace-collapsed, so a NameID, Issuer, Audience, Username, or PasswordText value with significant leading/trailing spaces is matched byte for byte against the bytes the signature covered and against configuration. Canonicalization charges the per-message work budget BEFORE each emitted run, so a refused canonical form is never fully allocated. username_token.remove_credential (default false) deletes the verified UsernameToken — or the whole wsse:Security header when it holds only the credential — from the backend-visible message; it is admitted only for an enabled PasswordText policy with no enabled x509_signature or saml and no explicit content_type.allow_mtom=true, its final-body proof binds the sanitized representation, and a signed envelope (400) or an unspliceable UTF-16/MTOM representation (415) is refused rather than forwarded with the credential intact. The schema's conditionals mirror those admission rules, so a configuration this component accepts is one the constructor accepts.",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "require_mechanisms": {
+                "const": "any"
+              }
+            },
+            "required": [
+              "require_mechanisms"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "username_token",
+                  "x509_signature"
+                ],
+                "properties": {
+                  "username_token": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  "x509_signature": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  }
+                }
+              },
+              {
+                "required": [
+                  "username_token",
+                  "saml"
+                ],
+                "properties": {
+                  "username_token": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  "saml": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  }
+                }
+              },
+              {
+                "required": [
+                  "x509_signature",
+                  "saml"
+                ],
+                "properties": {
+                  "x509_signature": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  "saml": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "timestamp": {
+                    "properties": {
+                      "require": {
+                        "const": false
+                      }
+                    },
+                    "required": [
+                      "require"
+                    ]
+                  }
+                },
+                "required": [
+                  "timestamp"
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "username_token": {
+                      "properties": {
+                        "enabled": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "username_token"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "x509_signature": {
+                      "properties": {
+                        "enabled": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "x509_signature"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "saml": {
+                      "properties": {
+                        "enabled": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "saml"
+                  ]
+                }
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "properties": {
+              "username_token": {
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "enabled"
+                ]
+              }
+            },
+            "required": [
+              "username_token"
+            ]
+          },
+          "then": {
+            "required": [
+              "username_token"
+            ],
+            "properties": {
+              "username_token": {
+                "required": [
+                  "credentials"
+                ],
+                "properties": {
+                  "credentials": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "x509_signature": {
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "enabled"
+                ]
+              }
+            },
+            "required": [
+              "x509_signature"
+            ]
+          },
+          "then": {
+            "required": [
+              "x509_signature"
+            ],
+            "properties": {
+              "x509_signature": {
+                "required": [
+                  "trusted_certs"
+                ],
+                "properties": {
+                  "trusted_certs": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "x509_signature": {
+                "properties": {
+                  "enabled": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "enabled"
+                ]
+              }
+            },
+            "required": [
+              "x509_signature"
+            ]
+          },
+          "then": {
+            "not": {
+              "properties": {
+                "content_type": {
+                  "properties": {
+                    "allow_mtom": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "allow_mtom"
+                  ]
+                }
+              },
+              "required": [
+                "content_type"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "username_token": {
+                "properties": {
+                  "remove_credential": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "remove_credential"
+                ]
+              }
+            },
+            "required": [
+              "username_token"
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "required": [
+                  "username_token"
+                ],
+                "properties": {
+                  "username_token": {
+                    "required": [
+                      "enabled",
+                      "password_type"
+                    ],
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      },
+                      "password_type": {
+                        "const": "PasswordText"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "x509_signature": {
+                      "properties": {
+                        "enabled": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "x509_signature"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "saml": {
+                      "properties": {
+                        "enabled": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "saml"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "content_type": {
+                      "properties": {
+                        "allow_mtom": {
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "allow_mtom"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "content_type"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "username_token": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "password_type": {
+                          "const": "PasswordText"
+                        }
+                      },
+                      "required": [
+                        "password_type"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "required": [
+              "username_token"
+            ]
+          },
+          "then": {
+            "required": [
+              "nonce"
+            ],
+            "properties": {
+              "nonce": {
+                "type": "object",
+                "required": [
+                  "replay_scope"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "saml": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "saml"
+            ]
+          },
+          "then": {
+            "required": [
+              "nonce",
+              "saml"
+            ],
+            "properties": {
+              "nonce": {
+                "type": "object",
+                "required": [
+                  "replay_scope"
+                ]
+              },
+              "saml": {
+                "type": "object",
+                "required": [
+                  "audience",
+                  "recipient",
+                  "trusted_issuers",
+                  "trusted_signing_certs"
+                ],
+                "properties": {
+                  "trusted_issuers": {
+                    "minItems": 1
+                  },
+                  "trusted_signing_certs": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "x509_signature": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ]
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "require_signed_timestamp": {
+                          "const": false
+                        }
+                      },
+                      "required": [
+                        "require_signed_timestamp"
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "required": [
+              "x509_signature"
+            ]
+          },
+          "then": {
+            "not": {
+              "properties": {
+                "timestamp": {
+                  "type": "object",
+                  "properties": {
+                    "require": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "require"
+                  ]
+                }
+              },
+              "required": [
+                "timestamp"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "nonce": {
+                "type": "object",
+                "properties": {
+                  "replay_scope": {
+                    "const": "shared"
+                  }
+                },
+                "required": [
+                  "replay_scope"
+                ]
+              }
+            },
+            "required": [
+              "nonce"
+            ]
+          },
+          "then": {
+            "required": [
+              "sync_mode",
+              "redis_url"
+            ],
+            "properties": {
+              "sync_mode": {
+                "const": "redis"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "sync_mode": {
+                "const": "redis"
+              }
+            },
+            "required": [
+              "sync_mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "nonce",
+              "redis_url"
+            ],
+            "properties": {
+              "nonce": {
+                "type": "object",
+                "properties": {
+                  "replay_scope": {
+                    "const": "shared"
+                  }
+                },
+                "required": [
+                  "replay_scope"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "require_mechanisms": {
+          "type": "string",
+          "enum": [
+            "all",
+            "any"
+          ],
+          "default": "all",
+          "description": "How the enabled identity mechanisms (username_token,\nx509_signature, saml) combine. 'all' (default): every enabled\nmechanism must be presented and must verify. 'any':\nWS-SecurityPolicy-style alternatives — a mechanism runs only when\nits token is presented (a wsse:UsernameToken or message ds:Signature\nas a direct child of the selected Security header, or a SAML\nAssertion anywhere in the message); at least one enabled mechanism\nmust be presented (otherwise 401), and EVERY presented token must\nverify, so a failing token rejects the message even beside a valid\none. 'any' requires at least two enabled identity mechanisms and is\nrefused at admission otherwise. The published principal is the first\nverified mechanism in the order UsernameToken, X.509, SAML.\n"
+        },
+        "reject_missing_security_header": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reject SOAP requests that lack a WS-Security header. This governs an\nABSENT HEADER ONLY. On a governed representation, malformed XML,\nunsupported or ambiguous SOAP envelope structure (duplicate or\nmisplaced Envelope/Header/Body/Security), and XML parsing-budget\nfailures always reject with 400 regardless of this setting: a\ngateway/backend parser disagreement must never become a\npass-through.\n"
+        },
+        "content_type": {
+          "type": "object",
+          "description": "Which requests this proxy governs. Media types are parsed\nstructurally (type/subtype plus RFC 9110 parameters) and matched by\nexact essence; they are never substring-matched, so a\n`multipart/form-data; boundary=application/xml` request is not SOAP\nand a SOAP envelope labelled `application/octet-stream` is not\nexempt. Recognized representations: text/xml (SOAP 1.1),\napplication/soap+xml (SOAP 1.2), application/xml,\napplication/xop+xml, and MTOM/XOP multipart/related whose `type`\nparameter names a SOAP/XOP root essence.\n",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "strict",
+                "mixed_route"
+              ],
+              "default": "strict",
+              "description": "'strict' (default) governs every request on this proxy: a\nmissing Content-Type returns 415, an unsupported media type\nreturns 415, and a malformed one returns 400 — all before\nbackend dispatch. 'mixed_route' is the explicit opt-out that\npasses non-SOAP media types through the SOAP policy; a\nmalformed media-type label still fails closed in that mode\nbecause an unparsable\nlabel cannot be proven non-SOAP. With an identity-establishing\nconfiguration the pass-through still reaches the authentication\nchain, where the absence of a SOAP principal is answered 401,\nso mixed anonymous traffic belongs on a timestamp-only instance\nor a separate proxy.\n"
+            },
+            "allow_mtom": {
+              "type": "boolean",
+              "default": true,
+              "description": "Accept MTOM/XOP multipart/related packaging. The root part is\nthe first part (when the `start` parameter is supplied it must\nname that part); the gateway validates that part's envelope and\nnever reads or decodes attachment payloads. Set false to declare\nthat this route does not accept MTOM at all; a SOAP-bearing\nmultipart then returns 415. Package framing is STRICT because\nthe parser decides which bytes are the envelope: delimiter LINES\nare recognized only at the body start or immediately after a\nCRLF with exact CRLF framing and no transport padding, and the\n`--boundary` token may appear nowhere else (a padded, LF-ended,\nor `--boundaryX` line, a token opened by a bare LF or CR, or a\ntoken mid-line in the preamble, a part, or the epilogue refuses\nthe package); exactly one close-delimiter is required; the\npackage Content-Type must not carry an RFC 2231 extended or\ncontinuation form (`boundary*`, `type*0`, `start*`, ...) of\nboundary/type/start; part headers must be US-ASCII with no\nobsolete folding, must be well-formed `token: value` pairs, and\nmay carry at most one Content-Type / Content-ID /\nContent-Transfer-Encoding each; Content-ID values must be\npackage-unique (ignoring ASCII case and a leading `cid:`) and\nnonblank, while a Content-ID or `start` carrying `%`, `+`, or\nembedded whitespace is refused (a percent-decoding backend\nwould resolve it to a different part); and the root part must\ndeclare a SOAP/XOP essence and must not declare a re-encoding\nContent-Transfer-Encoding (anything other than 7bit/8bit/binary).\nThe whole package is\nframed and every part parsed before a root is selected, so no\nlater ambiguity is missed by an early return. Bounds are\nfail-closed (at most 64 parts; at most 8 KiB and 32 header lines\nper part). MUST NOT be explicitly\ntrue when x509_signature.enabled is true — that pairing is\nrefused at admission, and XOP representations (multipart/related\nand bare application/xop+xml) return 415 under an enabled\nx509_signature regardless, because Ferrum implements no\nWS-Security attachment-signature transform and an X.509\nsignature therefore cannot cover attachment octets.\n"
+            }
+          }
+        },
+        "sync_mode": {
+          "type": "string",
+          "enum": [
+            "local",
+            "redis"
+          ],
+          "default": "local",
+          "description": "PasswordDigest replay-claim storage. 'redis' is required by (and only valid with) nonce.replay_scope = 'shared'; it is what makes replay protection cross-replica. Any RESP-compatible server works."
+        },
+        "redis_url": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[rR][eE][dD][iI][sS][sS]?://[^/?#\\s]+(?:/(?:0|[1-9][0-9]{0,8}|1[0-9]{9}|20[0-9]{8}|21[0-3][0-9]{7}|214[0-6][0-9]{6}|2147[0-3][0-9]{5}|21474[0-7][0-9]{4}|214748[0-2][0-9]{3}|2147483[0-5][0-9]{2}|21474836[0-3][0-9]|214748364[0-7])?)?(?:\\?[^\\s#]*)?(?![\\s\\S])",
+          "description": "Redis connection URL with a redis:// or rediss:// scheme and a non-empty authority/hostname. Must not carry a URL fragment; TLS skip-verify is only FERRUM_TLS_NO_VERIFY. Required when sync_mode is 'redis'."
+        },
+        "redis_tls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable TLS for the Redis connection. CA verification uses gateway-level FERRUM_TLS_CA_BUNDLE_PATH; skip-verify uses FERRUM_TLS_NO_VERIFY."
+        },
+        "redis_key_prefix": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Key prefix for shared replay claims. Must be non-empty when supplied. Defaults to `{FERRUM_NAMESPACE}:soap_ws_security:{plugin-config-id}`, which isolates independent PasswordDigest policies inside a namespace while keeping every replica of one policy claiming against the same keyspace. An explicit prefix is the opt-in for deliberately sharing a keyspace across policies."
+        },
+        "redis_pool_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "default": 4,
+          "description": "Number of multiplexed Redis connections. Must be between 1 and 128."
+        },
+        "redis_connect_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Redis connection timeout in seconds. Must be greater than zero."
+        },
+        "redis_health_check_interval_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Health check ping interval when Redis is unavailable. Must be greater than zero."
+        },
+        "redis_username": {
+          "type": "string",
+          "description": "Redis username for ACL authentication"
+        },
+        "redis_password": {
+          "type": "string",
+          "description": "Redis password"
+        },
+        "timestamp": {
+          "type": "object",
+          "description": "WS-Security Timestamp validation",
+          "additionalProperties": false,
+          "properties": {
+            "require": {
+              "type": "boolean",
+              "default": true,
+              "description": "Require a wsu:Timestamp element in the Security header. This controls whether the element may be ABSENT; a Timestamp that IS present is always validated against max_age_seconds / clock_skew_seconds / Expires, so an out-of-policy Timestamp is never ignored and the PasswordDigest binding always compares against a validated instant."
+            },
+            "max_age_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 300,
+              "minimum": 1,
+              "maximum": 86400,
+              "description": "Maximum age (seconds) of the Created timestamp before rejection. Zero is rejected because it would accept no timestamp at all."
+            },
+            "require_expires": {
+              "type": "boolean",
+              "default": false,
+              "description": "Require an Expires element inside the Timestamp"
+            },
+            "clock_skew_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 300,
+              "minimum": 0,
+              "maximum": 3600,
+              "description": "Clock skew tolerance (seconds) for timestamp validation. Zero is permitted (strictest). The maximum keeps every admitted value inside representable duration arithmetic."
+            }
+          }
+        },
+        "username_token": {
+          "type": "object",
+          "description": "WS-Security UsernameToken authentication. Unknown usernames, wrong\nPasswordText values, and wrong PasswordDigest values share one\ngeneric HTTP 401 body (`{\"error\":\"WS-Security: invalid credentials\"}`)\nand must not disclose whether the principal exists. Lookup misses\nstill perform PasswordText/PasswordDigest verification against\nprocess-local dummy material. Structural token or policy failures\nremain distinct.\n",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable UsernameToken authentication"
+            },
+            "password_type": {
+              "type": "string",
+              "enum": [
+                "PasswordText",
+                "PasswordDigest"
+              ],
+              "default": "PasswordDigest",
+              "description": "Password format. PasswordDigest hashes password with nonce+timestamp; PasswordText sends the password directly (TLS only)."
+            },
+            "credentials": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "\\S"
+                  }
+                }
+              },
+              "description": "Allowed username/password pairs for UsernameToken authentication. Every entry must be an object with a username and password that each contain at least one non-whitespace character; a malformed entry is rejected rather than dropped, and duplicate usernames are rejected because credential selection is first-wins. Values are matched EXACTLY, including any leading or trailing spaces — the gateway compares the credential the client sent byte for byte and never trims it. A `password` of exactly `${FERRUM_PLUGIN_SECRET_<NAME>}` is resolved once at admission from that process environment variable (populated directly or through the _FILE/_VAULT/_AWS/_AZURE/_GCP secret suffixes); a `${...}` reference to any other variable, or an unset, empty, or whitespace-only value, is refused at admission without echoing the name or value, and the variable must be set on every node that constructs the plugin. Required and non-empty when `enabled` is true."
+            },
+            "created_max_age_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 300,
+              "minimum": 1,
+              "maximum": 86400,
+              "description": "Freshness window (seconds) for the UsernameToken's own wsu:Created — the instant hashed into the PasswordDigest, distinct from the outer Timestamp Created. Without it a captured token stays digest-valid forever and only the replay TTL limits resubmission. Zero is rejected. The value validated is byte-for-byte the value fed to the digest."
+            },
+            "created_clock_skew_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 300,
+              "minimum": 0,
+              "maximum": 3600,
+              "description": "Clock skew tolerance (seconds) for the UsernameToken Created freshness window and for the Timestamp Expires comparison. Zero is permitted (strictest)."
+            },
+            "created_max_timestamp_divergence_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 60,
+              "minimum": 0,
+              "maximum": 3600,
+              "description": "Maximum permitted absolute difference between the UsernameToken Created and the outer wsu:Timestamp Created. This binding is what prevents a captured UsernameToken from being paired with a freshly minted outer Timestamp — moving the outer instant no longer moves the inner one, and moving the inner one invalidates the captured digest. Zero is permitted (the two instants must be identical). The UsernameToken Created must also not fall past an outer Expires."
+            },
+            "require_timestamp_binding": {
+              "type": "boolean",
+              "default": true,
+              "description": "Require an outer wsu:Timestamp carrying a valid Created for PasswordDigest requests, so the Timestamp binding cannot be dropped by omitting the element. The outer Timestamp is validated on every request in which it appears — including when timestamp.require is false — so the instant bound against is always an independently validated one."
+            },
+            "remove_credential": {
+              "type": "boolean",
+              "default": false,
+              "description": "Delete the verified `wsse:UsernameToken` — or the whole\n`wsse:Security` header, when the credential is all it carries —\nfrom the message the BACKEND receives, so a reusable PasswordText\nsecret is not handed to every system behind the gateway. The\nauthenticated identity is still published normally\n(`authenticated_identity`,\n`ctx.metadata[\"soap_ws_username\"]`).\n\nOff by default, because a backend may legitimately read the\ntoken. Admission requires `enabled: true` and an explicit\n`password_type: PasswordText`, and refuses the option alongside\nan enabled `x509_signature` or `saml` or an explicit\n`content_type.allow_mtom: true` — rewriting an envelope whose\ncontent a signature covers, or re-framing an MTOM package, is\nrefused rather than done silently.\n\nAt request time a governed envelope that carries an XMLDSIG\n`Signature` is rejected with 400, and a representation whose\nbytes cannot be spliced (a UTF-16 body, an MTOM package) is\nrejected with 415. Neither is forwarded with the credential\nintact. The final-body integrity proof binds the SANITIZED\nrepresentation, so this plugin's own removal is admitted while\nevery other post-validation body mutation still fails closed\nwith 500. Gateway-internal views (access logs, mirrors) may\nstill observe the original buffered body; the option governs the\nbackend-visible request.\n"
+            }
+          }
+        },
+        "x509_signature": {
+          "type": "object",
+          "description": "X.509 certificate signature verification",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable X.509 signature verification"
+            },
+            "trusted_certs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "description": "PEM file paths of trusted signing certificates (matched by SHA-256 fingerprint). A matched certificate is trusted only inside its own notBefore/notAfter window, checked on every request; an expired or not-yet-valid pin is admitted with a warning but its signatures are rejected with 401. Non-string or blank entries are rejected rather than dropped. Required and non-empty when `enabled` is true."
+            },
+            "allowed_algorithms": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "rsa-sha256",
+                  "rsa-sha1"
+                ]
+              },
+              "default": [
+                "rsa-sha256"
+              ],
+              "description": "Allowed XMLDSig signature algorithms. Unsupported values are rejected rather than dropped."
+            },
+            "allowed_digest_algorithms": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "sha256",
+                  "sha1"
+                ]
+              },
+              "default": [
+                "sha256"
+              ],
+              "description": "Allowed XMLDSig `<Reference>` digest algorithms. Tracked\nindependently of `allowed_algorithms` so signature method\nand reference digest can be gated separately — e.g. accept\nrsa-sha256 signatures over sha1 digests (rare but valid)\nwithout also accepting rsa-sha1 signatures. Defaults to\nsha256 only; add `sha1` to allow legacy reference digests.\n"
+            },
+            "require_signed_timestamp": {
+              "type": "boolean",
+              "default": true,
+              "description": "Require a wsu:Timestamp to be PRESENT and covered by the\nsignature. A message with no Timestamp is rejected rather than\npassing vacuously, and pairing this with timestamp.require=false\nis refused at admission as a contradiction.\n"
+            }
+          }
+        },
+        "saml": {
+          "type": "object",
+          "description": "SAML 2.0 assertion validation. The plugin cryptographically verifies\nthe assertion's `<Signature>` element (XMLDSIG) before resolving\nsignature references or trusting assertion claims. Verification\nsteps, in order:\n  1. Locate `<Signature>` inside the assertion (rejected if absent).\n     More than one `<Assertion>` inside the WS-Security block is\n     rejected outright.\n  2. Resolve the signing algorithm and confirm it is in `allowed_signature_algorithms`.\n  3. Match the signing certificate from `KeyInfo/X509Data/X509Certificate`\n     against `trusted_signing_certs` by SHA-256 fingerprint of the full DER\n     (leaf-cert trust — no CA chain validation; operators supply the IdP's\n     actual signing certificate(s) as published in IdP metadata).\n  4. Verify `<SignatureValue>` over exclusive-canonicalized `<SignedInfo>`\n     (`xml-exc-c14n#`, including `InclusiveNamespaces PrefixList`) using the\n     matched cert's RSA public key.\n  5. ONLY THEN verify the single `<Reference>` digest after the supported\n     transform chain (XMLDSIG enveloped-signature followed by Exclusive XML\n     Canonicalization `xml-exc-c14n#`, including `InclusiveNamespaces\n     PrefixList`). The digest algorithm must be in\n     `allowed_digest_algorithms` and the Reference must target the enclosing\n     Assertion ID. Exactly one Reference is supported, so a duplicate cannot\n     re-canonicalize the assertion.\n  6. Validate Issuer (must match `trusted_issuers`), the MANDATORY bounded\n     Conditions window (both NotBefore and NotOnOrAfter required, span capped\n     by `max_assertion_lifetime_seconds`, `clock_skew_seconds` tolerance), the\n     service `audience` on every AudienceRestriction, and every other\n     Conditions child: at most one OneTimeUse and at most one\n     ProxyRestriction are accepted, each standard condition only in its\n     standard shape (an `xsi:type` must resolve to its own standard SAML\n     type; no extension attributes or non-Audience children), and any\n     other condition (a `saml:Condition` extension, a derived or extended\n     standard condition, or a foreign element) makes the assertion\n     indeterminate and is rejected (SAML Core 2.0 section 2.5.1.1) before\n     its id is claimed. Exactly one SubjectConfirmation must qualify by\n     naming `recipient`; a non-qualifying confirmation is skipped, and\n     none or more than one qualifying is rejected.\n  7. Resolve exactly one namespace-correct, nonblank Subject NameID.\n     This happens before replay state is consumed, so an otherwise\n     valid assertion that authenticates nobody fails with 401\n     without burning its assertion id.\n  8. Claim the assertion id for single use in the declared\n     nonce.replay_scope, which is REQUIRED when SAML is enabled. Every\n     accepted assertion is claimed exactly once, so OneTimeUse needs no\n     special case; a replay-backend outage fails closed. Claims are retained\n     for the fixed 93601s horizon, which dominates\n     max_assertion_lifetime_seconds + 2 x clock_skew_seconds. 'process' scope\n     is a single-replica declaration and makes NO cross-replica claim;\n     multi-replica SAML deployments must use 'shared'.\n  9. Publish the Subject NameID as the request principal\n     (an external authenticated_identity, never mapped to a Consumer) and\n     mirror it into `ctx.metadata[\"soap_ws_saml_subject\"]`.\nOn any failure the request is rejected with HTTP 401. Rejections never echo\nthe issuer, audience, recipient, subject, or assertion id. Unsupported\ncanonicalization or transform algorithms fail closed; inclusive c14n,\ncomments, XPath, XSLT, and other XMLDSIG transforms are not supported.\n",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable SAML 2.0 assertion validation."
+            },
+            "trusted_issuers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "description": "SAML Issuer URIs that are accepted as the source of an assertion.\nRequired and non-empty when `enabled` is true. The Issuer string\ninside the signed assertion must match one of these values\nexactly, including any surrounding whitespace — the gateway acts\non the character data the signature covered and never trims it.\n"
+            },
+            "trusted_signing_certs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "description": "PEM file paths of IdP X.509 signing certificates. The cert\npresented inside the assertion's `KeyInfo` must match one of\nthese by SHA-256 fingerprint of the full DER, and is trusted only\ninside its own notBefore/notAfter window (checked on every\nrequest; an out-of-window pin is admitted with a warning but its\nassertions are rejected with 401). Required and non-empty when\n`enabled` is true.\n\nRotating an IdP signing cert does NOT require a gateway restart:\nthe trust list is read when the plugin generation is\nconstructed, so changing this list and applying a configuration\nreload (file-mode SIGHUP, a database/CP change, a DP push)\ninstalls the new trust material in place — the retired signer is\nrefused from the first request served by the new generation, and\nthe process, its listeners, and its connections are untouched.\nWhat is NOT detected is replacing a PEM's CONTENTS at an\nunchanged path: nothing watches the file, so the reload must\nchange the configuration (typically the path list) for the new\nmaterial to be read.\n"
+            },
+            "allowed_signature_algorithms": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "rsa-sha256",
+                  "rsa-sha1"
+                ]
+              },
+              "default": [
+                "rsa-sha256"
+              ],
+              "description": "XMLDSig signature algorithms accepted on SAML assertions.\nDefaults to RSA-SHA256 only. Adding `rsa-sha1` accepts legacy\nIdPs that still emit SHA-1 signatures. Tracked independently\nof `allowed_digest_algorithms`.\n"
+            },
+            "allowed_digest_algorithms": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "sha256",
+                  "sha1"
+                ]
+              },
+              "default": [
+                "sha256"
+              ],
+              "description": "XMLDSig `<Reference>` digest algorithms accepted inside the\nassertion's SignedInfo. Defaults to SHA-256 only. Add `sha1`\nonly to interoperate with IdPs that still emit SHA-1 digests.\nIndependent of `allowed_signature_algorithms` so an operator\ncan choose any combination.\n"
+            },
+            "audience": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S",
+              "description": "Required when `enabled` is true. Every\n`Conditions/AudienceRestriction` in the assertion must name this\nexact value (each restriction is a conjunct). Without it, an\nassertion minted by the same trusted issuer for another relying\nparty is accepted here.\n"
+            },
+            "recipient": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S",
+              "description": "Required when `enabled` is true. Matched against\n`Subject/SubjectConfirmation/SubjectConfirmationData/@Recipient`\nso a captured assertion cannot be presented to a different\nendpoint.\n"
+            },
+            "max_assertion_lifetime_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 300,
+              "minimum": 1,
+              "maximum": 86400,
+              "description": "Maximum permitted `Conditions/@NotOnOrAfter - @NotBefore` span.\nBoth instants are mandatory and the window must be non-empty,\nso an assertion with absent or unbounded Conditions is refused\nrather than becoming an indefinite bearer credential.\n"
+            },
+            "allowed_subject_confirmation_methods": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "urn:oasis:names:tc:SAML:2.0:cm:bearer"
+                ]
+              },
+              "default": [
+                "urn:oasis:names:tc:SAML:2.0:cm:bearer"
+              ],
+              "description": "Accepted SubjectConfirmation @Method URIs. Only\n'urn:oasis:names:tc:SAML:2.0:cm:bearer' is implemented;\n'urn:oasis:names:tc:SAML:2.0:cm:holder-of-key' is rejected at\nadmission because the confirmation key is not bound to the\nmessage signature. Exactly one acceptable SubjectConfirmation\nmust be present, its SubjectConfirmationData must name\n`recipient`, carry its own NotOnOrAfter, honour NotBefore when\npresent, and omit InResponseTo.\n"
+            },
+            "clock_skew_seconds": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 300,
+              "minimum": 0,
+              "maximum": 3600,
+              "description": "Clock skew tolerance (seconds) for SAML NotBefore / NotOnOrAfter. Zero is permitted (strictest); the maximum keeps every admitted value inside representable duration arithmetic."
+            }
+          }
+        },
+        "nonce": {
+          "type": "object",
+          "description": "Replay protection cache. A nonce is retained only after its\nPasswordDigest verifies, and the cache is\nbounded on three independent axes: per-nonce encoded length,\nretained entries, and retained key UTF-8 payload bytes counted once\nper shared immutable key allocation. An exact ordered age index\nprovides O(log n) expiry operations without a lookup-map scan or\nstale queue. Capacity maintenance reclaims only entries already\npast the fixed retention horizon and at most 64 of them per\nrequest; a nonce inside it is never evicted. If that bounded\nreclamation cannot make room the request fails closed (HTTP 401)\nrather than accepting a nonce whose replay window cannot be recorded\nor unprotecting one that was already claimed. This is the only\ncanonical shape; there is no `nonce_replay_protection` alias.\n\nAccepted SAML assertion-id claims share this same bounded state for\nthe same fixed horizon, under a separate internal claim-kind\nnamespace so an attacker-chosen nonce can never burn an assertion\nclaim or the reverse. They count against max_cache_size and\nmax_total_cache_bytes (a fixed 64-byte SHA-256 hex claim key each),\nso a SAML-enabled process scope must be sized for peak accepted\nassertion rate as well as peak PasswordDigest rate.\n\nreplay_scope declares where those claims live and is REQUIRED when\nusername_token is enabled with password_type PasswordDigest, and\nwhenever saml is enabled. It has no default because a gateway\ncannot observe its own replica count.\nThe entry/byte caps and bounded expiry maintenance described above\napply to replay_scope=process; under replay_scope=shared the bounds\nthat apply are Redis's own memory policy plus the fixed expiry on\neach claim key, and max_cache_size / max_total_cache_bytes are\ninert. The encoded-length ceiling applies on both paths.\n\nClaim retention is FIXED at 93601 seconds (~26 h) on both paths and\nis not configurable: it is\nmax created_max_age_seconds (86400) + 2 × max\ncreated_clock_skew_seconds (3600) + 1, the widest span over which\nany configuration this schema admits can accept an unchanged\nUsernameToken. Retention derived from the *configured* window is not\nsufficient, because replay state outlives the generation that wrote\nit: a later reload may widen created_max_age_seconds /\ncreated_clock_skew_seconds after the shorter retention has already\nelapsed, and the claim cannot then be resurrected in either scope\n(a process entry may already have been reclaimed or refreshed, and\nRedis SET NX cannot extend a key it finds present). Retaining every\nclaim for the schema-wide maximum makes any later admitted widening\nsafe with no rollout ordering, drain window, or operator procedure.\nThere is no cache_ttl_seconds field; it was removed rather than\nredefined, and supplying it fails admission as an unknown key.\n",
+          "additionalProperties": false,
+          "properties": {
+            "replay_scope": {
+              "type": "string",
+              "enum": [
+                "process",
+                "shared"
+              ],
+              "description": "Where PasswordDigest nonce and SAML assertion-id replay claims live. REQUIRED when username_token.enabled is true and password_type is PasswordDigest, and whenever saml.enabled is true; there is no default. \"process\" registers state under a stable {namespace}|{plugin-config-id} scope so a reload generation inherits the previous generation's claims instead of starting from an empty cache — it is explicitly NOT cross-replica protection, and selecting it asserts a single-replica deployment. Process-scope claims are lost on process restart, crash, or reschedule; a captured PasswordDigest token still inside its Created window can then be accepted again. Reload survival is not restart survival. \"shared\" claims each nonce with one atomic Redis SET NX EX so exactly one request across all replicas wins a nonce inside its TTL; it requires sync_mode=redis and a redis_url, and the key is SHA-256(nonce) in hex so the nonce never reaches a Redis keyspace, MONITOR, SLOWLOG, or client error log. A shared-backend outage fails closed with HTTP 401 (failure class nonce_shared_backend_unavailable); there is no degrade-to-local option because a per-replica fallback would reinstate the cross-replica bypass. Recovery is automatic: any error that marks the shared client unavailable — connect, DNS, a hostname that currently resolves to an egress-denied address, or a transient command error — also arms the background recovery checker, which restores enforcement within redis_health_check_interval_seconds without a reload (a literal-IP egress-policy denial is the exception and is a configuration fix; hostname denials re-screen because DNS answers can change). Because SET NX cannot tell an evicted claim from an unused nonce or assertion, every shared-replay connection (first dial and recovery probe) runs INFO MEMORY and must prove maxmemory 0 or maxmemory_policy noeviction before it carries a claim: a proven evicting policy is terminal for the plugin generation, an unprovable answer is a recoverable outage, and both fail closed like any other shared-backend outage. Durability across failover is Redis's own: run the replay keyspace with consistent failover, since a lost claim key makes its nonce claimable again. Admission enforces the pairing in both directions: shared without sync_mode=redis is rejected, and sync_mode=redis without shared is rejected."
+            },
+            "max_cache_size": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 100000,
+              "minimum": 1,
+              "maximum": 1000000,
+              "description": "Maximum retained replay entries — PasswordDigest nonces plus accepted SAML assertion-id claims (replay_scope=process only). Zero is rejected because it would make replay detection inert. Capacity maintenance uses an ordered age index and reclaims at most 64 entries per request, and only entries already past the fixed 93601-second retention horizon. A nonce inside that horizon is never evicted, so a claim that cannot be recorded is rejected with 401 instead of admitting an unprotected nonce. Size this (and max_total_cache_bytes) for peak authenticated PasswordDigest rate — plus peak accepted SAML assertion rate when saml is enabled — × 93601 s, roughly 1 claim/second sustained at the default and about 10/second at the 1000000 ceiling. Higher sustained rates need replay_scope=shared, where retention is Redis's cost rather than the gateway's."
+            },
+            "max_encoded_length": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 512,
+              "minimum": 16,
+              "maximum": 4096,
+              "description": "Maximum length of the encoded wsse:Nonce value, enforced before Base64 decoding and before any cache insertion so an oversized nonce is never decoded or retained."
+            },
+            "max_total_cache_bytes": {
+              "type": "integer",
+              "format": "uint64",
+              "default": 67108864,
+              "minimum": 4096,
+              "maximum": 1073741824,
+              "description": "Maximum total retained nonce-key UTF-8 payload bytes, counted once per logical nonce's immutable allocation shared by the lookup map and age index. Hash/tree node and reference-count control-block overhead is excluded and remains bounded by max_cache_size. Must be at least max_encoded_length. Like max_cache_size this is a fail-closed cap: exhausting it rejects the claim with 401 rather than evicting a nonce that is still inside its retention window."
+            }
+          }
+        }
+      }
+    }
+  }
+}

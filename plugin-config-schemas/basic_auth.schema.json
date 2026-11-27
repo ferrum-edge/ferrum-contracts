@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/basic_auth.schema.json",
+  "title": "basic_auth plugin config",
+  "description": "The `config` object of an enabled `basic_auth` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component BasicAuthConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "basic_auth",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/BasicAuthConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/BasicAuthConfig",
+  "$defs": {
+    "BasicAuthConfig": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "description": "Plugin: basic_auth — HTTP Basic credentials verified against HMAC-SHA256 password hashes. The property set is CLOSED: `null` and an empty object both select the defaults, and no other key is accepted. (The enclosing PluginConfig `config` property is independently restricted to objects, so `null` is only reachable when this component is validated on its own.)",
+      "properties": {
+        "hide_credentials": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remove the `Authorization` field carrying the RFC 7617 `Basic` scheme before forwarding an authenticated request upstream, including when another mechanism wins a multi-auth chain and this credential merely rode along. Basic encodes a reusable password in reversible Base64, so it is removed by default. Only the `Basic` scheme is removed; a `Bearer` or other scheme another policy needs is left in place. Disable only when a legacy backend explicitly requires the reusable credential. A request that sends more than one `Authorization` credential (repeated field lines, or a second credential after a top-level comma) never reaches this plugin: the ingress protocol guard rejects it with 400 on every protocol."
+        }
+      }
+    }
+  }
+}

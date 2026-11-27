@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/ws_logging.schema.json",
+  "title": "ws_logging plugin config",
+  "description": "The `config` object of an enabled `ws_logging` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component WsLoggingConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "ws_logging",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/WsLoggingConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/WsLoggingConfig",
+  "$defs": {
+    "SummaryLogSchema": {
+      "type": "object",
+      "description": "Customizable output schema for transaction-log JSON / line protocol. Rename keys, drop fields, reorder, inject static stamping, emit derived fields, flatten metadata. Metadata redaction always applies on every code path — sensitive substrings (`authorization`, `cookie`, `password`, `token`, …) cannot be introduced via `static_fields` or `derived_fields` (rejected at construction). This object, each `derived_fields` entry, and `metadata` are strict fixed shapes: unknown keys are rejected with a nested path. HTTP summaries include the normalized terminal `grpc_status` field (separate from `response_status_code`) when the request is gRPC. It can be renamed, omitted, or ordered like every other native field. `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reuse this same shape against their own record families; whatever a family cannot express (`summary_type`, `timestamp_format`, `metadata`, `order`, or a derived kind with no source field) is rejected at construction with a plugin- and field-specific diagnostic. Constraints this document cannot express are still enforced at construction and are NOT relaxations of the runtime contract: `omit` / `rename` / `order` names must resolve against the record family's field inventory for the selected `summary_type`; a field may not be both omitted and renamed; the combined native, static, and derived output keys must be unique; `order` must list every non-extension output key unless it contains `\"*\"`; and `rename` targets, `static_fields` keys (including nested keys) and `derived_fields` names may not match a sensitive-data substring or a credential-class name (for example `session_id`, `client_assertion`, `gpg_passphrase`, `private_rsa_key`; see docs/log_schema.md), while a `static_fields` string value that looks like a literal HTTP auth credential is refused. Under `metadata.mode: flatten`, `omit` may not list `metadata` and `rename` may not rename it; under `metadata.mode: omit`, `rename` may not rename it (those directives would otherwise be silently ignored). The whole `static_fields` object serialized as JSON (escaped keys and values, quotes, separators, braces) must be at most 16384 bytes and a static value may nest at most 8 objects/arrays deep. `transforms` keys must be fields of the selected `summary_type`, may not also be omitted, `ip_prefix` applies only to `client_ip` / `backend_resolved_ip`, and a `hash` `secret_ref` must resolve to a set `FERRUM_PLUGIN_SECRET_<NAME>` value of at least 32 bytes. See docs/log_schema.md.",
+      "additionalProperties": false,
+      "properties": {
+        "summary_type": {
+          "type": "string",
+          "enum": [
+            "http",
+            "stream",
+            "both"
+          ],
+          "default": "both",
+          "description": "Which summary type(s) this schema applies to. Summaries of the other type fall back to native serialization (the schema only customizes types it claims to handle)."
+        },
+        "omit": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Native field names to drop from output."
+        },
+        "rename": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Map of native field name -> output key (at most 128 bytes)."
+        },
+        "order": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Explicit output order, by output key. May contain `\"*\"` once as a wildcard for \"every unlisted entry in natural order.\" Without `\"*\"`, every field must be listed. Entries are unique — a repeated output key (or a second `\"*\"`) is rejected."
+        },
+        "static_fields": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "description": "Literal JSON values injected at top level. Keys / nested keys matching sensitive substrings or credential-class names (for example `session_id`) are rejected at compile time. A `null` value is rejected — use `omit` to drop a field. At most 64 entries; keys are at most 128 bytes; the whole object serialized as JSON (escaped keys and values included) is at most 16384 bytes; a value nests at most 8 objects/arrays deep. Static fields are stamped into every record, so these bounds are a per-record cost cap."
+        },
+        "derived_fields": {
+          "type": "array",
+          "maxItems": 32,
+          "description": "Computed values; emitted alongside native fields.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Output key for the derived value."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "status_class",
+                  "backend_host",
+                  "summary_kind",
+                  "outcome"
+                ],
+                "description": "`status_class`: `\"1xx\"`–`\"5xx\"` from `response_status_code` (stream: `\"none\"`). `backend_host`: hostname from `backend_target` (port stripped, IPv6 brackets honored). `summary_kind`: `\"http\"`, `\"stream\"`, or `\"websocket_disconnect\"` (the last only for `ws_logging` WebSocket disconnect entries). `outcome`: `\"ok\"` / `\"error\"`."
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "How to render the `metadata` map.",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "nested",
+                "omit",
+                "flatten"
+              ],
+              "default": "nested"
+            },
+            "prefix": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[^\\x00-\\x1F\\x7F-\\x9F]*$",
+              "description": "Prepended to each metadata key when promoted to top-level (e.g. `\"meta_\"`); only `flatten` reads it. Control characters are rejected. The type and the control-character restriction are validated in every mode, so a `nested` or `omit` schema cannot carry a value that would only start failing once the mode is switched to `flatten`."
+            },
+            "on_collision": {
+              "type": "string",
+              "enum": [
+                "skip",
+                "overwrite"
+              ],
+              "default": "skip",
+              "description": "Behavior when a metadata key collides with an already-emitted field; only `flatten` reads it. `skip` keeps the existing value; `overwrite` replaces the colliding field's value in place with the (redacted) metadata value, so every key appears exactly once in the record. Validated in every mode, like `prefix`."
+            }
+          }
+        },
+        "timestamp_format": {
+          "type": "string",
+          "enum": [
+            "rfc3339",
+            "epoch_ms",
+            "epoch_s"
+          ],
+          "default": "rfc3339",
+          "description": "Conversion applied to timestamp string fields (`timestamp_received`, `timestamp_connected`, `timestamp_disconnected`). Parse failures fall back to the raw RFC3339 string."
+        },
+        "transforms": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "client_ip",
+              "consumer_username",
+              "request_path",
+              "request_user_agent",
+              "backend_target",
+              "backend_resolved_ip",
+              "sni_hostname"
+            ]
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "max_bytes"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "truncate"
+                  },
+                  "max_bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65536
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "ip_prefix"
+                  },
+                  "ipv4_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32,
+                    "default": 24
+                  },
+                  "ipv6_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 128,
+                    "default": 48
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "secret_ref"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "hash"
+                  },
+                  "secret_ref": {
+                    "type": "string",
+                    "pattern": "^\\$\\{FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*\\}$"
+                  }
+                }
+              }
+            ]
+          },
+          "description": "Per-field value transforms, keyed by native source field name (before `rename`), applied when the field is emitted: `truncate` keeps at most `max_bytes` bytes (cut on a UTF-8 boundary); `ip_prefix` keeps the network prefix of an IP address (`ipv4_bits` default 24, `ipv6_bits` default 48; IPv4-mapped IPv6 is masked as IPv4; a value that is not an address is emitted as `null`); `hash` replaces the value with the lowercase-hex keyed HMAC-SHA-256 under the secret named by `secret_ref`, which must be a `${FERRUM_PLUGIN_SECRET_<NAME>}` reference resolved at construction (literal secrets are refused; the value must be at least 32 bytes). Only the transaction-summary loggers support `transforms`; `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reject the key, and statsd ignores it. Kafka partition keys and Loki labels read typed fields and are not transformed."
+        }
+      }
+    },
+    "WsLoggingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: ws_logging — Sends transaction logs to a WebSocket endpoint in batches with bounded establishment/write timeouts, per-entry and queued-byte admission budgets, and structurally redacted endpoint diagnostics. Unknown top-level keys are rejected. `schema` and `schema_ref` are mutually exclusive. `buffer_max_bytes` must be at least 2 * (max_entry_bytes + 1) at runtime; this schema encodes the absolute floor (2050) but cannot express that sibling-field arithmetic.",
+      "required": [
+        "endpoint_url"
+      ],
+      "allOf": [
+        {
+          "not": {
+            "required": [
+              "schema",
+              "schema_ref"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "endpoint_url": {
+          "type": "string",
+          "minLength": 1,
+          "format": "uri",
+          "pattern": "^[wW][sS][sS]?://(?![^/?#]*@)(?:\\[[^\\]\\s]+\\]|[^/?#:\\s]+)(?::0*(?:[1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?(?:[/?][^#]*)?$",
+          "description": "WebSocket URL (ws:// or wss://) to send transaction logs to. Must include a hostname, an explicit port (if any) of 1-65535, and no URL user information or fragment. A query parameter whose decoded name marks a credential is refused at runtime: exactly `jwt`, `pass`, `pwd`, `sid`, `sig`, or `signature`; any name ending in `key`; or any name containing `access_key`, `accesskey`, `api-key`, `api_key`, `apikey`, `assertion`, `auth` (so also `authorization`, `x-auth`), `bearer`, `cookie`, `credential`, `passphrase`, `passwd`, `password`, `secret`, `session`, or `token` (case-insensitive; a name still percent-encoded after one decode is refused too). The screen is a name heuristic; send collector credentials in `custom_headers`. Operational diagnostics always use a structurally redacted form (`scheme://host[:port]/redacted`). Malformed or non-WebSocket schemes are rejected at config load time. The constructor canonicalizes the value (lowercase scheme, percent-encoded path) before the collector handshake so admitted representations match the tungstenite request URI."
+        },
+        "custom_headers": {
+          "type": "object",
+          "maxProperties": 32,
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Header name to string value pairs added to every WebSocket upgrade request; the supported channel for collector credentials. A value may embed one `${FERRUM_PLUGIN_SECRET_<NAME>}` reference. Admission checks only its shape and refuses any other variable, so a control plane needs no collector credential; the serving node reads the variable when it starts the plugin generation; an unset/empty value rejects that config reload or aborts gateway startup. Handshake-owned headers (`Host`, `Connection`, `Upgrade`, `Sec-WebSocket-Key`, `Sec-WebSocket-Version`, `Sec-WebSocket-Extensions`, `Sec-WebSocket-Accept`, `Content-Length`, `Transfer-Encoding`, `TE`, `Trailer`, `Keep-Alive`, `Proxy-Connection`, `Expect`), case-insensitive duplicates, and invalid names or values are refused. Values are never logged and are redacted in admin API projections."
+        },
+        "inbound_message_policy": {
+          "type": "string",
+          "enum": [
+            "invalidate",
+            "ignore"
+          ],
+          "default": "invalidate",
+          "description": "`invalidate` closes the connection on a collector Text/Binary frame and reconnects for the next batch. `ignore` discards such frames (bounded to 64 KiB per message) and keeps the connection, for collectors that send greetings or per-batch acknowledgements. Close frames and read errors invalidate the connection under either policy."
+        },
+        "reconnect_delay_ms": {
+          "type": "integer",
+          "default": 5000,
+          "minimum": 1,
+          "maximum": 60000,
+          "description": "Delay in milliseconds before reconnecting after connection failure"
+        },
+        "connect_timeout_ms": {
+          "type": "integer",
+          "default": 5000,
+          "minimum": 100,
+          "maximum": 60000,
+          "description": "Bound covering DNS, TCP, TLS, and WebSocket Upgrade establishment. On timeout the partial transport is dropped and retry/reconnect advances. When the endpoint resolves to several addresses, each but the last may spend at most an equal share of the remaining budget connecting."
+        },
+        "write_timeout_ms": {
+          "type": "integer",
+          "default": 5000,
+          "minimum": 100,
+          "maximum": 60000,
+          "description": "Bound covering batch write/flush progress on an established socket. On timeout the complete connection (writer and drain task) is invalidated before retry/reconnect. Delivery is at-least-once."
+        },
+        "batch_size": {
+          "type": "integer",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "Number of entries to buffer before sending a batch"
+        },
+        "flush_interval_ms": {
+          "type": "integer",
+          "default": 1000,
+          "minimum": 100,
+          "maximum": 600000,
+          "description": "Max milliseconds before flushing a partial batch"
+        },
+        "max_retries": {
+          "type": "integer",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Retry attempts on failed batch delivery"
+        },
+        "retry_delay_ms": {
+          "type": "integer",
+          "default": 1000,
+          "minimum": 1,
+          "maximum": 60000,
+          "description": "Delay in milliseconds between retry attempts"
+        },
+        "buffer_capacity": {
+          "type": "integer",
+          "default": 10000,
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Channel slot capacity. Hot-path hooks reserve a slot before serialization; new entries are dropped when full."
+        },
+        "max_entry_bytes": {
+          "type": "integer",
+          "default": 65536,
+          "minimum": 1024,
+          "maximum": 1048576,
+          "description": "Maximum serialized size of one admitted log record"
+        },
+        "buffer_max_bytes": {
+          "type": "integer",
+          "default": 16777216,
+          "minimum": 2050,
+          "maximum": 268435456,
+          "description": "Aggregate serialized-content budget across queued records, contiguous batch assembly, and retries. Admission conservatively reserves two copies plus JSON-array framing, so this value must be greater than or equal to 2 * (max_entry_bytes + 1). Runtime validation enforces that sibling-field lower bound; this schema encodes only the absolute floor (2050) when max_entry_bytes is at its minimum."
+        },
+        "schema": {
+          "$ref": "#/$defs/SummaryLogSchema"
+        },
+        "schema_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of a schema registered by a `transaction_log_schema` plugin. Mutually exclusive with `schema`. WebSocket disconnect entries are serialized through the schema as well (`rename`, `omit`, `order`, `static_fields`, `derived_fields`, and `metadata` all apply). Because `ws_logging` opts into the WebSocket-disconnect capability, the named schema is recompiled under that capability at resolve time, so the WebSocket-disconnect native fields (`event`, `frames_client_to_backend`, `frames_backend_to_client`, `bytes_client_to_backend`, `bytes_backend_to_client`, `timestamp_connected`, `timestamp_disconnected`, `direction`, `io_side`, `connection_id`, `handshake_status_code`, …) are available in addition to the shared HTTP fields (`http_method` and `request_path` carry the upgrade handshake on disconnect entries). See docs/log_schema.md."
+        }
+      }
+    }
+  }
+}

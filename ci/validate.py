@@ -64,6 +64,13 @@ Checks, in order:
    The download refuses redirects and stops at MAX_OPENAPI_BYTES, so an
    oversized response fails before it is buffered whole or hashed;
    --openapi applies the same cap.
+9. Standalone plugin config schemas: plugin-config-schemas/ holds exactly
+   one <plugin>.schema.json per catalog plugin with a config_schema, each
+   valid against the JSON Schema 2020-12 meta-schema, with the `$id` and
+   `x-generated` (plugin, pointer, and the catalog's config_schema_document)
+   the generator writes. With --openapi or --fetch-openapi, every file must
+   also equal what ci/plugin_config_schemas.py generates from that pinned
+   openapi.yaml, so re-pinning the file without regenerating fails.
 
 Exit status is 0 when every check passes and 1 otherwise. Only the Python
 standard library and the pinned packages in ci/requirements.txt are used.
@@ -79,8 +86,18 @@ import sys
 import urllib.request
 from pathlib import Path
 
+import importlib.util
+
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
+
+# The stdlib-only generator of plugin-config-schemas/ (run with -I, so it is
+# loaded by path rather than from sys.path).
+_GENERATOR_SPEC = importlib.util.spec_from_file_location(
+    "plugin_config_schemas", Path(__file__).resolve().parent / "plugin_config_schemas.py"
+)
+plugin_config_schemas = importlib.util.module_from_spec(_GENERATOR_SPEC)
+_GENERATOR_SPEC.loader.exec_module(plugin_config_schemas)
 
 BASE = "https://github.com/ferrum-edge/ferrum-contracts/schemas"
 META = "https://json-schema.org/draft/2020-12/schema"
@@ -1014,6 +1031,100 @@ def mirroring_major(versions: dict[int, dict]) -> int | None:
     return max(implemented) if implemented else None
 
 
+def check_plugin_config_schema_files(root: Path, vocabularies: dict[str, dict], report: Report) -> None:
+    """plugin-config-schemas/ matches the catalog without the openapi.yaml (step 9).
+
+    Every catalog plugin with a config_schema has exactly one generated
+    document, which is a valid JSON Schema 2020-12 schema whose `$id`,
+    `x-generated.plugin`, `x-generated.source` and the catalog's
+    config_required_when_enabled / scope_constraint are what the generator
+    writes for the catalog as it stands. A catalog re-pin without
+    regeneration therefore fails even offline.
+    """
+    catalog = vocabularies.get("plugin-catalog")
+    output = plugin_config_schemas.OUTPUT_DIR
+    if not catalog:
+        report.fail(output, "plugin-catalog is missing, so the generated schemas cannot be checked")
+        return
+    document = catalog["config_schema_document"]
+    expected = {
+        p["name"]: p["config_schema"] for p in catalog["plugins"] if p.get("config_schema")
+    }
+    directory = root / output
+    present = (
+        {path.name for path in directory.iterdir() if path.name != "README.md"}
+        if directory.is_dir()
+        else set()
+    )
+    wanted = {f"{name}.schema.json" for name in expected}
+    for name in sorted(wanted - present):
+        report.fail(f"{output}/{name}", f"missing; run {plugin_config_schemas.GENERATOR} --write")
+    for name in sorted(present - wanted):
+        report.fail(f"{output}/{name}", "not a catalog plugin with a config_schema; remove it")
+    for name in sorted(wanted & present):
+        plugin = name.removesuffix(".schema.json")
+        config = expected[plugin]
+        path = directory / name
+        doc = load_json(path, report)
+        if doc is None:
+            continue
+        source = {
+            "repo": document["repo"],
+            "ref": document["ref"],
+            "commit": document["commit"],
+            "path": document["path"],
+            "sha256": document["sha256"],
+            "pointer": config["pointer"],
+        }
+        generated = doc.get("x-generated") if isinstance(doc, dict) else None
+        problems = []
+        if not isinstance(generated, dict):
+            problems.append("x-generated is missing")
+        else:
+            if generated.get("plugin") != plugin:
+                problems.append(f"x-generated.plugin must be {plugin!r}")
+            if generated.get("source") != source:
+                problems.append(
+                    "x-generated.source differs from the catalog's config_schema_document and "
+                    f"pointer; run {plugin_config_schemas.GENERATOR} --write"
+                )
+            if generated.get("config_required_when_enabled") != config.get(
+                "config_required_when_enabled", False
+            ) or generated.get("scope_constraint") != config.get("scope_constraint"):
+                problems.append("x-generated config_required_when_enabled/scope_constraint differ from the catalog")
+        if doc.get("$id") != f"{plugin_config_schemas.ID_BASE}/{name}":
+            problems.append(f"$id must be {plugin_config_schemas.ID_BASE}/{name}")
+        if doc.get("$schema") != plugin_config_schemas.SCHEMA_DIALECT:
+            problems.append(f"$schema must be {plugin_config_schemas.SCHEMA_DIALECT}")
+        try:
+            Draft202012Validator.check_schema(doc)
+        except Exception as exc:  # jsonschema.SchemaError and friends
+            problems.append(f"not a valid JSON Schema 2020-12 document: {exc}")
+        for problem in problems:
+            report.fail(path, problem)
+        if not problems:
+            report.ok()
+
+
+def check_plugin_config_schema_generation(
+    root: Path, label: str, data: bytes, vocabularies: dict[str, dict], report: Report
+) -> None:
+    """Every generated file equals the generator output for the pinned openapi.yaml (step 9)."""
+    catalog = vocabularies.get("plugin-catalog")
+    if not catalog:
+        return
+    try:
+        files = plugin_config_schemas.build(catalog, data)
+    except ValueError as exc:  # YamlError is a ValueError
+        report.fail(label, f"plugin config schema generation failed: {exc}")
+        return
+    problems = plugin_config_schemas.compare(root, files)
+    for problem in problems:
+        report.fail(plugin_config_schemas.OUTPUT_DIR, problem)
+    if not problems:
+        report.ok()
+
+
 def check_copied_values(schemas, vocabularies: dict[str, dict], report: Report) -> None:
     """Values a schema copies from a vocabulary must match it exactly.
 
@@ -1413,6 +1524,8 @@ def main() -> int:
     check_vocabulary_consistency(vocabularies, report)
     check_main_branch_delta(vocabularies, report)
     check_copied_values(schemas, vocabularies, report)
+    print("plugin config schemas")
+    check_plugin_config_schema_files(root, vocabularies, report)
     print("qualification cases")
     check_qualifications(root, schemas, registry, report)
     if args.openapi or args.fetch_openapi:
@@ -1428,6 +1541,8 @@ def main() -> int:
             data, label = fetch_openapi(vocabularies, report), "pinned openapi.yaml"
         if data is not None:
             check_openapi(label, data, vocabularies, report)
+            print("generated plugin config schemas")
+            check_plugin_config_schema_generation(root, label, data, vocabularies, report)
 
     if report.errors:
         print(f"\n{len(report.errors)} problem(s):", file=sys.stderr)

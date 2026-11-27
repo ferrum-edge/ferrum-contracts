@@ -434,6 +434,39 @@ class MainBranchDeltaTests(unittest.TestCase):
                 self.assertIsNone(validate.first_error(validate.validator(schema, registry), doc))
 
 
+class PluginConfigSchemaFileTests(unittest.TestCase):
+    """plugin-config-schemas/ matches the catalog offline: one valid 2020-12
+    document per plugin, carrying the catalog's pin."""
+
+    def setUp(self) -> None:
+        self.catalog = json.loads((ROOT / "vocabularies" / "plugin-catalog.json").read_text(encoding="utf-8"))
+
+    def check(self, catalog: dict) -> list[str]:
+        report = validate.Report()
+        validate.check_plugin_config_schema_files(ROOT, {"plugin-catalog": catalog}, report)
+        return report.errors
+
+    def test_the_repository_files_pass(self) -> None:
+        self.assertEqual(self.check(self.catalog), [])
+
+    def test_a_re_pin_without_regeneration_fails_every_file(self) -> None:
+        catalog = json.loads(json.dumps(self.catalog))
+        catalog["config_schema_document"]["sha256"] = "0" * 64
+        errors = self.check(catalog)
+        self.assertEqual(len(errors), len(catalog["plugins"]), errors[:3])
+        self.assertTrue(all("x-generated.source differs" in e for e in errors))
+
+    def test_a_missing_or_extra_plugin_fails(self) -> None:
+        catalog = json.loads(json.dumps(self.catalog))
+        removed = catalog["plugins"].pop(0)
+        added = dict(removed, name="zz_new_plugin")
+        catalog["plugins"].append(added)
+        errors = self.check(catalog)
+        self.assertEqual(len(errors), 2, errors)
+        self.assertTrue(any("zz_new_plugin.schema.json: missing" in e for e in errors))
+        self.assertTrue(any(f"{removed['name']}.schema.json: not a catalog plugin" in e for e in errors))
+
+
 class VocabularyInstanceTests(unittest.TestCase):
     """Every retained major of a vocabulary schema names its vocabulary file."""
 

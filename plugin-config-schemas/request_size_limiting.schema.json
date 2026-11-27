@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/request_size_limiting.schema.json",
+  "title": "request_size_limiting plugin config",
+  "description": "The `config` object of an enabled `request_size_limiting` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component RequestSizeLimitingConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "request_size_limiting",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/RequestSizeLimitingConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/RequestSizeLimitingConfig",
+  "$defs": {
+    "RequestSizeLimitingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: request_size_limiting — Per-proxy request body size limits.\nRejects oversized requests with HTTP 413 in three places: an early\nContent-Length fast path (`on_request_received`), a buffered-body\ncheck when another plugin already loaded the body (`before_proxy`),\nand a final post-transform check before forwarding to the backend\n(`on_final_request_body`).\n`max_bytes` is additionally published to the proxy core as the effective\nstreaming/buffering ceiling, so unbuffered H1/H2, H3, and streaming-gRPC\nuploads (chunked or unknown-length) are bounded at this route limit\nbefore any byte is forwarded or retained. The effective bound is the\nstrictest active (nonzero) value of this limit and\nFERRUM_MAX_REQUEST_BODY_SIZE_BYTES; a global limit of 0 means unlimited\nand does not disable an active route limit, and multiple instances\ncompose to their minimum.\nRepeated identical Content-Length values (RFC 9110 §8.6, which arrive\ncomma-folded in plugin-facing header maps) are parsed per member and\ncompared against the limit. A declared length that cannot be reduced to\none agreed value fails closed with HTTP 400 and\n`{\"error\":\"Request Content-Length is ambiguous\"}`.\nThe ceiling applies to every method: an HTTP/2 GET, HEAD, or OPTIONS\nrequest carrying DATA without Content-Length is forwarded through the\nsize-limited adapter, not replaced by an empty backend body (residual:\nan HTTPS backend with HTTP/2 enabled whose target is not yet\ncapability-classified can negotiate HTTP/1.1 via ALPN and send an\nunknown-length GET/HEAD bodyless until classified; pool warmup,\nFERRUM_POOL_WARMUP_ENABLED, classifies targets up front).\nEvery 413 for this policy, from any plugin hook or from the proxy core's\nstreaming overrun, carries the one shared body\n`{\"error\":\"Request body exceeds maximum size\"}` without the limit. A\nContent-Length or buffered-body refusal by the plugin records\n`request_size_limiting.reason`, `request_size_limiting.instance` (the\nplugin-config id), `request_size_limiting.limit_bytes`, and (except for\nan ambiguous Content-Length) `request_size_limiting.observed_bytes` in\nrequest metadata. A final-body refusal records them only when its hook\nreceives a request context, on any protocol: always on the native\nHTTP/3 preparation and HTTP/3 bridge paths, and elsewhere only when\nanother plugin on the route requests the final-body context. A\nstreaming overrun refused by the proxy core records none of them.\n",
+      "required": [
+        "max_bytes"
+      ],
+      "properties": {
+        "max_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Maximum allowed request body size in bytes. Required and must be a positive JSON integer — the gateway rejects plugin creation when it is missing or null, 0, negative, fractional or in exponent form (for example 1048576.0), or not a number (for example \"1048576\"), with a diagnostic naming that fault class."
+        }
+      }
+    }
+  }
+}

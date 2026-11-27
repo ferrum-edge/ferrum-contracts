@@ -1,0 +1,413 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/tcp_logging.schema.json",
+  "title": "tcp_logging plugin config",
+  "description": "The `config` object of an enabled `tcp_logging` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component TcpLoggingConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "tcp_logging",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/TcpLoggingConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/TcpLoggingConfig",
+  "$defs": {
+    "SummaryLogSchema": {
+      "type": "object",
+      "description": "Customizable output schema for transaction-log JSON / line protocol. Rename keys, drop fields, reorder, inject static stamping, emit derived fields, flatten metadata. Metadata redaction always applies on every code path — sensitive substrings (`authorization`, `cookie`, `password`, `token`, …) cannot be introduced via `static_fields` or `derived_fields` (rejected at construction). This object, each `derived_fields` entry, and `metadata` are strict fixed shapes: unknown keys are rejected with a nested path. HTTP summaries include the normalized terminal `grpc_status` field (separate from `response_status_code`) when the request is gRPC. It can be renamed, omitted, or ordered like every other native field. `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reuse this same shape against their own record families; whatever a family cannot express (`summary_type`, `timestamp_format`, `metadata`, `order`, or a derived kind with no source field) is rejected at construction with a plugin- and field-specific diagnostic. Constraints this document cannot express are still enforced at construction and are NOT relaxations of the runtime contract: `omit` / `rename` / `order` names must resolve against the record family's field inventory for the selected `summary_type`; a field may not be both omitted and renamed; the combined native, static, and derived output keys must be unique; `order` must list every non-extension output key unless it contains `\"*\"`; and `rename` targets, `static_fields` keys (including nested keys) and `derived_fields` names may not match a sensitive-data substring or a credential-class name (for example `session_id`, `client_assertion`, `gpg_passphrase`, `private_rsa_key`; see docs/log_schema.md), while a `static_fields` string value that looks like a literal HTTP auth credential is refused. Under `metadata.mode: flatten`, `omit` may not list `metadata` and `rename` may not rename it; under `metadata.mode: omit`, `rename` may not rename it (those directives would otherwise be silently ignored). The whole `static_fields` object serialized as JSON (escaped keys and values, quotes, separators, braces) must be at most 16384 bytes and a static value may nest at most 8 objects/arrays deep. `transforms` keys must be fields of the selected `summary_type`, may not also be omitted, `ip_prefix` applies only to `client_ip` / `backend_resolved_ip`, and a `hash` `secret_ref` must resolve to a set `FERRUM_PLUGIN_SECRET_<NAME>` value of at least 32 bytes. See docs/log_schema.md.",
+      "additionalProperties": false,
+      "properties": {
+        "summary_type": {
+          "type": "string",
+          "enum": [
+            "http",
+            "stream",
+            "both"
+          ],
+          "default": "both",
+          "description": "Which summary type(s) this schema applies to. Summaries of the other type fall back to native serialization (the schema only customizes types it claims to handle)."
+        },
+        "omit": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Native field names to drop from output."
+        },
+        "rename": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Map of native field name -> output key (at most 128 bytes)."
+        },
+        "order": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Explicit output order, by output key. May contain `\"*\"` once as a wildcard for \"every unlisted entry in natural order.\" Without `\"*\"`, every field must be listed. Entries are unique — a repeated output key (or a second `\"*\"`) is rejected."
+        },
+        "static_fields": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "description": "Literal JSON values injected at top level. Keys / nested keys matching sensitive substrings or credential-class names (for example `session_id`) are rejected at compile time. A `null` value is rejected — use `omit` to drop a field. At most 64 entries; keys are at most 128 bytes; the whole object serialized as JSON (escaped keys and values included) is at most 16384 bytes; a value nests at most 8 objects/arrays deep. Static fields are stamped into every record, so these bounds are a per-record cost cap."
+        },
+        "derived_fields": {
+          "type": "array",
+          "maxItems": 32,
+          "description": "Computed values; emitted alongside native fields.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Output key for the derived value."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "status_class",
+                  "backend_host",
+                  "summary_kind",
+                  "outcome"
+                ],
+                "description": "`status_class`: `\"1xx\"`–`\"5xx\"` from `response_status_code` (stream: `\"none\"`). `backend_host`: hostname from `backend_target` (port stripped, IPv6 brackets honored). `summary_kind`: `\"http\"`, `\"stream\"`, or `\"websocket_disconnect\"` (the last only for `ws_logging` WebSocket disconnect entries). `outcome`: `\"ok\"` / `\"error\"`."
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "How to render the `metadata` map.",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "nested",
+                "omit",
+                "flatten"
+              ],
+              "default": "nested"
+            },
+            "prefix": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[^\\x00-\\x1F\\x7F-\\x9F]*$",
+              "description": "Prepended to each metadata key when promoted to top-level (e.g. `\"meta_\"`); only `flatten` reads it. Control characters are rejected. The type and the control-character restriction are validated in every mode, so a `nested` or `omit` schema cannot carry a value that would only start failing once the mode is switched to `flatten`."
+            },
+            "on_collision": {
+              "type": "string",
+              "enum": [
+                "skip",
+                "overwrite"
+              ],
+              "default": "skip",
+              "description": "Behavior when a metadata key collides with an already-emitted field; only `flatten` reads it. `skip` keeps the existing value; `overwrite` replaces the colliding field's value in place with the (redacted) metadata value, so every key appears exactly once in the record. Validated in every mode, like `prefix`."
+            }
+          }
+        },
+        "timestamp_format": {
+          "type": "string",
+          "enum": [
+            "rfc3339",
+            "epoch_ms",
+            "epoch_s"
+          ],
+          "default": "rfc3339",
+          "description": "Conversion applied to timestamp string fields (`timestamp_received`, `timestamp_connected`, `timestamp_disconnected`). Parse failures fall back to the raw RFC3339 string."
+        },
+        "transforms": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "client_ip",
+              "consumer_username",
+              "request_path",
+              "request_user_agent",
+              "backend_target",
+              "backend_resolved_ip",
+              "sni_hostname"
+            ]
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "max_bytes"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "truncate"
+                  },
+                  "max_bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65536
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "ip_prefix"
+                  },
+                  "ipv4_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32,
+                    "default": 24
+                  },
+                  "ipv6_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 128,
+                    "default": 48
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "secret_ref"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "hash"
+                  },
+                  "secret_ref": {
+                    "type": "string",
+                    "pattern": "^\\$\\{FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*\\}$"
+                  }
+                }
+              }
+            ]
+          },
+          "description": "Per-field value transforms, keyed by native source field name (before `rename`), applied when the field is emitted: `truncate` keeps at most `max_bytes` bytes (cut on a UTF-8 boundary); `ip_prefix` keeps the network prefix of an IP address (`ipv4_bits` default 24, `ipv6_bits` default 48; IPv4-mapped IPv6 is masked as IPv4; a value that is not an address is emitted as `null`); `hash` replaces the value with the lowercase-hex keyed HMAC-SHA-256 under the secret named by `secret_ref`, which must be a `${FERRUM_PLUGIN_SECRET_<NAME>}` reference resolved at construction (literal secrets are refused; the value must be at least 32 bytes). Only the transaction-summary loggers support `transforms`; `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reject the key, and statsd ignores it. Kafka partition keys and Loki labels read typed fields and are not transformed."
+        }
+      }
+    },
+    "TcpLoggingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: tcp_logging — Sends transaction logs as NDJSON over a persistent TCP or TCP+TLS connection. Only the properties below are admitted; unknown keys (for example a misspelled `tlls`) are rejected so transport security cannot silently default to plaintext. `connect_timeout_ms` bounds DNS, TCP connect, and TLS handshake when enabled. `write_timeout_ms` bounds each batch write/flush; timeouts discard the writer and use the shared retry/reconnect path. Delivery is at-least-once after partial-write failure. Registration policy is KeepLastKnownGood: an invalid enabled candidate rejects startup or reload publication instead of silently removing or downgrading the previously accepted logger.",
+      "required": [
+        "host",
+        "port"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "tls_server_name"
+            ]
+          },
+          "then": {
+            "required": [
+              "tls"
+            ],
+            "properties": {
+              "tls": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "schema",
+              "schema_ref"
+            ]
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "required": [
+                "max_entry_bytes"
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "buffer_max_bytes": {
+                "minimum": 131074
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "anyOf": [
+              {
+                "pattern": "://"
+              },
+              {
+                "pattern": "[/?#@]"
+              },
+              {
+                "pattern": "^\\s+$"
+              },
+              {
+                "pattern": "\\S\\s+\\S"
+              },
+              {
+                "pattern": "^\\s*[^\\[\\]:\\s]+:[^:\\s]+\\s*$"
+              },
+              {
+                "allOf": [
+                  {
+                    "pattern": "[\\[\\]]"
+                  },
+                  {
+                    "not": {
+                      "pattern": "^\\s*\\[[0-9A-Fa-f:.]+\\]\\s*$"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "description": "Hostname or IP of the TCP log receiver. Surrounding whitespace is trimmed. Must be a bare hostname or IP without scheme, path, query, fragment, credentials, or port (bracketed and unbracketed IPv6 literals are allowed)."
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Port of the TCP log receiver"
+        },
+        "tls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable TLS encryption for the connection"
+        },
+        "tls_server_name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?:[A-Za-z0-9_](?:[A-Za-z0-9_.-]*[A-Za-z0-9_])?\\.?|[0-9A-Fa-f.]*:[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*)$",
+          "description": "DNS or IP identity for TLS SNI/certificate verification (defaults to `host`). Allowed only when `tls` is true. Accepts rustls DNS/IP identities, including absolute names (trailing dot) and underscore labels. The schema rejects URL schemes, paths, queries, fragments, credentials, whitespace, and host:port values; full rustls DNS/IP identity validation is enforced during plugin admission."
+        },
+        "batch_size": {
+          "type": "integer",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "Number of entries to buffer before sending a batch"
+        },
+        "flush_interval_ms": {
+          "type": "integer",
+          "default": 1000,
+          "minimum": 100,
+          "maximum": 600000,
+          "description": "Max milliseconds before flushing a partial batch"
+        },
+        "max_retries": {
+          "type": "integer",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Retry attempts on failed batch delivery"
+        },
+        "retry_delay_ms": {
+          "type": "integer",
+          "default": 1000,
+          "minimum": 0,
+          "maximum": 60000,
+          "description": "Delay in milliseconds between retry attempts"
+        },
+        "buffer_capacity": {
+          "type": "integer",
+          "default": 10000,
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Channel capacity — new entries are dropped when full"
+        },
+        "max_entry_bytes": {
+          "type": "integer",
+          "default": 65536,
+          "minimum": 1024,
+          "maximum": 1048576,
+          "description": "Maximum serialized bytes for one admitted NDJSON record. Oversized records are dropped before enqueue."
+        },
+        "buffer_max_bytes": {
+          "type": "integer",
+          "default": 16777216,
+          "minimum": 2050,
+          "maximum": 268435456,
+          "description": "Aggregate retained serialized-content budget across queued, assembled, and retrying records. Must be at least 2 * (max_entry_bytes + 1) and at most 268435456 (256 MiB). When `max_entry_bytes` is omitted, the default entry size requires at least 131074."
+        },
+        "connect_timeout_ms": {
+          "type": "integer",
+          "default": 5000,
+          "minimum": 100,
+          "maximum": 60000,
+          "description": "Connection establishment timeout in milliseconds. Covers DNS resolution, TCP connect, and the TLS handshake when `tls` is true."
+        },
+        "write_timeout_ms": {
+          "type": "integer",
+          "default": 5000,
+          "minimum": 100,
+          "maximum": 60000,
+          "description": "Per-batch socket write_all + flush timeout in milliseconds. On timeout the persistent writer is discarded and retries reconnect."
+        },
+        "schema": {
+          "$ref": "#/$defs/SummaryLogSchema"
+        },
+        "schema_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of a schema registered by a `transaction_log_schema` plugin. Mutually exclusive with `schema`. See docs/log_schema.md."
+        }
+      }
+    }
+  }
+}

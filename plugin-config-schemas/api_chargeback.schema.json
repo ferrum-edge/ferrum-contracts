@@ -1,0 +1,535 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/api_chargeback.schema.json",
+  "title": "api_chargeback plugin config",
+  "description": "The `config` object of an enabled `api_chargeback` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component ApiChargebackConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "api_chargeback",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/ApiChargebackConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/ApiChargebackConfig",
+  "$defs": {
+    "ApiChargebackConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: api_chargeback — Per-consumer API usage charge tracking across\nthree independent pricing dimensions: per-call pricing by billable\nstatus code, per-byte bandwidth pricing (both client->backend and\nbackend->client, applied to HTTP-family AND stream proxies), and\nper-connection pricing for stream proxies (TCP/TCP+TLS/UDP/DTLS).\nOrdinary HTTP uses the wire status. Native gRPC and translated\ngRPC-Web use the final client-visible grpc-status mapped to the\ncanonical effective HTTP status; missing/malformed/unknown terminal\nstatus, and a terminal status present on the wire but unreadable by the\ngateway, fail closed to 500. Explicitly zero-priced tiers still meter calls.\nBandwidth pricing bills WebSocket sessions from the parsed relay's\npayload byte counters, so a bandwidth-priced instance keeps its proxy's\nWebSocket sessions off the raw tunnel relay and is refused on a\n`websocket_permessage_deflate: passthrough` proxy.\nSuccessful H1/H2/H3 WebSocket handshakes share the 101 pricing tier;\nrejected handshakes retain their error status.\nAt least one of `pricing_tiers`, `bandwidth_pricing`, or\n`stream_connection_pricing` must be configured.\nUnknown top-level keys and unknown `pricing_tiers[]` keys are\nrejected so a misspelled pricing dimension cannot silently bill\nat zero.\nExactly-once accounting: after scope merging, each proxy may retain\nat most one effective `api_chargeback` instance. Multiple proxy-scoped,\nproxy-group-scoped, or mixed attachments on one proxy are rejected\nbecause the process-global `/charges` registry has no ledger/instance\ndimension. Distinct proxies may each attach one instance (including\ndifferent currencies/pricing). Shared render/cleanup/budget tunables\n(`render_cache_ttl_seconds`, `stale_entry_ttl_seconds`,\n`cache_invalidation_min_age_ms`, `cleanup_interval_seconds`,\n`max_entries`, `max_retained_bytes`) must\nagree across every enabled instance in the process.\nCardinality budget: the shared registry retains at most `max_entries`\nbilling rows (complete registry entry keys) and at most\n`max_retained_bytes` of state. Keys include consumer, proxy, status,\nprotocol family, currency, namespace, and prices, so one principal can\noccupy many slots. A new ordinary row beyond either ceiling uses its\nprepared aggregate fallback, preserving totals while losing per-identity\nattribution. Outside a prepared matrix, an aggregate that cannot reserve\nbytes drops the charge and increments `dropped_charges_total`. The\naggregate `consumer` label is the internal sentinel\n`__cardinality_overflow__~sha256:ferrum-edge/api-chargeback/overflow/v1`,\npreserving billable totals while losing only per-identity attribution.\nThe aggregate overflow rows are created and their missing bytes reserved\natomically while staging, before the cache generation can serve. There\nis one row per priced status, one shared status-0 bandwidth row when\nbandwidth is priced, or one row per stream proxy. Global instances also\nreserve unknown-proxy fallback rows in their own and all known namespaces.\nRows stay pinned while a cache generation owns them; unused preallocations\nconsume estimated bytes but do not appear as billing series. Ordinary\nadmission leaves an additional matrix of reload headroom. This cannot\nguarantee that a larger matrix or repeated repricing fits beside history.\nThat sentinel lives in the digest-form billing-identity class, so a real\nauthenticated or configured identity can never share its registry key.\nBilling identities are never prefix-truncated: an external identity\nclaim above 512 bytes is rejected at authentication, and any remaining\noversized value is represented as a prefix plus a domain-separated\nSHA-256 digest of the complete value.\nRuntime-only admission (not expressible here): every enabled instance\nmust resolve to the same shared tunables and the same projection; a\n`schema_ref` must name a definition a `transaction_log_schema` plugin\nregistered; a status code must not appear in more than one tier across\nthe whole `pricing_tiers` array; `max_retained_bytes` must hold twice\nthe configured overflow-row matrix, and a reload whose not-yet-created\noverflow rows do not fit beside the billing state the live registry\nretains is refused wholesale when a node builds that generation (not by\noffline validation). This includes a budget-lowering reload needing new\nfallback rows; if every fallback row already exists, a lower budget is\naccepted and existing state drains through eviction. Current aggregate\nrows and their cumulative exported series remain retained while pinned.\n`stale_entry_ttl_seconds` /\n`cleanup_interval_seconds` interact with the collection contract\ndescribed in docs/plugins.md.\n",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "required": [
+                "pricing_tiers"
+              ],
+              "properties": {
+                "pricing_tiers": {
+                  "type": "array",
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "bandwidth_pricing"
+              ],
+              "properties": {
+                "bandwidth_pricing": {
+                  "type": "object",
+                  "anyOf": [
+                    {
+                      "required": [
+                        "price_per_byte_sent"
+                      ],
+                      "properties": {
+                        "price_per_byte_sent": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 1e+288
+                        }
+                      }
+                    },
+                    {
+                      "required": [
+                        "price_per_byte_received"
+                      ],
+                      "properties": {
+                        "price_per_byte_received": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 1e+288
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "required": [
+                "stream_connection_pricing"
+              ],
+              "properties": {
+                "stream_connection_pricing": {
+                  "type": "object",
+                  "required": [
+                    "price_per_connection"
+                  ],
+                  "properties": {
+                    "price_per_connection": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "maximum": 1e+288
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "schema",
+              "schema_ref"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "currency": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "default": "USD",
+          "description": "Currency label included in Prometheus metrics and JSON output.\nInformational only — the plugin does not perform currency\nconversion. Trimmed at admission and rejected when the trimmed\nvalue is empty, so a whitespace-only label cannot become a currency.\n"
+        },
+        "pricing_tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status_codes",
+              "price_per_call"
+            ],
+            "properties": {
+              "status_codes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 599
+                },
+                "description": "Billable status codes that trigger this tier's charge. Must be real HTTP status codes in 100–599 and distinct within the tier. Ordinary HTTP uses the wire status. Native gRPC and translated gRPC-Web map final terminal codes as 0→200, 1→499, 2→500, 3→400, 4→504, 5→404, 6→409, 7→403, 8→429, 9→400, 10→409, 11→400, 12→501, 13→500, 14→503, 15→500, and 16→401; missing, malformed, unknown, or present-but-unreadable terminal codes map to 500. A status code must appear in exactly one tier; cross-tier duplication is rejected at construction."
+              },
+              "price_per_call": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1e+288,
+                "description": "Charge per HTTP API call (e.g. 0.00001). Must be finite,\nnon-negative, and at most 1e288 so `u64` counter × price stays\nfinite in IEEE-754 binary64. Stored counters are converted to\nbinary64 before multiplication, so values above 2^53 follow\nnormal binary64 rounding; Ferrum applies no additional decimal\nrounding. Prometheus formats 10 fractional digits.\n"
+              }
+            }
+          },
+          "description": "HTTP-family per-call pricing. Each tier maps a set of billable\nstatus codes to a per-call price. Ordinary HTTP uses its wire\nstatus; native gRPC and translated gRPC-Web use the canonical\neffective-HTTP mapping of the finalized terminal grpc-status.\nStream proxies (TCP/UDP/DTLS) have no HTTP status code and use\n`stream_connection_pricing` instead.\n"
+        },
+        "bandwidth_pricing": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Optional bandwidth pricing applied to both HTTP-family and stream\ntransactions, using the gateway-perspective `bytes_sent` /\n`bytes_received` counters from the transaction-summary schema.\nWebSocket sessions are billed from the parsed relay's payload byte\ncounters; any nonzero price keeps the proxy's WebSocket sessions on\nthe parsed relay (no raw tunnel copy) and is refused on a\n`websocket_permessage_deflate: passthrough` proxy.\n",
+          "properties": {
+            "price_per_byte_sent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1e+288,
+              "default": 0.0,
+              "description": "Per-byte charge for bytes flowed client->backend. Finite,\nnon-negative, at most 1e288 (same binary64 counter×price bound\nas `price_per_call`).\n"
+            },
+            "price_per_byte_received": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1e+288,
+              "default": 0.0,
+              "description": "Per-byte charge for bytes flowed backend->client. Finite,\nnon-negative, at most 1e288 (same binary64 counter×price bound\nas `price_per_call`).\n"
+            }
+          }
+        },
+        "stream_connection_pricing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "price_per_connection"
+          ],
+          "description": "Optional per-connection pricing for stream proxies (TCP, TCP+TLS,\nUDP, DTLS). Charges the configured flat fee once per session at\ndisconnect time. Streams have no HTTP status code so they cannot\nuse `pricing_tiers`.\n",
+          "properties": {
+            "price_per_connection": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1e+288,
+              "description": "Per-session charge applied at stream disconnect. Finite,\nnon-negative, at most 1e288 (same binary64 counter×price bound\nas `price_per_call`).\n"
+            }
+          }
+        },
+        "render_cache_ttl_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615,
+          "default": 5,
+          "description": "How long the cached /charges response is served before rebuilding.\nUnsigned 64-bit; a negative or fractional value is rejected at\nconstruction. Process-global: every enabled api_chargeback instance\nmust use the same value.\n"
+        },
+        "stale_entry_ttl_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615,
+          "default": 3600,
+          "description": "How long an idle chargeback entry may live before it becomes\neligible for eviction. Eligibility is not deletion: an idle entry is\nremoved only once two delivered GET /charges exports (the admin\nconnection took the complete document) have collected its current\ncounters, and only together with every row sharing its consumer,\nproxy, and currency, so uncollected billing state is never discarded\non age alone and a live cumulative series never shrinks. Unsigned\n64-bit. Process-global: every enabled\napi_chargeback instance must use the same value.\n"
+        },
+        "cache_invalidation_min_age_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615,
+          "default": 500,
+          "description": "Minimum age (ms) of a render cache before record() will invalidate\nit. Evaluated per format against that document's own timestamp, so\na JSON-only collector gets the same protection as a Prometheus one.\nUnsigned 64-bit. Process-global: every enabled api_chargeback\ninstance must use the same value.\n"
+        },
+        "cleanup_interval_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31536000,
+          "default": 300,
+          "description": "How often (seconds) the background task evicts entries that have\nbeen idle longer than stale_entry_ttl_seconds AND have already been\nconfirmed collected by two delivered exports. Set to 0 to disable. At most\n31536000 (one year); larger values are rejected because the task's\nsleep deadline would overflow. Process-global: every enabled\napi_chargeback instance must use the same value.\n"
+        },
+        "max_entries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 100000,
+          "description": "Hard ceiling on retained billing rows (complete registry entry keys)\nin the shared /charges registry. One principal can occupy many slots\nbecause keys also include proxy, status, protocol family, currency,\nnamespace, and prices. Charges for a new row beyond this ceiling are\nfolded into the fixed-cardinality internal overflow aggregate row\n(`__cardinality_overflow__~sha256:ferrum-edge/api-chargeback/overflow/v1`)\nwhen its prepared fallback exists — per-identity attribution is lost\nwhile recorded totals are preserved. A charge outside a prepared\nmatrix may be dropped if no aggregate can reserve bytes; inspect\ndropped_charges_total. 0 is rejected — there is no unlimited mode.\nProcess-global: every enabled api_chargeback instance must use the\nsame value.\n"
+        },
+        "max_retained_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "default": 67108864,
+          "description": "Hard ceiling on estimated retained registry bytes, covering ordinary\nbilling rows and aggregate overflow rows together. The overflow rows\nthe configured proxies and pricing tiers can create are reserved\nand created during cache staging, plus equal headroom for a pricing\nreload. Admission refuses a budget that cannot hold twice that matrix.\nA node also refuses the whole reload if missing fallback rows cannot\nfit beside retained state under the candidate budget, including a\nbudget decrease needing new rows. A decrease with all rows already\npresent is allowed and drains existing state through eviction. Charges\noutside a prepared matrix can still be dropped when a new aggregate\ncannot reserve bytes; inspect dropped_charges_total. 0 is rejected.\nProcess-global: every enabled api_chargeback instance must use the\nsame value.\n"
+        },
+        "schema": {
+          "$ref": "#/$defs/ApiChargebackRenderSchema"
+        },
+        "schema_ref": {
+          "type": "string",
+          "description": "Name of a schema registered by a `transaction_log_schema` plugin. Mutually exclusive with `schema`. Projects the per-proxy billing row inside the `GET /charges` document (`proxy_id`, `namespace`, `proxy_name`, `currency`, `protocol_family`, `total_calls`, `total_charges`, `by_status`, `bandwidth`, `stream`). Billing identity, charge accounting, registry keys, and the Prometheus exposition are unaffected. `summary_type`, `timestamp_format`, `metadata`, `order`, `transforms`, and every derived kind except `summary_kind` are rejected for this surface. Process-global: every enabled api_chargeback instance must resolve to the same projection because one render cache serves them all. See docs/log_schema.md."
+        }
+      }
+    },
+    "ApiChargebackRenderSchema": {
+      "description": "`SummaryLogSchema` narrowed to what an `api_chargeback` billing row can actually express. The `/charges` row is an aggregate assembled into a `serde_json::Map`-backed document, so it has no HTTP/stream summary type, no RFC3339 timestamp field, no metadata map, and no member order under the projection's control: `summary_type`, `timestamp_format`, `metadata`, `order`, and `transforms` are rejected at construction rather than silently ignored. `omit` names and `rename` sources must be native billing-row fields, and `summary_kind` is the only derived kind representable from a row that spans many transactions (it has no single status, backend, or outcome). See docs/log_schema.md.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/SummaryLogSchema"
+        },
+        {
+          "type": "object",
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "summary_type"
+                ]
+              },
+              {
+                "required": [
+                  "timestamp_format"
+                ]
+              },
+              {
+                "required": [
+                  "metadata"
+                ]
+              },
+              {
+                "required": [
+                  "order"
+                ]
+              },
+              {
+                "required": [
+                  "transforms"
+                ]
+              }
+            ]
+          },
+          "properties": {
+            "omit": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "proxy_id",
+                  "namespace",
+                  "proxy_name",
+                  "currency",
+                  "protocol_family",
+                  "total_calls",
+                  "total_charges",
+                  "by_status",
+                  "bandwidth",
+                  "stream"
+                ]
+              }
+            },
+            "rename": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "proxy_id",
+                  "namespace",
+                  "proxy_name",
+                  "currency",
+                  "protocol_family",
+                  "total_calls",
+                  "total_charges",
+                  "by_status",
+                  "bandwidth",
+                  "stream"
+                ]
+              }
+            },
+            "derived_fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "const": "summary_kind"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SummaryLogSchema": {
+      "type": "object",
+      "description": "Customizable output schema for transaction-log JSON / line protocol. Rename keys, drop fields, reorder, inject static stamping, emit derived fields, flatten metadata. Metadata redaction always applies on every code path — sensitive substrings (`authorization`, `cookie`, `password`, `token`, …) cannot be introduced via `static_fields` or `derived_fields` (rejected at construction). This object, each `derived_fields` entry, and `metadata` are strict fixed shapes: unknown keys are rejected with a nested path. HTTP summaries include the normalized terminal `grpc_status` field (separate from `response_status_code`) when the request is gRPC. It can be renamed, omitted, or ordered like every other native field. `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reuse this same shape against their own record families; whatever a family cannot express (`summary_type`, `timestamp_format`, `metadata`, `order`, or a derived kind with no source field) is rejected at construction with a plugin- and field-specific diagnostic. Constraints this document cannot express are still enforced at construction and are NOT relaxations of the runtime contract: `omit` / `rename` / `order` names must resolve against the record family's field inventory for the selected `summary_type`; a field may not be both omitted and renamed; the combined native, static, and derived output keys must be unique; `order` must list every non-extension output key unless it contains `\"*\"`; and `rename` targets, `static_fields` keys (including nested keys) and `derived_fields` names may not match a sensitive-data substring or a credential-class name (for example `session_id`, `client_assertion`, `gpg_passphrase`, `private_rsa_key`; see docs/log_schema.md), while a `static_fields` string value that looks like a literal HTTP auth credential is refused. Under `metadata.mode: flatten`, `omit` may not list `metadata` and `rename` may not rename it; under `metadata.mode: omit`, `rename` may not rename it (those directives would otherwise be silently ignored). The whole `static_fields` object serialized as JSON (escaped keys and values, quotes, separators, braces) must be at most 16384 bytes and a static value may nest at most 8 objects/arrays deep. `transforms` keys must be fields of the selected `summary_type`, may not also be omitted, `ip_prefix` applies only to `client_ip` / `backend_resolved_ip`, and a `hash` `secret_ref` must resolve to a set `FERRUM_PLUGIN_SECRET_<NAME>` value of at least 32 bytes. See docs/log_schema.md.",
+      "additionalProperties": false,
+      "properties": {
+        "summary_type": {
+          "type": "string",
+          "enum": [
+            "http",
+            "stream",
+            "both"
+          ],
+          "default": "both",
+          "description": "Which summary type(s) this schema applies to. Summaries of the other type fall back to native serialization (the schema only customizes types it claims to handle)."
+        },
+        "omit": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Native field names to drop from output."
+        },
+        "rename": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Map of native field name -> output key (at most 128 bytes)."
+        },
+        "order": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Explicit output order, by output key. May contain `\"*\"` once as a wildcard for \"every unlisted entry in natural order.\" Without `\"*\"`, every field must be listed. Entries are unique — a repeated output key (or a second `\"*\"`) is rejected."
+        },
+        "static_fields": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "description": "Literal JSON values injected at top level. Keys / nested keys matching sensitive substrings or credential-class names (for example `session_id`) are rejected at compile time. A `null` value is rejected — use `omit` to drop a field. At most 64 entries; keys are at most 128 bytes; the whole object serialized as JSON (escaped keys and values included) is at most 16384 bytes; a value nests at most 8 objects/arrays deep. Static fields are stamped into every record, so these bounds are a per-record cost cap."
+        },
+        "derived_fields": {
+          "type": "array",
+          "maxItems": 32,
+          "description": "Computed values; emitted alongside native fields.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Output key for the derived value."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "status_class",
+                  "backend_host",
+                  "summary_kind",
+                  "outcome"
+                ],
+                "description": "`status_class`: `\"1xx\"`–`\"5xx\"` from `response_status_code` (stream: `\"none\"`). `backend_host`: hostname from `backend_target` (port stripped, IPv6 brackets honored). `summary_kind`: `\"http\"`, `\"stream\"`, or `\"websocket_disconnect\"` (the last only for `ws_logging` WebSocket disconnect entries). `outcome`: `\"ok\"` / `\"error\"`."
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "How to render the `metadata` map.",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "nested",
+                "omit",
+                "flatten"
+              ],
+              "default": "nested"
+            },
+            "prefix": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[^\\x00-\\x1F\\x7F-\\x9F]*$",
+              "description": "Prepended to each metadata key when promoted to top-level (e.g. `\"meta_\"`); only `flatten` reads it. Control characters are rejected. The type and the control-character restriction are validated in every mode, so a `nested` or `omit` schema cannot carry a value that would only start failing once the mode is switched to `flatten`."
+            },
+            "on_collision": {
+              "type": "string",
+              "enum": [
+                "skip",
+                "overwrite"
+              ],
+              "default": "skip",
+              "description": "Behavior when a metadata key collides with an already-emitted field; only `flatten` reads it. `skip` keeps the existing value; `overwrite` replaces the colliding field's value in place with the (redacted) metadata value, so every key appears exactly once in the record. Validated in every mode, like `prefix`."
+            }
+          }
+        },
+        "timestamp_format": {
+          "type": "string",
+          "enum": [
+            "rfc3339",
+            "epoch_ms",
+            "epoch_s"
+          ],
+          "default": "rfc3339",
+          "description": "Conversion applied to timestamp string fields (`timestamp_received`, `timestamp_connected`, `timestamp_disconnected`). Parse failures fall back to the raw RFC3339 string."
+        },
+        "transforms": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "client_ip",
+              "consumer_username",
+              "request_path",
+              "request_user_agent",
+              "backend_target",
+              "backend_resolved_ip",
+              "sni_hostname"
+            ]
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "max_bytes"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "truncate"
+                  },
+                  "max_bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65536
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "ip_prefix"
+                  },
+                  "ipv4_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32,
+                    "default": 24
+                  },
+                  "ipv6_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 128,
+                    "default": 48
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "secret_ref"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "hash"
+                  },
+                  "secret_ref": {
+                    "type": "string",
+                    "pattern": "^\\$\\{FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*\\}$"
+                  }
+                }
+              }
+            ]
+          },
+          "description": "Per-field value transforms, keyed by native source field name (before `rename`), applied when the field is emitted: `truncate` keeps at most `max_bytes` bytes (cut on a UTF-8 boundary); `ip_prefix` keeps the network prefix of an IP address (`ipv4_bits` default 24, `ipv6_bits` default 48; IPv4-mapped IPv6 is masked as IPv4; a value that is not an address is emitted as `null`); `hash` replaces the value with the lowercase-hex keyed HMAC-SHA-256 under the secret named by `secret_ref`, which must be a `${FERRUM_PLUGIN_SECRET_<NAME>}` reference resolved at construction (literal secrets are refused; the value must be at least 32 bytes). Only the transaction-summary loggers support `transforms`; `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reject the key, and statsd ignores it. Kafka partition keys and Loki labels read typed fields and are not transformed."
+        }
+      }
+    }
+  }
+}

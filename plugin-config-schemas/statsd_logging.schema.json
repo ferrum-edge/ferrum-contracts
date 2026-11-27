@@ -1,0 +1,376 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/statsd_logging.schema.json",
+  "title": "statsd_logging plugin config",
+  "description": "The `config` object of an enabled `statsd_logging` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component StatsdLoggingConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "statsd_logging",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/StatsdLoggingConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/StatsdLoggingConfig",
+  "$defs": {
+    "StatsdLoggingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "not": {
+        "required": [
+          "schema",
+          "schema_ref"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "required": [
+                "max_entry_bytes"
+              ]
+            }
+          },
+          "then": {
+            "properties": {
+              "buffer_max_bytes": {
+                "minimum": 131074
+              }
+            }
+          }
+        }
+      ],
+      "description": "Plugin: statsd_logging — Sends transaction metrics to a StatsD-compatible server over UDP. Unknown top-level keys are rejected at construction / Admin validation. Nested `global_tags` remains an intentionally open string map, but keys must match [A-Za-z_][A-Za-z0-9_.-]* (max 64 bytes) and cannot override reserved or schema-renamed runtime tags (namespace, method, status, status_class, grpc_status, proxy, protocol, error, cause, direction, body_outcome, body_error, result, io_side, error_class). The authoritative namespace tag is always appended and preserves the full validated Ferrum namespace (up to 254 bytes). Metric prefixes are sanitized and capped at 256 UTF-8 bytes after trim; encoded global_tags (+ namespace) are capped at 400 bytes. `schema` and `schema_ref` are structurally exclusive. When `max_entry_bytes` is omitted, OpenAPI requires `buffer_max_bytes` to be at least 131074 (`2 * (65536 + 1)`); a sibling comparison against an explicit `max_entry_bytes` is enforced only at construction. Named-schema existence is runtime-only. Construction also rejects a prefix/tag/schema combination whose smallest ordinary record (HTTP, gRPC, stream, or WebSocket) cannot fit `max_entry_bytes`. UDP datagrams never exceed a 1452-byte conservative IPv4/IPv6 payload ceiling; indivisible oversized lines are dropped rather than fragmented. Hot-path admission reserves a queue slot and a provisional max_entry_bytes lease before rendering StatsD line protocol, then shrinks the lease to the exact retained size under buffer_max_bytes. Delivery retains admitted payloads plus at most one MTU-bounded datagram buffer. Mirror summaries are excluded from request.* families. Timers require finite non-negative samples (the -1.0 no-backend TTFB sentinel is omitted). gRPC transactions add a bounded grpc_status tag and request.grpc_status.{code} counter (0-16 or OTHER) while keeping HTTP status/status_class distinct. WebSocket session completion emits websocket.* families via on_ws_disconnect. Registration policy is KeepLastKnownGood (an invalid enabled config fails file-mode load and `ferrum-edge validate`, and a reload keeps the prior generation). See docs/plugins.md.",
+      "required": [
+        "host"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "anyOf": [
+              {
+                "pattern": "://"
+              },
+              {
+                "pattern": "[/?#@\\s]"
+              },
+              {
+                "pattern": "^[^\\[\\]:]+:[^:]+$"
+              }
+            ]
+          },
+          "description": "StatsD server hostname or IP address. Must be a bare hostname or IP without scheme, path, query, fragment, credentials, or port (bracketed and unbracketed IPv6 literals are allowed)."
+        },
+        "port": {
+          "type": "integer",
+          "default": 8125,
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "StatsD server UDP port"
+        },
+        "prefix": {
+          "type": "string",
+          "default": "ferrum",
+          "minLength": 1,
+          "description": "Metric name prefix (e.g., ferrum.request.count). Leading and trailing whitespace is trimmed before sanitization; empty after trim is rejected. Runtime admission enforces at most 256 UTF-8 bytes after sanitization, so a longer raw string may still be refused. Construction also requires max_entry_bytes to fit the smallest ordinary record under this prefix."
+        },
+        "global_tags": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^(?!(namespace|method|status_class|status|grpc_status|proxy|protocol|error_class|error|cause|direction|body_outcome|body_error|result|io_side)$)[A-Za-z_][A-Za-z0-9_.-]*$",
+            "description": "Tag keys are restricted to the ASCII grammar `[A-Za-z_][A-Za-z0-9_.-]*`, so OpenAPI `maxLength: 64` matches the runtime 64-byte key ceiling. Reserved runtime tag names are excluded case-insensitively."
+          },
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Extra DogStatsD tags appended to every metric. Keys must match `[A-Za-z_][A-Za-z0-9_.-]*` (max 64 ASCII bytes) and cannot override reserved runtime tags or effective schema-renamed runtime keys (enforced at construction). Encoded global_tags (+ authoritative namespace) are capped at 400 bytes."
+        },
+        "flush_interval_ms": {
+          "type": "integer",
+          "default": 500,
+          "minimum": 50,
+          "maximum": 600000,
+          "description": "Max milliseconds before flushing buffered metrics"
+        },
+        "buffer_capacity": {
+          "type": "integer",
+          "default": 10000,
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "Channel capacity — new entries are dropped when full"
+        },
+        "max_batch_lines": {
+          "type": "integer",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 10000,
+          "description": "Max transaction records to batch before flushing. The threshold counts admitted transaction payloads (each rendering several newline-separated metric lines), not individual metric lines."
+        },
+        "max_entry_bytes": {
+          "type": "integer",
+          "default": 65536,
+          "minimum": 1024,
+          "maximum": 1048576,
+          "description": "Maximum rendered StatsD line-protocol bytes for one admitted transaction. Configuration is rejected unless the smallest ordinary record (HTTP, gRPC, stream, or WebSocket) with the resolved prefix, global tags, and schema fits this budget. Request-shaped fields can still make an individual render exceed the budget; those oversized entries are dropped before enqueue."
+        },
+        "buffer_max_bytes": {
+          "type": "integer",
+          "default": 16777216,
+          "minimum": 2050,
+          "maximum": 268435456,
+          "description": "Aggregate retained rendered-content budget across queued entries, one MTU-bounded datagram buffer, and retries. Admission reserves two copies plus framing before rendering and shrinks that lease to the exact retained size. Must be at least 2 * (max_entry_bytes + 1). When max_entry_bytes is omitted, this field must be at least 131074 (the default-dependent bound). An arbitrary sibling comparison against an explicit max_entry_bytes is runtime-only."
+        },
+        "max_retries": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Retry attempts after the initial UDP send fails. Defaults to 0 (no retries). Consumed by the shared batching logger."
+        },
+        "retry_delay_ms": {
+          "type": "integer",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 60000,
+          "description": "Delay in milliseconds between retry attempts. Defaults to 0. Consumed by the shared batching logger when `max_retries` > 0."
+        },
+        "schema": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SummaryLogSchema"
+            }
+          ],
+          "description": "Only `rename` and `omit` apply to statsd output — they operate on tag keys that map 1:1 to a native summary field: HTTP: `method`↔`http_method`, `status`↔`response_status_code`, `proxy`↔`proxy_id`. Stream: `protocol`↔`protocol`, `proxy`↔`proxy_id`, `cause`↔`disconnect_cause`, `direction`↔`disconnect_direction`. Rename targets must match [A-Za-z_][A-Za-z0-9_.-]* and must not collide with reserved runtime tags. `static_fields`, `derived_fields`, `metadata`, `order`, and `timestamp_format` are no-ops for statsd (line protocol, not JSON). See docs/log_schema.md."
+        },
+        "schema_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of a schema registered by a `transaction_log_schema` plugin. Mutually exclusive with `schema`. Same statsd caveats as above. Existence of the named schema is resolved at construction."
+        }
+      }
+    },
+    "SummaryLogSchema": {
+      "type": "object",
+      "description": "Customizable output schema for transaction-log JSON / line protocol. Rename keys, drop fields, reorder, inject static stamping, emit derived fields, flatten metadata. Metadata redaction always applies on every code path — sensitive substrings (`authorization`, `cookie`, `password`, `token`, …) cannot be introduced via `static_fields` or `derived_fields` (rejected at construction). This object, each `derived_fields` entry, and `metadata` are strict fixed shapes: unknown keys are rejected with a nested path. HTTP summaries include the normalized terminal `grpc_status` field (separate from `response_status_code`) when the request is gRPC. It can be renamed, omitted, or ordered like every other native field. `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reuse this same shape against their own record families; whatever a family cannot express (`summary_type`, `timestamp_format`, `metadata`, `order`, or a derived kind with no source field) is rejected at construction with a plugin- and field-specific diagnostic. Constraints this document cannot express are still enforced at construction and are NOT relaxations of the runtime contract: `omit` / `rename` / `order` names must resolve against the record family's field inventory for the selected `summary_type`; a field may not be both omitted and renamed; the combined native, static, and derived output keys must be unique; `order` must list every non-extension output key unless it contains `\"*\"`; and `rename` targets, `static_fields` keys (including nested keys) and `derived_fields` names may not match a sensitive-data substring or a credential-class name (for example `session_id`, `client_assertion`, `gpg_passphrase`, `private_rsa_key`; see docs/log_schema.md), while a `static_fields` string value that looks like a literal HTTP auth credential is refused. Under `metadata.mode: flatten`, `omit` may not list `metadata` and `rename` may not rename it; under `metadata.mode: omit`, `rename` may not rename it (those directives would otherwise be silently ignored). The whole `static_fields` object serialized as JSON (escaped keys and values, quotes, separators, braces) must be at most 16384 bytes and a static value may nest at most 8 objects/arrays deep. `transforms` keys must be fields of the selected `summary_type`, may not also be omitted, `ip_prefix` applies only to `client_ip` / `backend_resolved_ip`, and a `hash` `secret_ref` must resolve to a set `FERRUM_PLUGIN_SECRET_<NAME>` value of at least 32 bytes. See docs/log_schema.md.",
+      "additionalProperties": false,
+      "properties": {
+        "summary_type": {
+          "type": "string",
+          "enum": [
+            "http",
+            "stream",
+            "both"
+          ],
+          "default": "both",
+          "description": "Which summary type(s) this schema applies to. Summaries of the other type fall back to native serialization (the schema only customizes types it claims to handle)."
+        },
+        "omit": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Native field names to drop from output."
+        },
+        "rename": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Map of native field name -> output key (at most 128 bytes)."
+        },
+        "order": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Explicit output order, by output key. May contain `\"*\"` once as a wildcard for \"every unlisted entry in natural order.\" Without `\"*\"`, every field must be listed. Entries are unique — a repeated output key (or a second `\"*\"`) is rejected."
+        },
+        "static_fields": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "description": "Literal JSON values injected at top level. Keys / nested keys matching sensitive substrings or credential-class names (for example `session_id`) are rejected at compile time. A `null` value is rejected — use `omit` to drop a field. At most 64 entries; keys are at most 128 bytes; the whole object serialized as JSON (escaped keys and values included) is at most 16384 bytes; a value nests at most 8 objects/arrays deep. Static fields are stamped into every record, so these bounds are a per-record cost cap."
+        },
+        "derived_fields": {
+          "type": "array",
+          "maxItems": 32,
+          "description": "Computed values; emitted alongside native fields.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Output key for the derived value."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "status_class",
+                  "backend_host",
+                  "summary_kind",
+                  "outcome"
+                ],
+                "description": "`status_class`: `\"1xx\"`–`\"5xx\"` from `response_status_code` (stream: `\"none\"`). `backend_host`: hostname from `backend_target` (port stripped, IPv6 brackets honored). `summary_kind`: `\"http\"`, `\"stream\"`, or `\"websocket_disconnect\"` (the last only for `ws_logging` WebSocket disconnect entries). `outcome`: `\"ok\"` / `\"error\"`."
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "How to render the `metadata` map.",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "nested",
+                "omit",
+                "flatten"
+              ],
+              "default": "nested"
+            },
+            "prefix": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[^\\x00-\\x1F\\x7F-\\x9F]*$",
+              "description": "Prepended to each metadata key when promoted to top-level (e.g. `\"meta_\"`); only `flatten` reads it. Control characters are rejected. The type and the control-character restriction are validated in every mode, so a `nested` or `omit` schema cannot carry a value that would only start failing once the mode is switched to `flatten`."
+            },
+            "on_collision": {
+              "type": "string",
+              "enum": [
+                "skip",
+                "overwrite"
+              ],
+              "default": "skip",
+              "description": "Behavior when a metadata key collides with an already-emitted field; only `flatten` reads it. `skip` keeps the existing value; `overwrite` replaces the colliding field's value in place with the (redacted) metadata value, so every key appears exactly once in the record. Validated in every mode, like `prefix`."
+            }
+          }
+        },
+        "timestamp_format": {
+          "type": "string",
+          "enum": [
+            "rfc3339",
+            "epoch_ms",
+            "epoch_s"
+          ],
+          "default": "rfc3339",
+          "description": "Conversion applied to timestamp string fields (`timestamp_received`, `timestamp_connected`, `timestamp_disconnected`). Parse failures fall back to the raw RFC3339 string."
+        },
+        "transforms": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "client_ip",
+              "consumer_username",
+              "request_path",
+              "request_user_agent",
+              "backend_target",
+              "backend_resolved_ip",
+              "sni_hostname"
+            ]
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "max_bytes"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "truncate"
+                  },
+                  "max_bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65536
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "ip_prefix"
+                  },
+                  "ipv4_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32,
+                    "default": 24
+                  },
+                  "ipv6_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 128,
+                    "default": 48
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "secret_ref"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "hash"
+                  },
+                  "secret_ref": {
+                    "type": "string",
+                    "pattern": "^\\$\\{FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*\\}$"
+                  }
+                }
+              }
+            ]
+          },
+          "description": "Per-field value transforms, keyed by native source field name (before `rename`), applied when the field is emitted: `truncate` keeps at most `max_bytes` bytes (cut on a UTF-8 boundary); `ip_prefix` keeps the network prefix of an IP address (`ipv4_bits` default 24, `ipv6_bits` default 48; IPv4-mapped IPv6 is masked as IPv4; a value that is not an address is emitted as `null`); `hash` replaces the value with the lowercase-hex keyed HMAC-SHA-256 under the secret named by `secret_ref`, which must be a `${FERRUM_PLUGIN_SECRET_<NAME>}` reference resolved at construction (literal secrets are refused; the value must be at least 32 bytes). Only the transaction-summary loggers support `transforms`; `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reject the key, and statsd ignores it. Kafka partition keys and Loki labels read typed fields and are not transformed."
+        }
+      }
+    }
+  }
+}

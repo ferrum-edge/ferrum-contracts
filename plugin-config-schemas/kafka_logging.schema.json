@@ -1,0 +1,821 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/kafka_logging.schema.json",
+  "title": "kafka_logging plugin config",
+  "description": "The `config` object of an enabled `kafka_logging` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component KafkaLoggingConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "kafka_logging",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/KafkaLoggingConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/KafkaLoggingConfig",
+  "$defs": {
+    "KafkaLoggingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: kafka_logging — Produces transaction summaries as JSON messages to an Apache Kafka topic. Uses an async channel to decouple the proxy hot path from Kafka I/O, with librdkafka handling batching, compression, and delivery retries. Local queue admission is distinct from terminal broker acknowledgement; flush_timeout_seconds bounds blocking-pool scheduling plus the owned shutdown/reload producer flush. KeepLastKnownGood admission rejects invalid startup configuration and preserves the previous accepted generation on invalid reload. librdkafka resolves bootstrap hostnames itself and dials brokers advertised by cluster metadata, and the pinned client exposes no connect/resolve callback, so those addresses cannot be screened. Admission therefore returns 400 whenever FERRUM_BACKEND_* policy can deny any address (including the default posture), unless the node operator attests the Kafka cluster with FERRUM_KAFKA_ALLOWED_BROKERS and every broker_list entry is listed there (host:port, or an IP covered by a listed CIDR); a listed literal broker IP may pass FERRUM_BACKEND_DENY_CIDRS and the FERRUM_BACKEND_ALLOW_IPS mode but never the dangerous-range baseline. That depends on the node's environment, so this schema does not model it. broker_list is parsed with librdkafka's [proto://]host[:port] grammar, so protocol-prefixed denied literals and protocol prefixes that disagree with security_protocol are rejected.",
+      "required": [
+        "broker_list",
+        "topic"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "ssl_ca_location"
+                ]
+              },
+              {
+                "required": [
+                  "ssl_no_verify"
+                ]
+              },
+              {
+                "required": [
+                  "ssl_certificate_location"
+                ]
+              },
+              {
+                "required": [
+                  "ssl_key_location"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "required": [
+              "security_protocol"
+            ],
+            "properties": {
+              "security_protocol": {
+                "enum": [
+                  "ssl",
+                  "sasl_ssl"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "sasl_mechanism"
+                ]
+              },
+              {
+                "required": [
+                  "sasl_username"
+                ]
+              },
+              {
+                "required": [
+                  "sasl_password"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "required": [
+              "security_protocol"
+            ],
+            "properties": {
+              "security_protocol": {
+                "enum": [
+                  "sasl_plaintext",
+                  "sasl_ssl"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "ssl_certificate_location"
+            ]
+          },
+          "then": {
+            "required": [
+              "ssl_key_location"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "ssl_key_location"
+            ]
+          },
+          "then": {
+            "required": [
+              "ssl_certificate_location"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "sasl_username"
+            ]
+          },
+          "then": {
+            "required": [
+              "sasl_password"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "sasl_password"
+            ]
+          },
+          "then": {
+            "required": [
+              "sasl_username"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "security_protocol"
+            ],
+            "properties": {
+              "security_protocol": {
+                "enum": [
+                  "sasl_plaintext",
+                  "sasl_ssl"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "sasl_mechanism"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "sasl_mechanism"
+            ],
+            "properties": {
+              "sasl_mechanism": {
+                "enum": [
+                  "PLAIN",
+                  "SCRAM-SHA-256",
+                  "SCRAM-SHA-512"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "sasl_username",
+              "sasl_password"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "sasl_mechanism"
+            ],
+            "properties": {
+              "sasl_mechanism": {
+                "enum": [
+                  "OAUTHBEARER",
+                  "GSSAPI"
+                ]
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "sasl_username"
+                  ]
+                },
+                {
+                  "required": [
+                    "sasl_password"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "acks",
+              "producer_config"
+            ],
+            "properties": {
+              "acks": {
+                "enum": [
+                  "0",
+                  "1"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "producer_config": {
+                "properties": {
+                  "enable.idempotence": {
+                    "not": {
+                      "enum": [
+                        "true",
+                        "True",
+                        "TRUE",
+                        "t",
+                        "T",
+                        "1"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "schema",
+              "schema_ref"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "security_protocol"
+            ],
+            "properties": {
+              "security_protocol": {
+                "enum": [
+                  "ssl",
+                  "sasl_ssl"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "producer_config": {
+                "propertyNames": {
+                  "not": {
+                    "pattern": "^(ssl\\.|enable\\.ssl\\.)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "security_protocol"
+            ],
+            "properties": {
+              "security_protocol": {
+                "enum": [
+                  "sasl_plaintext",
+                  "sasl_ssl"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "producer_config": {
+                "propertyNames": {
+                  "not": {
+                    "pattern": "^(sasl\\.|enable\\.sasl\\.|https\\.)"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "broker_list": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "[^,\\s]",
+          "description": "Comma-separated Kafka broker addresses (e.g., broker1:9092,broker2:9092)"
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 249,
+          "pattern": "^[A-Za-z0-9._-]+$",
+          "not": {
+            "anyOf": [
+              {
+                "enum": [
+                  ".",
+                  ".."
+                ]
+              },
+              {
+                "pattern": "\\s"
+              }
+            ]
+          },
+          "description": "Kafka topic to produce messages to. Held to Kafka's own topic syntax at admission: 1-249 characters drawn from ASCII letters, digits, '.', '_', and '-', and never \".\" or \"..\". Whether an otherwise valid topic exists (or may be auto-created) is still a broker decision."
+        },
+        "key_field": {
+          "type": "string",
+          "enum": [
+            "client_ip",
+            "proxy_id",
+            "consumer_username",
+            "none"
+          ],
+          "default": "client_ip",
+          "description": "Partition key field: client_ip (groups by client), proxy_id (groups by route), consumer_username (groups by the summary's effective identity — the mapped Consumer's username, or the external authenticated identity when no Consumer is mapped; unauthenticated records carry no key), none (omits the record key and delegates partition selection to the configured librdkafka partitioner — by default consistent_random with sticky batching, NOT a Ferrum per-record rotation). Matched exactly: lowercase, no surrounding whitespace."
+        },
+        "buffer_capacity": {
+          "type": "integer",
+          "default": 10000,
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "Ferrum userspace channel capacity (record count). Zero is rejected. A channel slot is reserved before serialization. Hard maximum 100000."
+        },
+        "max_entry_bytes": {
+          "type": "integer",
+          "default": 65536,
+          "minimum": 1,
+          "maximum": 1048576,
+          "description": "Maximum retained bytes for one pre-serialized Kafka payload plus its optional partition key. Oversized entries are dropped before enqueue. An explicit producer_config message.max.bytes must be at least max_entry_bytes + 128 bytes of record framing (a cross-field bound the constructor enforces); without one, message.max.bytes defaults to the larger of 1048576 and that floor. Hard maximum 1048576."
+        },
+        "buffer_max_bytes": {
+          "type": "integer",
+          "default": 16777216,
+          "minimum": 1,
+          "maximum": 268435456,
+          "description": "Aggregate Ferrum retained-content byte budget across queued records awaiting librdkafka admission and transient serializers. Admission reserves max_entry_bytes before serialization and shrinks that lease to the exact retained record size. Must be at least max_entry_bytes (a cross-field bound JSON Schema cannot express; the constructor enforces it). The charge is NOT released when librdkafka send returns: it is transferred into the record's delivery opaque and covers librdkafka's own retained copy until terminal delivery, terminal failure, purge-on-destroy, or an immediate send rejection. Hard maximum 268435456."
+        },
+        "compression": {
+          "type": "string",
+          "enum": [
+            "none",
+            "gzip",
+            "snappy",
+            "lz4",
+            "zstd"
+          ],
+          "default": "lz4",
+          "description": "Kafka message compression algorithm"
+        },
+        "flush_timeout_seconds": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 300,
+          "description": "Total bounded seconds for blocking-pool scheduling and librdkafka flush during graceful shutdown and reload disposal after Ferrum admission is closed. Zero is rejected. Hard maximum 300."
+        },
+        "acks": {
+          "type": "string",
+          "enum": [
+            "0",
+            "1",
+            "all",
+            "-1"
+          ],
+          "description": "Delivery acknowledgment level: 0 (fire-and-forget local completion still observed via delivery callback), 1 (leader ack), all/-1 (full ISR ack)"
+        },
+        "message_timeout_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647,
+          "description": "Timeout for message delivery in milliseconds. librdkafka's own range; 0 means no local timeout."
+        },
+        "security_protocol": {
+          "type": "string",
+          "enum": [
+            "plaintext",
+            "ssl",
+            "sasl_plaintext",
+            "sasl_ssl"
+          ],
+          "default": "plaintext",
+          "description": "Kafka security protocol. Unknown root keys are rejected so a misspelled control cannot silently select PLAINTEXT. Explicit TLS controls require ssl/sasl_ssl; explicit SASL controls require sasl_plaintext/sasl_ssl; username and password must be paired."
+        },
+        "sasl_mechanism": {
+          "type": "string",
+          "enum": [
+            "PLAIN",
+            "SCRAM-SHA-256",
+            "SCRAM-SHA-512",
+            "OAUTHBEARER",
+            "GSSAPI"
+          ],
+          "description": "SASL mechanism, matched exactly (librdkafka compares it case-sensitively). Required with sasl_plaintext/sasl_ssl. PLAIN and SCRAM-* require sasl_username and sasl_password; OAUTHBEARER and GSSAPI refuse them. GSSAPI is refused at admission except on Windows builds, because this gateway's librdkafka is built without Cyrus SASL."
+        },
+        "sasl_username": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "SASL username"
+        },
+        "sasl_password": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "SASL password"
+        },
+        "ssl_ca_location": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Path to CA certificate for broker TLS verification. Falls back to FERRUM_TLS_CA_BUNDLE_PATH. librdkafka reads this value as a local filename, so an `operator` whose token carries an `ns` claim (or any `operator` where admin namespace-claim enforcement is on) cannot introduce it: a gateway-local path is refused with `400` before it is loaded, and the references such an operator may otherwise use (inline PEM, `system://`, a `k8s://` Secret) are not filenames. A value already stored in this field is exempt; set or change it with an `admin`-role token."
+        },
+        "ssl_no_verify": {
+          "type": "boolean",
+          "description": "Skip broker TLS certificate verification. Falls back to FERRUM_TLS_NO_VERIFY"
+        },
+        "ssl_certificate_location": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Path to client certificate for mTLS. librdkafka reads this value as a local filename, so an `operator` whose token carries an `ns` claim (or any `operator` where admin namespace-claim enforcement is on) cannot introduce it: a gateway-local path is refused with `400` before it is loaded, and the references such an operator may otherwise use (inline PEM, `system://`, a `k8s://` Secret) are not filenames. A value already stored in this field is exempt; set or change it with an `admin`-role token."
+        },
+        "ssl_key_location": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Path to client private key for mTLS. librdkafka reads this value as a local filename, so an `operator` whose token carries an `ns` claim (or any `operator` where admin namespace-claim enforcement is on) cannot introduce it: a gateway-local path is refused with `400` before it is loaded, and the references such an operator may otherwise use (inline PEM, `system://`, a `k8s://` Secret) are not filenames. A value already stored in this field is exempt; set or change it with an `admin`-role token."
+        },
+        "producer_config": {
+          "type": "object",
+          "propertyNames": {
+            "allOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^\\S(?:[\\s\\S]*\\S)?$"
+              },
+              {
+                "not": {
+                  "pattern": "^[dD][eE][lL][iI][vV][eE][rR][yY]\\.[rR][eE][pP][oO][rR][tT]\\.[oO][nN][lL][yY]\\.[eE][rR][rR][oO][rR]$"
+                }
+              },
+              {
+                "not": {
+                  "enum": [
+                    "bootstrap.servers",
+                    "metadata.broker.list",
+                    "transactional.id",
+                    "security.protocol",
+                    "enable.ssl.certificate.verification",
+                    "ssl.endpoint.identification.algorithm",
+                    "ssl.ca.location",
+                    "ssl.ca.pem",
+                    "ssl.ca.certificate.stores",
+                    "ssl.certificate.location",
+                    "ssl.certificate.pem",
+                    "ssl.key.location",
+                    "ssl.key.pem",
+                    "ssl.keystore.location",
+                    "sasl.mechanism",
+                    "sasl.mechanisms",
+                    "sasl.username",
+                    "sasl.password"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "enum": [
+                    "acks",
+                    "request.required.acks",
+                    "topic.acks",
+                    "topic.request.required.acks",
+                    "message.timeout.ms",
+                    "delivery.timeout.ms",
+                    "topic.message.timeout.ms",
+                    "topic.delivery.timeout.ms",
+                    "compression.codec",
+                    "compression.type",
+                    "topic.compression.codec",
+                    "topic.compression.type"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "enum": [
+                    "topic.queue.buffering.max.messages",
+                    "topic.queue.buffering.max.kbytes",
+                    "topic.message.max.bytes"
+                  ]
+                }
+              }
+            ]
+          },
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "linger.ms",
+                  "queue.buffering.max.ms"
+                ]
+              },
+              {
+                "required": [
+                  "retries",
+                  "message.send.max.retries"
+                ]
+              },
+              {
+                "required": [
+                  "max.in.flight",
+                  "max.in.flight.requests.per.connection"
+                ]
+              },
+              {
+                "required": [
+                  "sasl.oauthbearer.client.credentials.client.id",
+                  "sasl.oauthbearer.client.id"
+                ]
+              },
+              {
+                "required": [
+                  "sasl.oauthbearer.client.credentials.client.secret",
+                  "sasl.oauthbearer.client.secret"
+                ]
+              }
+            ]
+          },
+          "properties": {
+            "queue.buffering.max.messages": {
+              "type": "string",
+              "description": "librdkafka producer queue depth, 1-100000.",
+              "pattern": "^([1-9][0-9]{0,4}|100000)$"
+            },
+            "queue.buffering.max.kbytes": {
+              "type": "string",
+              "description": "librdkafka producer queue size in KiB, 1-262144.",
+              "pattern": "^([1-9][0-9]{0,4}|1[0-9]{5}|2[0-5][0-9]{4}|26[01][0-9]{3}|2620[0-9]{2}|2621[0-3][0-9]|26214[0-4])$"
+            },
+            "message.max.bytes": {
+              "type": "string",
+              "description": "librdkafka maximum message size in bytes, 1-4194304, and at least max_entry_bytes + 128 (enforced by the constructor).",
+              "pattern": "^([1-9][0-9]{0,5}|[1-3][0-9]{6}|40[0-9]{5}|41[0-8][0-9]{4}|419[0-3][0-9]{3}|4194[0-2][0-9]{2}|419430[0-4])$"
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "description": "Escape hatch: additional librdkafka producer properties as string key-value pairs. Cannot override bootstrap.servers or authoritative TLS/SASL controls, including official aliases, PEM/keystore identity alternatives, or hostname-verification disablement. Every spelling of acks, message.timeout.ms, and compression (aliases such as request.required.acks, delivery.timeout.ms, compression.type, and topic.-prefixed forms) is refused — use the top-level field — and two keys naming the same librdkafka property (for example linger.ms and queue.buffering.max.ms) are refused, because librdkafka would apply them in hash order. enable.idempotence=true requires acks all. TLS-namespace properties require ssl/sasl_ssl; SASL/HTTPS-auth properties require sasl_plaintext/sasl_ssl. Queue/message budgets cannot exceed Ferrum hard maxima. ssl.crl.location cannot conflict with gateway file-backed gateway CRL source when verification is enabled. transactional.id is refused outright: the logging lifecycle never calls init_transactions/begin_transaction/commit_transaction, so a transactional producer would reject every record. delivery.report.only.error is refused regardless of value or casing: Ferrum owns delivery reporting and always enables successful delivery reports. Retained-byte leases release at terminal delivery, terminal failure, purge-on-destroy, or immediate send rejection. Values carrying inline PEM private-key material are refused by shape, which JSON Schema does not model here. Keys that load native code, run a host command, or make librdkafka read or write a gateway file (plugin.library.paths, ssl.engine.location, ssl.engine.id, ssl.providers, sasl.kerberos.kinit.cmd, sasl.kerberos.keytab, sasl.oauthbearer.assertion.private.key.file, sasl.oauthbearer.assertion.file, sasl.oauthbearer.assertion.jwt.template.file, https.ca.location, offset.store.path) are refused case-insensitively for every token unless the node sets FERRUM_KAFKA_ALLOW_NATIVE_CONFIG=true. That depends on the node's environment, so this schema admits them."
+        },
+        "schema": {
+          "$ref": "#/$defs/SummaryLogSchema"
+        },
+        "schema_ref": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Name of a schema registered by a `transaction_log_schema` plugin. Mutually exclusive with `schema`. Note: Kafka partition keys (`client_ip` / `proxy_id`) read typed summary fields and are NOT affected by `rename:`. See docs/log_schema.md."
+        }
+      }
+    },
+    "SummaryLogSchema": {
+      "type": "object",
+      "description": "Customizable output schema for transaction-log JSON / line protocol. Rename keys, drop fields, reorder, inject static stamping, emit derived fields, flatten metadata. Metadata redaction always applies on every code path — sensitive substrings (`authorization`, `cookie`, `password`, `token`, …) cannot be introduced via `static_fields` or `derived_fields` (rejected at construction). This object, each `derived_fields` entry, and `metadata` are strict fixed shapes: unknown keys are rejected with a nested path. HTTP summaries include the normalized terminal `grpc_status` field (separate from `response_status_code`) when the request is gRPC. It can be renamed, omitted, or ordered like every other native field. `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reuse this same shape against their own record families; whatever a family cannot express (`summary_type`, `timestamp_format`, `metadata`, `order`, or a derived kind with no source field) is rejected at construction with a plugin- and field-specific diagnostic. Constraints this document cannot express are still enforced at construction and are NOT relaxations of the runtime contract: `omit` / `rename` / `order` names must resolve against the record family's field inventory for the selected `summary_type`; a field may not be both omitted and renamed; the combined native, static, and derived output keys must be unique; `order` must list every non-extension output key unless it contains `\"*\"`; and `rename` targets, `static_fields` keys (including nested keys) and `derived_fields` names may not match a sensitive-data substring or a credential-class name (for example `session_id`, `client_assertion`, `gpg_passphrase`, `private_rsa_key`; see docs/log_schema.md), while a `static_fields` string value that looks like a literal HTTP auth credential is refused. Under `metadata.mode: flatten`, `omit` may not list `metadata` and `rename` may not rename it; under `metadata.mode: omit`, `rename` may not rename it (those directives would otherwise be silently ignored). The whole `static_fields` object serialized as JSON (escaped keys and values, quotes, separators, braces) must be at most 16384 bytes and a static value may nest at most 8 objects/arrays deep. `transforms` keys must be fields of the selected `summary_type`, may not also be omitted, `ip_prefix` applies only to `client_ip` / `backend_resolved_ip`, and a `hash` `secret_ref` must resolve to a set `FERRUM_PLUGIN_SECRET_<NAME>` value of at least 32 bytes. See docs/log_schema.md.",
+      "additionalProperties": false,
+      "properties": {
+        "summary_type": {
+          "type": "string",
+          "enum": [
+            "http",
+            "stream",
+            "both"
+          ],
+          "default": "both",
+          "description": "Which summary type(s) this schema applies to. Summaries of the other type fall back to native serialization (the schema only customizes types it claims to handle)."
+        },
+        "omit": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Native field names to drop from output."
+        },
+        "rename": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Map of native field name -> output key (at most 128 bytes)."
+        },
+        "order": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Explicit output order, by output key. May contain `\"*\"` once as a wildcard for \"every unlisted entry in natural order.\" Without `\"*\"`, every field must be listed. Entries are unique — a repeated output key (or a second `\"*\"`) is rejected."
+        },
+        "static_fields": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "description": "Literal JSON values injected at top level. Keys / nested keys matching sensitive substrings or credential-class names (for example `session_id`) are rejected at compile time. A `null` value is rejected — use `omit` to drop a field. At most 64 entries; keys are at most 128 bytes; the whole object serialized as JSON (escaped keys and values included) is at most 16384 bytes; a value nests at most 8 objects/arrays deep. Static fields are stamped into every record, so these bounds are a per-record cost cap."
+        },
+        "derived_fields": {
+          "type": "array",
+          "maxItems": 32,
+          "description": "Computed values; emitted alongside native fields.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Output key for the derived value."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "status_class",
+                  "backend_host",
+                  "summary_kind",
+                  "outcome"
+                ],
+                "description": "`status_class`: `\"1xx\"`–`\"5xx\"` from `response_status_code` (stream: `\"none\"`). `backend_host`: hostname from `backend_target` (port stripped, IPv6 brackets honored). `summary_kind`: `\"http\"`, `\"stream\"`, or `\"websocket_disconnect\"` (the last only for `ws_logging` WebSocket disconnect entries). `outcome`: `\"ok\"` / `\"error\"`."
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "How to render the `metadata` map.",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "nested",
+                "omit",
+                "flatten"
+              ],
+              "default": "nested"
+            },
+            "prefix": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[^\\x00-\\x1F\\x7F-\\x9F]*$",
+              "description": "Prepended to each metadata key when promoted to top-level (e.g. `\"meta_\"`); only `flatten` reads it. Control characters are rejected. The type and the control-character restriction are validated in every mode, so a `nested` or `omit` schema cannot carry a value that would only start failing once the mode is switched to `flatten`."
+            },
+            "on_collision": {
+              "type": "string",
+              "enum": [
+                "skip",
+                "overwrite"
+              ],
+              "default": "skip",
+              "description": "Behavior when a metadata key collides with an already-emitted field; only `flatten` reads it. `skip` keeps the existing value; `overwrite` replaces the colliding field's value in place with the (redacted) metadata value, so every key appears exactly once in the record. Validated in every mode, like `prefix`."
+            }
+          }
+        },
+        "timestamp_format": {
+          "type": "string",
+          "enum": [
+            "rfc3339",
+            "epoch_ms",
+            "epoch_s"
+          ],
+          "default": "rfc3339",
+          "description": "Conversion applied to timestamp string fields (`timestamp_received`, `timestamp_connected`, `timestamp_disconnected`). Parse failures fall back to the raw RFC3339 string."
+        },
+        "transforms": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "client_ip",
+              "consumer_username",
+              "request_path",
+              "request_user_agent",
+              "backend_target",
+              "backend_resolved_ip",
+              "sni_hostname"
+            ]
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "max_bytes"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "truncate"
+                  },
+                  "max_bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65536
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "ip_prefix"
+                  },
+                  "ipv4_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32,
+                    "default": 24
+                  },
+                  "ipv6_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 128,
+                    "default": 48
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "secret_ref"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "hash"
+                  },
+                  "secret_ref": {
+                    "type": "string",
+                    "pattern": "^\\$\\{FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*\\}$"
+                  }
+                }
+              }
+            ]
+          },
+          "description": "Per-field value transforms, keyed by native source field name (before `rename`), applied when the field is emitted: `truncate` keeps at most `max_bytes` bytes (cut on a UTF-8 boundary); `ip_prefix` keeps the network prefix of an IP address (`ipv4_bits` default 24, `ipv6_bits` default 48; IPv4-mapped IPv6 is masked as IPv4; a value that is not an address is emitted as `null`); `hash` replaces the value with the lowercase-hex keyed HMAC-SHA-256 under the secret named by `secret_ref`, which must be a `${FERRUM_PLUGIN_SECRET_<NAME>}` reference resolved at construction (literal secrets are refused; the value must be at least 32 bytes). Only the transaction-summary loggers support `transforms`; `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reject the key, and statsd ignores it. Kafka partition keys and Loki labels read typed fields and are not transformed."
+        }
+      }
+    }
+  }
+}

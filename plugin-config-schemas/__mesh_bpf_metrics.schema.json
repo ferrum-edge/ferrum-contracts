@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/__mesh_bpf_metrics.schema.json",
+  "title": "__mesh_bpf_metrics plugin config",
+  "description": "The `config` object of an enabled `__mesh_bpf_metrics` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component MeshBpfMetricsConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "__mesh_bpf_metrics",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/MeshBpfMetricsConfig"
+    },
+    "config_required_when_enabled": false,
+    "scope_constraint": "global"
+  },
+  "$ref": "#/$defs/MeshBpfMetricsConfig",
+  "$defs": {
+    "MeshBpfMetricsConfig": {
+      "type": [
+        "object",
+        "null",
+        "string",
+        "array",
+        "number",
+        "boolean"
+      ],
+      "description": "Plugin: __mesh_bpf_metrics - reserved internal mesh NodeWaypoint\nplugin that exposes BPF SOCK_OPS counters and fixed-bucket TCP\nlatency histograms (SRTT / SYN-to-ACK / accept-to-first-byte)\non the Prometheus scrape surface. Mesh mode auto-injects a\nglobal instance on NodeWaypoint; operator-managed plugin configs\nshould not create names prefixed with `__`. Enabled instances\nmust use `scope: global` (at most one enabled instance per\nprocess). Registration is OptionalFailOpen: Admin create/update\nstill returns HTTP 400 for an invalid enabled config, while\nfile-mode load/`ferrum-edge validate` and plugin-cache rebuild\nwarn and omit the instance.\n\nObject configs are closed: the only admitted key is `prefix`.\nA string `prefix` is trimmed before the identifier check.\nNon-object configs (null, string, array, number, boolean) keep\nthe default prefix `ferrum_mesh_bpf`.\n",
+      "additionalProperties": false,
+      "properties": {
+        "prefix": {
+          "type": "string",
+          "pattern": "^\\s*[A-Za-z_][A-Za-z0-9_]*\\s*$",
+          "default": "ferrum_mesh_bpf",
+          "description": "Prometheus metric name prefix for every emitted BPF family\n(`{prefix}_tcp_events_total`, `{prefix}_drops_total`,\n`{prefix}_srtt_microseconds`, `{prefix}_syn_to_ack_microseconds`,\n`{prefix}_accept_to_first_byte_microseconds`, and the ringbuf\nfamilies). Surrounding whitespace is trimmed before the\nidentifier check; the trimmed value must match\n`[A-Za-z_][A-Za-z0-9_]*` and must not be empty. There is no\ndeclared length limit beyond that grammar. Omit the key to\nkeep `ferrum_mesh_bpf`.\n"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/ws_message_size_limiting.schema.json",
+  "title": "ws_message_size_limiting plugin config",
+  "description": "The `config` object of an enabled `ws_message_size_limiting` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component WsMessageSizeLimitingConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "ws_message_size_limiting",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/WsMessageSizeLimitingConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/WsMessageSizeLimitingConfig",
+  "$defs": {
+    "WsMessageSizeLimitingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Configuration for the `ws_message_size_limiting` plugin. Enforces an\nactual wire-frame payload ceiling before payload reservation and an\nindependent reassembled-message ceiling. Violations trigger a bounded\nclose frame (RFC 6455 close code 1009 — Message Too Big) sent to both\nclient and backend after shared relay cancellation is published, and\nincrement `ferrum_ws_message_size_limit_rejected_total{direction}`.\nThe top-level fields are the default for both directions;\n`client_to_backend` and `backend_to_client` override any of them for\nframes read from that peer. Under `websocket_permessage_deflate:\nterminate`, a compressed or inflated frame/message over this plugin's\nceiling closes with the configured `close_reason`; a fault at an\nindependent global or decompression ceiling keeps the adapter's fixed\nreason.\n",
+      "required": [
+        "max_frame_bytes"
+      ],
+      "properties": {
+        "max_frame_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Maximum frame payload size in bytes, the default for both directions. Required and must be greater than zero — the plugin rejects configs with `max_frame_bytes` of 0 at config load time. Applied to Text, Binary, Ping, and Pong frames in both directions; Close frames bypass the size check. Note that Ping/Pong are RFC 6455 control frames capped at 125 bytes by the protocol itself, so values below 125 will close the connection on heartbeat traffic."
+        },
+        "max_message_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Maximum reassembled Text/Binary message payload in bytes, the default for both directions. Defaults to four times `max_frame_bytes` and must be greater than or equal to `max_frame_bytes`. Continuation frames are still checked separately against `max_frame_bytes`; a cumulative message larger than the frame limit is valid until this independent bound is exceeded."
+        },
+        "close_reason": {
+          "type": "string",
+          "default": "Message too large",
+          "description": "Close frame reason text sent to both peers when either limit is exceeded, the default for both directions. Truncated to 123 UTF-8 bytes (the WebSocket protocol close-frame reason limit) on a UTF-8 char boundary."
+        },
+        "client_to_backend": {
+          "$ref": "#/$defs/WsMessageSizeLimitingDirectionConfig",
+          "description": "Override for frames the client sends (the client-side parser)."
+        },
+        "backend_to_client": {
+          "$ref": "#/$defs/WsMessageSizeLimitingDirectionConfig",
+          "description": "Override for frames the backend sends (the backend-side parser)."
+        }
+      }
+    },
+    "WsMessageSizeLimitingDirectionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Per-direction override for `ws_message_size_limiting`. Omitted fields\ninherit the top-level value, except that when `max_message_bytes` is\nset at neither level it defaults to four times this direction's\neffective `max_frame_bytes`. The resolved values must satisfy\n`max_message_bytes >= max_frame_bytes`; an inherited explicit\ntop-level `max_message_bytes` below a raised override\n`max_frame_bytes` is rejected. Ping/Pong count against this\ndirection's `max_frame_bytes`, so values below 125 close the\nconnection on heartbeat traffic.\n",
+      "properties": {
+        "max_frame_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Maximum frame payload in bytes for this direction."
+        },
+        "max_message_bytes": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 18446744073709551615,
+          "description": "Maximum reassembled Text/Binary message payload in bytes for this direction."
+        },
+        "close_reason": {
+          "type": "string",
+          "description": "Close frame reason text for violations in this direction; truncated to 123 UTF-8 bytes on a UTF-8 char boundary."
+        }
+      }
+    }
+  }
+}

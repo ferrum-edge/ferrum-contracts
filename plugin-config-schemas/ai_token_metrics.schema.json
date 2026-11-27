@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/ai_token_metrics.schema.json",
+  "title": "ai_token_metrics plugin config",
+  "description": "The `config` object of an enabled `ai_token_metrics` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component AiTokenMetricsConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "ai_token_metrics",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/AiTokenMetricsConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/AiTokenMetricsConfig",
+  "$defs": {
+    "AiTokenMetricsConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin: ai_token_metrics — Extracts token usage from HTTP JSON LLM response bodies and from streamed SSE / AWS event-stream responses. Native gRPC protobuf messages are unsupported and the plugin is not registered for the Grpc protocol view. Unknown keys are rejected. Streamed responses are metered incrementally without buffering; buffer_streaming_responses instead collects SSE before inspection and disables live delivery. A collected body above 4 MiB (before decoding) is not inspected. Cohere counts come from usage.tokens, delta.usage.tokens, or meta.tokens, not billed_units; configured cost rates estimate cost from those token counts, not provider billing units.",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "openai",
+            "anthropic",
+            "google",
+            "cohere",
+            "mistral",
+            "bedrock",
+            "tgi"
+          ],
+          "description": "Exact lowercase LLM provider format; surrounding whitespace and alternate casing are rejected. `tgi` selects Hugging Face TGI native `/generate` shapes (`details.generated_tokens`)."
+        },
+        "include_model": {
+          "type": "boolean",
+          "default": true,
+          "description": "Extract model name into metadata"
+        },
+        "include_token_details": {
+          "type": "boolean",
+          "default": true,
+          "description": "Extract prompt/completion tokens separately"
+        },
+        "metadata_prefix": {
+          "type": "string",
+          "default": "ai",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9_.-]+$",
+          "description": "Prefix for metadata keys"
+        },
+        "buffer_streaming_responses": {
+          "type": "boolean",
+          "default": false,
+          "description": "Buffer text/event-stream responses and meter them after the full response is collected; disables streaming delivery for those responses. Not required for SSE token accounting, which observes streams incrementally by default."
+        },
+        "cost_per_prompt_token": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double",
+          "minimum": 0,
+          "maximum": 18446744073709.55,
+          "description": "Calculate estimated cost per request from prompt tokens; range 0 through 18446744073709.55. Omitted or null disables this rate."
+        },
+        "cost_per_completion_token": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double",
+          "minimum": 0,
+          "maximum": 18446744073709.55,
+          "description": "Calculate estimated cost per request from completion tokens; range 0 through 18446744073709.55. Omitted or null disables this rate."
+        },
+        "model_pricing": {
+          "type": "array",
+          "maxItems": 128,
+          "default": [],
+          "description": "Ordered per-model rate overrides. The first entry whose `model` glob matches the response's reported model supplies the rates (an omitted entry rate leaves that side unpriced); when none matches, or no publishable model is reported, the flat rates apply. Federation usage is priced at the flat rates.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "model"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "cost_per_prompt_token"
+                ],
+                "properties": {
+                  "cost_per_prompt_token": {
+                    "type": "number"
+                  }
+                }
+              },
+              {
+                "required": [
+                  "cost_per_completion_token"
+                ],
+                "properties": {
+                  "cost_per_completion_token": {
+                    "type": "number"
+                  }
+                }
+              }
+            ],
+            "properties": {
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:/+*-]+$",
+                "not": {
+                  "pattern": "\\.\\."
+                },
+                "description": "Anchored glob matched against the response's model; `*` is the only wildcard and never matches URL-structural separators (`/ ? # & \\`) or whitespace."
+              },
+              "cost_per_prompt_token": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "format": "double",
+                "minimum": 0,
+                "maximum": 18446744073709.55,
+                "description": "Prompt-token rate for matching models; null or omitted leaves the prompt side unpriced."
+              },
+              "cost_per_completion_token": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "format": "double",
+                "minimum": 0,
+                "maximum": 18446744073709.55,
+                "description": "Completion-token rate for matching models; null or omitted leaves the completion side unpriced."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

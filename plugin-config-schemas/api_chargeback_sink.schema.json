@@ -1,0 +1,1085 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/api_chargeback_sink.schema.json",
+  "title": "api_chargeback_sink plugin config",
+  "description": "The `config` object of an enabled `api_chargeback_sink` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component ApiChargebackSinkConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "api_chargeback_sink",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/ApiChargebackSinkConfig"
+    },
+    "config_required_when_enabled": true
+  },
+  "$ref": "#/$defs/ApiChargebackSinkConfig",
+  "$defs": {
+    "ApiChargebackSinkConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clickhouse"
+      ],
+      "description": "Plugin: api_chargeback_sink — Durable ClickHouse charge export. At most one\neffective sink is admitted per proxy after scope merging; independent\nevent_id keys would otherwise duplicate durable billing rows. Uses the\nsame `pricing_tiers`, `bandwidth_pricing`, `stream_connection_pricing`,\nand `currency` fields as `api_chargeback`, then exports either\nper-transaction events (`mode: per_event`) or periodic accumulator\ndeltas (`mode: snapshot`) to ClickHouse. Ordinary HTTP uses its wire\nstatus for pricing. Native gRPC and translated gRPC-Web use the final\nnormalized grpc-status mapped to the canonical effective HTTP status.\nExplicitly zero-priced tiers still count matching calls. Successful H1/H2/H3\nWebSocket handshakes use the 101 tier and ws protocol label; rejected\nhandshakes retain their error status. Admission into memory is not durable:\npending batches and spool handoffs can be lost on abrupt process termination.\nDurable events preserve that billable status, the raw HTTP status, and\nthe normalized gRPC status separately. Snapshot mode aggregates by every\nexported categorical dimension (namespace, consumer_id, consumer_name,\nproxy_id, proxy_name, route_id, billable status, raw HTTP status, final\ngRPC status, and protocol) so mixed route/protocol/name traffic cannot\nbe labeled with first-record metadata.\n\nAt least one nonempty pricing dimension must be configured with the same\nsemantics as runtime `PricingConfig::has_any_pricing`: a nonempty\n`pricing_tiers` array, `bandwidth_pricing` with at least one strictly\npositive per-byte rate, or `stream_connection_pricing` with a strictly\npositive `price_per_connection`.\n\nOpenAPI encodes material cross-field invariants that JSON Schema can\nrepresent accurately: `clickhouse` (with runtime-mandatory `url`) is\nrequired; snapshot mode forbids `spool.enabled=false`; nonempty\n`clickhouse.password_ref` requires `https://`, forbids disabled TLS\ncertificate/hostname verification, and requires a non-blank\n`clickhouse.username` (the password is sent as that user's HTTP Basic\npassword); `clickhouse.url` must be http(s) without user-info;\n`clickhouse.database` is a single identifier and `clickhouse.table` is\n`table` or `database.table`, each part not starting with a digit;\n`insert_query_params` may not name the reserved `database` / `query`\nparameters; an enabled spool's `max_bytes` is at least 1048576;\n`clickhouse.tls.client_cert_file` and\n`client_key_file` must be set together; `pricing_tiers[].status_codes`\nentries are unique within a tier; and batch/spool/snapshot numeric,\nlength, and character bounds match the constructor. Settings the\nconstructor ignores while `spool.enabled` is false (`dir`, `max_bytes`,\n`replay_interval_secs`, `delivery_queue_capacity`) are constrained only\nwhile spooling is enabled, which is the default.\n\nCold constructor validation (`validate`, Admin, file mode, and CP-DP all\nshare it) adds the checks that need no I/O but that OpenAPI 3.1 cannot\nexpress safely: `retry.max_delay_ms >= retry.initial_delay_ms`;\nworst-case cumulative inter-attempt delay\n(`retry.max_attempts` / `retry.initial_delay_ms` / `retry.max_delay_ms`)\nmust not exceed 600000 ms;\n`snapshot.stale_entry_ttl_secs >= snapshot.interval_secs`; ClickHouse\nURL egress IP screening; whitespace-only trimming for `currency` /\n`pricing_version` / `password_ref`; that a nonempty `password_ref` *is\nspelled* `FERRUM_PLUGIN_SECRET_<NAME>`; and UTF-8 byte bounds where `maxLength` above\ncounts characters instead.\n\nActivation (serving startup) adds the checks that require local files,\nthe process environment, or the filesystem, and therefore do NOT run\nunder `ferrum-edge validate`: resolving `password_ref` to a set\nenvironment variable, reading/parsing the TLS CA and client\ncertificate/key files, and creating the spool tree with private\npermissions (`ensure_private_dir`). A configuration accepted by\n`validate` can still abort serving startup on a node missing those\nfiles or variables.\n",
+      "allOf": [
+        {
+          "not": {
+            "required": [
+              "schema",
+              "schema_ref"
+            ]
+          }
+        },
+        {
+          "anyOf": [
+            {
+              "required": [
+                "pricing_tiers"
+              ],
+              "properties": {
+                "pricing_tiers": {
+                  "type": "array",
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "bandwidth_pricing"
+              ],
+              "properties": {
+                "bandwidth_pricing": {
+                  "type": "object",
+                  "anyOf": [
+                    {
+                      "required": [
+                        "price_per_byte_sent"
+                      ],
+                      "properties": {
+                        "price_per_byte_sent": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 1e+288
+                        }
+                      }
+                    },
+                    {
+                      "required": [
+                        "price_per_byte_received"
+                      ],
+                      "properties": {
+                        "price_per_byte_received": {
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 1e+288
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "required": [
+                "stream_connection_pricing"
+              ],
+              "properties": {
+                "stream_connection_pricing": {
+                  "type": "object",
+                  "required": [
+                    "price_per_connection"
+                  ],
+                  "properties": {
+                    "price_per_connection": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "maximum": 1e+288
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "if": {
+            "required": [
+              "mode"
+            ],
+            "properties": {
+              "mode": {
+                "const": "snapshot"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "spool"
+              ],
+              "properties": {
+                "spool": {
+                  "type": "object",
+                  "required": [
+                    "enabled"
+                  ],
+                  "properties": {
+                    "enabled": {
+                      "const": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "clickhouse"
+            ],
+            "properties": {
+              "clickhouse": {
+                "type": "object",
+                "required": [
+                  "tls"
+                ],
+                "properties": {
+                  "tls": {
+                    "type": "object",
+                    "oneOf": [
+                      {
+                        "required": [
+                          "client_cert_file"
+                        ],
+                        "properties": {
+                          "client_cert_file": {
+                            "type": "string"
+                          },
+                          "client_key_file": {
+                            "type": "null"
+                          }
+                        }
+                      },
+                      {
+                        "required": [
+                          "client_key_file"
+                        ],
+                        "properties": {
+                          "client_key_file": {
+                            "type": "string"
+                          },
+                          "client_cert_file": {
+                            "type": "null"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "required": [
+                "spool"
+              ],
+              "properties": {
+                "spool": {
+                  "type": "object",
+                  "required": [
+                    "enabled"
+                  ],
+                  "properties": {
+                    "enabled": {
+                      "const": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spool": {
+                "type": "object",
+                "properties": {
+                  "dir": {
+                    "type": "string",
+                    "minLength": 1,
+                    "not": {
+                      "pattern": "[\\x00]"
+                    }
+                  },
+                  "max_bytes": {
+                    "type": "integer",
+                    "minimum": 1048576
+                  },
+                  "replay_interval_secs": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "delivery_queue_capacity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000000
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "clickhouse"
+            ],
+            "properties": {
+              "clickhouse": {
+                "type": "object",
+                "required": [
+                  "password_ref"
+                ],
+                "properties": {
+                  "password_ref": {
+                    "type": "string",
+                    "pattern": "\\S"
+                  }
+                },
+                "not": {
+                  "required": [
+                    "username"
+                  ],
+                  "properties": {
+                    "username": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "not": {
+            "allOf": [
+              {
+                "required": [
+                  "clickhouse"
+                ],
+                "properties": {
+                  "clickhouse": {
+                    "type": "object",
+                    "required": [
+                      "password_ref"
+                    ],
+                    "properties": {
+                      "password_ref": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256,
+                        "pattern": "\\S"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "required": [
+                      "clickhouse"
+                    ],
+                    "properties": {
+                      "clickhouse": {
+                        "type": "object",
+                        "required": [
+                          "url"
+                        ],
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "pattern": "^https?://",
+                            "not": {
+                              "pattern": "^https://"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "clickhouse"
+                    ],
+                    "properties": {
+                      "clickhouse": {
+                        "type": "object",
+                        "required": [
+                          "tls"
+                        ],
+                        "properties": {
+                          "tls": {
+                            "type": "object",
+                            "required": [
+                              "insecure_skip_verify"
+                            ],
+                            "properties": {
+                              "insecure_skip_verify": {
+                                "const": true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "clickhouse"
+                    ],
+                    "properties": {
+                      "clickhouse": {
+                        "type": "object",
+                        "required": [
+                          "tls"
+                        ],
+                        "properties": {
+                          "tls": {
+                            "type": "object",
+                            "required": [
+                              "verify_hostname"
+                            ],
+                            "properties": {
+                              "verify_hostname": {
+                                "const": false
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "per_event",
+            "snapshot"
+          ],
+          "default": "per_event",
+          "description": "Export one event per transaction or periodic snapshot deltas.\nSnapshot mode requires spool.enabled=true for durable delta delivery.\nSnapshot accumulator identity is every exported categorical field:\nnamespace, consumer_id, consumer_name (empty when absent), proxy_id,\nproxy_name, route_id (empty when absent), billable status_code, raw\nhttp_status_code, final grpc_status, and protocol. Delta emission,\nlast-emitted bookkeeping, and stale cleanup share that identity so\nmixed routes, protocols, or display names cannot collapse into one\nmislabeled aggregate.\n"
+        },
+        "currency": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "\\S",
+          "default": "USD",
+          "description": "Currency label written to each charge event. Runtime also rejects whitespace-only values after trim, and bounds the label at 512 UTF-8 bytes: it is copied verbatim into every exported row and counts against the bounded charge-event budget, so a longer label would make every per-event export fail admission. `maxLength` counts characters, so the runtime byte bound is the stricter of the two for non-ASCII labels."
+        },
+        "pricing_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "pattern": "\\S",
+          "default": "default",
+          "description": "Operator-controlled pricing/version label written to each event. Runtime also rejects whitespace-only values after trim, and bounds the label at 512 UTF-8 bytes for the same reason as `currency`. `maxLength` counts characters, so the runtime byte bound is the stricter of the two for non-ASCII labels."
+        },
+        "include_request_id": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include request/correlation ID metadata when present."
+        },
+        "include_trace_id": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include trace ID or traceparent metadata when present."
+        },
+        "pricing_tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status_codes",
+              "price_per_call"
+            ],
+            "properties": {
+              "status_codes": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 599
+                },
+                "description": "Billable status codes. Ordinary HTTP uses the wire status; gRPC/gRPC-Web uses the canonical effective mapping of final grpc-status, with missing/malformed/unknown terminal status mapped to 500."
+              },
+              "price_per_call": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1e+288,
+                "description": "Finite non-negative per-call price at most 1e288 (shared\nchargeback binary64 counter×price bound).\n"
+              }
+            }
+          },
+          "description": "HTTP-family per-call pricing by billable status. A status code must appear in at most one tier. A nonempty tiers list satisfies has_any_pricing even when prices are zero."
+        },
+        "bandwidth_pricing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "price_per_byte_sent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1e+288,
+              "default": 0.0
+            },
+            "price_per_byte_received": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1e+288,
+              "default": 0.0
+            }
+          },
+          "description": "Optional per-byte pricing for client->backend and backend->client bytes. When this is the only pricing dimension, at least one rate must be strictly greater than zero (has_any_pricing)."
+        },
+        "stream_connection_pricing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "price_per_connection"
+          ],
+          "properties": {
+            "price_per_connection": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1e+288
+            }
+          },
+          "description": "Optional flat per-session charge for TCP/TCP+TLS/UDP/DTLS disconnects. When this is the only pricing dimension, price_per_connection must be strictly greater than zero (has_any_pricing)."
+        },
+        "clickhouse": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "url"
+          ],
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "minLength": 1,
+              "pattern": "^[hH][tT][tT][pP][sS]?://(?![^/?#]*@)(?:\\[[^\\]\\s]+\\]|[^/?#:\\s]+)(?::[0-9]+)?(?:[/?#]\\S*)?$",
+              "description": "ClickHouse HTTP endpoint. Must use http:// or https://, include a host, and must not contain user-info (use username/password_ref instead)."
+            },
+            "database": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+              "default": "ferrum",
+              "description": "ClickHouse database identifier sent as the INSERT `database` parameter. A single identifier of ASCII letters, digits, and underscore that does not start with a digit; dots are rejected."
+            },
+            "table": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?$",
+              "default": "charges_raw",
+              "description": "ClickHouse table identifier interpolated into INSERT, as `table` or `database.table` (at most one dot). Each part uses ASCII letters, digits, and underscore and must not start with a digit, so names such as `123charges`, `.`, `ferrum.`, `a..b`, or `a.b.c` that ClickHouse cannot parse as an unquoted INSERT target are rejected at admission."
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1,
+              "pattern": "\\S",
+              "description": "Optional ClickHouse HTTP Basic username. `null` is accepted and means unset; an empty or whitespace-only string is rejected. Required whenever `password_ref` is nonempty, because the resolved password is only ever sent as this user's HTTP Basic password."
+            },
+            "password_ref": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "maxLength": 256,
+              "pattern": "^\\s*(?:(?!\\S*_(?:FILE|VAULT|AWS|AZURE|GCP)\\s*$)FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*)?\\s*$",
+              "description": "Name of the `FERRUM_PLUGIN_SECRET_<NAME>` environment variable\ncontaining the ClickHouse password (`<NAME>` uppercase\n`[A-Z_][A-Z0-9_]*`), often materialized at startup from a\n`FERRUM_PLUGIN_SECRET_<NAME>_FILE`, `_VAULT`, `_AWS`, `_AZURE`,\nor `_GCP` secret suffix. Any other process environment\nvariable, including every other `FERRUM_*` setting, is refused\nat admission. Empty values are treated as unset. Because the password is sent via HTTP Basic auth,\n`clickhouse.url` must use `https://` and TLS certificate/hostname\nverification must stay enabled when this is nonempty after\ntrimming. Empty or whitespace-only values are treated as unset.\nRuntime additionally requires the referenced env var to be set.\n"
+            },
+            "tls": {
+              "type": "object",
+              "additionalProperties": false,
+              "if": {
+                "required": [
+                  "verify_hostname"
+                ],
+                "properties": {
+                  "verify_hostname": {
+                    "const": false
+                  }
+                }
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "ca_file"
+                    ],
+                    "properties": {
+                      "ca_file": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "required": [
+                      "insecure_skip_verify"
+                    ],
+                    "properties": {
+                      "insecure_skip_verify": {
+                        "const": true
+                      }
+                    }
+                  }
+                ]
+              },
+              "properties": {
+                "ca_file": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "PEM CA bundle for this ClickHouse endpoint."
+                },
+                "client_cert_file": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "PEM client certificate for ClickHouse mTLS. Must be set together with `client_key_file`; the constructor rejects an incomplete pair during file/Admin/CP-DP admission rather than only when the TLS client is built."
+                },
+                "client_key_file": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "PEM client private key for ClickHouse mTLS. Must be set together with `client_cert_file`."
+                },
+                "verify_hostname": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Verify the ClickHouse server hostname. Disabling this logs a warning and is for testing only, and requires `ca_file` (the server certificate is still verified against that pinned bundle) or `insecure_skip_verify: true`; without either the constructor refuses the configuration."
+                },
+                "insecure_skip_verify": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Disable certificate verification for this ClickHouse endpoint. Logs a warning and cannot be used with password_ref. Testing only."
+                }
+              }
+            },
+            "insert_query_params": {
+              "type": "object",
+              "propertyNames": {
+                "minLength": 1,
+                "maxLength": 128,
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[Aa][Pp][Ii][Kk][Ee][Yy]|[Aa][Pp][Ii]_[Kk][Ee][Yy]|[Cc][Rr][Ee][Dd][Ee][Nn][Tt][Ii][Aa][Ll]|[Pp][Aa][Ss][Ss][Ww][Dd]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Tt][Oo][Kk][Ee][Nn]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[Uu][Ss][Ee][Rr]$|^[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd]$|^[Ss][Ee][Ss][Ss][Ii][Oo][Nn]_[Ii][Dd]$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[Dd][Aa][Tt][Aa][Bb][Aa][Ss][Ee]$|^[Qq][Uu][Ee][Rr][Yy]$"
+                    }
+                  }
+                ]
+              },
+              "additionalProperties": {
+                "type": "string",
+                "maxLength": 512,
+                "not": {
+                  "pattern": "[\\x00-\\x1f\\x7f-\\x9f]"
+                }
+              },
+              "default": {},
+              "description": "Extra query parameters appended to the ClickHouse INSERT request.\nDurable mode rejects `wait_for_async_insert` values that disable\npersistence waits (`0`, `false`, `no`, `off`) unless\n`allow_lossy_async_insert` is true. Recommended durable settings\nuse `async_insert=1` with `wait_for_async_insert=1`. Whenever\nthe wait setting is omitted, the sink pins\n`wait_for_async_insert=1` on every durable request rather than\ninheriting a ClickHouse user/profile default, including one\nthat enables `async_insert` while disabling the persistence\nwait.\n\nCredential-bearing parameter names are rejected: the exact names\n`user`, `password`, `access_token`, and `session_id`, plus any\nname containing `apikey`, `api_key`, `credential`, `passwd`,\n`secret`, or `token`. Authenticate with `username` and\n`password_ref`, which are sent as an HTTP Basic header rather\nthan appended to the INSERT URL. The names `database` and\n`query` (case-insensitive) are reserved: the sink sets them from\n`clickhouse.database` and its fixed\n`INSERT INTO <table> FORMAT JSONEachRow` statement, and a second\noccurrence would leave the executed statement to ClickHouse's\nduplicate-parameter handling. Parameter values stay arbitrary\nbounded strings, so the sink never renders the INSERT query\nstring in any diagnostic; failures report a structurally\nredacted `scheme://host:port/redacted` endpoint. Admin audit\nprojections redact every value in this map.\n\nNames are 1-128 bytes and values at most 512 bytes, and neither\nmay contain a Unicode control character. The `maxLength`\nkeywords above count characters, so for non-ASCII names or\nvalues the runtime UTF-8 byte bound is the stricter of the two.\n"
+            },
+            "allow_lossy_async_insert": {
+              "type": "boolean",
+              "default": false,
+              "description": "Explicit fire-and-forget opt-in. When true, permits\n`insert_query_params.wait_for_async_insert=0` (and equivalent\nfalsy values). ClickHouse may acknowledge buffered inserts before\npersistence; spool deletion still follows a complete\nexception-free HTTP acknowledgement, which is not a durability\nproof in this mode. Default false keeps the durable contract.\n"
+            },
+            "timeout_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 600000,
+              "default": 5000,
+              "description": "Per-attempt ClickHouse connect/request timeout. Bounded at ten minutes so the cross-process spool claim horizon used for stranded-claim diagnostics remains finite and strictly longer than the accepted request/retry budget. The horizon never authorizes descriptor-free claim restoration."
+            }
+          }
+        },
+        "batch": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "size": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 500
+            },
+            "flush_interval_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 600000,
+              "default": 2000
+            },
+            "buffer_capacity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000,
+              "default": 50000,
+              "description": "Bounded in-memory export channel capacity. With spool.enabled=false, the 80% high-water mark is telemetry only and every slot remains usable until the channel is actually full. With spool enabled, high-water overflow is diverted to durable spool delivery instead of consuming the remaining channel slots.\n"
+            },
+            "buffer_max_bytes": {
+              "type": "integer",
+              "minimum": 9440,
+              "maximum": 268435456,
+              "default": 16777216,
+              "description": "Aggregate retained-byte budget for ChargeEvent records awaiting ClickHouse export or async spool delivery."
+            }
+          }
+        },
+        "retry": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Retry budget and bounded exponential backoff. OpenAPI cannot express\n`max_delay_ms >= initial_delay_ms` or the worst-case cumulative\ninter-attempt delay budget; the plugin constructor rejects inverted\nbounds and budgets over 600000 ms during Admin/file/CP-DP admission.\n`max_attempts` is the total attempt count (including the initial try);\n`0` is rejected. Each delay field is capped at 60000 ms.\n",
+          "properties": {
+            "max_attempts": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 32,
+              "default": 5
+            },
+            "initial_delay_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000,
+              "default": 250
+            },
+            "max_delay_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 60000,
+              "default": 10000,
+              "description": "Cap on inter-attempt delay. Runtime requires max_delay_ms >=\ninitial_delay_ms and that the worst-case cumulative inter-attempt\ndelay stays within 600000 ms.\n"
+            },
+            "jitter": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "spool": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "dir": {
+              "type": "string",
+              "default": "/var/lib/ferrum/chargeback-spool",
+              "description": "Spool root. Constrained only while spooling is enabled (the default): the constructor requires a nonempty, NUL-free path, and ignores `dir`, `max_bytes`, `replay_interval_secs`, and `delivery_queue_capacity` entirely when `enabled` is false."
+            },
+            "max_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 10737418240,
+              "description": "Hard ceiling on total encoded on-disk bytes owned by this sink under\nits managed namespace\n(<spool.dir>/<safe_node>/<safe_plugin>/o<owner_digest>/) after\ncompression. While spooling is enabled it must be at least\n1048576 bytes. This is a policy floor: a quota that small or\nsmaller refuses ordinary failed batches and snapshot chunks so\noften that spooling (and snapshot finalization) cannot be relied\non, even though an individual small artifact may fit. The owner digest binds the plugin config id, Ferrum\nnamespace/ledger, sanitized ClickHouse endpoint, database, table, and\nnode id; it contains no credentials. Counts active spool files\n(*.ndjson / *.ndjson.zst), atomic-write temps\n(*.write-<process_tag>-<generation>.tmp), in-flight replay claims\n(*.inflight), and quarantined (*.corrupt) / dead-letter payload and\nmetadata files. Ordinary pending writes are sized before admission;\nincrementally streamed dead-letter payloads are admitted before each\nbounded replay-batch append. Admission/inventory/eviction and the\ncorresponding mutation hold one stable ownership-bound exclusive\nfilesystem lock shared by every manager, plugin generation, and\ncooperating Ferrum process using the namespace. The private\nno-follow lock inode and spool.meta.json identity are revalidated\nafter acquisition; lock/identity failures refuse the mutation. The\nzero-length coordination file is excluded from quota/status counts.\nThe oldest evictable owned file is dropped until the incoming bytes fit.\nIn-flight claims, temps under an active write,\nand records carrying another owner's tag are never evictable, so a\nwrite that cannot fit is rejected rather than exceeding the ceiling\nor destroying another owner's or another delivery's records. Each\nencoded and decoded artifact is also capped at 268435456 bytes;\nzstd replay additionally applies a 200x expansion limit with a\n1 MiB floor, and oversized artifacts are quarantined without first\nbeing read or expanded without bound.\n"
+            },
+            "replay_interval_secs": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 60
+            },
+            "delivery_queue_capacity": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 4096,
+              "description": "Bounded async handoff queue for overflow and failed-batch spool writes. Request and body terminal hooks only enqueue here; compression, directory work, writes, and fsync run on the owned delivery worker. Saturation drops are counted without blocking the proxy path."
+            },
+            "compression": {
+              "type": "string",
+              "enum": [
+                "zstd",
+                "none"
+              ],
+              "default": "zstd"
+            }
+          }
+        },
+        "snapshot": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "interval_secs": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 30
+            },
+            "emit_zero_deltas": {
+              "type": "boolean",
+              "default": false,
+              "description": "Emit unchanged keys on every snapshot tick."
+            },
+            "cleanup_interval_secs": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 300,
+              "description": "How often idle snapshot accumulator keys are evicted."
+            },
+            "stale_entry_ttl_secs": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 3600,
+              "description": "How long a snapshot accumulator key may remain idle before\nentries and last-emitted state are removed. Runtime requires\n`stale_entry_ttl_secs >= interval_secs`. Cleanup also refuses to\nevict keys whose current totals still exceed their last durable\nbaseline (pending/uncommitted deltas survive TTL).\n"
+            },
+            "max_entries": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000,
+              "default": 100000,
+              "description": "Hard ceiling on distinct snapshot accumulator identities.\nNew identities beyond this budget are spooled as per-event rows\nthrough the bounded async spool delivery worker (never inline on\nthe terminal hook), or staged within the retained-byte budget for\nthe next durable emission, rather than merged into unrelated\nkeys. Exhaustion of both durable handoff and bounded staging\nincrements the explicit cardinality-rejection counter.\n"
+            },
+            "max_retained_bytes": {
+              "type": "integer",
+              "minimum": 9440,
+              "maximum": 268435456,
+              "default": 67108864,
+              "description": "Hard ceiling on estimated retained bytes for snapshot\naccumulator identities and staged overflow events, enforced as a\nsingle combined reservation so concurrent identity admission and\noverflow staging cannot exceed it. Overflow uses the same bounded\nasync delivery-worker spool strategy as max_entries. Runtime\nadditionally requires the value to be at least one bounded\ncharge-event size.\n"
+            }
+          }
+        },
+        "schema": {
+          "$ref": "#/$defs/ApiChargebackSinkLogSchema"
+        },
+        "schema_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Nonempty name of a schema registered by a `transaction_log_schema` plugin. Mutually exclusive with `schema` by key presence, including null values. The referenced definition must also satisfy ApiChargebackSinkLogSchema; existence and compatibility are checked at construction, since JSON Schema cannot resolve registry contents. Named definitions must first compile against the transaction-summary field inventory, so use inline schema for charge-event-only fields. Projects the exported charge-event record (the JSONEachRow row delivered to ClickHouse and the durable spool artifact that replays it), not the pricing, the accumulator identities, or the snapshot keys. Renaming a field renames the ClickHouse column the row inserts into, so the target table must agree. `summary_type`, `timestamp_format`, the `metadata` policy, `transforms`, and the `backend_host` derived kind are rejected for this surface: a charge event has no RFC3339 timestamp field, no metadata map, and no backend target. See docs/log_schema.md."
+        }
+      }
+    },
+    "ApiChargebackSinkLogField": {
+      "type": "string",
+      "description": "Native exported charge-event field available to omit or rename.",
+      "enum": [
+        "event_id",
+        "received_at",
+        "node_id",
+        "namespace",
+        "consumer_id",
+        "consumer_name",
+        "proxy_id",
+        "proxy_name",
+        "route_id",
+        "status_code",
+        "http_status_code",
+        "grpc_status",
+        "protocol",
+        "call_count",
+        "charge_call",
+        "bytes_sent",
+        "bytes_received",
+        "charge_bytes_sent",
+        "charge_bytes_received",
+        "charge_total",
+        "currency",
+        "pricing_version",
+        "request_id",
+        "trace_id",
+        "snapshot_id"
+      ]
+    },
+    "ApiChargebackSinkLogSchema": {
+      "description": "Projection of the exported charge-event record. Supports omit, rename, order, static_fields, and derived_fields. The summary_type, timestamp_format, metadata, and transforms keys are forbidden, even with null or default values. received_at remains an epoch-nanosecond integer. Derived kinds are status_class (from billable status_code), summary_kind (always charge_event), and outcome (error for status_code >= 500 or a nonzero grpc_status, otherwise ok). backend_host is unavailable. Shared constructor checks still enforce output-key uniqueness, sensitive-data restrictions, omit/rename conflicts, and order coverage against the final output keys. See docs/log_schema.md.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/SummaryLogSchema"
+        },
+        {
+          "properties": {
+            "summary_type": false,
+            "timestamp_format": false,
+            "metadata": false,
+            "transforms": false,
+            "omit": {
+              "items": {
+                "$ref": "#/$defs/ApiChargebackSinkLogField"
+              }
+            },
+            "rename": {
+              "propertyNames": {
+                "$ref": "#/$defs/ApiChargebackSinkLogField"
+              }
+            },
+            "derived_fields": {
+              "items": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "status_class",
+                      "summary_kind",
+                      "outcome"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SummaryLogSchema": {
+      "type": "object",
+      "description": "Customizable output schema for transaction-log JSON / line protocol. Rename keys, drop fields, reorder, inject static stamping, emit derived fields, flatten metadata. Metadata redaction always applies on every code path — sensitive substrings (`authorization`, `cookie`, `password`, `token`, …) cannot be introduced via `static_fields` or `derived_fields` (rejected at construction). This object, each `derived_fields` entry, and `metadata` are strict fixed shapes: unknown keys are rejected with a nested path. HTTP summaries include the normalized terminal `grpc_status` field (separate from `response_status_code`) when the request is gRPC. It can be renamed, omitted, or ordered like every other native field. `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reuse this same shape against their own record families; whatever a family cannot express (`summary_type`, `timestamp_format`, `metadata`, `order`, or a derived kind with no source field) is rejected at construction with a plugin- and field-specific diagnostic. Constraints this document cannot express are still enforced at construction and are NOT relaxations of the runtime contract: `omit` / `rename` / `order` names must resolve against the record family's field inventory for the selected `summary_type`; a field may not be both omitted and renamed; the combined native, static, and derived output keys must be unique; `order` must list every non-extension output key unless it contains `\"*\"`; and `rename` targets, `static_fields` keys (including nested keys) and `derived_fields` names may not match a sensitive-data substring or a credential-class name (for example `session_id`, `client_assertion`, `gpg_passphrase`, `private_rsa_key`; see docs/log_schema.md), while a `static_fields` string value that looks like a literal HTTP auth credential is refused. Under `metadata.mode: flatten`, `omit` may not list `metadata` and `rename` may not rename it; under `metadata.mode: omit`, `rename` may not rename it (those directives would otherwise be silently ignored). The whole `static_fields` object serialized as JSON (escaped keys and values, quotes, separators, braces) must be at most 16384 bytes and a static value may nest at most 8 objects/arrays deep. `transforms` keys must be fields of the selected `summary_type`, may not also be omitted, `ip_prefix` applies only to `client_ip` / `backend_resolved_ip`, and a `hash` `secret_ref` must resolve to a set `FERRUM_PLUGIN_SECRET_<NAME>` value of at least 32 bytes. See docs/log_schema.md.",
+      "additionalProperties": false,
+      "properties": {
+        "summary_type": {
+          "type": "string",
+          "enum": [
+            "http",
+            "stream",
+            "both"
+          ],
+          "default": "both",
+          "description": "Which summary type(s) this schema applies to. Summaries of the other type fall back to native serialization (the schema only customizes types it claims to handle)."
+        },
+        "omit": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Native field names to drop from output."
+        },
+        "rename": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Map of native field name -> output key (at most 128 bytes)."
+        },
+        "order": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Explicit output order, by output key. May contain `\"*\"` once as a wildcard for \"every unlisted entry in natural order.\" Without `\"*\"`, every field must be listed. Entries are unique — a repeated output key (or a second `\"*\"`) is rejected."
+        },
+        "static_fields": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "not": {
+              "type": "null"
+            }
+          },
+          "description": "Literal JSON values injected at top level. Keys / nested keys matching sensitive substrings or credential-class names (for example `session_id`) are rejected at compile time. A `null` value is rejected — use `omit` to drop a field. At most 64 entries; keys are at most 128 bytes; the whole object serialized as JSON (escaped keys and values included) is at most 16384 bytes; a value nests at most 8 objects/arrays deep. Static fields are stamped into every record, so these bounds are a per-record cost cap."
+        },
+        "derived_fields": {
+          "type": "array",
+          "maxItems": 32,
+          "description": "Computed values; emitted alongside native fields.",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "description": "Output key for the derived value."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "status_class",
+                  "backend_host",
+                  "summary_kind",
+                  "outcome"
+                ],
+                "description": "`status_class`: `\"1xx\"`–`\"5xx\"` from `response_status_code` (stream: `\"none\"`). `backend_host`: hostname from `backend_target` (port stripped, IPv6 brackets honored). `summary_kind`: `\"http\"`, `\"stream\"`, or `\"websocket_disconnect\"` (the last only for `ws_logging` WebSocket disconnect entries). `outcome`: `\"ok\"` / `\"error\"`."
+              }
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "How to render the `metadata` map.",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "nested",
+                "omit",
+                "flatten"
+              ],
+              "default": "nested"
+            },
+            "prefix": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[^\\x00-\\x1F\\x7F-\\x9F]*$",
+              "description": "Prepended to each metadata key when promoted to top-level (e.g. `\"meta_\"`); only `flatten` reads it. Control characters are rejected. The type and the control-character restriction are validated in every mode, so a `nested` or `omit` schema cannot carry a value that would only start failing once the mode is switched to `flatten`."
+            },
+            "on_collision": {
+              "type": "string",
+              "enum": [
+                "skip",
+                "overwrite"
+              ],
+              "default": "skip",
+              "description": "Behavior when a metadata key collides with an already-emitted field; only `flatten` reads it. `skip` keeps the existing value; `overwrite` replaces the colliding field's value in place with the (redacted) metadata value, so every key appears exactly once in the record. Validated in every mode, like `prefix`."
+            }
+          }
+        },
+        "timestamp_format": {
+          "type": "string",
+          "enum": [
+            "rfc3339",
+            "epoch_ms",
+            "epoch_s"
+          ],
+          "default": "rfc3339",
+          "description": "Conversion applied to timestamp string fields (`timestamp_received`, `timestamp_connected`, `timestamp_disconnected`). Parse failures fall back to the raw RFC3339 string."
+        },
+        "transforms": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "client_ip",
+              "consumer_username",
+              "request_path",
+              "request_user_agent",
+              "backend_target",
+              "backend_resolved_ip",
+              "sni_hostname"
+            ]
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "max_bytes"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "truncate"
+                  },
+                  "max_bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65536
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "ip_prefix"
+                  },
+                  "ipv4_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32,
+                    "default": 24
+                  },
+                  "ipv6_bits": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 128,
+                    "default": 48
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "type",
+                  "secret_ref"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "hash"
+                  },
+                  "secret_ref": {
+                    "type": "string",
+                    "pattern": "^\\$\\{FERRUM_PLUGIN_SECRET_[A-Z_][A-Z0-9_]*\\}$"
+                  }
+                }
+              }
+            ]
+          },
+          "description": "Per-field value transforms, keyed by native source field name (before `rename`), applied when the field is emitted: `truncate` keeps at most `max_bytes` bytes (cut on a UTF-8 boundary); `ip_prefix` keeps the network prefix of an IP address (`ipv4_bits` default 24, `ipv6_bits` default 48; IPv4-mapped IPv6 is masked as IPv4; a value that is not an address is emitted as `null`); `hash` replaces the value with the lowercase-hex keyed HMAC-SHA-256 under the secret named by `secret_ref`, which must be a `${FERRUM_PLUGIN_SECRET_<NAME>}` reference resolved at construction (literal secrets are refused; the value must be at least 32 bytes). Only the transaction-summary loggers support `transforms`; `api_chargeback`, `api_chargeback_sink`, and `transaction_debugger` reject the key, and statsd ignores it. Kafka partition keys and Loki labels read typed fields and are not transformed."
+        }
+      }
+    }
+  }
+}

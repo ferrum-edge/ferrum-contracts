@@ -1,0 +1,843 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/mesh_authz.schema.json",
+  "title": "mesh_authz plugin config",
+  "description": "The `config` object of an enabled `mesh_authz` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component MeshAuthzConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
+  "x-generated": {
+    "plugin": "mesh_authz",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/MeshAuthzConfig"
+    },
+    "config_required_when_enabled": false
+  },
+  "$ref": "#/$defs/MeshAuthzConfig",
+  "$defs": {
+    "MeshAuthzAction": {
+      "description": "Istio `spec.action`, required on every rule. There is deliberately NO\ndefault: a rule whose action failed to deserialize used to fall back to\n`allow`, turning an operator's DENY into a grant with no diagnostic.\n\n`custom` delegates to a `meshConfig.extensionProviders` entry carried on\nthe mesh slice. A provider name that does not bind — and every `custom`\nrule in a flat `mesh_policies` config, which has no provider source at\nall — refuses with a fixed `403` that no provider's `failOpen` admits.\n",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "allow",
+            "deny",
+            "audit"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "custom"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "custom": {
+              "type": "object",
+              "required": [
+                "provider"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 253
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "MeshAuthzConditionMatch": {
+      "type": "object",
+      "description": "One Istio `when[]` condition. At least one of `values` / `not_values`\nmust be non-empty; a condition with neither never matches and is\nrejected at admission. Keys outside the documented Istio set are\nrejected with a field-specific diagnostic so a DENY condition on an\nunmodelled attribute cannot silently fail open. See `docs/mesh.md` →\n\"Condition keys\" for the key set and the per-key value grammars.\n",
+      "required": [
+        "key"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "values": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          }
+        },
+        "not_values": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "maxLength": 512
+          }
+        }
+      }
+    },
+    "MeshAuthzConfig": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Plugin: mesh_authz — Layer 2 mesh authorization evaluator. Applies\nIstio-style `MeshPolicy` (ALLOW / DENY / AUDIT) rules to the SPIFFE\nidentity extracted by `spiffe_identity` or the HBONE baggage on\nambient mTLS streams. DENY rules are evaluated first (first match\nwins); the presence of any ALLOW rule with no match triggers an\nimplicit deny.\n`to.hosts` / `notHosts` match normalized literal request authorities,\nwithout service-alias expansion. Explicit decimal ports use one\ncanonical spelling on both request and pattern sides; wildcard ports\nremain supported. Signed request ports are rejected at admission.\n\nSource matching enforces both the positive identity matchers\n(`principals` in Istio `<trust-domain>/ns/.../sa/...` form,\n`serviceAccounts`, `namespaces`, `trustDomains`,\n`requestPrincipals`) and the conjunctive negative and IP-block\nmatchers (`notPrincipals`/`notServiceAccounts`/`notNamespaces`/\n`notTrustDomains`/`notRequestPrincipals`/`ipBlocks`/`notIpBlocks`/\n`remoteIpBlocks`/`notRemoteIpBlocks`). `when:` conditions cover the\ncomplete documented Istio condition-key set: `source.principal`,\n`source.namespace`, `source.serviceAccount`, `source.trustDomain`,\n`source.ip`, `remote.ip`, `destination.ip`,\n`destination.port`, `connection.sni`, `request.auth.principal`,\n`request.auth.presenter`, `request.auth.audiences`,\n`request.auth.claims[...]` string or string-list values including\nnested claim leaf paths, `request.headers[...]`, and\n`experimental.envoy.filters.<filter>[<key>]`.\nDynamic header/claim keys follow Istio's loose map-key framing: the\nfirst `[` and final `]` delimit a non-empty interior without a separate\nHTTP-header-name parse. Known HTTP pseudo-headers (`:authority`,\n`:method`, `:path`, `:scheme`) are sourced from typed request facts;\nunusual admitted interiors that cannot materialize remain absent.\nValues follow Istio's string-matcher grammar (`*` presence,\n`<prefix>*`, `*<suffix>`, otherwise exact — a mid-string `*` is literal\ntext) for every key EXCEPT the ones Istio compiles differently:\n`source.ip`/`remote.ip`/`destination.ip` are CIDR blocks;\n`source.serviceAccount` is an exact match over\n`<namespace>/<service-account>` where a bare `<service-account>` is\nresolved against the declaring policy's namespace and a `*` is rejected;\nand `source.namespace` treats every `*` as an arbitrary substring at any\nposition, including mid-string and repeated stars. Keys outside the\ndocumented prefixes — and empty/oversized/control-character keys or\nmalformed values, non-numeric\n`destination.port` values, malformed IP CIDRs, a `source.serviceAccount`\nwith a `*` or more than one `/`, a `source.trustDomain` with a `/` or a\nrepeated/mid-string `*`, a non-ASCII `connection.sni` value that\ncannot be converted to its A-label, and collections over 64 `when[]`\nentries per\nrule or 256 values per list (16 values of at most 320 bytes for\n`source.serviceAccount`) — are rejected during translation/config\nvalidation with a field-specific diagnostic, on both `values` and\n`notValues`, so DENY conditions cannot silently fail open.\n`connection.sni` values are normalized at load to the spelling of the\nreceived ClientHello SNI: one trailing dot is stripped, ASCII is\nlowercased, and a non-ASCII (U-label) name is converted to its A-label\nwith IDNA. Other ASCII characters that DNS hostnames do not allow are\nnot rejected; such a value never matches.\nAn attribute the path CAN source but that this request lacks follows\nordinary Istio semantics (a `values` check fails; a `notValues`-only\ncheck passes). An attribute the path can NEVER source — an HTTP-only key\non a TCP/UDP/DTLS connection, a source/remote/destination IP or\ndestination port with no typed transport evidence, or any\n`experimental.envoy.filters.*` key — is fail-closed in\nboth directions, matching Istio's non-HTTP-port behavior: a DENY rule\nignores the field and still matches, while an ALLOW or AUDIT rule can\nnever match. `destination.ip` is sourced only from the captured pre-NAT\noriginal destination or the connection's local address, never from a\nclient-settable header. That mesh-authz connection fact is separate\nfrom VirtualService L4 `destinationSubnets`, which accepts only trusted\nPROXY/capture original-destination evidence and never an ordinary\nlistener's bind/local address.\nNegative identity matchers reject only when the source/JWT identity\nis present and matches an excluded pattern; absent identities satisfy\nthe negative matcher so DENY policies such as `notPrincipals: [\"*\"]`\nand `notRequestPrincipals: [\"*\"]` catch anonymous traffic. IP-block\nmatchers fail closed when the IP they test is absent, and malformed\nCIDRs reject translated resources or direct plugin config. See\n`docs/mesh.md`.\n\nAuto-injected by mesh mode on every applicable topology; reserved\nplugin id `__mesh_authz`. PolicyScope filtering (`MeshWide` /\n`Namespace` / `WorkloadSelector` / `TargetRefs`) is applied at\nconstruction time from the slice-embedded workload identity, except in\nnode-waypoint topology where the filter runs per-request against the\npod-scoped cache attached to `RequestContext`. `TargetRefs`\n(AuthorizationPolicy `spec.targetRef` / `spec.targetRefs`) is\nwaypoint-only and is additionally re-checked per request against the\nexact destination Service and waypoint Gateway/GatewayClass identity — construction-time\nretention is OR over the attachment list and never widens a targeted\npolicy onto another destination. See `docs/mesh.md`.\n\nRoot-shape admission: an object, or `null` (how an omitted `config:`\nblock deserializes for every plugin, meaning \"no configuration\nsupplied\"). A scalar or array root is REJECTED at construction rather\nthan degraded into a default instance — a policy-free `mesh_authz`\nnever raises the implicit-deny floor and therefore allows every\nrequest. Unknown root keys are rejected for the same reason.\n",
+      "additionalProperties": false,
+      "properties": {
+        "mesh_slice": {
+          "type": "object",
+          "description": "Embedded mesh slice — supplied by mesh-mode auto-injection.\nCarries the filtered policy set plus the workload's\n`namespace`/`labels` used for slice-level scope filtering, the\nadmitted `ext_authz_providers` set, and the destination inventory.\nNot intended for direct operator configuration; operator-managed\ninstances pass `mesh_policies` instead.\n\nDeliberately left unmodelled here. The slice is a machine-authored\ndocument produced by the same Ferrum build that consumes it, its\nshape tracks every mesh resource family, and a partial schema for\nit would drift into rejecting valid injected configuration. It is\nadmitted by the runtime deserializer instead, which fails the whole\nplugin generation on a malformed slice so the previous valid\ngeneration keeps serving. Its root members are closed (an\nunrecognized top-level slice member is rejected), and its\n`mesh_policies` member follows the same closed policy grammar\nmodelled below, including the never-match matcher refusals.\n\nIts `ext_authz_providers` entries are closed (with their\n`include_additional_headers_in_check` and\n`include_request_body_in_check` objects) and may declare\n`headers_to_upstream_on_allow` (provider response headers that\nreplace the backend request's same-named headers on an allowed\nCUSTOM check, applied in this plugin's `before_proxy`; client copies\nare always removed) and `headers_to_downstream_on_allow` (added to\nthe allowed response in `after_proxy`, `Set-Cookie` appended).\nGateway identity assertions (`x-consumer-*`, `x-path-param-*`, …),\n`content-*`, and (upstream) `set-cookie` are refused there. Every\ncheck carries `x-ferrum-source-principal`,\n`x-ferrum-source-namespace`, `x-ferrum-source-service-account`, and\n`x-ferrum-request-principal`.\n"
+        },
+        "mesh_policies": {
+          "type": "array",
+          "description": "Standalone-mode policy list. Used by direct configuration when no\nslice is available. Rules with `action: custom` in this form always\nDENY: a flat list carries no `extensionProviders` source, and a\ndelegation that cannot be executed is never allowed to fall through\nto the ALLOW/DENY tiers.\n\nThe grammar is CLOSED at every level and `action` is REQUIRED on\nevery rule: each misspelling here removes a restriction the\noperator wrote, so an unrecognized member fails admission rather\nthan silently widening the effective policy.\n",
+          "items": {
+            "$ref": "#/$defs/MeshAuthzPolicy"
+          }
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Proxy workload namespace, used by the slice-level PolicyScope\nfilter to discard policies that do not apply to this workload.\nOverrides any namespace embedded in `mesh_slice`.\n"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Proxy workload labels, used by the slice-level scope filter for\n`WorkloadSelector`-scoped policies. Overrides any labels embedded\nin `mesh_slice`.\n"
+        },
+        "trust_domain_aliases": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "pattern": "^[a-z0-9._-]+$"
+          },
+          "description": "Additional SPIFFE trust domains accepted as equivalent to the\npeer cert's trust domain when authorising HBONE baggage\n`source.principal`. Empty (default) means strict same-trust-domain\nmatch. `null` is accepted and treated as absent. Each entry must be\na valid SPIFFE trust domain (SPIFFE-ID section 2.1): lowercase, at\nmost 255 bytes, and composed only of `[a-z0-9._-]`, including at\nthe first and last byte.\n"
+        },
+        "per_pod_policy_scoping": {
+          "type": "boolean",
+          "default": false,
+          "description": "When `true`, the construction-time slice-level scope filter is\nskipped and policies are filtered per-connection using the\n`PolicyScopeCache` attached to `RequestContext.node_waypoint_policy_scope`\n(HTTP/HBONE) or `StreamConnectionContext.node_waypoint_policy_scope`\n(raw TCP streams). A connection whose source pod has no resolved\nper-pod scope records `mesh_authz.scope_missing`; when any\nnamespace/selector-scoped policy is configured it then **fails closed**\n(`403`, `mesh_authz.deny_policy=scope_missing`) on the HTTP/HBONE\nrequest path and raw TCP streams (at accept) — a missing scope\nmeans the source workload left the live slice generation, not an\nenrollment race, so a long-lived connection from a removed workload\nstops being served under scoped authz. NodeWaypoint UDP/DTLS has no\ntrustworthy per-datagram/session pod scope, so slice preparation\ndisables UDP/DTLS service/proxy paths when enforcing\nnamespace/selector-scoped policies are present; mesh-wide UDP/DTLS\npolicy remains evaluable, and audit-only scoped policy does not\nforce suppression. Auto-set by mesh injection on `NodeWaypoint`\ntopology where one listener serves many pods.\n"
+        },
+        "ambient_udp_source_scoping": {
+          "type": "boolean",
+          "default": false,
+          "readOnly": true,
+          "description": "Enables node-waypoint Ambient UDP source-policy scoping. Injected by mesh runtime configuration rather than operator-managed plugin config."
+        },
+        "cluster_domain": {
+          "type": "string",
+          "default": "cluster.local",
+          "readOnly": true,
+          "description": "Primary Kubernetes cluster domain injected by mesh mode."
+        },
+        "cluster_domains": {
+          "type": "array",
+          "readOnly": true,
+          "items": {
+            "type": "string"
+          },
+          "description": "Deduplicated cluster-domain aliases used for node-waypoint service host matching; injected by mesh mode."
+        },
+        "node_waypoint_route_upstreams": {
+          "type": "array",
+          "readOnly": true,
+          "description": "Mesh-generated route upstream metadata used to precompute destination policy scopes for node-waypoint dispatch. Each entry and each target is closed: an unrecognized member is rejected.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "namespace"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              },
+              "targets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "host",
+                    "port"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "host": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "integer",
+                      "format": "uint16",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    "service_namespace": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "service_name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "service_port": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint16",
+                      "minimum": 0,
+                      "maximum": 65535
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "node_waypoint_route_branches": {
+          "type": "array",
+          "readOnly": true,
+          "description": "Mesh-generated candidate destinations of each NodeWaypoint VirtualService route whose `mesh_route_dispatch` rules can select a destination other than the route's own: the route's own destination first, then each rule destination. Each candidate's destination policy is evaluated before dispatch, and the destination a request finally reaches is admitted only on its own verdict. Every entry and destination is closed; a destination names exactly one of `upstream_id` or `backend_host` + `backend_port`. A weighted split the route dispatches leg by leg (`mesh_route_dispatch` `weighted_splits`, issue #7387) is listed through its legs, never as a candidate of its own.",
+          "items": {
+            "type": "object",
+            "required": [
+              "namespace",
+              "proxy_id",
+              "destinations"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "namespace": {
+                "type": "string"
+              },
+              "proxy_id": {
+                "type": "string"
+              },
+              "weighted_split": {
+                "type": "boolean",
+                "default": false,
+                "description": "The route reaches some candidates only through\nweighted-split leg selection, so verdicts are recorded even\nwhen no AuthorizationPolicy is loaded and a split no leg was\nselected for is refused.\n"
+              },
+              "own_is_weighted_split": {
+                "type": "boolean",
+                "default": false,
+                "description": "The route's own destination (the first entry) is a weighted\nsplit: it is never judged or admitted, and each selected\nleg's own verdict decides.\n"
+              },
+              "destinations": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "oneOf": [
+                    {
+                      "required": [
+                        "upstream_id"
+                      ],
+                      "not": {
+                        "anyOf": [
+                          {
+                            "required": [
+                              "backend_host"
+                            ]
+                          },
+                          {
+                            "required": [
+                              "backend_port"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "required": [
+                        "backend_host",
+                        "backend_port"
+                      ],
+                      "not": {
+                        "required": [
+                          "upstream_id"
+                        ]
+                      }
+                    }
+                  ],
+                  "properties": {
+                    "upstream_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "backend_host": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "backend_port": {
+                      "type": "integer",
+                      "format": "uint16",
+                      "minimum": 1,
+                      "maximum": 65535
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "trusted_hbone_assertors": {
+          "$ref": "#/$defs/MeshTrustedHboneAssertors",
+          "default": [
+            "ztunnel",
+            "waypoint"
+          ],
+          "description": "Allow-list of identity-asserting infrastructure components whose\nHBONE baggage `source.principal` may rewrite the authz principal.\nBare service-account names match any peer whose SPIFFE path ends\nwith `/sa/<name>`; full SPIFFE IDs match exactly. Default is\n`[\"ztunnel\", \"waypoint\"]`. Explicit empty array disables all\nbaggage rewriting.\n\nMatching a peer is necessary but NOT sufficient (issue #4274):\nevery entry also carries a grant that decides WHICH identities that\npeer may assert. String entries and objects without `asserts` /\n`scope` grant `same_namespace` only, so a peer in\n`ns/attacker/sa/waypoint` can no longer assert\n`ns/prod/sa/payments`. Baggage refused by the grant is dropped, the\npeer-cert identity is used instead, and the request is stamped\n`mesh_authz.ignored_baggage.assertion_out_of_scope=true`.\n"
+        }
+      }
+    },
+    "MeshAuthzPolicy": {
+      "type": "object",
+      "description": "One `MeshPolicy` document, as accepted by the `mesh_authz` plugin's\n`mesh_policies` list and by the native/file mesh document. Mirrors\nIstio `AuthorizationPolicy`.\n\nThe grammar is CLOSED at every level below: an unrecognized member is\nrejected at admission rather than dropped, because every misspelling in\nan authorization grammar removes a restriction. See `docs/mesh.md` →\n\"MeshPolicy\" and \"Rule Matching\".\n\nMatchers that could never match are rejected at plugin construction\ntoo — for the flat `mesh_policies` form and an embedded `mesh_slice`\nalike, with the same diagnostics as the native mesh validator: an\nempty `name` / `namespace`, an empty `from[{}]` or `to[{}]` entry, a\n`to.headers` pseudo-header, an invalid `hosts` / `not_hosts` pattern,\nand an inadmissible `port_patterns` / `not_port_patterns` entry.\n",
+      "required": [
+        "name",
+        "namespace",
+        "scope"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Policy name, used in deny diagnostics and metadata."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "The namespace that declared this policy. Load-bearing beyond\nidentification: a bare `source.serviceAccount` value in a `when`\ncondition is resolved against it.\n"
+        },
+        "scope": {
+          "$ref": "#/$defs/MeshAuthzPolicyScope"
+        },
+        "rules": {
+          "type": "array",
+          "default": [],
+          "description": "Rules are additive. DENY rules are evaluated first and the first\nmatch wins; if any ALLOW rule is loaded and none matches, the\nimplicit-deny floor refuses the request. An explicitly empty list\nis a valid scaffold that matches nothing.\n",
+          "items": {
+            "$ref": "#/$defs/MeshAuthzRule"
+          }
+        }
+      }
+    },
+    "MeshAuthzPolicyScope": {
+      "type": "object",
+      "description": "Which workloads this policy applies to, discriminated by `kind`.\nResolved by the shared `policy_scope_applies_to_workload` predicate at\nplugin construction — except in node-waypoint topology, where one\nlistener serves many pods and the filter runs per request against the\npod-scoped cache.\n\nClosed like the rest of the grammar: each `kind` admits only its own\nmembers, so an unrecognized sibling key (including one beside\n`kind: mesh_wide`) is rejected at admission. The nested `selector` and\nevery `attachments` entry are closed too.\n",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "mesh_wide",
+            "namespace",
+            "workload_selector",
+            "target_refs"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "title": "mesh_wide",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "mesh_wide"
+            }
+          }
+        },
+        {
+          "title": "namespace",
+          "required": [
+            "kind",
+            "namespace"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "namespace"
+            },
+            "namespace": {
+              "type": "string",
+              "description": "Applies to workloads in exactly this namespace."
+            }
+          }
+        },
+        {
+          "title": "workload_selector",
+          "required": [
+            "kind",
+            "selector"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "workload_selector"
+            },
+            "selector": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Label/namespace selector. An empty selector matches EVERY\nworkload, which is why unknown members are rejected here: a\nmisspelled `labels` key would widen a targeted policy onto the\nwhole mesh instead of failing admission.\n",
+              "properties": {
+                "labels": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "namespace": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "target_refs",
+          "required": [
+            "kind",
+            "attachments"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "target_refs"
+            },
+            "attachments": {
+              "type": "array",
+              "maxItems": 16,
+              "description": "Istio `spec.targetRefs` attachments. A policy matches when ANY\nattachment applies (OR), and retention alone proves nothing —\nevery runtime consumer re-checks the exact attachment against\nits own authoritative evidence. Waypoint-only.\n",
+              "items": {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "if": {
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "service",
+                            "gateway"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "namespace"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "required": [
+                        "kind"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "gateway_class"
+                        }
+                      }
+                    },
+                    "then": {
+                      "not": {
+                        "required": [
+                          "namespace"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "service",
+                      "gateway",
+                      "gateway_class"
+                    ]
+                  },
+                  "namespace": {
+                    "type": "string",
+                    "maxLength": 253
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 253
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "MeshAuthzPrincipalMatch": {
+      "type": "object",
+      "description": "One source identity matcher. Every populated field must match. A source\nwith no verified peer identity never matches.\n",
+      "additionalProperties": false,
+      "properties": {
+        "spiffe_id_pattern": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Glob over the Istio source principal\n(`<trust-domain>/ns/<ns>/sa/<sa>`); a full `spiffe://…` pattern is\nalso accepted in direct config.\n"
+        },
+        "namespace_pattern": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Glob over the source workload namespace."
+        },
+        "trust_domain": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "^[a-z0-9._-]+$",
+          "description": "Exact source trust domain."
+        },
+        "trust_domain_pattern": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Glob over the source trust domain."
+        }
+      }
+    },
+    "MeshAuthzRequestMatch": {
+      "type": "object",
+      "description": "One request matcher (Istio `to[].operation`). Positive and negative\nfields in the SAME matcher are conjunctive — never split a negative\nfield into a separate rule.\n\nALLOW/AUDIT rules fail closed when the attribute is absent. DENY and\n`custom` rules treat an UNSOURCEABLE attribute as a match (Istio's\nnon-HTTP-port model), but an HTTP-family request whose header map was\nparsed and simply lacks the named header is ABSENT, not unsourceable,\nand fails a positive `headers` predicate for every action.\n",
+      "additionalProperties": false,
+      "properties": {
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "not_methods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Glob patterns, matched against the canonical policy path."
+        },
+        "not_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Glob patterns over the normalized literal request authority. These\ndo NOT expand service aliases.\n"
+        },
+        "not_hosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        },
+        "not_ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        },
+        "port_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Istio string-match ports such as `\"*\"` or `\"8*\"`."
+        },
+        "not_port_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Header name (case-insensitive, lowercased at config load) to glob\nvalue pattern. The pseudo-header names `:path`, `:method`,\n`:authority`, and `:scheme` are rejected (they are not in the\nrequest header map; use `paths` / `methods` / `hosts`, or a\n`when: request.headers[:path]` condition). A header sent as several\nfield lines is matched as ONE value — every line joined with `, `\n(`; ` for `cookie`) — the same reading `when: request.headers[...]`\nconditions and CUSTOM forwarded headers use.\n"
+        }
+      }
+    },
+    "MeshAuthzRule": {
+      "type": "object",
+      "description": "One authorization rule. Every populated dimension must match (a\nconjunction); within a dimension the entries are ORed.\n",
+      "required": [
+        "action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/$defs/MeshAuthzAction"
+        },
+        "from": {
+          "type": "array",
+          "description": "ORed source-identity matchers.",
+          "items": {
+            "$ref": "#/$defs/MeshAuthzPrincipalMatch"
+          }
+        },
+        "to": {
+          "type": "array",
+          "description": "ORed request matchers.",
+          "items": {
+            "$ref": "#/$defs/MeshAuthzRequestMatch"
+          }
+        },
+        "when": {
+          "type": "array",
+          "maxItems": 64,
+          "description": "Conjunctive attribute conditions.",
+          "items": {
+            "$ref": "#/$defs/MeshAuthzConditionMatch"
+          }
+        },
+        "request_principals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Glob patterns over the JWT-derived `{issuer}/{subject}` request\nprincipal. HTTP-only: on a Layer-4 session a DENY/`custom` rule\nignores it and an ALLOW/AUDIT rule can never match on it.\n"
+        },
+        "not_request_principals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Conjunctive negative match over the request principal. An absent\nprincipal SATISFIES it, which is how `[\"*\"]` catches anonymous\nHTTP traffic.\n"
+        },
+        "source_negation": {
+          "$ref": "#/$defs/MeshAuthzSourceNegation"
+        },
+        "never_matches": {
+          "type": "boolean",
+          "default": false,
+          "description": "Synthetic marker for a rule that must affect policy accounting but\nnever match traffic — Istio's ALLOW-without-rules \"allow nothing\".\nSet by translation; hand-authoring it is not useful.\n"
+        }
+      }
+    },
+    "MeshAuthzSourceNegation": {
+      "type": "object",
+      "description": "Conjunctive negative-identity and IP-block matchers for one Istio\n`from[].source`. These AND with the ORed positive `from` list; placing\nthem in `from` would let traffic through whenever a single negative-only\nentry matched.\n\nNegative identity matchers succeed when the identity is ABSENT, which is\nhow `not_spiffe_id_patterns: [\"*\"]` catches anonymous traffic. IP-block\nmatchers fail CLOSED when the IP they test is absent.\n",
+      "additionalProperties": false,
+      "properties": {
+        "not_spiffe_id_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "not_namespace_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "not_trust_domain_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ip_blocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "CIDR or bare IP (host route); matched against `source.ip`."
+        },
+        "not_ip_blocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "remote_ip_blocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "CIDR or bare IP; matched against XFF-derived `remote.ip`."
+        },
+        "not_remote_ip_blocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "MeshTrustedHboneAssertors": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "description": "Trusted HBONE assertor allow-list shared by `mesh_authz`,\n`workload_metrics`, and the injected\n`_effective_mesh_authz_baggage_gates`. Both plugins admit it through one\nparser, so this one schema is the contract for every copy. `null` (or\nomission) selects the default `[\"ztunnel\", \"waypoint\"]`; `[]` disables\nbaggage-derived identity entirely.\n\nWhitespace is trimmed with Rust `str::trim` (Unicode `White_Space`)\nbefore any comparison; the patterns spell that class out explicitly so\nevery JSON Schema regex dialect reads it the same way. A value that is\nempty after trimming is refused.\n",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/MeshTrustedHboneAssertors/$defs/assertor"
+          },
+          {
+            "type": "object",
+            "required": [
+              "assertor"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "assertor": {
+                "$ref": "#/$defs/MeshTrustedHboneAssertors/$defs/assertor"
+              },
+              "asserts": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string",
+                  "pattern": "^[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*spiffe://"
+                },
+                "description": "Exact SPIFFE IDs this assertor may assert and nothing\nelse — the inventory of workloads it actually fronts. An\nempty array authorizes nothing. `null` is treated as\nabsent. Mutually exclusive with `scope`.\n"
+              },
+              "scope": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*(same_namespace|mesh_wide)[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*$",
+                "description": "Explicit grant contract. `same_namespace` (the default\nfor every entry) permits only identities in the\nassertor's own Kubernetes namespace; `mesh_wide` requires\n`assertor` to be a full, exactly matched `spiffe://` ID,\npermits any identity that clears the trust-domain gate,\nand logs a warning at construction. Mutually exclusive\nwith `asserts`. `null` is treated as absent. Surrounding\nwhitespace is trimmed before the value is compared,\nmatching the `assertor` field's normalization; the\npattern rather than an `enum` is what expresses that.\n"
+              }
+            },
+            "allOf": [
+              {
+                "not": {
+                  "required": [
+                    "asserts",
+                    "scope"
+                  ],
+                  "properties": {
+                    "asserts": {
+                      "type": "array"
+                    },
+                    "scope": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "scope"
+                  ],
+                  "properties": {
+                    "scope": {
+                      "type": "string",
+                      "pattern": "^[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*mesh_wide[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*$"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "assertor": {
+                      "pattern": "^[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*spiffe://"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "$defs": {
+        "assertor": {
+          "type": "string",
+          "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]",
+          "anyOf": [
+            {
+              "pattern": "^[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*spiffe://"
+            },
+            {
+              "not": {
+                "pattern": "://"
+              }
+            }
+          ],
+          "description": "Bare service-account name (matches any peer whose SPIFFE path ends\nwith `/sa/<name>`) or full `spiffe://` SPIFFE ID (matches exactly)\nidentifying the peer this entry admits. Surrounding whitespace is\ntrimmed before matching.\n"
+        }
+      }
+    }
+  }
+}
