@@ -21,10 +21,12 @@ instead of guessing. Output is deterministic: the same catalog and the same
 Usage:
   python -I ci/plugin_config_schemas.py --openapi PATH --write   # regenerate
   python -I ci/plugin_config_schemas.py --openapi PATH --check   # compare
-  python -I ci/plugin_config_schemas.py --fetch-openapi --check  # download the pinned file
 
-`ci/validate.py --fetch-openapi` runs the same comparison in CI, and also
-checks every generated document against the JSON Schema 2020-12 meta-schema.
+`ci/validate.py --fetch-openapi` downloads the pinned file through its guarded
+reader (no redirects, size cap) and runs the same comparison in CI, checks
+every generated document against the JSON Schema 2020-12 meta-schema, and
+compares this reader's parse of the pinned file with an independent YAML 1.2
+core-schema parse (PyYAML with 1.2 resolvers) on every run.
 """
 
 from __future__ import annotations
@@ -32,9 +34,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 import sys
-import urllib.request
 from pathlib import Path
 
 OUTPUT_DIR = "plugin-config-schemas"
@@ -79,7 +81,10 @@ def plain_scalar(text: str):
     if _HEX_RE.fullmatch(text):
         return int(text[2:], 16)
     if _FLOAT_RE.fullmatch(text):
-        return float(text)
+        number = float(text)
+        if not math.isfinite(number):
+            raise YamlError(f"number {text!r} overflows to a non-finite float, which has no JSON form")
+        return number
     if _INF_RE.fullmatch(text) or _NAN_RE.fullmatch(text):
         raise YamlError(f"non-finite number {text!r} has no JSON form")
     if text[0] in "&*!|>%@`":
@@ -92,6 +97,12 @@ _ESCAPES = {
     "f": "\f", "r": "\r", "e": "\x1b", " ": " ", '"': '"', "/": "/", "\\": "\\",
     "N": "\x85", "_": "\xa0", "L": " ", "P": " ",
 }
+
+
+def check_plain_block_text(text: str, line: int) -> None:
+    """Refuse a block-context plain scalar YAML would not read as one string."""
+    if ": " in text or text.endswith(":") or " #" in text:
+        raise YamlError(f"line {line}: ':' or ' #' inside a plain scalar is outside the supported subset; quote the value")
 
 
 def double_quoted(body: str) -> str:
@@ -217,7 +228,10 @@ class _Flow:
                 raise YamlError("unterminated quoted scalar in flow collection")
             token = self.text[self.i : end]
             self.i = end
-            return quoted_scalar(token.replace("\n", " ") if "\n" in token else token)
+            if "\n" not in token:
+                return quoted_scalar(token)
+            body = _fold_quoted_lines(token[1:-1].split("\n"))
+            return body.replace("''", "'") if token[0] == "'" else double_quoted(body)
         start = self.i
         while self.i < len(self.text):
             ch = self.text[self.i]
@@ -226,9 +240,12 @@ class _Flow:
             if ch == ":" and (self.i + 1 >= len(self.text) or self.text[self.i + 1] in " \t\n,]}"):
                 break
             self.i += 1
-        raw = " ".join(self.text[start : self.i].split())
+        lines = self.text[start : self.i].split("\n")
+        raw = lines[0].strip(" \t") if len(lines) == 1 else _fold_quoted_lines([line.strip(" \t") for line in lines]).strip("\n")
         if not raw:
             raise YamlError("empty entry in flow collection")
+        if raw.startswith(("- ", "? ")) or " #" in raw:
+            raise YamlError(f"unsupported flow scalar {raw!r}")
         return plain_scalar(raw)
 
     def sequence(self) -> list:
@@ -330,6 +347,8 @@ class _Block:
         i = self.significant(0)
         if i >= self.n:
             return None
+        if self.lines[i].startswith("%"):
+            raise YamlError(f"line {i + 1}: directives are not supported")
         if self.lines[i].strip() in ("---",):
             i = self.significant(i + 1)
         value, i = self.node(i, self.indent(self.lines[i]))
@@ -367,6 +386,8 @@ class _Block:
             key = quoted_scalar(raw_key) if raw_key[:1] != "" and raw_key[0] in "'\"" else raw_key
             if raw_key[:1] != "" and raw_key[0] in "&*!":
                 raise YamlError(f"line {i + 1}: anchors, aliases and tags are not supported")
+            if key == "<<":
+                raise YamlError(f"line {i + 1}: merge keys are not supported")
             if key in result:
                 raise YamlError(f"line {i + 1}: duplicate key {key!r}")
             rest = content[match.end() :]
@@ -466,6 +487,7 @@ class _Block:
                 if text[0] == "'":
                     return body.replace("''", "'"), j + 1
                 return double_quoted(body), j + 1
+        check_plain_block_text(text, i + 1)
         parts = [text]
         j = i + 1
         end = i + 1
@@ -478,7 +500,9 @@ class _Block:
                 continue
             if self.indent(line) <= parent or stripped.startswith("#"):
                 break
-            parts.append(strip_comment(stripped))
+            continuation = strip_comment(stripped)
+            check_plain_block_text(continuation, j + 1)
+            parts.append(continuation)
             j += 1
             end = j
         while parts and parts[-1] == "":
@@ -598,28 +622,60 @@ def _component_name(pointer: str) -> str:
     return name
 
 
-def _rewrite(node, refs: set[str]):
-    """Copy `node`, rewriting component references to `$defs` references.
+# JSON Schema 2020-12 keywords whose values are schemas, by shape. Only these
+# positions are walked for references; every other keyword (const, default,
+# enum, examples, OpenAPI `example`, `x-*` extensions) is copied verbatim, so
+# literal instance data is never mistaken for a reference.
+_SUBSCHEMA = (
+    "additionalProperties", "items", "contains", "propertyNames", "not", "if", "then", "else",
+    "unevaluatedItems", "unevaluatedProperties", "contentSchema",
+)
+_SUBSCHEMA_MAP = ("properties", "patternProperties", "$defs", "definitions", "dependentSchemas")
+_SUBSCHEMA_LIST = ("allOf", "anyOf", "oneOf", "prefixItems")
 
-    `#/components/schemas/<Name>` becomes `#/$defs/<Name>`, and a reference to
-    a location inside a component keeps its suffix
-    (`#/components/schemas/<Name>/$defs/x` becomes `#/$defs/<Name>/$defs/x`).
-    Any other `$ref` (another document, another components section) is
-    refused, so every generated document is self-contained.
+
+def _rewrite_ref(value, refs: set[str]) -> str:
+    name, suffix = _component_ref(value)
+    refs.add(name)
+    return DEFS_PREFIX + name + suffix
+
+
+def _rewrite(node, refs: set[str]):
+    """Copy the schema `node`, rewriting component references to `$defs` ones.
+
+    `#/components/schemas/<Name>` becomes `#/$defs/<Name>`, a reference into a
+    component keeps its suffix (`#/components/schemas/<Name>/$defs/x` becomes
+    `#/$defs/<Name>/$defs/x`), and an OpenAPI `discriminator.mapping` target is
+    rewritten the same way. Only schema positions are walked. Any other
+    `$ref` (another document, another components section) is refused, so
+    every generated document is self-contained.
     """
-    if isinstance(node, dict):
-        out = {}
-        for key, value in node.items():
-            if key == "$ref":
-                name, suffix = _component_ref(value)
-                refs.add(name)
-                out[key] = DEFS_PREFIX + name + suffix
-            else:
-                out[key] = _rewrite(value, refs)
-        return out
-    if isinstance(node, list):
-        return [_rewrite(item, refs) for item in node]
-    return node
+    if isinstance(node, bool):
+        return node
+    if not isinstance(node, dict):
+        raise ValueError(f"a schema must be an object or a boolean, not {node!r}")
+    out = {}
+    for key, value in node.items():
+        if key == "$ref":
+            out[key] = _rewrite_ref(value, refs)
+        elif key in _SUBSCHEMA:
+            out[key] = _rewrite(value, refs)
+        elif key in _SUBSCHEMA_MAP:
+            if not isinstance(value, dict):
+                raise ValueError(f"{key} must map names to schemas")
+            out[key] = {name: _rewrite(item, refs) for name, item in value.items()}
+        elif key in _SUBSCHEMA_LIST:
+            if not isinstance(value, list):
+                raise ValueError(f"{key} must be a list of schemas")
+            out[key] = [_rewrite(item, refs) for item in value]
+        elif key == "discriminator" and isinstance(value, dict) and "mapping" in value:
+            mapping = value["mapping"]
+            if not isinstance(mapping, dict):
+                raise ValueError("discriminator.mapping must be an object")
+            out[key] = dict(value, mapping={tag: _rewrite_ref(target, refs) for tag, target in mapping.items()})
+        else:
+            out[key] = value
+    return out
 
 
 def closure(components: dict, root: str) -> dict[str, dict]:
@@ -636,6 +692,60 @@ def closure(components: dict, root: str) -> dict[str, dict]:
         done[name] = _rewrite(components[name], refs)
         todo.extend(sorted(refs - set(done)))
     return done
+
+
+def _resolve(document: dict, pointer: str):
+    """The value at a local JSON Pointer (`#/...`) in `document`, or raise."""
+    node = document
+    for raw in pointer[2:].split("/"):
+        token = raw.replace("~1", "/").replace("~0", "~")
+        if isinstance(node, dict) and token in node:
+            node = node[token]
+        elif isinstance(node, list) and token.isdigit() and int(token) < len(node):
+            node = node[int(token)]
+        else:
+            raise ValueError(f"reference {pointer!r} does not resolve")
+    return node
+
+
+def _check_references(document: dict) -> None:
+    """Every reference in a schema position resolves to a schema, every
+    discriminator target resolves, and no `#/components/...` string survives
+    anywhere the walker copies verbatim (a keyword this table does not know)."""
+    def literal(node) -> None:
+        if isinstance(node, dict):
+            for value in node.values():
+                literal(value)
+        elif isinstance(node, list):
+            for value in node:
+                literal(value)
+        elif isinstance(node, str) and node.startswith("#/components/"):
+            raise ValueError(f"unrewritten component reference {node!r}; extend the generator's keyword table")
+
+    def schema(node) -> None:
+        if isinstance(node, bool):
+            return
+        for key, value in node.items():
+            if key == "$ref":
+                if not isinstance(_resolve(document, value), (dict, bool)):
+                    raise ValueError(f"reference {value!r} does not name a schema")
+            elif key in _SUBSCHEMA:
+                schema(value)
+            elif key in _SUBSCHEMA_MAP:
+                for item in value.values():
+                    schema(item)
+            elif key in _SUBSCHEMA_LIST:
+                for item in value:
+                    schema(item)
+            elif key == "discriminator" and isinstance(value, dict) and "mapping" in value:
+                for target in value["mapping"].values():
+                    if not isinstance(_resolve(document, target), dict):
+                        raise ValueError(f"discriminator target {target!r} does not name a schema")
+            else:
+                literal(value)
+
+    for item in document["$defs"].values():
+        schema(item)
 
 
 def build(catalog: dict, openapi: bytes) -> dict[str, bytes]:
@@ -672,7 +782,7 @@ def build(catalog: dict, openapi: bytes) -> dict[str, bytes]:
             generated["scope_constraint"] = config["scope_constraint"]
         doc = {
             "$schema": SCHEMA_DIALECT,
-            "$id": f"{ID_BASE}/{plugin['name']}.schema.json",
+            "$id": f"{ID_BASE}/edge-{document['ref']}/{plugin['name']}.schema.json",
             "title": f"{plugin['name']} plugin config",
             "description": (
                 f"The `config` object of an enabled `{plugin['name']}` plugin, generated from "
@@ -685,7 +795,8 @@ def build(catalog: dict, openapi: bytes) -> dict[str, bytes]:
             "$ref": DEFS_PREFIX + root,
             "$defs": {name: defs[name] for name in sorted(defs)},
         }
-        text = json.dumps(doc, indent=2, ensure_ascii=False) + "\n"
+        _check_references(doc)
+        text = json.dumps(doc, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         files[f"{OUTPUT_DIR}/{plugin['name']}.schema.json"] = text.encode("utf-8")
     return files
 
@@ -719,31 +830,26 @@ def write(root: Path, files: dict[str, bytes]) -> None:
         (root / rel).write_bytes(data)
 
 
-def fetch(document: dict) -> bytes:
-    for key, pattern in (("repo", r"ferrum-edge/[A-Za-z0-9._-]+"), ("commit", r"[0-9a-f]{40}"), ("path", r"[A-Za-z0-9._/-]+")):
-        if not re.fullmatch(pattern, document.get(key, "")):
-            raise ValueError(f"config_schema_document.{key} is not fetchable")
-    url = f"https://raw.githubusercontent.com/{document['repo']}/{document['commit']}/{document['path']}"
-    with urllib.request.urlopen(url, timeout=60) as response:  # noqa: S310 (fixed host)
-        data = response.read(MAX_OPENAPI_BYTES + 1)
+def read_capped(path: Path) -> bytes:
+    """Read a local openapi.yaml, refusing more than MAX_OPENAPI_BYTES."""
+    with path.open("rb") as handle:
+        data = handle.read(MAX_OPENAPI_BYTES + 1)
     if len(data) > MAX_OPENAPI_BYTES:
-        raise ValueError("openapi.yaml exceeds the size limit")
+        raise ValueError(f"{path} exceeds {MAX_OPENAPI_BYTES} bytes")
     return data
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parent.parent)
-    source = parser.add_mutually_exclusive_group(required=True)
-    source.add_argument("--openapi", type=Path, help="local copy of the pinned Edge openapi.yaml")
-    source.add_argument("--fetch-openapi", action="store_true", help="download the pinned file")
+    parser.add_argument("--openapi", type=Path, required=True, help="local copy of the pinned Edge openapi.yaml")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true", help="write the generated files")
     mode.add_argument("--check", action="store_true", help="fail if the committed files differ")
     args = parser.parse_args()
     root = args.root.resolve()
     catalog = json.loads((root / CATALOG).read_text(encoding="utf-8"))
-    data = fetch(catalog["config_schema_document"]) if args.fetch_openapi else args.openapi.read_bytes()
+    data = read_capped(args.openapi)
     files = build(catalog, data)
     if args.write:
         write(root, files)

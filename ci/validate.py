@@ -70,7 +70,9 @@ Checks, in order:
    `x-generated` (plugin, pointer, and the catalog's config_schema_document)
    the generator writes. With --openapi or --fetch-openapi, every file must
    also equal what ci/plugin_config_schemas.py generates from that pinned
-   openapi.yaml, so re-pinning the file without regenerating fails.
+   openapi.yaml, so re-pinning the file without regenerating fails, and the
+   generator's YAML reader must parse that file exactly as PyYAML does with
+   YAML 1.2 core-schema resolvers.
 
 Exit status is 0 when every check passes and 1 otherwise. Only the Python
 standard library and the pinned packages in ci/requirements.txt are used.
@@ -200,9 +202,12 @@ def load_json(path: Path, report: Report):
             seen[key] = value
         return seen
 
+    def no_constants(name):
+        raise ValueError(f"{name} is not JSON")
+
     try:
         text = path.read_text(encoding="utf-8")
-        return json.loads(text, object_pairs_hook=no_duplicates)
+        return json.loads(text, object_pairs_hook=no_duplicates, parse_constant=no_constants)
     except (OSError, UnicodeDecodeError, ValueError) as exc:
         report.fail(path, f"not valid JSON: {exc}")
         return None
@@ -1067,7 +1072,8 @@ def check_plugin_config_schema_files(root: Path, vocabularies: dict[str, dict], 
         config = expected[plugin]
         path = directory / name
         doc = load_json(path, report)
-        if doc is None:
+        if not isinstance(doc, dict):
+            report.fail(path, "a generated schema is a JSON object")
             continue
         source = {
             "repo": document["repo"],
@@ -1093,8 +1099,9 @@ def check_plugin_config_schema_files(root: Path, vocabularies: dict[str, dict], 
                 "config_required_when_enabled", False
             ) or generated.get("scope_constraint") != config.get("scope_constraint"):
                 problems.append("x-generated config_required_when_enabled/scope_constraint differ from the catalog")
-        if doc.get("$id") != f"{plugin_config_schemas.ID_BASE}/{name}":
-            problems.append(f"$id must be {plugin_config_schemas.ID_BASE}/{name}")
+        expected_id = f"{plugin_config_schemas.ID_BASE}/edge-{document['ref']}/{name}"
+        if doc.get("$id") != expected_id:
+            problems.append(f"$id must be {expected_id}")
         if doc.get("$schema") != plugin_config_schemas.SCHEMA_DIALECT:
             problems.append(f"$schema must be {plugin_config_schemas.SCHEMA_DIALECT}")
         try:
@@ -1123,6 +1130,101 @@ def check_plugin_config_schema_generation(
     for problem in problems:
         report.fail(plugin_config_schemas.OUTPUT_DIR, problem)
     if not problems:
+        report.ok()
+
+
+def yaml_core_12_loader():
+    """A PyYAML SafeLoader that resolves plain scalars with the YAML 1.2 core
+    schema (the schema ci/plugin_config_schemas.py implements), not YAML 1.1:
+    no yes/no booleans, no sexagesimal or timestamp scalars, no merge keys,
+    and 1.2 integers and floats."""
+    import yaml  # hash-pinned in ci/requirements.txt; used only by this check
+
+    class Core12Loader(yaml.SafeLoader):
+        pass
+
+    Core12Loader.yaml_implicit_resolvers = {}
+    resolvers = [
+        ("tag:yaml.org,2002:bool", r"^(?:true|True|TRUE|false|False|FALSE)$", "tTfF"),
+        ("tag:yaml.org,2002:null", r"^(?:~|null|Null|NULL|)$", ["~", "n", "N", ""]),
+        ("tag:yaml.org,2002:int", r"^(?:[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+)$", "-+0123456789"),
+        (
+            "tag:yaml.org,2002:float",
+            r"^(?:[-+]?(?:\.[0-9]+|[0-9]+(?:\.[0-9]*)?)(?:[eE][-+]?[0-9]+)?|[-+]?\.(?:inf|Inf|INF)|\.(?:nan|NaN|NAN))$",
+            "-+.0123456789",
+        ),
+    ]
+    for tag, pattern, first in resolvers:
+        Core12Loader.add_implicit_resolver(tag, re.compile(pattern), list(first))
+
+    def construct_int(loader, node):
+        value = loader.construct_scalar(node)
+        if value.startswith("0o"):
+            return int(value[2:], 8)
+        if value.startswith("0x"):
+            return int(value[2:], 16)
+        return int(value)
+
+    def construct_float(loader, node):
+        value = loader.construct_scalar(node)
+        bare = value.lstrip("+-").lower()
+        if bare in (".inf", ".nan"):
+            return float(value.replace(".", "", 1))
+        return float(value)
+
+    def construct_bool(loader, node):
+        return loader.construct_scalar(node).lower() == "true"
+
+    Core12Loader.add_constructor("tag:yaml.org,2002:int", construct_int)
+    Core12Loader.add_constructor("tag:yaml.org,2002:float", construct_float)
+    Core12Loader.add_constructor("tag:yaml.org,2002:bool", construct_bool)
+    return yaml, Core12Loader
+
+
+def yaml_difference(left, right, path: str = "") -> str | None:
+    """The first difference between two parsed documents, types included."""
+    if type(left) is not type(right):
+        return f"{path or '/'}: {type(left).__name__} {left!r:.80} vs {type(right).__name__} {right!r:.80}"
+    if isinstance(left, dict):
+        if list(left) != list(right):
+            return f"{path or '/'}: keys {sorted(set(left) ^ set(right))[:5] or 'order'}"
+        for key in left:
+            found = yaml_difference(left[key], right[key], f"{path}/{key}")
+            if found:
+                return found
+        return None
+    if isinstance(left, list):
+        if len(left) != len(right):
+            return f"{path or '/'}: {len(left)} vs {len(right)} items"
+        for index, (a, b) in enumerate(zip(left, right)):
+            found = yaml_difference(a, b, f"{path}/{index}")
+            if found:
+                return found
+        return None
+    if left != right and not (isinstance(left, float) and left != left and right != right):
+        return f"{path or '/'}: {left!r:.80} vs {right!r:.80}"
+    return None
+
+
+def check_yaml_reader(label: str, data: bytes, report: Report) -> None:
+    """ci/plugin_config_schemas.py's YAML reader parses the pinned openapi.yaml
+    exactly as an independent YAML 1.2 core-schema parser does (step 9)."""
+    text = data.decode("utf-8")
+    try:
+        ours = plugin_config_schemas.load_yaml(text)
+    except ValueError as exc:
+        report.fail(label, f"the generator's YAML reader refuses the pinned file: {exc}")
+        return
+    yaml, loader = yaml_core_12_loader()
+    try:
+        theirs = yaml.load(text, Loader=loader)  # noqa: S506 (SafeLoader subclass)
+    except yaml.YAMLError as exc:
+        report.fail(label, f"PyYAML cannot parse the pinned file: {exc}")
+        return
+    difference = yaml_difference(ours, theirs)
+    if difference:
+        report.fail(label, f"the generator's YAML reader and PyYAML (YAML 1.2 core) disagree at {difference}")
+    else:
         report.ok()
 
 
@@ -1543,6 +1645,7 @@ def main() -> int:
         if data is not None:
             check_openapi(label, data, vocabularies, report)
             print("generated plugin config schemas")
+            check_yaml_reader(label, data, report)
             check_plugin_config_schema_generation(root, label, data, vocabularies, report)
 
     if report.errors:

@@ -107,7 +107,8 @@ completed).
   plugin catalog's pointers, `config_required_when_enabled` and
   `scope_constraint` against the pinned Edge `openapi.yaml`, and
   `plugin-config-schemas/` (2020-12 meta-schema, catalog pin, and with the
-  pinned file, byte equality with the generator).
+  pinned file, byte equality with the generator and an independent PyYAML
+  parse equal to the generator's YAML reader).
 - Actions are pinned by full commit SHA with a version comment.
   `permissions: contents: read`; no secrets; `persist-credentials: false`.
 - Python packages are pinned by version and sha256 in `ci/requirements.txt`

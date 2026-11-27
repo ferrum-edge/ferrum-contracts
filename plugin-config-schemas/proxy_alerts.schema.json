@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/proxy_alerts.schema.json",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/proxy_alerts.schema.json",
   "title": "proxy_alerts plugin config",
   "description": "The `config` object of an enabled `proxy_alerts` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component ProxyAlertsConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
   "x-generated": {
@@ -75,11 +75,11 @@
       "discriminator": {
         "propertyName": "type",
         "mapping": {
-          "slack": "#/components/schemas/ProxyAlertsSlackChannel",
-          "teams": "#/components/schemas/ProxyAlertsTeamsChannel",
-          "discord": "#/components/schemas/ProxyAlertsDiscordChannel",
-          "webhook": "#/components/schemas/ProxyAlertsWebhookChannel",
-          "email": "#/components/schemas/ProxyAlertsEmailChannel"
+          "slack": "#/$defs/ProxyAlertsSlackChannel",
+          "teams": "#/$defs/ProxyAlertsTeamsChannel",
+          "discord": "#/$defs/ProxyAlertsDiscordChannel",
+          "webhook": "#/$defs/ProxyAlertsWebhookChannel",
+          "email": "#/$defs/ProxyAlertsEmailChannel"
         }
       }
     },
@@ -843,13 +843,13 @@
       "discriminator": {
         "propertyName": "type",
         "mapping": {
-          "error_rate": "#/components/schemas/ProxyAlertsErrorRateRule",
-          "status_code_count": "#/components/schemas/ProxyAlertsStatusCodeCountRule",
-          "latency_percentile": "#/components/schemas/ProxyAlertsLatencyPercentileRule",
-          "error_class": "#/components/schemas/ProxyAlertsErrorClassRule",
-          "stream_disconnect_cause": "#/components/schemas/ProxyAlertsStreamDisconnectCauseRule",
-          "grpc_status_count": "#/components/schemas/ProxyAlertsGrpcStatusCountRule",
-          "grpc_status_rate": "#/components/schemas/ProxyAlertsGrpcStatusRateRule"
+          "error_rate": "#/$defs/ProxyAlertsErrorRateRule",
+          "status_code_count": "#/$defs/ProxyAlertsStatusCodeCountRule",
+          "latency_percentile": "#/$defs/ProxyAlertsLatencyPercentileRule",
+          "error_class": "#/$defs/ProxyAlertsErrorClassRule",
+          "stream_disconnect_cause": "#/$defs/ProxyAlertsStreamDisconnectCauseRule",
+          "grpc_status_count": "#/$defs/ProxyAlertsGrpcStatusCountRule",
+          "grpc_status_rate": "#/$defs/ProxyAlertsGrpcStatusRateRule"
         }
       }
     },

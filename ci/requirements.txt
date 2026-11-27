@@ -12,12 +12,19 @@
 # manylinux x86_64 wheel only, which is what the workflow's pinned
 # Python 3.13 on ubuntu-26.04 installs. Changing the Python version or runner
 # architecture needs the matching wheel hash. See docs/release-process.md.
+#
+# pyyaml is a compiled wheel too (CPython 3.13 manylinux x86_64 only). It is
+# used only by ci/validate.py to parse the pinned openapi.yaml independently
+# and compare the result with ci/plugin_config_schemas.py's own reader; the
+# generator itself stays standard-library only.
 attrs==26.1.0 \
     --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309
 jsonschema==4.26.0 \
     --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
 jsonschema-specifications==2025.9.1 \
     --hash=sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe
+pyyaml==6.0.3 \
+    --hash=sha256:0f29edc409a6392443abf94b9cf89ce99889a1dd5376d94316ae5145dfedd5d6
 referencing==0.37.0 \
     --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231
 rfc3339-validator==0.1.4 \

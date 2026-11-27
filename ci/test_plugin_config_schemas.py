@@ -82,6 +82,11 @@ class YamlReaderTests(unittest.TestCase):
              "c": ["x", "y"], "d": [], "e": {}},
         )
 
+    def test_flow_scalars_keep_interior_whitespace(self) -> None:
+        doc = self.load('a: [two  spaces, "x  y", \'p  q\']\nb: {k: v  w}\nc: [\n  folded\n  line\n]\n')
+        self.assertEqual(doc, {"a": ["two  spaces", "x  y", "p  q"], "b": {"k": "v  w"}, "c": ["folded line"]})
+        self.assertEqual(self.load("a: [one\n  two]\n"), {"a": ["one two"]})
+
     def test_block_scalars(self) -> None:
         text = (
             "lit: |\n"
@@ -138,6 +143,11 @@ class YamlReaderTests(unittest.TestCase):
             "complex key": "? a\n: b\n",
             "non-finite number": "a: .inf\n",
             "unterminated flow": "a: [1, 2\n",
+            "overflowing float": "a: 1e400\n",
+            "colon in a plain scalar": "a: b: c\n",
+            "colon in a continuation line": "a: first\n  second: x\n",
+            "merge key": "<<: {a: 1}\n",
+            "directive": "%YAML 1.2\n---\na: 1\n",
         }
         for label, text in cases.items():
             with self.subTest(label):
@@ -218,7 +228,7 @@ class GeneratorTests(unittest.TestCase):
         )
         doc = json.loads(files["plugin-config-schemas/a_plugin.schema.json"])
         self.assertEqual(doc["$schema"], gen.SCHEMA_DIALECT)
-        self.assertEqual(doc["$id"], f"{gen.ID_BASE}/a_plugin.schema.json")
+        self.assertEqual(doc["$id"], f"{gen.ID_BASE}/edge-v9.9.9/a_plugin.schema.json")
         self.assertEqual(doc["$ref"], "#/$defs/AConfig")
         self.assertEqual(sorted(doc["$defs"]), ["AConfig", "Holder", "Inner"])
         self.assertEqual(doc["$defs"]["AConfig"]["properties"]["inner"], {"$ref": "#/$defs/Inner"})
@@ -251,6 +261,58 @@ class GeneratorTests(unittest.TestCase):
         plugins = [{"name": "p", "config_schema": {"document": "openapi.yaml", "pointer": "#/components/schemas/Holder/$defs/item"}}]
         with self.assertRaises(ValueError):
             gen.build(catalog_for(self.openapi, plugins), self.openapi)
+
+    def test_ids_carry_the_edge_release(self) -> None:
+        first = json.loads(gen.build(self.catalog, self.openapi)["plugin-config-schemas/b_plugin.schema.json"])
+        other = dict(self.catalog, config_schema_document=dict(self.catalog["config_schema_document"], ref="v9.9.10"))
+        second = json.loads(gen.build(other, self.openapi)["plugin-config-schemas/b_plugin.schema.json"])
+        self.assertNotEqual(first["$id"], second["$id"])
+
+    def test_discriminator_mappings_are_rewritten_and_resolved(self) -> None:
+        openapi = OPENAPI.replace(
+            "    BConfig:\n      type: string\n      enum: [x, y]\n",
+            "    BConfig:\n      oneOf:\n        - $ref: \"#/components/schemas/Inner\"\n"
+            "      discriminator:\n        propertyName: kind\n"
+            "        mapping:\n          inner: \"#/components/schemas/Inner\"\n",
+        ).encode()
+        doc = json.loads(gen.build(catalog_for(openapi), openapi)["plugin-config-schemas/b_plugin.schema.json"])
+        self.assertEqual(doc["$defs"]["BConfig"]["discriminator"]["mapping"], {"inner": "#/$defs/Inner"})
+        broken = openapi.replace(b'inner: "#/components/schemas/Inner"', b'inner: "#/components/schemas/Gone"')
+        with self.assertRaises(ValueError):
+            gen.build(catalog_for(broken), broken)
+
+    def test_a_reference_into_a_component_must_resolve(self) -> None:
+        openapi = OPENAPI.replace("Holder/$defs/item", "Holder/$defs/renamed").encode()
+        with self.assertRaisesRegex(ValueError, "does not resolve"):
+            gen.build(catalog_for(openapi), openapi)
+
+    def test_literal_data_is_never_treated_as_a_reference(self) -> None:
+        openapi = OPENAPI.replace(
+            "    BConfig:\n      type: string\n      enum: [x, y]\n",
+            "    BConfig:\n      type: object\n      properties:\n        $ref:\n          type: string\n"
+            "      default:\n        $ref: literal\n      const:\n        $ref: \"#/components/schemas/Inner\"\n",
+        ).encode()
+        with self.assertRaisesRegex(ValueError, "unrewritten component reference"):
+            gen.build(catalog_for(openapi), openapi)
+        ok = openapi.replace(b'      const:\n        $ref: "#/components/schemas/Inner"\n', b"")
+        doc = json.loads(gen.build(catalog_for(ok), ok)["plugin-config-schemas/b_plugin.schema.json"])
+        config = doc["$defs"]["BConfig"]
+        self.assertEqual(config["properties"], {"$ref": {"type": "string"}})
+        self.assertEqual(config["default"], {"$ref": "literal"})
+        self.assertEqual(sorted(doc["$defs"]), ["BConfig"])
+
+    def test_local_input_is_capped(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "openapi.yaml"
+            path.write_bytes(b"a: 1\n")
+            self.assertEqual(gen.read_capped(path), b"a: 1\n")
+            original = gen.MAX_OPENAPI_BYTES
+            gen.MAX_OPENAPI_BYTES = 2
+            try:
+                with self.assertRaises(ValueError):
+                    gen.read_capped(path)
+            finally:
+                gen.MAX_OPENAPI_BYTES = original
 
     def test_compare_reports_missing_extra_and_changed_files(self) -> None:
         files = gen.build(self.catalog, self.openapi)

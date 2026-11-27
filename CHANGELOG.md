@@ -22,7 +22,17 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   against the 2020-12 meta-schema and the catalog pin, and with
   `--fetch-openapi` byte for byte against the generator, so a catalog re-pin
   without regeneration fails CI. They are Edge's own configuration schemas
-  under rule 5 of the stability promise, not schema majors.
+  under rule 5 of the stability promise, not schema majors. Each `$id` names
+  the Edge release (`plugin-config-schemas/edge-<ref>/<plugin>.schema.json`).
+  The generator walks only JSON Schema subschema positions (literal `const`,
+  `default` and `examples` data is copied verbatim), rewrites OpenAPI
+  `discriminator.mapping` targets, resolves every reference before writing,
+  and refuses non-finite numbers, `:` inside plain scalars, merge keys and
+  directives instead of guessing; its CLI reads only a local, size-capped
+  file. `ci/validate.py` refuses non-JSON constants and non-object generated
+  files, and compares the reader's parse of the pinned file with PyYAML 6.0.3
+  using YAML 1.2 core resolvers on every run (`pyyaml` is hash-pinned in
+  `ci/requirements.txt`; the generator itself stays standard-library only).
 
 - Agent dispatch skills under `.agents/skills/` with Claude entrypoints under
   `.claude/skills/` (`astra-agents`, `sol-agents`, `opus-agents`,

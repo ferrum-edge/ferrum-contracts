@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/prometheus_metrics.schema.json",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/plugin-config-schemas/edge-v0.9.21/prometheus_metrics.schema.json",
   "title": "prometheus_metrics plugin config",
   "description": "The `config` object of an enabled `prometheus_metrics` plugin, generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3), component PrometheusMetricsConfig and every component it references. Do not edit: run ci/plugin_config_schemas.py. This is Edge's own configuration schema, governed by Edge's support policy (docs/versioning.md); the plugin catalog records when Edge requires it.",
   "x-generated": {
