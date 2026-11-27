@@ -4,7 +4,8 @@ Versioned wire contracts shared by the Ferrum products (Edge, Anvil, Alloy,
 Nexus, Foundry, GitForgeOps), kept as data: JSON Schemas, machine-readable
 vocabularies, and conformance fixtures. There is no application code. The
 only executable files are the repository's own CI check, `ci/validate.py`,
-and its tests, `ci/test_*.py`.
+and its tests, `ci/test_*.py`, plus the agent dispatch launchers under
+`.agents/skills/` (repository tooling, not contract content).
 License: PolyForm Noncommercial 1.0.0 (`LICENSE`); commercial use needs the
 commercial license in `LICENSE-COMMERCIAL.md`.
 
@@ -44,6 +45,10 @@ completed).
   tests of the documented release verification using public signed data;
   no keys are generated or private keys accessed. `.github/workflows/validate.yml`
   runs both.
+- `.agents/skills/<name>-agents/` and `.claude/skills/<name>-agents/`: agent
+  dispatch skills (Codex and Claude entrypoints, worker briefs, launchers)
+  matching the ones in ferrum-edge, with this repository's validation and
+  review rules. They are tooling and never part of a contracts release.
 
 ## Rules
 

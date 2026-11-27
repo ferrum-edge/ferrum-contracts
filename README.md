@@ -22,6 +22,7 @@ complete; the issue is closed and remains as project history.
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | Repository guidance for contract provenance, schemas and releases |
 | [`CHANGELOG.md`](CHANGELOG.md) | Changes recorded by contracts release |
+| [`.agents/skills/`](.agents/skills) | Agent dispatch skills (Claude entrypoints in [`.claude/skills/`](.claude/skills)); repository tooling, not contract content |
 | [`ci/`](ci) | Validator (`validate.py`), its tests and hash-pinned requirements; the workflow is [`.github/workflows/validate.yml`](.github/workflows/validate.yml) |
 | [`vocabularies/`](vocabularies) | Edge-owned vocabularies: `ErrorClass` and `X-Gateway-Error` tokens, gateway-owned headers, `provisioned-by` values, and the plugin catalog index |
 | [`schemas/`](schemas) | JSON Schemas (2020-12), one directory per contract, one file per major version |
