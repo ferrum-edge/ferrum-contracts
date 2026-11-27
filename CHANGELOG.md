@@ -60,7 +60,13 @@ tags named `contracts-edge-X.Y.Z` pinned to Ferrum Edge releases; see
   `health_checks.passive` drops `gateway_error_codes` and
   `split_external_local_origin_errors` (Edge #7520); ConfigSync moves to
   revision 8 (Edge #7520, #7524); a `1.0.0` binary needs a rebuilt database
-  (Edge #7523). No plugin registration, plugin config conditional, header,
+  (Edge #7523), with the namespace registry recreated separately and retired
+  or unknown nested keys removed before the final export; stored API-spec
+  documents restore without full extension admission; the `/live`,
+  `/health` and `/status` probes answer only `GET` and `HEAD` (Edge #7491);
+  and parsed timestamps outside years `-9999..=9999` in UTC take the existing
+  invalid path (Edge #7511-#7517, #7527). No plugin registration, plugin
+  config conditional, header,
   error class or token changes. `edge_release`, `provenance` and
   `config_schema_document` stay pinned to published `v0.9.21`; no schema or
   fixture changes.

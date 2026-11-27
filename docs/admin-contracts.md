@@ -273,8 +273,11 @@ keep unchanged wire shapes):
   queues independent material-set watcher reloads and gateway SVID reload then
   fails, Edge `main` includes those already-queued surfaces in
   `accepted_surfaces` on the error response body (where `v0.9.21` returned the
-  SVID error alone). `/health`, `/live` and `/status` expose `HEAD` parity in
-  `openapi.yaml`, `GET /consumers/{id}/verification` documents its existing
+  SVID error alone). The `/live`, `/health` and `/status` probes answer only
+  `GET` and `HEAD` at runtime (`v0.9.21` dispatched them on the path alone, so
+  any method reached them); a probe that used another method no longer reaches
+  the probe handler and must switch to `GET` or `HEAD`. `openapi.yaml` adds
+  `HEAD` for the three probes, `GET /consumers/{id}/verification` documents its existing
   `Cache-Control: no-store` response header, and `DeploymentSnapshot` explicitly
   types `api_specs[].id` and `api_specs[].proxy_id` as `string`.
 - **Database outage mapping and port-scoped `listen_path` conflicts** (Edge PRs
@@ -288,8 +291,11 @@ keep unchanged wire shapes):
 - **Closed nested objects and JSON-object request bodies** (Edge PRs
   [#7520](https://github.com/ferrum-edge/ferrum-edge/pull/7520) and
   [#7524](https://github.com/ferrum-edge/ferrum-edge/pull/7524)). Edge
-  `v0.9.21` refused unknown keys only on top-level resources and dropped them
-  silently in nested objects. Edge `main` refuses them in every nested proxy
+  `v0.9.21` already refused unknown keys in top-level resources and in some
+  nested objects (stream `stream_match` criteria and arms, plugin trigger
+  objects, and the mesh policy, authentication, telemetry and VirtualService
+  route objects), but silently ignored them in the objects these PRs close.
+  Edge `main` refuses them in every nested proxy
   and upstream object (`health_checks` and its `active`/`passive` blocks,
   `targets[]`, `service_discovery` and its provider objects, `subsets[]` and
   their `traffic_policy`, `port_overrides`, `locality_lb_setting`,
@@ -298,11 +304,19 @@ keep unchanged wire shapes):
   associations), in every native mesh resource object, and in the managed TLS,
   ACME, namespace, `/admin/tls/validate` and `/mesh/egress-scope/test` request
   bodies, which must also be JSON objects (a positional array is refused).
-  Admin `POST`/`PUT` and `/batch` return `400` naming the key, `POST /restore`
-  refuses a backup carrying one, `POST`/`PUT /api-specs` refuse one in
-  `x-ferrum-proxy`/`x-ferrum-upstream`, and in database and CP mode a stored
+  Admin `POST`/`PUT` and `/batch` return `400` naming the key; `POST /restore`
+  decodes the typed resources (proxies, consumers, plugin configs, upstreams)
+  before deleting anything and refuses a backup carrying one with `400`, so
+  nothing is restored; `POST`/`PUT /api-specs` refuse one in
+  `x-ferrum-proxy`/`x-ferrum-upstream`; and in database and CP mode a stored
   row carrying one fails to load (MongoDB projects stored `plugins[]`
-  associations onto `plugin_config_id` first). `health_checks.passive`
+  associations onto `plugin_config_id` first). Stored API-spec documents in a
+  backup's `api_specs.items` are copied without full extension admission
+  (restore only checks that each `x-ferrum-proxy.plugins` entry is an object
+  with a string `plugin_config_id`), so a stale `x-ferrum-*` key inside a
+  stored spec restores successfully and is refused only when that spec is
+  next submitted; review and re-submit source spec documents separately, even
+  after a successful rehearsal restore. `health_checks.passive`
   drops `gateway_error_codes` and `split_external_local_origin_errors`
   (#7520). `labels`, plugin `config` and consumer `credentials` stay open.
   `openapi.yaml` marks the closed objects `additionalProperties: false`. The
@@ -321,8 +335,46 @@ keep unchanged wire shapes):
   `V001` baseline gets a new frozen identity, so a `1.0.0` binary refuses every
   SQL database created by a `0.9.x` release; the supported upgrade, also for
   MongoDB, is a fresh database populated with `POST /restore` from
-  per-namespace `GET /backup` exports. Backup and restore wire shapes do not
-  change.
+  per-namespace `GET /backup` exports, following Edge's
+  [rebuild procedure](https://github.com/ferrum-edge/ferrum-edge/blob/f1b4d3739dab704494a3caa68eb5bfff0b5db99c/docs/upgrade_guide.md#every-09x-database-is-rebuilt-and-restored-7523).
+  A backup never carries the namespace registry row (description and
+  timestamps), so the registry is recorded (`GET /namespaces`,
+  `GET /namespaces/{name}`) and recreated (`POST /namespaces`, or
+  `PUT /namespaces/{name}` for an existing one such as `ferrum`) before the
+  restores; a registered namespace with no resources comes back only through
+  that step. The backup *envelope* does not change, but the nested resource
+  payloads `1.0.0` accepts are narrower: an export from `v0.9.21` whose
+  upstreams still carry `gateway_error_codes` or
+  `split_external_local_origin_errors` (which `v0.9.21` serialized when set),
+  or any other key in a newly closed object, is refused by `POST /restore`
+  with `400` before anything is restored. Remove those keys from the stored
+  resources on `0.9.21` before the final export, and rehearse the restore on a
+  scratch `1.0.0` database.
+- **Runtime timestamp range** (Edge issue #7419 phases, PRs
+  [#7511](https://github.com/ferrum-edge/ferrum-edge/pull/7511),
+  [#7512](https://github.com/ferrum-edge/ferrum-edge/pull/7512),
+  [#7513](https://github.com/ferrum-edge/ferrum-edge/pull/7513),
+  [#7516](https://github.com/ferrum-edge/ferrum-edge/pull/7516),
+  [#7517](https://github.com/ferrum-edge/ferrum-edge/pull/7517) and
+  [#7527](https://github.com/ferrum-edge/ferrum-edge/pull/7527)). Parsed
+  timestamps are held as UTC instants in years `-9999..=9999`, and a leap
+  second (`:60`) is stored as the following second. An instant that `v0.9.21`
+  (chrono) accepted outside that range, after conversion to UTC, now takes the
+  site's existing invalid-timestamp path: the `GET /admin/tls/events` `since`
+  filter returns `400` (its `invalid since timestamp: ` detail text changed;
+  status and envelope did not), `transaction_debugger` refuses such a
+  `capture_expires_at` (for example `9999-12-31T23:30:00-01:00`, which is
+  UTC year 10000), `response_caching` treats such an HTTP date as
+  unparseable, and `soap_ws_security` refuses it (a `9999-12-31T23:59:60Z`
+  leap second is out of range). From #7527, a config document (file,
+  backup, ConfigSync snapshot) whose `loaded_at`, or a ConfigSync delta whose
+  `poll_timestamp`, is outside the range fails to decode instead of loading;
+  a ConfigSync envelope version outside it is refused as unparseable; and a
+  mesh slice version outside it is treated like any unparseable slice
+  version. Rendered in-range timestamps, and the wire and storage text of these
+  stamps, are byte-identical. Source: Edge `CHANGELOG.md` and
+  `docs/upgrade_guide.md` at the commit above and the notes refresh in Edge PR
+  [#7533](https://github.com/ferrum-edge/ferrum-edge/pull/7533).
 
 ## Owner sources and artifact scope
 
