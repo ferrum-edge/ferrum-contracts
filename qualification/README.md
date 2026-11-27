@@ -46,7 +46,7 @@ in `symbols`.
 
 | Case set | Producer rule | Producer revision |
 |---|---|---|
-| [`service-manifest/v1/derived-id-limit.json`](service-manifest/v1/derived-id-limit.json) | Alloy always generates `<proxy_id>-otel-tracing` and refuses a manifest whose derived resource ID exceeds Edge's 254-character limit, with or without `gateway.otel_endpoint`: 241-character proxy IDs export, 242-character ones do not. The explicit-exporter pair is the control. (#80) | ferrum-alloy `db412da37564ffbe869e2b40530dbebf5afe7ac8` (main, unreleased) |
+| [`service-manifest/v1/derived-id-limit.json`](service-manifest/v1/derived-id-limit.json) | Alloy always generates `<proxy_id>-otel-tracing` and refuses a manifest whose derived resource ID exceeds Edge's 254-character limit, with or without `gateway.otel_endpoint`: 241-character proxy IDs export, 242-character ones do not. The explicit-exporter pair is the control. (#80) | ferrum-alloy `v0.1.0` (`c949978d7e90be33bac6a16e23744bcdd4ee3924`; rule unchanged since `db412da37564ffbe869e2b40530dbebf5afe7ac8`) |
 
 Consumer results for these cases are recorded in
 [docs/adoption.md](../docs/adoption.md#service-manifest-derived-id-qualification).

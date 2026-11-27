@@ -8,9 +8,9 @@
   "base": "fixtures/service-manifest/valid/plain-http.json",
   "producer": {
     "repo": "ferrum-edge/ferrum-alloy",
-    "ref": "main",
-    "commit": "db412da37564ffbe869e2b40530dbebf5afe7ac8",
-    "availability": "unreleased",
+    "ref": "v0.1.0",
+    "commit": "c949978d7e90be33bac6a16e23744bcdd4ee3924",
+    "availability": "released",
     "paths": [
       "crates/ferrum-alloy-edge/src/manifest.rs",
       "crates/ferrum-alloy-edge/src/export.rs",
@@ -24,7 +24,7 @@
       "each_generated_id_suffix_is_checked_at_its_boundary",
       "the_trace_plugin_bounds_a_proxy_id_without_other_derived_resources"
     ],
-    "note": "Since ferrum-alloy#313 the export always generates the <proxy_id>-otel-tracing plugin, with or without gateway.otel_endpoint, and validate() bounds its ID by EDGE_RESOURCE_ID_MAX_LENGTH (254, Edge's MAX_ID_LENGTH in src/config/types.rs). The cases transcribe the propagation-only and otel families of each_generated_id_suffix_is_checked_at_its_boundary (241 accepted, 242 refused with an error naming -otel-tracing). Unchanged on Alloy main at 0e8a96a24c149432f0c3583732d8a3875db756ce."
+    "note": "Since ferrum-alloy#313 the export always generates the <proxy_id>-otel-tracing plugin, with or without gateway.otel_endpoint, and validate() bounds its ID by EDGE_RESOURCE_ID_MAX_LENGTH (254, Edge's MAX_ID_LENGTH in src/config/types.rs). The cases transcribe the propagation-only and otel families of each_generated_id_suffix_is_checked_at_its_boundary (241 accepted, 242 refused with an error naming -otel-tracing). Read at Alloy v0.1.0 (c949978d7e90be33bac6a16e23744bcdd4ee3924), where EDGE_RESOURCE_ID_MAX_LENGTH, export.rs and both named tests are unchanged since ferrum-alloy#313 (db412da37564ffbe869e2b40530dbebf5afe7ac8), the revision these outcomes were first derived from; unchanged on Alloy main at dc36f78cb39edd3da58649a0bed7aa6f1f4263e8. No case outcome changes."
   },
   "cases": [
     {
