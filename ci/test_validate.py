@@ -338,6 +338,18 @@ class EdgeTagTests(unittest.TestCase):
         }
         self.assertEqual(self.check(vocabulary), [])
 
+    def test_a_schema_x_contract_naming_an_unpublished_tag_fails(self) -> None:
+        report = validate.Report()
+        contract = {"provenance": [{"repo": validate.EDGE_REPO, "ref": "v0.9.18"}]}
+        validate.check_edge_tags("schema.json", contract, report, "/x-contract")
+        self.assertEqual(
+            report.errors,
+            [
+                "schema.json: /x-contract/provenance/0/ref names Edge v0.9.18, "
+                "which was never published"
+            ],
+        )
+
 
 class MainBranchDeltaTests(unittest.TestCase):
     """plugin-catalog, gateway-headers and gateway-errors keep a
@@ -420,18 +432,6 @@ class MainBranchDeltaTests(unittest.TestCase):
                 doc["main_branch_delta"] = dict(self.EMPTY_DELTA)
                 schema = schemas[f"vocabulary-{name}"][doc["version"]]
                 self.assertIsNone(validate.first_error(validate.validator(schema, registry), doc))
-
-    def test_a_schema_x_contract_naming_an_unpublished_tag_fails(self) -> None:
-        report = validate.Report()
-        contract = {"provenance": [{"repo": validate.EDGE_REPO, "ref": "v0.9.18"}]}
-        validate.check_edge_tags("schema.json", contract, report, "/x-contract")
-        self.assertEqual(
-            report.errors,
-            [
-                "schema.json: /x-contract/provenance/0/ref names Edge v0.9.18, "
-                "which was never published"
-            ],
-        )
 
 
 class VocabularyInstanceTests(unittest.TestCase):
