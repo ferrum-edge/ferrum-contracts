@@ -507,8 +507,8 @@ only when the consumer's own PR merges. The Nexus and Foundry re-pins to
 `c3fc0373b5cdf50a09404471a6cad98dbb0896fc`; ferrum-foundry#686, merged in
 #695 as `c20bd90b1bb548749f956076ab38ee0130674269`) kept their legacy `PIN`
 formats and checks, so neither converged at that PR. Foundry converged
-afterwards in ferrum-foundry#711, Nexus in ferrum-nexus#731, and Anvil in
-ferrum-anvil#598.
+afterwards in ferrum-foundry#711, Nexus in ferrum-nexus#731, Anvil in
+ferrum-anvil#598, and GitForgeOps in ferrum-edge-git-forge-ops#782.
 
 | Consumer (`main` read) | Current `PIN` | Differences from the canonical format and checks | Status |
 |---|---|---|---|
@@ -516,7 +516,7 @@ ferrum-anvil#598.
 | ferrum-nexus (`0ebd7590d132878d67c5fb3b23fa2eb9a6787015`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.20`, one `PIN` (136 rows) | None. `SERVICE-MANIFEST-PIN` is merged into the one `PIN`. `shared/src/ferrum-contracts.test.ts` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory (refusing a symbolic link), and checks each hash; `.gitattributes` marks the directory `-text`. | converged in ferrum-nexus#731 (`ed9e4eb8b63bcf1e8820010bd27243477ba2e631`) |
 | ferrum-foundry (`60cbfa770974ad4254d47471d81d7192814f795d`) | canonical `tag X` / `commit X` / `<hash>  <path>`, `contracts-edge-0.9.21` (37 rows) | None. `scripts/ferrum-contracts.test.mjs` parses every line strictly by position, refuses unsorted or duplicate rows and a row naming `PIN`, compares the rows with the files under the vendored directory, and checks each hash. | converged in ferrum-foundry#711 (`7d574c19074492612aef3a92f200613792180079`) |
 | ferrum-alloy (`d54999f86b2c7f69ea826dc60d0baff7519860b8`) | JSON `{"tag", "commit", "files": {path: hash}}`, `contracts-edge-0.9.21` (28 files) | JSON instead of text; paths are repository-relative (`contracts/ferrum-contracts/...`) instead of relative to the vendored directory; duplicate JSON keys collapse silently when parsed (`crates/ferrum-alloy-edge/tests/pairing.rs`). | not converged |
-| ferrum-edge-git-forge-ops (`a1de5903b0bd7c3cd97b67fee4a295b2012262d3`) | `tag=X` / `commit=X` / `edge_version=X` / `sha256 <path> <hash>`, `contracts-edge-0.9.20` (13 rows) | Key syntax `key=value`; checksum rows put the path before the hash. Its test already refuses unknown and duplicate rows; `edge_version` is the canonical optional header. | not converged |
+| ferrum-edge-git-forge-ops (`ee8f71417e8cfc6d5991cbf678a96ce78066bffb`) | canonical `tag X` / `commit X` / `edge_version X` / `<hash>  <path>`, `contracts-edge-0.9.21` (16 rows) | None. `tests/unit/contracts_tests.rs` parses the canonical lines strictly, refuses a missing final newline, unsorted or duplicate rows and a row naming `PIN`, and compares the rows with the files under the vendored directory. | converged in ferrum-edge-git-forge-ops#782 (`ee8f71417e8cfc6d5991cbf678a96ce78066bffb`) |
 
 Ferrum Edge is the producer and vendors nothing. Every `commit` above is its
 tag's commit (`contracts-edge-0.9.21` at
