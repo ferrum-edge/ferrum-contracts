@@ -307,7 +307,8 @@ From `contracts-edge-1.0.0` until a `contracts-edge-2.0.0`, every
    records any incompatible owner configuration change it finds in its
    release record instead of passing it off as compatible. The standalone
    documents in `plugin-config-schemas/` are generated from that pinned file
-   (`ci/plugin_config_schemas.py`) and follow the same rule: they change
+   (`ci/plugin_config_schemas.py`), as are the Admin API resource request
+   schemas in `resource-schemas/`, and both follow the same rule: they change
    exactly when the pinned `openapi.yaml` changes, and they are not schema
    majors of this repository.
 6. **Tags are signed and immutable.** Every `1.*` tag is an SSH-signed

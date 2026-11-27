@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the standalone plugin config schemas from Edge's openapi.yaml.
+"""Generate standalone plugin config and resource schemas from Edge's openapi.yaml.
 
 The plugin catalog (vocabularies/plugin-catalog.json) points every built-in
 plugin at a component of Edge's `openapi.yaml` (`config_schema.pointer`) and
@@ -8,8 +8,10 @@ reads exactly that file and writes one self-contained JSON Schema 2020-12
 document per plugin to plugin-config-schemas/<plugin>.schema.json: the
 plugin's component plus every component it reaches through `$ref`, copied
 under `$defs` with each `#/components/schemas/<Name>` reference rewritten to
-`#/$defs/<Name>`. Consumers can then validate a plugin `config` without
-parsing `openapi.yaml`.
+`#/$defs/<Name>`. It also writes Edge's Admin API resource request schemas
+(RESOURCE_ROOTS) to resource-schemas/<Component>.schema.json the same way.
+Consumers can then validate a plugin `config` or a resource without parsing
+`openapi.yaml`.
 
 The script uses only the Python standard library, so it reads YAML with its
 own reader. That reader accepts the block and flow YAML subset Edge's
@@ -43,6 +45,12 @@ OUTPUT_DIR = "plugin-config-schemas"
 CATALOG = "vocabularies/plugin-catalog.json"
 SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
 ID_BASE = "https://github.com/ferrum-edge/ferrum-contracts/" + OUTPUT_DIR
+# Edge's Admin API resource request schemas, published from the same pinned
+# openapi.yaml (resource-schemas/<Component>.schema.json).
+RESOURCE_DIR = "resource-schemas"
+RESOURCE_ID_BASE = "https://github.com/ferrum-edge/ferrum-contracts/" + RESOURCE_DIR
+RESOURCE_ROOTS = ("ProxyCreate", "UpstreamCreate", "ConsumerCreate", "PluginConfigCreate", "GatewayTrustBundleCreate")
+GENERATED_DIRS = (OUTPUT_DIR, RESOURCE_DIR)
 GENERATOR = "ci/plugin_config_schemas.py"
 COMPONENT_PREFIX = "#/components/schemas/"
 DEFS_PREFIX = "#/$defs/"
@@ -798,18 +806,57 @@ def build(catalog: dict, openapi: bytes) -> dict[str, bytes]:
         _check_references(doc)
         text = json.dumps(doc, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
         files[f"{OUTPUT_DIR}/{plugin['name']}.schema.json"] = text.encode("utf-8")
+    for root in RESOURCE_ROOTS:
+        defs = closure(components, root)
+        pointer = COMPONENT_PREFIX + root
+        doc = {
+            "$schema": SCHEMA_DIALECT,
+            "$id": f"{RESOURCE_ID_BASE}/edge-{document['ref']}/{root}.schema.json",
+            "title": f"{root} request body",
+            "description": (
+                f"Edge's {root} request schema (openapi.yaml components.schemas.{root}), generated from "
+                f"{document['repo']} {document['path']} at {document['ref']} ({document['commit']}) "
+                f"with every component it references. Do not edit: run {GENERATOR}. Admission rules "
+                f"that exist only in Edge's Rust code are not in this schema; {RESOURCE_DIR}/README.md "
+                "lists them. This is Edge's own API schema, governed by Edge's support policy "
+                "(docs/versioning.md)."
+            ),
+            "x-generated": {
+                "resource": root,
+                "generator": GENERATOR,
+                "source": {
+                    "repo": document["repo"],
+                    "ref": document["ref"],
+                    "commit": document["commit"],
+                    "path": document["path"],
+                    "sha256": document["sha256"],
+                    "pointer": pointer,
+                },
+            },
+            "$ref": DEFS_PREFIX + root,
+            "$defs": {name: defs[name] for name in sorted(defs)},
+        }
+        _check_references(doc)
+        text = json.dumps(doc, indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+        files[f"{RESOURCE_DIR}/{root}.schema.json"] = text.encode("utf-8")
     return files
 
 
+def _present(root: Path) -> dict[str, Path]:
+    """Committed generated files under every GENERATED_DIRS directory."""
+    present = {}
+    for name in GENERATED_DIRS:
+        directory = root / name
+        for path in sorted(directory.iterdir()) if directory.is_dir() else []:
+            if path.name != "README.md":
+                present[f"{name}/{path.name}"] = path
+    return present
+
+
 def compare(root: Path, files: dict[str, bytes]) -> list[str]:
-    """Differences between `files` and what is committed under OUTPUT_DIR."""
+    """Differences between `files` and what is committed under GENERATED_DIRS."""
     problems = []
-    directory = root / OUTPUT_DIR
-    present = {
-        f"{OUTPUT_DIR}/{path.name}": path
-        for path in (sorted(directory.iterdir()) if directory.is_dir() else [])
-        if path.name != "README.md"
-    }
+    present = _present(root)
     for rel in sorted(set(files) - set(present)):
         problems.append(f"{rel}: missing; run {GENERATOR} --write")
     for rel in sorted(set(present) - set(files)):
@@ -821,10 +868,10 @@ def compare(root: Path, files: dict[str, bytes]) -> list[str]:
 
 
 def write(root: Path, files: dict[str, bytes]) -> None:
-    directory = root / OUTPUT_DIR
-    directory.mkdir(exist_ok=True)
-    for path in directory.iterdir():
-        if path.name != "README.md" and f"{OUTPUT_DIR}/{path.name}" not in files:
+    for name in GENERATED_DIRS:
+        (root / name).mkdir(exist_ok=True)
+    for rel, path in _present(root).items():
+        if rel not in files:
             path.unlink()
     for rel, data in files.items():
         (root / rel).write_bytes(data)
@@ -853,7 +900,7 @@ def main() -> int:
     files = build(catalog, data)
     if args.write:
         write(root, files)
-        print(f"wrote {len(files)} files to {OUTPUT_DIR}/")
+        print(f"wrote {len(files)} files to {', '.join(d + '/' for d in GENERATED_DIRS)}")
         return 0
     problems = compare(root, files)
     for problem in problems:

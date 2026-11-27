@@ -32,6 +32,11 @@ completed).
   One standalone JSON Schema 2020-12 document per catalog plugin, made by
   `ci/plugin_config_schemas.py --openapi <pinned openapi.yaml> --write` from
   the file `config_schema_document` pins; regenerate whenever that pin moves.
+- `resource-schemas/<Component>.schema.json`: generated the same way, one
+  standalone document per Edge Admin API resource request schema
+  (`ProxyCreate`, `UpstreamCreate`, `ConsumerCreate`, `PluginConfigCreate`,
+  `GatewayTrustBundleCreate`); its README lists the Rust-only admission rules
+  the schemas do not carry.
 - `qualification/<name>/v<N>/*.json`: schema-valid (or invalid) payloads with
   the producer's own outcome for rules the schema cannot express; not
   fixtures. Layout and policy: `qualification/README.md`.

@@ -1,0 +1,1103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/resource-schemas/edge-v0.9.21/ProxyCreate.schema.json",
+  "title": "ProxyCreate request body",
+  "description": "Edge's ProxyCreate request schema (openapi.yaml components.schemas.ProxyCreate), generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3) with every component it references. Do not edit: run ci/plugin_config_schemas.py. Admission rules that exist only in Edge's Rust code are not in this schema; resource-schemas/README.md lists them. This is Edge's own API schema, governed by Edge's support policy (docs/versioning.md).",
+  "x-generated": {
+    "resource": "ProxyCreate",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/ProxyCreate"
+    }
+  },
+  "$ref": "#/$defs/ProxyCreate",
+  "$defs": {
+    "AuthMode": {
+      "type": "string",
+      "enum": [
+        "single",
+        "multi"
+      ],
+      "default": "single",
+      "description": "`single` — auth plugins run in priority order until the first success.\nFor `basic_auth` and the Bearer-token mechanisms `jwt_auth`, `jwks_auth`,\nand `oauth2_introspection`, a foreign `Authorization` scheme is skipped;\nother mechanisms are not covered by this guarantee. Any rejection\nreturned by a plugin is terminal.\n`multi` — auth plugins run sequentially until one succeeds. If none\nsucceeds, a server rejection takes precedence over the last ordinary\nrejection.\nIn either mode a `401` from the authentication phase carries a\n`WWW-Authenticate` field listing every challenge each rejecting\nmechanism carried in chain order and then every other applicable auth\nplugin's advertised challenge in priority order, merging only\nequivalent challenges (same scheme and parameters), falling back to the\ngeneric `ferrum-edge` challenge.\n"
+    },
+    "BackendScheme": {
+      "type": "string",
+      "enum": [
+        "http",
+        "https",
+        "tcp",
+        "tcps",
+        "udp",
+        "dtls"
+      ],
+      "description": "Wire-level scheme a proxy uses to talk to its backend.\n\n**HTTP family** (`http`, `https`) covers HTTP/1.1, HTTP/2, HTTP/3,\ngRPC, and WebSocket. Which of those is actually spoken is\ndetermined per-request (content-type, Upgrade/Connection headers,\nHTTP/2 Extended CONNECT) — it is **never pinned in config**.\nA single `https` proxy transparently serves a mix of REST, gRPC,\nand WebSocket traffic on the same backend pool. Backend HTTP/3 is\nselected automatically for plain HTTP traffic when the concrete\nbackend target is classified as H3-capable.\n\n**Stream family** (`tcp`, `tcps`, `udp`, `dtls`) are raw L4\nproxies selected by `listen_port`. `tcps` follows the\n`http`/`https`, `ws`/`wss` convention (previously spelled\n`tcp_tls`). `dtls` encrypts UDP datagrams to the backend using\nDTLS 1.2/1.3 (ECDSA P-256/P-384 keys only, version\nauto-negotiated).\n\n**Legacy note**: In earlier releases this was the 11-variant\n`BackendProtocol` enum including `ws`/`wss`/`grpc`/`grpcs`/`h3`\nplus `tcp_tls`. These are no longer accepted on the admin API —\nuse `backend_scheme` instead.\n"
+    },
+    "BackoffStrategy": {
+      "description": "Retry delay strategy",
+      "oneOf": [
+        {
+          "type": "object",
+          "title": "Fixed delay",
+          "required": [
+            "fixed"
+          ],
+          "properties": {
+            "fixed": {
+              "type": "object",
+              "required": [
+                "delay_ms"
+              ],
+              "properties": {
+                "delay_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "maximum": 300000,
+                  "default": 100,
+                  "description": "Fixed delay between retries in milliseconds"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "title": "Exponential backoff",
+          "required": [
+            "exponential"
+          ],
+          "properties": {
+            "exponential": {
+              "type": "object",
+              "required": [
+                "base_ms",
+                "max_ms"
+              ],
+              "properties": {
+                "base_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "maximum": 300000,
+                  "description": "Base delay in milliseconds (doubled each attempt)"
+                },
+                "max_ms": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "maximum": 300000,
+                  "description": "Maximum delay cap in milliseconds"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "default": {
+        "fixed": {
+          "delay_ms": 100
+        }
+      }
+    },
+    "CircuitBreakerConfig": {
+      "type": "object",
+      "properties": {
+        "failure_threshold": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 5,
+          "description": "Consecutive failures to trip the circuit open"
+        },
+        "success_threshold": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 3,
+          "description": "Consecutive successes in half-open to close the circuit"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400,
+          "default": 30,
+          "description": "Seconds to wait in open state before transitioning to half-open. `cooldown_seconds` is accepted as an input alias on Admin API, file config, database rows, and batch/restore payloads, and is never returned.\n"
+        },
+        "cooldown_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400,
+          "writeOnly": true,
+          "deprecated": true,
+          "description": "Input alias for `timeout_seconds`, accepted on Admin API, file config, database rows, and batch/restore payloads. Never returned: responses always carry `timeout_seconds`. Supplying both spellings in one object is rejected as a duplicate field.\n"
+        },
+        "failure_status_codes": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "default": [
+            500,
+            502,
+            503,
+            504
+          ],
+          "description": "HTTP status codes that count as failures"
+        },
+        "half_open_max_requests": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 10000,
+          "default": 1,
+          "description": "Maximum concurrent probe requests allowed in half-open state"
+        },
+        "trip_on_connection_errors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether connection-level errors (TCP refused, DNS failure, TLS handshake error, connect timeout) count as circuit breaker failures independently of failure_status_codes. When true (default), connection errors always trip the breaker. When false, only real HTTP response status codes in failure_status_codes are counted.\n"
+        }
+      }
+    },
+    "PluginAssociation": {
+      "type": "object",
+      "required": [
+        "plugin_config_id"
+      ],
+      "properties": {
+        "plugin_config_id": {
+          "type": "string",
+          "description": "ID of the PluginConfig to apply to this proxy"
+        }
+      }
+    },
+    "Proxy": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "$ref": "#/$defs/ResourceLabels"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique identifier (UUID auto-generated if omitted or empty on create). Custom IDs must start with an alphanumeric character and contain only alphanumeric characters, dots, underscores, or hyphens (max 254 chars).",
+          "pattern": "^$|^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+          "maxLength": 254
+        },
+        "namespace": {
+          "type": "string",
+          "default": "ferrum",
+          "readOnly": true,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+          "maxLength": 254,
+          "description": "Namespace this proxy belongs to. Read-only on the wire — set from the `X-Ferrum-Namespace` request header (or the `ferrum` default) on every create/update; any value in the request body is ignored. See the API description for namespace semantics."
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional friendly name. Must be unique across all proxies when set."
+        },
+        "listen_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "description": "URL path prefix, `=/exact-path`, or `~regex` this proxy matches. Must start with `/` for literal prefix matching, `=/` for exact whole-path matching, or `~` for regex matching (e.g., `~^/api/v[0-9]+$`). Regex patterns are compiled at creation time and auto-anchored with `^` and `$` for full-path matching if not already present. To allow sub-path matching, end the pattern with `.*` (e.g., `~/api/v[0-9]+/.*`).\n\n**Required for HTTP-family proxies UNLESS `hosts` is non-empty.** An HTTP proxy with neither `hosts` nor `listen_path` set is rejected — that would route every request on every host and collides with every other catch-all.\n\n**MUST be omitted / null for stream-family proxies** (`tcp`, `tcps`, `udp`, `dtls`). Stream proxies route on `listen_port`.\n\nWhen `listen_path` is null on an HTTP proxy, the proxy matches any path under the configured `hosts`. `strip_listen_path` is a no-op (nothing to strip); `backend_path` (if set) prepends to the forwarded path.\n\nThe combination of `(hosts, listen_path)` must be unique across all HTTP proxies in the same namespace.\n\n**Must already be a canonical policy path.** Request paths are canonicalized at the frontend boundary before route lookup: percent-escapes of characters that are legal literally in a path are decoded (`/%61dmin` becomes `/admin`) and every other escape is rejected with `400`: encoded separators (`%2F`, `%3F`, `%23`), double encodings (`%25…`), encoded control characters, invalid escapes, and escapes of bytes outside that decode set (`%20`, `%7B`, and any percent-encoded non-ASCII byte). Dot segments and backslashes are rejected in both spellings — literal (`/a/../b`, `/a/./b`, `/a\\b`) and encoded (`%2e%2e`, `%5C`) — because the URL parser that builds the backend request line removes dot segments and reads `\\` as a separator. A segment whose text before the first `;` is `.` or `..` (`..;`, `.;x`, `%2e%2e;`, `..%3B`) is a dot segment too, because backends that strip path parameters resolve it as one. A non-final empty segment (`//`, `/a//b`) and a segment that is empty before its first `;` (`/;x/a`) are rejected too, because backends that collapse `//` would resolve a different path; a trailing slash is allowed. A `.` inside a segment (`/v1.0/users`) is an ordinary path character. A `;` on an ordinary segment (`/v1;version=2`) is refused after route lookup unless the matched proxy sets `allow_path_parameters`, so a literal `listen_path` containing `;` requires that opt-in.\n\nA literal `listen_path` containing any of the above is unreachable, and admission rejects it on every create, update, batch, restore, and config-load path. A `~regex` `listen_path` is a pattern rather than a literal path, so only the percent-escape rules apply to it: `\\` and `.` are regex syntax there, and `~^/v1\\.0/.*` matching the reachable canonical path `/v1.0/x` stays valid. See `docs/request_path_canonicalization.md`.",
+          "examples": [
+            "/api/v1",
+            "=/healthz",
+            "/users",
+            "~/api/v[0-9]+/users/[^/]+"
+          ]
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Optional list of hostnames this proxy matches. Empty means match all hosts. Supports exact hostnames (`api.example.com`) and wildcard prefixes (`*.example.com`). Entries are normalized to lowercase on admission (CRUD create/update, batch, restore, and config loaders). Must match the format `[a-z0-9]([a-z0-9.-]*[a-z0-9])?` for exact hosts or `*.[a-z0-9]([a-z0-9.-]*[a-z0-9])?` for wildcards.\n\nFor HTTP-family proxies, either `hosts` or `listen_path` must be set (both may be set together). A host-only proxy (hosts set, no listen_path) matches any path under the configured hosts.\n\nFor stream-family proxies (`tcp`, `tcps`, `udp`, `dtls`), `hosts` is the TLS/DTLS `server_name` (SNI) route predicate. It is accepted only on an opaque listener that terminates nothing — `passthrough: true`, or `backend_scheme: tcp` with `frontend_tls: false` — because only such a listener can read a ClientHello. Setting it on a terminating (`frontend_tls: true`), backend-TLS-originating (`tcps`), or non-passthrough `udp`/`dtls` proxy is rejected with a field-specific 400 rather than silently ignored. Proxies sharing one `listen_port` resolve in a fixed tier order (exact host, wildcard, then the single empty-`hosts` catch-all); admission rejects a tie inside one tier, more than one catch-all, and mixed `passthrough` on a port.",
+          "examples": [
+            [
+              "api.example.com",
+              "*.internal.example.com"
+            ]
+          ]
+        },
+        "backend_scheme": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/BackendScheme"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Wire-level scheme the proxy uses to talk to its backend. Optional for HTTP-family proxies — defaults to `https` when omitted. Plaintext backends must set `backend_scheme: http`; otherwise an HTTPS dial of an HTTP origin fails with a generic 502. **Required for stream-family proxies** (`tcp`, `tcps`, `udp`, `dtls`); validation rejects stream proxies that omit it.\ngRPC and WebSocket are no longer schemes — they are detected per-request from the incoming traffic (content-type, Upgrade/Connection headers, HTTP/2 Extended CONNECT). A single `https` proxy transparently serves a mix of REST, gRPC, and WebSocket traffic on the same backend pool.\nHTTPS backends are classified at startup for HTTP/1.1, HTTP/2, and HTTP/3 support. Plain HTTP traffic uses the native H3 backend pool automatically when the concrete target is classified as H3-capable.\n\n**WebSocket requests arriving over HTTP/3** are supported via RFC 9220 Extended CONNECT (`:method=CONNECT`, `:protocol=websocket`). The H3 frontend bridges to an HTTP/1.1 Upgrade backend connection — the same `connect_websocket_backend()` helper the H1/H2 frontends use — so the backend sees a normal HTTP/1.1 WebSocket regardless of the frontend transport. Same plugin pipeline (`on_ws_frame`, `on_ws_disconnect`, sticky-session cookies). Gated by `FERRUM_HTTP3_WEBSOCKET_ENABLED` (default `true`); when false the H3 server does not advertise `SETTINGS_ENABLE_CONNECT_PROTOCOL` and the bridge returns 501."
+        },
+        "backend_host": {
+          "type": "string",
+          "description": "Backend server hostname or IP. Required when `upstream_id` is not set. When `upstream_id` is set, this field may be omitted (empty on the wire) and is ignored — upstream targets provide the dial address."
+        },
+        "backend_port": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0,
+          "maximum": 65535,
+          "default": 0,
+          "description": "Backend server port. Required (>= 1) when `upstream_id` is not set. When `upstream_id` is set, this field may be omitted (0 on the wire) and is ignored — upstream targets provide the dial port."
+        },
+        "backend_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional path prefix prepended to forwarded requests"
+        },
+        "strip_listen_path": {
+          "type": "boolean",
+          "default": true,
+          "description": "Strip the matched `listen_path` prefix before forwarding to the backend. No-op when `listen_path` is null (host-only proxies have no prefix to strip)."
+        },
+        "preserve_host_header": {
+          "type": "boolean",
+          "default": false,
+          "description": "Forward the original Host header to the backend"
+        },
+        "allow_path_parameters": {
+          "type": "boolean",
+          "default": false,
+          "description": "Accept RFC 3986 `;` path parameters (matrix parameters) in request paths routed to this proxy. With the default `false`, a request whose canonical path contains a `;` (literal or `%3B`, for example `/admin;x/users`) is refused with `400` (`path_parameter`) after route lookup and before any plugin runs, because backends such as Tomcat and Spring strip `;…` from every segment and would execute a different path than routing and policy evaluated. Enable it only for backends that use matrix parameters: routing, policy, and the backend request line then carry the `;` unchanged, so policy keyed on a parameter-free path does not match those requests. A request is still refused when its path with every parameter removed belongs to a different proxy (`/admin;x/users` on an opted-in `/` when an `/admin` proxy exists); a less specific ancestor of this proxy's own literal `listen_path` does not count, so a catch-all `/` does not shadow `/api;v=1`. Dot segments with a parameter (`..;`) and segments that are empty before their `;` (`/;x/admin`) are refused either way. A literal `listen_path` containing `;` requires `true`. HTTP-family proxies only; stream proxies must leave it `false`."
+        },
+        "backend_connect_timeout_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400000,
+          "default": 5000,
+          "description": "TCP connect timeout in milliseconds"
+        },
+        "backend_read_timeout_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0,
+          "maximum": 86400000,
+          "default": 30000,
+          "description": "Backend read timeout in milliseconds (default 30000). For HTTP/gRPC proxies it bounds backend response reads and is also the total, not idle, deadline for any client request upload that Ferrum must buffer before backend dispatch. A buffered upload that exceeds the deadline is rejected with HTTP 408 or gRPC DEADLINE_EXCEEDED; streaming pass-through uploads are unaffected. For TCP proxies, this is a per-direction inactivity timeout on the backend read path. 0 disables these bounds."
+        },
+        "backend_write_timeout_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0,
+          "maximum": 86400000,
+          "default": 30000,
+          "description": "Backend write timeout in milliseconds. For TCP proxies, this is a per-direction inactivity timeout on the backend write path. 0 = disabled."
+        },
+        "backend_tls_client_cert_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4096,
+          "description": "Path to mTLS client certificate (PEM). Max 4096 characters. When admin namespace-claim enforcement is on, or the token carries an `ns` claim even with enforcement off, an `operator` may set only inline PEM, `system://`, or a `k8s://` Secret in the addressed namespace; any other reference it introduces is refused with `400` before the material is loaded. A value already stored in this field is exempt, and `admin`-role tokens are not restricted."
+        },
+        "backend_tls_client_key_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4096,
+          "description": "Path to mTLS client private key (PEM), or a pkcs11 signer URI with the optional pkcs11 build feature. Module overrides require admission by FERRUM_PKCS11_MODULE_ALLOWED_PATHS on each node. Without that policy, omit module options to use FERRUM_PKCS11_MODULE_PATH. Max 4096 characters. Inline PEM key material is withheld from every non-admin read (`[REDACTED]`; a fingerprint in `GET /config/export`); references stay visible. When admin namespace-claim enforcement is on, or the token carries an `ns` claim even with enforcement off, an `operator` may set only inline PEM, `system://`, or a `k8s://` Secret in the addressed namespace; any other reference it introduces is refused with `400` before the material is loaded. A value already stored in this field is exempt, and `admin`-role tokens are not restricted."
+        },
+        "backend_tls_verify_server_cert": {
+          "type": "boolean",
+          "default": true,
+          "description": "Verify the backend's TLS certificate"
+        },
+        "backend_tls_server_ca_cert_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 4096,
+          "description": "Path (or typed source URI) for the custom CA bundle used for backend TLS verification. Max 4096 characters. The reserved value `system://` selects the built-in system/webpki trust anchors explicitly: unlike leaving this field null, it does NOT fall back to the global `FERRUM_TLS_CA_BUNDLE_PATH` and never inherits `FERRUM_TLS_NO_VERIFY`. `system://` requires `backend_tls_verify_server_cert: true` and must be spelled exactly, with no path or query options. When admin namespace-claim enforcement is on, or the token carries an `ns` claim even with enforcement off, an `operator` may set only inline PEM, `system://`, or a `k8s://` Secret in the addressed namespace; any other reference it introduces is refused with `400` before the material is loaded. A value already stored in this field is exempt, and `admin`-role tokens are not restricted."
+        },
+        "dns_override": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Override backend DNS resolution with a valid IPv4 or IPv6 address.\nApplies to every hostname selected for the proxy, including\nload-balanced targets. A reqwest target that is itself an IP literal\nmust equal the override; conflicting direct targets are rejected at\nadmission and runtime-selected conflicts fail closed with 502.\n"
+        },
+        "dns_cache_ttl_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400,
+          "description": "DNS cache TTL override in seconds"
+        },
+        "auth_mode": {
+          "$ref": "#/$defs/AuthMode"
+        },
+        "plugins": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PluginAssociation"
+          },
+          "description": "Plugin configurations applied to this proxy. `PUT /proxies/{id}` is presence-aware for this one field: an omitted `plugins` key preserves the stored associations rather than detaching them (the `default: []` would otherwise silently remove an authentication plugin on a partial replace body). Send `\"plugins\": []` explicitly to clear them; any present array replaces them wholesale."
+        },
+        "pool_idle_timeout_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 3600,
+          "description": "Idle connection timeout in seconds (overrides global)"
+        },
+        "pool_enable_http_keep_alive": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Enable HTTP keep-alive (overrides global)"
+        },
+        "pool_enable_http2": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Enable HTTP/2 keep-alive PINGs (overrides global)"
+        },
+        "pool_tcp_keepalive_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400,
+          "description": "TCP keep-alive probe interval (overrides global)"
+        },
+        "pool_http2_keep_alive_interval_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400,
+          "description": "HTTP/2 PING interval in seconds (overrides global)"
+        },
+        "pool_http2_keep_alive_timeout_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 86400,
+          "description": "HTTP/2 PING timeout in seconds (overrides global)"
+        },
+        "pool_http2_initial_stream_window_size": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 65535,
+          "maximum": 134217728,
+          "description": "HTTP/2 initial per-stream flow-control window size in bytes (overrides global).\nLarger values improve single-stream throughput. Range: 65535–134217728 (128 MiB). Default: 8388608 (8 MiB).\nApplies while adaptive windowing is off (the default); enabling adaptive replaces this fixed size\nwith hyper/reqwest BDP probing that starts at 65535 bytes.\nSetting this (or the connection window) without also setting pool_http2_adaptive_window\nexplicitly auto-disables adaptive at this proxy so the fixed window takes effect.\n"
+        },
+        "pool_http2_initial_connection_window_size": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 65535,
+          "maximum": 134217728,
+          "description": "HTTP/2 initial connection-level flow-control window size in bytes (overrides global).\nAggregate budget shared across all concurrent streams. Range: 65535–134217728 (128 MiB). Default: 33554432 (32 MiB).\nSame adaptive-vs-fixed precedence as pool_http2_initial_stream_window_size.\n"
+        },
+        "pool_http2_adaptive_window": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Enable adaptive flow-control (BDP probing) for HTTP/2 connections (overrides global).\nDefault: false — the fixed initial stream/connection windows apply. While enabled, adaptive\nwindowing replaces those fixed sizes: hyper restarts both at 65535 bytes and grows the connection\nwindow only as the link is measured, which fragments hundreds of concurrent streams into tiny\nDATA frames and can trip h2's small-frame flood budget (GOAWAY ENHANCE_YOUR_CALM). Its BDP\nPING/SETTINGS traffic can also deadlock a connection carrying large bodies in both directions,\nespecially when both peers enable adaptive windowing; h2 stops reading while a control-frame\nwrite waits for socket capacity (issue #6073, upstream https://github.com/hyperium/h2/issues/975).\nThis describes hyper/reqwest HTTP/2 connections; HBONE uses a separate raw-h2 window policy\nand does not enable this BDP PING/SETTINGS behavior.\nAn explicit adaptive choice remains authoritative even alongside window overrides; omit this\nfield when setting explicit windows to auto-disable adaptive so fixed sizes apply.\n"
+        },
+        "pool_http2_max_frame_size": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 16384,
+          "maximum": 1048576,
+          "description": "Maximum HTTP/2 frame payload size in bytes (overrides global).\nRange: 16384–1048576 (1 MiB). Default: 1048576 (1 MiB).\n"
+        },
+        "pool_http2_max_concurrent_streams": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "description": "Maximum concurrent HTTP/2 streams per backend connection (overrides global).\nRange: 1–2147483647. Default: 1000.\n"
+        },
+        "pool_http3_connections_per_backend": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 256,
+          "description": "Number of QUIC connections per HTTP/3 backend (overrides global\nFERRUM_HTTP3_CONNECTIONS_PER_BACKEND). Multiple connections distribute\nQUIC frame processing across driver tasks. Range: 1–256. Default: 4.\n"
+        },
+        "upstream_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Reference to an existing Upstream for load-balanced backends. When set,\n`backend_host` and `backend_port` may be omitted; the selected\nupstream target supplies the dial address. The referenced upstream\nmust exist at creation time. Deleting an upstream that is referenced\nby a proxy is blocked.\n"
+        },
+        "upstream_subset": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128,
+          "description": "Named subset within `upstream_id` to route to. The subset must be\ndefined in the referenced upstream's `subsets` list; invalid subset\nreferences are rejected during config/admin validation. Matching is\nexact: a target belongs to a subset when its `tags` contain every\nlabel in the subset selector with the same value.\n"
+        },
+        "listen_port": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Listen-port identity for this proxy (must be >= 1 when set).\n\nStream family (`tcp`/`tcps`/`udp`/`dtls`): required. The proxy binds\nthis port and routes by it (not by path). A stream proxy normally binds\nits own dedicated port; proxies may share one port only by forming a\nsingle shared listener — an opaque-TLS SNI group (all `passthrough:\ntrue`, or all opaque `tcp` listeners with at least one declaring\n`hosts`) or an L4 `stream_match` group. Any other duplicate port is\nrejected. In database mode, the Admin API also rejects ports that\nconflict with gateway reserved ports (proxy/admin/gRPC listeners) or\nare already bound on the host. In CP mode, local port checks are\nskipped since stream proxies run on remote DP nodes.\n\nHTTP family: optional. When set, the proxy is port-scoped and only\nmatches requests accepted on that frontend port (or the protocol-class\nremap when a single HTTP/HTTPS Gateway listener port is projected onto\n`FERRUM_PROXY_HTTP_PORT` / `FERRUM_PROXY_HTTPS_PORT`). When omitted,\nthe proxy remains port-agnostic and matches any HTTP-family frontend\n(manual / non-Kubernetes default). Distinct `listen_port` values do not\nconflict on the same `hosts`+`listen_path`. A `listen_port` equal to\n`FERRUM_PROXY_HTTP_PORT` or `FERRUM_PROXY_HTTPS_PORT` must match that\nfrontend's class (`http_tls_listen_ports`) and carry no dedicated\nSidecar ingress bind; in database mode the Admin API rejects either\nconflict with `409`. CP mode skips this check.\n"
+        },
+        "frontend_tls": {
+          "type": "boolean",
+          "default": false,
+          "description": "Terminate encryption on the gateway side for incoming connections.\nFor TCP: uses the gateway's TLS certificate.\nFor UDP: uses DTLS with ECDSA P-256 or Ed25519 certificates\n(configured via FERRUM_DTLS_CERT_PATH/FERRUM_DTLS_KEY_PATH env vars).\n"
+        },
+        "passthrough": {
+          "type": "boolean",
+          "default": false,
+          "description": "Forward encrypted client bytes directly to the backend without\nterminating TLS (TCP) or DTLS (UDP). The proxy peeks at the\nClientHello to extract SNI for logging but does not decrypt traffic.\nOnly valid for stream proxies (tcp, tcps, udp, dtls).\nMutually exclusive with frontend_tls.\n\nSNI-based routing is not exclusive to this flag: an ordinary\n`backend_scheme: tcp` listener with `frontend_tls: false` is equally\nopaque and routes by `hosts` on the same plane. Every candidate\nsharing one `listen_port` must agree on `passthrough`, because the\nshared listener socket is built from one representative before any\nroute is selected.\n"
+        },
+        "tcp_idle_timeout_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0,
+          "maximum": 86400,
+          "description": "TCP stream idle timeout in seconds. After this duration of no data transfer\nin either direction, the connection is closed. When omitted, uses the global\nFERRUM_TCP_IDLE_TIMEOUT_SECONDS (default: 300s / 5 min). Set to 0 to disable.\nOnly applicable for tcp/tcps schemes.\n"
+        },
+        "stream_proxy_protocol": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Enable inbound PROXY protocol on this stream proxy listener. The framing\ndepends on the scheme:\n\n* tcp / tcps: PROXY protocol v1 text or v2 binary (auto-detected), read once\n  at the head of each accepted connection. A connection that does not begin with\n  a valid header is closed immediately (fail closed).\n* udp / dtls: the PROXY protocol v2 DGRAM envelope, present on EVERY datagram\n  (a session-scoped header cannot be trusted on an unordered, lossy transport).\n  A datagram that does not decode is dropped; nothing is forwarded and no\n  session is created. When FERRUM_DATAGRAM_PROXY_PROTOCOL_SECRET is set, the\n  HMAC-SHA-256 tag is computed over a versioned domain-separation prefix\n  naming the exact receiving listener (receive-boundary protocol, canonical\n  bind address, port), so an envelope minted for listener A can never\n  authenticate on listener B under one process-global root secret — for every\n  command and family, LOCAL and AF_UNSPEC included. The envelope's declared\n  destination port is compared to this proxy's listen_port as defense in\n  depth. Each authenticated envelope also carries an authenticated freshness\n  record (sender id, epoch, monotonic sequence, timestamp), and the receiver\n  keeps a bounded per-sender sliding replay window, so a duplicate or stale\n  datagram is dropped before any session, plugin, or backend work. LOCAL and\n  AF_UNSPEC still never set a forwarded identity. Ferrum never emits the\n  envelope toward the backend, and replies are sent back to the socket peer\n  unwrapped.\n\nTrust requirement: the forwarded address is honoured only when the socket peer\n(the load balancer's own IP) belongs to the FERRUM_TRUSTED_PROXIES CIDR set. A\nconnection from an untrusted peer on a PROXY-protocol-enabled listener is also\nclosed (TCP) or dropped (UDP/DTLS) to prevent direct-connect clients from\nspoofing their source IP. On udp / dtls, set\nFERRUM_DATAGRAM_PROXY_PROTOCOL_SECRET to additionally require an HMAC-SHA-256\ntag and a freshness record on every datagram; source addresses are spoofable on\nUDP, so that secret is what makes datagram metadata trustworthy off a protected\npath. Without it the listener stays in the address-trust posture, which has\nneither cryptographic authenticity nor freshness.\n\nAfter a trusted parse, client_ip in the stream context (and in stream logs and\nauthz plugins) is the forwarded source IP; direct_client_ip retains the raw\nsocket peer (the LB's own IP). This mirrors XFF + FERRUM_TRUSTED_PROXIES\non the HTTP path.\n\nOnly valid for tcp / tcps / udp / dtls stream proxies. Setting it on an\nHTTP-family proxy produces a validation error: HTTP-family proxies share the\nglobal HTTP/HTTPS listeners, which enable inbound PROXY protocol listener-wide\nwith the FERRUM_FRONTEND_PROXY_PROTOCOL_HTTP / FERRUM_FRONTEND_PROXY_PROTOCOL_HTTPS\nenvironment settings instead.\n\nDefault: null / false (disabled; socket peer is always used as client_ip).\n"
+        },
+        "backend_proxy_protocol": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "v2",
+            null
+          ],
+          "description": "Opt-in outbound PROXY protocol written on backend TCP connects for this\nstream proxy. When set to `v2`, Ferrum prepends a PROXY protocol v2 binary\nheader carrying the trusted stream client_ip (and port) immediately after\nthe backend TCP connect — before any relayed application bytes, and before\nthe backend TLS handshake when originating TLS. Compatible with passthrough\n(the header precedes the client's encrypted ClientHello on the wire).\n\nSource addresses honor the inbound PROXY trust decision: when\nstream_proxy_protocol is enabled and the peer is trusted, the forwarded\nclient identity is advertised; otherwise the accept-time socket peer is used.\n\nOnly valid for tcp / tcps stream proxies. Setting it on UDP, DTLS, or HTTP\nproxies produces a validation error (PROXY protocol is TCP-borne). UDP\noutbound PROXY is intentionally out of scope.\n\nDefault: null (disabled — backends see the gateway egress IP).\n"
+        },
+        "stream_match": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/StreamMatchCriteria"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional bounded L4 connection matcher for TCP/TCP+TLS proxies.\nPredicates within one arm are ANDed; arms are ORed in declaration\norder. Any predicate whose trusted connection evidence is absent\ndenies that arm. Source IP is the canonical authoritative client IP\nafter trusted PROXY-protocol processing, never an untrusted\napplication header.\nDestination IP comes from trusted original-destination capture.\nGateway identity is trusted listener configuration only.\n\nOmitted, null, `{}`, or `{ \"arms\": [] }` means no additional matcher.\nA non-empty arm must contain at least one predicate. Invalid or\nuncompiled configured matchers fail closed. Only valid for TCP-borne\nstream proxies; UDP and DTLS configurations are rejected.\n"
+        },
+        "websocket_idle_timeout_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0,
+          "maximum": 86400,
+          "description": "WebSocket relay idle timeout in seconds for upgraded sessions on this proxy\n(HTTP-family proxies; applies to H1/H2/H3 frontends and both the frame-parsed\nand tunnel-mode relays). The session closes only when neither direction\nproduces activity (frames, including Ping/Pong, or transport bytes) within the\nwindow; activity from either side keeps it open. When omitted, uses the global\nFERRUM_WEBSOCKET_IDLE_TIMEOUT_SECONDS (default: 300s / 5 min). Set to 0 to\ndisable only the idle bound for this proxy; the finite global WebSocket\nmaximum lifetime still applies. Maximum 86400 (24h).\nHTTP/3 caveat: on QUIC frontends the transport idle timeout\nFERRUM_HTTP3_IDLE_TIMEOUT (default 30s) also applies. On an\notherwise-idle H3 connection, QUIC may close before a longer WebSocket\nidle timer; multiplexed H3 connections with other active streams may\nstay open. Startup/reload warnings are logged only for affected proxies\nwhen an H3 WebSocket listener is actually reachable.\n"
+        },
+        "websocket_permessage_deflate": {
+          "type": "string",
+          "enum": [
+            "strip",
+            "passthrough",
+            "terminate"
+          ],
+          "default": "strip",
+          "description": "RFC 7692 `permessage-deflate` handling for WebSocket upgrades on this\nproxy (HTTP-family proxies only; stream proxies must use `strip`).\n\n- `strip` (default): the client's `Sec-WebSocket-Extensions` offer\n  never reaches the backend and no extension is negotiated, so every\n  message stays inspectable by WebSocket frame plugins.\n- `passthrough`: `permessage-deflate` offer elements reach the backend\n  unchanged and the backend's `permessage-deflate` answer reaches the\n  client unchanged on HTTP/1.1, HTTP/2 Extended CONNECT, and HTTP/3\n  Extended CONNECT. Every other extension token is still stripped. A\n  session that negotiates the extension is relayed as raw bytes, so\n  gateway WebSocket frame and fragment limits do not apply to it.\n  Refused (400) on a proxy with any plugin that requires the parsed\n  WebSocket relay (`waf`, `ws_frame_logging`,\n  `ws_message_size_limiting`, `ws_rate_limiting`, an `api_chargeback`\n  that prices bandwidth, or a custom plugin whose\n  `requires_websocket_framing()` is true), whether attached\n  directly, through a proxy group, or inherited from a global plugin.\n- `terminate`: the gateway negotiates `permessage-deflate` with the\n  client and with the backend independently (the backend receives\n  the gateway's own `permessage-deflate` offer), inflates every\n  message before the frame relay and its plugins see it, and\n  re-deflates toward each leg that negotiated compression. Every\n  plugin stays allowed and sees plaintext. Decompression is bounded:\n  a compressed frame may not exceed the frame ceiling, a frame may not\n  inflate past it, and a message may not inflate past\n  `FERRUM_WEBSOCKET_PERMESSAGE_DEFLATE_MAX_MESSAGE_BYTES` (default\n  1 MiB; `0` opts into the reassembled-message ceiling); exceeding\n  either closes with 1009. An invalid backend answer (including a\n  foreign extension, a malformed list, or a non-ASCII value) refuses\n  the upgrade with 502.\n  Applies on HTTP/1.1, HTTP/2 Extended CONNECT, and HTTP/3 Extended\n  CONNECT.\n"
+        },
+        "udp_idle_timeout_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1,
+          "maximum": 3600,
+          "default": 60,
+          "description": "UDP session idle timeout in seconds. After this duration of inactivity,\nthe UDP session mapping is removed. Only applicable for udp/dtls protocols.\n"
+        },
+        "udp_max_response_amplification_factor": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "float",
+          "minimum": 0,
+          "maximum": 1024,
+          "description": "Maximum allowed response amplification factor for UDP proxies.\nBackend→client datagrams share one remaining payload-byte budget\nper admitted client request (`payload_size * factor`, cumulative\nacross replies). A zero-length request receives an explicit\none-byte reply allowance so it cannot black-hole the session;\nnonempty requests retain the exact configured payload ratio. Every\nbackend response datagram consumes at least one unit of remaining\nbudget, so a zero-length reply cannot bypass a finite factor. This\nprotects against UDP amplification attacks (e.g., spoofed-source\nreflection). Finite values must be greater than 0 and at most 1024.\n\n**Omitting the field is not unlimited.** Every `udp` / `dtls` proxy\nthat leaves it unset is normalized to the finite default `8.0`,\nwhatever the configuration source (file, database, admin API,\nCP→DP, mesh, Gateway API), so a UDP proxy is never an open\nreflector by default. `0` is the explicit operator opt-out meaning\n\"no limit\"; it is accepted only on `udp` / `dtls` proxies and the\naffected listener logs a warning at startup. Gateway API `UDPRoute`\ntranslation projects the same `8.0` default unless a Ferrum\n`UDPResponseAmplificationPolicy` supplies a finite override or an\nexplicit dual-acknowledged unlimited mode, which is materialized as\n`0`. Only applicable for `udp` / `dtls` proxies.\n"
+        },
+        "allowed_methods": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE",
+                  "HEAD",
+                  "OPTIONS",
+                  "TRACE",
+                  "CONNECT"
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional list of HTTP methods this proxy accepts. When null (default),\nall methods are allowed. When set, requests with methods not in the list\nreceive 405 Method Not Allowed before any plugin processing.\n"
+        },
+        "allowed_ws_origins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Optional list of allowed WebSocket Origin values (e.g., [\"https://example.com\"]).\nWhen non-empty, WebSocket upgrade requests must include an Origin header matching\none of these values (case-insensitive comparison).\nEmpty array (default) allows all origins. Entries are literal origins of the\nform `scheme://host[:port]`; `*` is not a wildcard and is rejected at Admin API\ncreate/update (POST/PUT/PATCH proxies, batch, restore), file-mode loads, and\n`ferrum-edge validate`. Existing database/CP rows containing `*` still load,\nwith a warning naming the proxy. Protects against Cross-Site WebSocket Hijacking (CSWSH).\n\nIndependent of the `cors` plugin, which does not run on WebSocket upgrades.\nOperators with a strict CORS allowlist on the same proxy should mirror those\norigins here. See docs/routing.md#websocket-origin-admission.\n\nWebSocket over HTTP/1.1 (`Upgrade: websocket`), HTTP/2\n(RFC 8441 Extended CONNECT), and HTTP/3 (RFC 9220 Extended\nCONNECT) are all supported and use the same Origin check.\nThe H3 path is gated by `FERRUM_HTTP3_WEBSOCKET_ENABLED`\n(default `true`); see `docs/http3.md` for the H3-specific\nbridge architecture.\n"
+        },
+        "circuit_breaker": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/CircuitBreakerConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional circuit breaker configuration"
+        },
+        "retry": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/RetryConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional retry configuration"
+        },
+        "response_body_mode": {
+          "type": "string",
+          "enum": [
+            "stream",
+            "buffer"
+          ],
+          "default": "stream",
+          "description": "Response body handling mode.\n\n- `stream` (default): Passes response bytes through as they arrive for\n  lower latency and memory usage. If any plugin attached to this proxy\n  requires response body buffering (e.g., response_transformer), the\n  gateway automatically buffers regardless of this setting.\n- `buffer`: Always buffers the full response body before running\n  after-proxy plugins, even if no plugin requires it. Use this when you\n  need to guarantee the complete body is available for inspection.\n"
+        },
+        "api_spec_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "ID of the `ApiSpec` that created this proxy via the spec-import admin\nAPI (`POST /api-specs`). `null` for proxies created via direct admin\nendpoints (`POST /proxies`). When set, the proxy participates in\nspec-level ownership: `PUT /api-specs/{id}` replaces this proxy as part\nof the bundle, and `DELETE /api-specs/{id}` deletes this proxy (and\nits plugins via FK cascade).\n"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp (set by server)"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification timestamp (set by server)"
+        }
+      },
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "required": [
+                "upstream_id"
+              ],
+              "properties": {
+                "upstream_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "backend_host",
+                "backend_port"
+              ],
+              "properties": {
+                "backend_host": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "backend_port": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "if": {
+            "required": [
+              "backend_scheme"
+            ],
+            "properties": {
+              "backend_scheme": {
+                "enum": [
+                  "tcp",
+                  "tcps",
+                  "udp",
+                  "dtls"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "listen_port"
+            ],
+            "properties": {
+              "listen_port": {
+                "type": "integer"
+              },
+              "listen_path": {
+                "type": "null"
+              },
+              "response_body_mode": {
+                "const": "stream"
+              },
+              "websocket_permessage_deflate": {
+                "const": "strip"
+              },
+              "allow_path_parameters": {
+                "const": false
+              }
+            }
+          },
+          "else": {
+            "anyOf": [
+              {
+                "required": [
+                  "hosts"
+                ],
+                "properties": {
+                  "hosts": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "required": [
+                  "listen_path"
+                ],
+                "properties": {
+                  "listen_path": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            ],
+            "properties": {
+              "passthrough": {
+                "const": false
+              },
+              "stream_proxy_protocol": {
+                "enum": [
+                  false,
+                  null
+                ]
+              },
+              "backend_proxy_protocol": {
+                "type": "null"
+              },
+              "stream_match": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "backend_scheme"
+            ],
+            "properties": {
+              "backend_scheme": {
+                "enum": [
+                  "udp",
+                  "dtls"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "backend_proxy_protocol": {
+                "type": "null"
+              },
+              "stream_match": {
+                "type": "null"
+              },
+              "upstream_subset": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "udp_max_response_amplification_factor": {
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "passthrough"
+            ],
+            "properties": {
+              "passthrough": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "frontend_tls": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "upstream_subset"
+            ],
+            "properties": {
+              "upstream_subset": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "upstream_id"
+            ],
+            "properties": {
+              "upstream_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "listen_port"
+            ],
+            "properties": {
+              "listen_port": {
+                "type": "integer"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "backend_scheme"
+            ],
+            "properties": {
+              "backend_scheme": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "listen_path"
+            ],
+            "properties": {
+              "listen_path": {
+                "type": "string",
+                "pattern": "^[^~].*;"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "allow_path_parameters"
+            ],
+            "properties": {
+              "allow_path_parameters": {
+                "const": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ProxyCreate": {
+      "description": "Request body for creating or updating a proxy. Same schema as Proxy\nbut `id`, `created_at`, and `updated_at` are optional (server-managed).\n\n**Validation rules** (enforced at admin API + file/DB load time):\n- HTTP-family proxies: at least one of `hosts` or `listen_path` must\n  be set. A proxy with neither is rejected (400). Optional `listen_port`\n  scopes the route to that frontend port (or the HTTP/HTTPS protocol\n  remap); omit it for port-agnostic matching.\n- Stream-family proxies (`tcp`/`tcps`/`udp`/`dtls`): `listen_path`\n  MUST be null/omitted, and `listen_port` MUST be set,\n  and `backend_scheme` MUST be set explicitly.\n- HTTP-family `backend_scheme` defaults to `https` when omitted.\n  Plaintext backends must set `backend_scheme: http`.\n- Unknown fields are rejected. Backend H3 selection is runtime\n  capability-driven for `Https` backends — there is no scheme for it.\n- `backend_host` and `backend_port` may be omitted when `upstream_id`\n  is set. They remain required for a direct-backend proxy.\n",
+      "allOf": [
+        {
+          "$ref": "#/$defs/Proxy"
+        }
+      ],
+      "examples": [
+        {
+          "listen_path": "/api",
+          "backend_scheme": "http",
+          "backend_host": "backend.example.com",
+          "backend_port": 8080
+        },
+        {
+          "hosts": [
+            "api.example.com"
+          ],
+          "listen_path": null,
+          "upstream_id": "api-pool",
+          "backend_port": 0,
+          "allowed_methods": null
+        },
+        {
+          "backend_scheme": "tcp",
+          "listen_port": 5432,
+          "backend_host": "db.internal",
+          "backend_port": 5432
+        }
+      ]
+    },
+    "ResourceLabels": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 512
+      },
+      "description": "Informational operator metadata. Keys must be nonblank; keys and values cannot contain control characters. Runtime length limits are UTF-8 bytes (128 per key, 512 per value). Independent of target tags, routing, access control and api_spec_id. Omitted labels on resource PUT preserve the current map; an explicit map replaces it and {} clears it. Labels are retained in GET/list, backup/restore, file configuration and CP/DP sync. The provisioned-by label identifies the application that provisioned a resource; it is caller-supplied information, not proof of ownership. Resource labels landed on main in pull request 5483 on 2026-09-12, and every published release through v0.9.4 rejects the `labels` field with unknown field `labels`. v0.9.5 is the first tagged release with resource labels; operators and clients should use v0.9.5 or later.",
+      "examples": [
+        {
+          "provisioned-by": "ferrum-nexus",
+          "team": "platform"
+        }
+      ]
+    },
+    "RetryConfig": {
+      "type": "object",
+      "properties": {
+        "max_retries": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 3,
+          "description": "Maximum retry attempts"
+        },
+        "retryable_status_codes": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 100,
+            "maximum": 599
+          },
+          "default": [],
+          "description": "HTTP status codes eligible for retry. Empty by default: no status-code retries occur unless codes are listed."
+        },
+        "retryable_methods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "HEAD",
+              "OPTIONS",
+              "TRACE",
+              "CONNECT"
+            ]
+          },
+          "maxItems": 9,
+          "default": [
+            "GET",
+            "HEAD",
+            "OPTIONS",
+            "PUT",
+            "DELETE"
+          ],
+          "description": "HTTP methods eligible for retry. Must be valid HTTP methods."
+        },
+        "backoff": {
+          "$ref": "#/$defs/BackoffStrategy"
+        },
+        "retry_on_connect_failure": {
+          "type": "boolean",
+          "default": true,
+          "description": "Retry on TCP-level failures (connect refused, DNS failure, TLS\nerror, timeout) independently of `retryable_status_codes`.\n"
+        }
+      }
+    },
+    "StreamMatchArm": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "source_labels": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 64,
+          "propertyNames": {
+            "minLength": 1,
+            "maxLength": 317,
+            "pattern": "^(?:(?=.{1,253}/)[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?)*/)?[A-Za-z0-9](?:[-_.A-Za-z0-9]{0,61}[A-Za-z0-9])?$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^$|^[A-Za-z0-9](?:[-_.A-Za-z0-9]{0,61}[A-Za-z0-9])?$"
+          },
+          "description": "Kubernetes label key/value pairs that must all match trustworthy\nworkload identity evidence. Empty label values are valid. Missing,\nambiguous, or unauthenticated label evidence denies the arm.\n"
+        },
+        "source_namespace": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 63,
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+          "description": "Exact Kubernetes source namespace from authenticated SPIFFE/workload\nidentity. Missing authenticated namespace evidence denies the arm.\n"
+        },
+        "source_subnets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": "IPv4/IPv6 CIDRs or individual IP addresses. Entries are parsed\nstrictly at admission. The authoritative canonical client IP after\nthe trusted PROXY boundary must belong to at least one entry.\n"
+        },
+        "destination_subnets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "description": "IPv4/IPv6 CIDRs or individual IP addresses, parsed strictly at\nadmission. The trusted captured original destination must belong to\nat least one entry; missing capture evidence denies the arm.\n"
+        },
+        "gateways": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 127,
+            "pattern": "^(mesh|[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?/[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?)$"
+          },
+          "description": "Exact trusted gateway bindings: `mesh` or canonical\n`namespace/name`. Short names are rejected outside translation\nbecause no namespace can be inferred safely. Missing listener\nbinding denies the arm; the value is never wire-derived.\n"
+        }
+      }
+    },
+    "StreamMatchCriteria": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "arms": {
+          "type": "array",
+          "maxItems": 64,
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/StreamMatchArm"
+          },
+          "description": "OR-ordered match arms. Declaration order is semantic both within\nthis list and across proxies sharing a stream listener; an earlier\nunconstrained candidate shadows later candidates. Empty means no\nadditional L4 matcher.\n"
+        }
+      }
+    }
+  }
+}

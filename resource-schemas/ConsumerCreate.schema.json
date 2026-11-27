@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ferrum-edge/ferrum-contracts/resource-schemas/edge-v0.9.21/ConsumerCreate.schema.json",
+  "title": "ConsumerCreate request body",
+  "description": "Edge's ConsumerCreate request schema (openapi.yaml components.schemas.ConsumerCreate), generated from ferrum-edge/ferrum-edge openapi.yaml at v0.9.21 (f9915358c8032214f4034a17c28cdf72d14006c3) with every component it references. Do not edit: run ci/plugin_config_schemas.py. Admission rules that exist only in Edge's Rust code are not in this schema; resource-schemas/README.md lists them. This is Edge's own API schema, governed by Edge's support policy (docs/versioning.md).",
+  "x-generated": {
+    "resource": "ConsumerCreate",
+    "generator": "ci/plugin_config_schemas.py",
+    "source": {
+      "repo": "ferrum-edge/ferrum-edge",
+      "ref": "v0.9.21",
+      "commit": "f9915358c8032214f4034a17c28cdf72d14006c3",
+      "path": "openapi.yaml",
+      "sha256": "13c21d12d3028c8044ad2f467cbca6425d9bd2f3fce787d6fe7ae78316c21bee",
+      "pointer": "#/components/schemas/ConsumerCreate"
+    }
+  },
+  "$ref": "#/$defs/ConsumerCreate",
+  "$defs": {
+    "BasicAuthCredential": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "password"
+          ]
+        },
+        {
+          "required": [
+            "password_hash"
+          ]
+        }
+      ],
+      "properties": {
+        "password": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]*$",
+          "writeOnly": true,
+          "description": "Plaintext password (automatically hashed on write using HMAC-SHA256 with the server secret `FERRUM_BASIC_AUTH_HMAC_SECRET`). Mutually exclusive with `password_hash`. Must not contain ASCII control bytes other than horizontal tab, line feed, and carriage return."
+        },
+        "password_hash": {
+          "type": "string",
+          "maxLength": 76,
+          "pattern": "^hmac_sha256:[0-9a-f]{64}$",
+          "description": "Pre-hashed password in `hmac_sha256:<64 lowercase hex>` format (constant-time, ~1μs). Ordinary Consumer responses omit the entire `basicauth` credential type; authenticated backups return this canonical unredacted value for restoration."
+        }
+      },
+      "description": "Basic auth credential for the `basic_auth` plugin. Supply either `password` (auto-hashed) or `password_hash` (pre-hashed). Indexed by the consumer's `username`."
+    },
+    "ConsumerBase": {
+      "type": "object",
+      "required": [
+        "username"
+      ],
+      "properties": {
+        "labels": {
+          "$ref": "#/$defs/ResourceLabels"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique identifier (UUID auto-generated if omitted or empty on create). Custom IDs must start with an alphanumeric character and contain only alphanumeric characters, dots, underscores, or hyphens (max 254 chars).",
+          "pattern": "^$|^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+          "maxLength": 254
+        },
+        "namespace": {
+          "type": "string",
+          "default": "ferrum",
+          "readOnly": true,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+          "maxLength": 254,
+          "description": "Namespace this consumer belongs to. Read-only on the wire — set from the `X-Ferrum-Namespace` request header (or the `ferrum` default) on every create/update; any value in the request body is ignored."
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique consumer username (must be non-empty). Used as the lookup key for basic_auth authentication. Must be unique across all consumers."
+        },
+        "custom_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional external identifier. Must be unique across all consumers when set. Empty strings are normalized to null. Must not collide with another consumer's username (this would cause incorrect JWKS/JWT authentication)."
+        },
+        "acl_groups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "default": [],
+          "maxItems": 500,
+          "description": "ACL group memberships for group-based access control. The `access_control` plugin can allow/deny by group instead of (or in addition to) individual consumer usernames. A consumer can belong to up to 500 groups."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ConsumerCreate": {
+      "description": "Request body for creating a consumer and for consumer items in `POST /batch`. Credential values are write-only inputs: plaintext `basicauth` `password` fields are hashed on write and stored secrets are never returned by ordinary Consumer responses. Every credential value must be a real secret; the reserved `[REDACTED]` placeholder is rejected here, and only `PUT` (see `ConsumerUpdate`) accepts it as a round-trip marker. Unknown top-level fields are rejected (`unevaluatedProperties: false`), matching runtime `Consumer` serde `deny_unknown_fields` on create, update, batch, restore, and file/CP-DP config deserialization.\n\nUpdate (`PUT`, `ConsumerUpdate`) is non-destructive for credential state the ordinary `Consumer` response cannot express, so a read-modify-write round trip of a `Consumer` response is safe: an omitted credential type the ordinary response does not emit at all (`basicauth`, any unknown/custom type, or an `mtls_auth` map whose entries the projection filtered out) is preserved from the stored consumer, and a `keyauth`/`jwt`/`hmac_auth` entry submitted as the exact `[REDACTED]` placeholder is restored from the stored entry at the same array index. Omitting a credential type that the ordinary response does represent (`keyauth`, `jwt`, `hmac_auth`, `mtls_auth`) still removes it; removing a hidden type uses `DELETE /consumers/{consumer_id}/credentials/{cred_type}`.",
+      "unevaluatedProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/$defs/ConsumerBase"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "credentials": {
+              "$ref": "#/$defs/ConsumerCredentialsInput"
+            }
+          }
+        }
+      ]
+    },
+    "ConsumerCredentialsInput": {
+      "type": "object",
+      "default": {},
+      "description": "Map of credential type to credential payload for consumer create,\nupdate, and batch requests. Each type maps to an array of credential\nobjects for zero-downtime rotation. Credential arrays must be non-empty\nand elements must be JSON objects. Credential values that serve as\nlookup keys must be unique across all consumers and across all entries\nwithin arrays. Max entries per type is controlled by\n`FERRUM_MAX_CREDENTIALS_PER_TYPE` (default: 2).\n",
+      "properties": {
+        "keyauth": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/KeyAuthCredential"
+          },
+          "minItems": 1,
+          "description": "Multiple API key entries for zero-downtime rotation. Each `key` must be globally unique."
+        },
+        "basicauth": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BasicAuthCredential"
+          },
+          "minItems": 1,
+          "description": "Multiple basic auth entries for zero-downtime rotation. Indexed by consumer `username`; plaintext `password` is hashed on write and never returned."
+        },
+        "jwt": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JwtCredential"
+          },
+          "minItems": 1,
+          "description": "Multiple HMAC JWT secrets (verified with the algorithm the `jwt_auth` instance pins, HS256 by default) for zero-downtime rotation. Each entry contains exactly one `secret` string of 32-4096 characters. Looked up by `username`, `id`, or `custom_id`; all secrets tried."
+        },
+        "hmac_auth": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HmacAuthCredential"
+          },
+          "minItems": 1,
+          "description": "Multiple HMAC secrets for zero-downtime rotation. Looked up by username within the matched proxy namespace; all secrets tried."
+        },
+        "mtls_auth": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MtlsAuthCredential"
+          },
+          "minItems": 1,
+          "description": "Multiple mTLS identities for zero-downtime rotation. Each `identity` must be globally unique."
+        }
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/CredentialTypeName"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "minItems": 1
+      }
+    },
+    "CredentialTypeName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "description": "Credential type key. The built-in types are `keyauth`, `basicauth`, `jwt`, `hmac_auth`, and `mtls_auth`; any other key defines a custom credential type whose entries Ferrum stores and exports verbatim but does not interpret. Keys are restricted to one path-safe URI segment — 1-64 ASCII letters, digits, underscores, or hyphens — so that every stored credential type stays removable through `DELETE /consumers/{consumer_id}/credentials/{cred_type}`, which matches the raw request path split on `/` and does not percent-decode. Keys that are empty, contain `/`, `%`, whitespace, control bytes, or other reserved URI characters are rejected on create, update, batch, and restore. Dedicated credential `PUT`/`POST` path parameters use the narrower `BuiltInCredentialType` enum; this broader name stays on credential maps and on `DELETE`."
+    },
+    "HmacAuthCredential": {
+      "type": "object",
+      "required": [
+        "secret"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "secret": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 4096,
+          "allOf": [
+            {
+              "pattern": "^(?:[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]){32}"
+            },
+            {
+              "pattern": "^[^\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]*$"
+            }
+          ],
+          "writeOnly": true,
+          "description": "Shared secret for HMAC signature computation and verification. Must contain 32-4096 characters, at least 32 of which are non-whitespace, and must not contain disallowed ASCII control bytes or be shared by different Consumers within one namespace. Separate namespaces may reuse the same secret."
+        }
+      },
+      "description": "HMAC auth credential for the `hmac_auth` plugin. Consumer is looked up by username within the matched proxy namespace; all secrets are tried until one verifies the namespace-bound signature."
+    },
+    "JwtCredential": {
+      "type": "object",
+      "required": [
+        "secret"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "secret": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 4096,
+          "allOf": [
+            {
+              "pattern": "^(?:[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]){32}"
+            },
+            {
+              "pattern": "^[^\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]*$"
+            }
+          ],
+          "writeOnly": true,
+          "description": "JWT signing secret used to verify token signatures (with the HMAC algorithm the `jwt_auth` instance pins, HS256 by default) for this consumer. Must contain 32-4096 characters, at least 32 of which are non-whitespace, and must not contain ASCII control bytes other than horizontal tab, line feed, and carriage return. Writes that configure it on a different Consumer within one namespace are refused: the token's signer chooses the identity claim, so a shared secret lets either Consumer sign as the other. Separate namespaces may reuse the same secret."
+        }
+      },
+      "description": "JWT credential for the `jwt_auth` plugin. The only supported Consumer JWT key form is exactly one HMAC `secret`; algorithm selectors, public keys, and JWKS fields are not Consumer credential fields (the HMAC algorithm is the `jwt_auth` plugin's `algorithm` setting). Use the separate `jwks_auth` plugin configuration for RSA/EC/JWKS token verification. Consumer is looked up by `username`, `id`, or `custom_id` from the JWT claim; then all secrets are tried until one verifies the signature."
+    },
+    "KeyAuthCredential": {
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 4096,
+          "allOf": [
+            {
+              "pattern": "^(?:[\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]*[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]){16}"
+            },
+            {
+              "pattern": "^[^\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]*$"
+            }
+          ],
+          "not": {
+            "const": "[REDACTED]"
+          },
+          "description": "API key value. Must contain at least 16 non-whitespace characters and no more than 4096 characters, be free of disallowed ASCII control bytes, and be globally unique across all consumers. The exact string `[REDACTED]` is reserved as the response redaction placeholder and is rejected as a stored key on every write surface; `jwt` and `hmac_auth` secrets exclude it implicitly through their 32-character minimum."
+        }
+      },
+      "description": "API key credential for the `key_auth` authentication plugin."
+    },
+    "MtlsAuthCredential": {
+      "type": "object",
+      "required": [
+        "identity"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "identity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "allOf": [
+            {
+              "pattern": "[^\\u0009-\\u000D\\u0020\\u0085\\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]"
+            },
+            {
+              "pattern": "^[^\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]*$"
+            }
+          ],
+          "description": "Certificate field value to match against the client certificate (e.g., CN, SAN DNS name, fingerprint, or serial). The field extracted from the cert is configured on the `mtls_auth` plugin via `cert_field`. For subject and SAN fields Ferrum selects the first matching value in certificate order; it does not try later values. DNS SAN values are compared using ASCII case-insensitive matching; all other certificate fields are compared exactly. Identities are always exact-unique across consumers and, while an enabled san_dns mTLS policy exists, must also be unique under ASCII case folding. Persistent backends serialize Consumer, policy, and proxy-association admission per namespace so concurrent case variants or policy races cannot commit ambiguity; ordinary conflicting CRUD writes return 409. Batch and restore use their documented per-item and rollback responses. File, database, CP/DP, and reload snapshots reject violations before runtime indexes are published."
+        }
+      },
+      "description": "mTLS auth credential for the `mtls_auth` plugin. Indexed for O(1) lookup by certificate identity."
+    },
+    "ResourceLabels": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 512
+      },
+      "description": "Informational operator metadata. Keys must be nonblank; keys and values cannot contain control characters. Runtime length limits are UTF-8 bytes (128 per key, 512 per value). Independent of target tags, routing, access control and api_spec_id. Omitted labels on resource PUT preserve the current map; an explicit map replaces it and {} clears it. Labels are retained in GET/list, backup/restore, file configuration and CP/DP sync. The provisioned-by label identifies the application that provisioned a resource; it is caller-supplied information, not proof of ownership. Resource labels landed on main in pull request 5483 on 2026-09-12, and every published release through v0.9.4 rejects the `labels` field with unknown field `labels`. v0.9.5 is the first tagged release with resource labels; operators and clients should use v0.9.5 or later.",
+      "examples": [
+        {
+          "provisioned-by": "ferrum-nexus",
+          "team": "platform"
+        }
+      ]
+    }
+  }
+}

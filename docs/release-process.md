@@ -33,8 +33,10 @@ When Ferrum Edge publishes `vX.Y.Z`:
      regenerate the standalone plugin config schemas from that file:
      `git show vX.Y.Z:openapi.yaml > /tmp/openapi.yaml` and
      `python3 -I ci/plugin_config_schemas.py --openapi /tmp/openapi.yaml --write`
-     (standard library only), and commit `plugin-config-schemas/`. CI fails a
-     catalog re-pin whose generated files were not regenerated.
+     (standard library only), and commit `plugin-config-schemas/` and
+     `resource-schemas/`. CI fails a catalog re-pin whose generated files were
+     not regenerated. Re-check the Rust-only rule table in
+     `resource-schemas/README.md` against the new tag's sources.
    - `vocabularies/backend-egress-policy.json`: `openapi.yaml`,
      `src/admin/backend_egress_policy.rs`,
      `src/grpc/backend_egress_attestation.rs`, `src/config/env_config.rs`, and
