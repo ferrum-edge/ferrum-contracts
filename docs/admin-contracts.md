@@ -297,9 +297,17 @@ keep unchanged wire shapes):
   example `?confirm=true&confirm=false`), where `v0.9.21` accepted the flag if
   any occurrence was `true`. `GET /metrics`, `GET /metrics/runtime` and backup
   serialization return `500` on a serialization failure instead of `200` with
-  an empty object. ACME order creation and renewal return `502` for an
-  upstream CA or DNS failure. Gateway trust-bundle IDs follow the shared
-  resource-ID limit (`MAX_ID_LENGTH`, 254 bytes; `v0.9.21` allowed 255).
+  an empty object. ACME order creation and renewal map upstream transport and
+  ACME client errors, unusable finalization material and a terminally invalid
+  order to `502`; request validation failures (including a CA authorization
+  that offers none of the requested challenge types) and egress-policy
+  refusals still return `400`. Explicit gateway trust-bundle IDs on create
+  already followed the shared resource-ID rule in `v0.9.21` (at most 254
+  bytes, an ASCII alphanumeric first, then alphanumerics, `.`, `_` or `-`);
+  Edge `main` applies the same rule in the trust-bundle record validator that
+  `POST /restore` uses, where `v0.9.21`'s record validator and `openapi.yaml`
+  allowed up to 255 bytes with no character rule, so a restored trust bundle
+  with an ID such as `_legacy`, or a 255-byte ID, is now refused.
 - **Closed nested objects and JSON-object request bodies** (Edge PRs
   [#7520](https://github.com/ferrum-edge/ferrum-edge/pull/7520) and
   [#7524](https://github.com/ferrum-edge/ferrum-edge/pull/7524)). Edge

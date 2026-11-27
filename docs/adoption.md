@@ -32,6 +32,20 @@ pin `contracts-edge-0.9.20` (tag commit
 consumption of every file in that tagged release, nor a qualified admin or
 publisher integration.
 
+### Consumer test changes at the next re-pin
+
+The next tag carries metadata that some consumers' own tests assert, so their
+re-pin PR changes those assertions as well as the `PIN` hashes. Checked on
+2026-11-27 against each consumer's `main`:
+
+| Consumer | Test | Change at re-pin |
+|---|---|---|
+| ferrum-alloy | `crates/ferrum-alloy-edge/tests/pairing.rs` (`pinned_diagnostic_schema_and_finding_fixtures_match_alloy`) | The pinned `diagnostic-report` v1 `x-contract.provenance[0]` now reads `ref: v0.1.0`, `commit: c949978d7e90be33bac6a16e23744bcdd4ee3924`, `availability: released`. Replace the assertions that `provenance[0].commit` equals `coordinated_release.qualified_owner_commit` and that `provenance[0].availability` is `unreleased`; keep `coordinated_release.qualified_owner_commit` equal to `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`. |
+| ferrum-foundry | `scripts/ferrum-contracts.test.mjs` ("the published manifest pin retains owner status and complete canonical integrity") | The pinned `service-manifest` v1 `x-contract.provenance[0]` now reads `commit: c949978d7e90be33bac6a16e23744bcdd4ee3924` and `availability: released`; `coordinated_release.qualified_owner_commit` stays `81cbb410d34ff5fba1f3d54cfd2e7ebccaed397e`. The same file's assertion that `vocabularies/plugin-catalog.json` has no `main_branch_delta` must also go ([consumer-pins.md](consumer-pins.md#required-checks)). |
+| ferrum-nexus | `server/src/test/service-manifest.test.ts` ("verifies the exact commit, schema, shared fixtures and invalid-expectation integrity pins") | `service-manifest` v1 `x-contract.provenance[0].commit` becomes `c949978d7e90be33bac6a16e23744bcdd4ee3924` and `provenance[0].availability` becomes `released`. |
+| ferrum-anvil | `crates/anvil-diagnostics/tests/contracts_adoption.rs` | None beyond hashes: it asserts `coordinated_release.qualified_owner_commit` (unchanged) and the `EXISTING shared v1` prefix of `shared_status` (unchanged). |
+| ferrum-edge-git-forge-ops | its contract tests | None beyond hashes: it vendors neither Alloy schema and reads the plugin catalog as untyped JSON. |
+
 An earlier snapshot inspected Edge main
 `66f25f5f89f1dbd4f7d523f3c57e2ace7f59d017` and published
 [v0.9.10](https://github.com/ferrum-edge/ferrum-edge/releases/tag/v0.9.10),
